@@ -22,7 +22,19 @@
 //   gembel_replay.html) binden diese Datei per <script src="gembel_rules.js">
 //   ein — kein Copy-Paste der Regellogik.
 //
-// ABHÄNGIGKEITEN (müssen VOR diesem Script definiert sein):
+// SPIELREGELN (kanonisch, nicht verändern ohne Regelklärung):
+//   - KEINE REICHWEITENREGEL: Figuren dürfen auf jedes Feld des Bretts gezogen
+//     werden. Es gibt keine Distanzbeschränkung. Jeder Filter der Züge auf
+//     "benachbarte Felder" einschränkt ist FALSCH.
+//   - Stripe-Match: Nur beim Ablegen auf ein LEERES Feld (canPlaceOnEmpty).
+//     Beim Stapeln (canStack) und beim Abheben vom Stack (canLift) gilt KEIN
+//     Stripe-Match für die bewegte Figur.
+//   - Einzelstein auf gesperrtem Feld: nicht hebbar (canLift gibt false).
+//   - Stapel auf gesperrtem Feld: Top-Stein hebbar wenn formedBy===currentPlayer.
+//   - Parity: gezählt werden alle roten Figuren in der Nachbarschaft des
+//     ZIELFELDES (bei leerem Ziel) bzw. rote Figuren im neuen Stapel (beim
+//     Stapeln). Beim Abheben keine Paritätsprüfung für Stack-Owner.
+//
 //   - `board`         : globales 4×4-Spielfeld (Array of Arrays)
 //   - `currentPlayer` : 1 oder 2
 //   - `PARITY_P1`     : 'odd' oder 'even' — Parität von Spieler 1
@@ -136,6 +148,12 @@ function canStack(mp,tr,tc){
 
 function canDrop(fr,fc,tr,tc){
   if(fr===tr&&fc===tc) return false;
+  // !! KEINE REICHWEITENREGEL !!
+  // Figuren dürfen auf JEDES Feld des Bretts gezogen werden — nicht nur auf
+  // benachbarte Felder. Es gibt keine Distanzbeschränkung in Gembel.
+  // Eine frühere fehlerhafte Implementierung hatte Math.abs(fr-tr)>1 ||
+  // Math.abs(fc-tc)>1 als Filter in getLegalMoves — das war FALSCH und wurde
+  // entfernt. Diese Anmerkung verhindert dass der Fehler erneut eingebaut wird.
   const mp=getMovingPiece(board[fr][fc]);
   if(!mp) return false;
   if(!board[tr][tc].piece) return canPlaceOnEmpty(mp,fr,fc,tr,tc);
