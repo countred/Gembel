@@ -31,6 +31,8 @@
 //     KEIN Stripe-Match für die bewegte Figur.
 //   - Einzelstein auf gesperrtem Feld: nicht hebbar.
 //   - Stapel auf gesperrtem Feld: Top-Stein hebbar wenn formedBy===player.
+//   - Stapeln auf gesperrte Einzelfigur: ERLAUBT. Basisfigur bleibt,
+//     neuer Stapel entsteht darüber. Entstapeln ebenfalls erlaubt.
 //   - Parity beim leeren Ziel: alle roten Figuren in der Nachbarschaft des
 //     Zielfeldes zählen (exkl. Quellfeld). Beim Stapeln: rote Figuren im
 //     neuen Stapel zählen. Beim Abheben vom Stack: keine Paritätsprüfung.
@@ -44,7 +46,11 @@
 //   player   = 1 oder 2
 //   p1parity = 'odd' oder 'even' (Parität von Spieler 1)
 //
-// VERSION: 2.0 (2026-06-03) — vollständig parametrisch, kein globaler Zustand
+// VERSION: 2.1 (2026-06-09) — canStack-Bugfix: Stapeln auf gesperrte Einzelfiguren erlaubt
+// BUGFIX 2.1: canStack hatte fälschlich || to.locked — regelwidrig entfernt.
+//   Regel: Auf JEDE Einzelfigur darf gestapelt werden, egal ob das Feld locked ist.
+//   Die Basisfigur bleibt stehen, der Stapel entsteht darüber.
+//   Betrifft alle Runs r7–r26 (Kiki) und alle bisherigen Spieler-KI-Versionen.
 // ═══════════════════════════════════════════════════════════════════
 
 // ── Hilfsfunktionen ────────────────────────────────────────────────
@@ -139,8 +145,12 @@ function canPlaceOnEmpty(b, mp, fr, fc, tr, tc, player, p1parity){
 
 function canStack(b, mp, tr, tc, player, p1parity){
   const to=b[tr][tc];
-  // Kein Stapeln auf leere, bereits gestapelte oder gesperrte Felder.
-  if(!to.piece||to.stack||to.locked) return false;
+  // Kein Stapeln auf leere oder bereits gestapelte Felder.
+  // REGEL: Stapeln auf gesperrte Einzelfiguren ist ERLAUBT — die Basisfigur
+  // bleibt stehen, der neue Stapel entsteht darüber. to.locked darf hier
+  // NICHT geprüft werden.
+  // !! BUG-HISTORIE: bis v2.0 stand hier fälschlich || to.locked — entfernt 2026-06-09 !!
+  if(!to.piece||to.stack) return false;
   return parityOk(countRedsInStack(to.piece,mp), player, p1parity);
 }
 
