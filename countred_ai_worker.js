@@ -1,0 +1,48 @@
+// ═══════════════════════════════════════════════════════════════════
+// countred_ai_worker.js — Web-Worker-Hülle für die KI-Suche (§47)
+// ═══════════════════════════════════════════════════════════════════
+//
+// HERKUNFT: HANDOVER §47 (Web-Worker-Bauplan). Ersetzt den synchronen
+//   pickMove-Aufruf im UI-Thread (Notlösung §45) durch einen Hintergrund-
+//   Thread, damit die KI-Suche mit vollen §37d-Budgets rechnen kann, ohne
+//   Klicks/Animationen im Hauptfenster einzufrieren.
+//
+// ARCHITEKTURPRINZIP: Diese Datei enthält KEINE eigene Logik — sie lädt
+//   nur die bestehenden, framework-freien Kern-Dateien per importScripts
+//   und leitet Aufträge/Ergebnisse per postMessage weiter. Regel- und
+//   Heuristikschicht bleiben unverändert (gembel_rules.js / countred_ai_core.js).
+//
+// PFAD-HINWEIS (§47c Punkt 4): importScripts lädt relativ zum Pfad DIESER
+//   Datei. gembel_rules.js und countred_ai_core.js müssen im selben
+//   Verzeichnis liegen wie countred_ai_worker.js (wie auch schon countred.html
+//   sie per <script src> aus dem selben Verzeichnis lädt).
+//   Bei file://-Öffnen (lokaler Test ohne Server) blockieren manche Browser
+//   Worker-Skripte — dann lokal per `python3 -m http.server` testen. Auf
+//   Walters Setup (GitHub Pages, https) ist das unkritisch.
+//
+// PROTOKOLL:
+//   Haupt-Thread → Worker:  { id, board, player, p1parity, skill, seenPositions }
+//   Worker → Haupt-Thread:  { id, res }              bei Erfolg (res = pickMove-Rückgabe)
+//                            { id, error: <string> }  bei Fehler (z.B. Antisymmetrie-Sperre)
+//   Der Haupt-Thread ordnet Antworten per `id` einem laufenden Auftrag zu und verwirft
+//   veraltete Antworten selbst (Job-Tracking lebt in countred.html, §47c Punkt 6) —
+//   dieser Worker muss dafür nichts wissen, er beantwortet einfach jede Anfrage.
+// ═══════════════════════════════════════════════════════════════════
+
+'use strict';
+
+importScripts('gembel_rules.js', 'countred_ai_core.js');
+
+self.onmessage = function(e){
+  const { id, board, player, p1parity, skill, seenPositions } = e.data;
+  try {
+    // PARITY_P1 wird vom KI-Kern als GLOBAL erwartet (siehe countred_ai_core.js
+    // evaluate()/negamax()) — im Worker-Scope ist `self` das globale Objekt,
+    // genau wie `window.PARITY_P1` im Haupt-Thread (countred.html §42d-Kommentar).
+    self.PARITY_P1 = p1parity;
+    const res = pickMove(board, player, p1parity, skill, seenPositions);
+    self.postMessage({ id, res });
+  } catch(err){
+    self.postMessage({ id, error: String((err && err.message) || err) });
+  }
+};
