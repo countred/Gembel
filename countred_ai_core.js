@@ -28,11 +28,18 @@
 // Vier Stufen aus §37d. Startwerte (MOBIL-Ziel, echte Rechenzeit vor künstl. Denkzeit).
 // Werte in Kommentaren [ ] = beim Testen final.
 const SKILL_LEVELS = {
-  einsteiger:      { timeBudgetMs: 800,  maxDepth: 5, minDepth: 2, rankPool: 3, blockRate: 0.8, minThinkMs: 600 },
-  fortgeschritten: { timeBudgetMs: 1500, maxDepth: 5, minDepth: 2, rankPool: 2, blockRate: 1.0, minThinkMs: 700 },
-  stark:           { timeBudgetMs: 3000, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 800 },
-  meister:         { timeBudgetMs: 5000, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 900 },
+  // NOTLÖSUNG §44 (7. Juli): Budgets radikal gesenkt + minDepth=1, damit pickMove den
+  // UI-Thread nie lange blockiert und die MvKI-LOGIK (Bonuszug/Regeln/Animation) testbar wird.
+  // Das opfert Spielstärke bewusst. Echte Budgets (§37d) kommen zurück, sobald die KI-Suche
+  // im Web Worker läuft (dann blockiert sie den UI-Thread nicht mehr). Werte hier = Testwerte.
+  einsteiger:      { timeBudgetMs: 150, maxDepth: 3, minDepth: 1, rankPool: 3, blockRate: 0.8, minThinkMs: 500 },
+  fortgeschritten: { timeBudgetMs: 250, maxDepth: 3, minDepth: 1, rankPool: 2, blockRate: 1.0, minThinkMs: 500 },
+  stark:           { timeBudgetMs: 400, maxDepth: 4, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 500 },
+  meister:         { timeBudgetMs: 600, maxDepth: 4, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 500 },
 };
+// ── ORIGINAL-Budgets (§37d, für Web-Worker-Version wiederherstellen) ──
+// einsteiger 800/maxD5/minD2/rank3/block.8 · fortgeschritten 1500/5/2/2/1 ·
+// stark 3000/5/2/1/1 · meister 5000/5/2/1/1 · alle minThink 600-900
 
 // Zeitquelle: performance.now im Browser, Date.now sonst. Injizierbar für Tests.
 const _now = (typeof performance !== 'undefined' && performance.now)
@@ -98,9 +105,15 @@ function pickMove(board, player, p1parity, config, seenPositions){
   for(let depth = 1; depth <= cfg.maxDepth; depth++){
     let localBest = -Infinity, localMove = null;
     const scored = [];
+    let aborted = false;
     for(const m of legal){
       // Sicherheitsnetz: Gegner-Sieg-ermöglichende Züge meiden, solange es Alternativen gibt
       if(blockActive && isBad(m) && badMoves.size < legal.length) continue;
+      // INTRA-TIEFEN-ABBRUCH (Notlösung §44): wenn das Budget schon während dieser Tiefe
+      // reißt UND minDepth bereits vollständig gerechnet wurde, brich ab und BEHALTE das
+      // Ergebnis der letzten VOLLSTÄNDIGEN Tiefe (bestMove von depth-1). Verhindert, dass
+      // eine teure Tiefe den UI-Thread sekundenlang blockiert.
+      if(depth > cfg.minDepth && (_now() - t0) >= cfg.timeBudgetMs){ aborted = true; break; }
       const nb = applyMoveOn(board, m.fr, m.fc, m.tr, m.tc, player);
       if(checkFourOn(nb)){ localBest = 100000; localMove = m; scored.push({m, v: 100000}); break; }
       const triple = applyLockOn(nb);
@@ -115,6 +128,9 @@ function pickMove(board, player, p1parity, config, seenPositions){
       scored.push({m, v});
       if(v > localBest){ localBest = v; localMove = m; }
     }
+    // Bei Abbruch mitten in der Tiefe: diese unvollständige Tiefe NICHT übernehmen
+    // (bestMove bleibt auf dem Ergebnis der letzten vollständigen Tiefe).
+    if(aborted){ budgetHit = true; break; }
     if(localMove){
       // rankPool: aus den Top-k Zügen wählen (Feinjustierung untere Stufen, §37d)
       if(cfg.rankPool > 1){
