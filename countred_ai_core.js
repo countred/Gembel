@@ -24,6 +24,11 @@
 
 'use strict';
 
+// §38h/§54: Versionslabel fürs Firebase-Logging (Kalibrierungs-Grundlage, §37h). MUSS identisch
+// gehalten werden mit dem, was tatsächlich läuft — bei jeder inhaltlichen Änderung an evaluate/
+// negamax/SKILL_LEVELS hochzählen (Checkliste 11.2: Versionslabel-Konsistenz).
+const HEURISTIC_VERSION = 'countred-ai-1.0'; // Kiki-3.2a-Herz + §37-Skalierungskörper, §37d-Budgets voll (post-Worker, §49)
+
 // ── §37.3 Config-Schnittstelle (alle Hebel als Parameter → Um-Entscheidung = Config-Wechsel) ──
 // Vier Stufen aus §37d. Startwerte (MOBIL-Ziel, echte Rechenzeit vor künstl. Denkzeit).
 // Werte in Kommentaren [ ] = beim Testen final.
@@ -540,6 +545,6 @@ function antisymmetrySelfTest(p1parity){
 // ── Export (Node-Test + spätere Einbindung) ──
 if(typeof module !== 'undefined' && module.exports){
   module.exports = { pickMove, evaluate, negamax, antisymmetrySelfTest, SKILL_LEVELS,
-    parityCtrlJS, asingleControlJS, doubleThreatJS,
+    parityCtrlJS, asingleControlJS, doubleThreatJS, HEURISTIC_VERSION,
     findImmediateWin, movesAllowingOpponentWin };
 }
