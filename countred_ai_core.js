@@ -24,28 +24,22 @@
 
 'use strict';
 
-// §38h/§54: Versionslabel fürs Firebase-Logging (Kalibrierungs-Grundlage, §37h). MUSS identisch
-// gehalten werden mit dem, was tatsächlich läuft — bei jeder inhaltlichen Änderung an evaluate/
-// negamax/SKILL_LEVELS hochzählen (Checkliste 11.2: Versionslabel-Konsistenz).
-const HEURISTIC_VERSION = 'countred-ai-1.0'; // Kiki-3.2a-Herz + §37-Skalierungskörper, §37d-Budgets voll (post-Worker, §49)
-
 // ── §37.3 Config-Schnittstelle (alle Hebel als Parameter → Um-Entscheidung = Config-Wechsel) ──
 // Vier Stufen aus §37d. Startwerte (MOBIL-Ziel, echte Rechenzeit vor künstl. Denkzeit).
 // Werte in Kommentaren [ ] = beim Testen final.
 const SKILL_LEVELS = {
-  // §47 WEB-WORKER-UMBAU (9. Juli): pickMove läuft jetzt im Web Worker (countred_ai_worker.js)
-  // und blockiert den UI-Thread nicht mehr — die Notlösungs-Budgets aus §44/§45 sind damit
-  // hinfällig. Zurückgesetzt auf die §37d-ORIGINAL-Werte (MOBIL-Ziel, echte Rechenzeit vor
-  // künstl. Denkzeit). minThinkMs wieder gestaffelt statt pauschal 500 (§48a-Hinweis beachtet).
-  einsteiger:      { timeBudgetMs: 800,  maxDepth: 5, minDepth: 2, rankPool: 3, blockRate: 0.8, minThinkMs: 600 },
-  fortgeschritten: { timeBudgetMs: 1500, maxDepth: 5, minDepth: 2, rankPool: 2, blockRate: 1.0, minThinkMs: 700 },
-  stark:           { timeBudgetMs: 3000, maxDepth: 5, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 800 },
-  meister:         { timeBudgetMs: 5000, maxDepth: 5, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 900 },
+  // NOTLÖSUNG §44 (7. Juli): Budgets radikal gesenkt + minDepth=1, damit pickMove den
+  // UI-Thread nie lange blockiert und die MvKI-LOGIK (Bonuszug/Regeln/Animation) testbar wird.
+  // Das opfert Spielstärke bewusst. Echte Budgets (§37d) kommen zurück, sobald die KI-Suche
+  // im Web Worker läuft (dann blockiert sie den UI-Thread nicht mehr). Werte hier = Testwerte.
+  einsteiger:      { timeBudgetMs: 150, maxDepth: 3, minDepth: 1, rankPool: 3, blockRate: 0.8, minThinkMs: 500 },
+  fortgeschritten: { timeBudgetMs: 250, maxDepth: 3, minDepth: 1, rankPool: 2, blockRate: 1.0, minThinkMs: 500 },
+  stark:           { timeBudgetMs: 400, maxDepth: 4, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 500 },
+  meister:         { timeBudgetMs: 600, maxDepth: 4, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 500 },
 };
-// ── NOTLÖSUNGS-Budgets (§44/§45, VOR dem Web-Worker-Umbau — nur zur Referenz) ──
-// einsteiger 150/maxD3/minD1/rank3/.8 · fortgeschritten 250/3/1/2/1 ·
-// stark 400/4/1/1/1 · meister 600/4/1/1/1 · alle minThink pauschal 500
-// (galt, solange pickMove synchron im UI-Thread lief — s. HANDOVER §44-46)
+// ── ORIGINAL-Budgets (§37d, für Web-Worker-Version wiederherstellen) ──
+// einsteiger 800/maxD5/minD2/rank3/block.8 · fortgeschritten 1500/5/2/2/1 ·
+// stark 3000/5/2/1/1 · meister 5000/5/2/1/1 · alle minThink 600-900
 
 // Zeitquelle: performance.now im Browser, Date.now sonst. Injizierbar für Tests.
 const _now = (typeof performance !== 'undefined' && performance.now)
@@ -545,6 +539,6 @@ function antisymmetrySelfTest(p1parity){
 // ── Export (Node-Test + spätere Einbindung) ──
 if(typeof module !== 'undefined' && module.exports){
   module.exports = { pickMove, evaluate, negamax, antisymmetrySelfTest, SKILL_LEVELS,
-    parityCtrlJS, asingleControlJS, doubleThreatJS, HEURISTIC_VERSION,
+    parityCtrlJS, asingleControlJS, doubleThreatJS,
     findImmediateWin, movesAllowingOpponentWin };
 }
