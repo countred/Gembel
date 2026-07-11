@@ -24,22 +24,35 @@
 
 'use strict';
 
+// §61a/§65a-BUGFIX: Diese Konstante fehlte — finalizeMvkiGame() in countred.html referenziert
+// sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
+// ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
+// MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
+const HEURISTIC_VERSION = 'countred-ai-1.0';
+// §65f-BUGFIX: countred_ai_core.js ist ein KLASSISCHES Script, der Hauptcode in countred.html
+// ein MODUL. Ein top-level `const` eines klassischen Scripts landet im globalen LEXIKALISCHEN
+// Environment — auf das ein Modul NICHT zugreift (Module lesen undeklarierte Namen von globalThis).
+// Deshalb war HEURISTIC_VERSION im Modul-Block unsichtbar (Versions-Log zeigte "UNDEFINED", und
+// finalizeMvkiGame hätte weiterhin geworfen). Fix wie bei PARITY_P1: explizit auf globalThis legen.
+if(typeof globalThis!=='undefined'){ globalThis.HEURISTIC_VERSION = HEURISTIC_VERSION; }
+
 // ── §37.3 Config-Schnittstelle (alle Hebel als Parameter → Um-Entscheidung = Config-Wechsel) ──
-// Vier Stufen aus §37d. Startwerte (MOBIL-Ziel, echte Rechenzeit vor künstl. Denkzeit).
-// Werte in Kommentaren [ ] = beim Testen final.
+// §37d-ORIGINALBUDGETS (11.7. wiederhergestellt, §61a/§65a). Zuvor liefen versehentlich noch die
+// §44-Notlösungswerte (radikal gesenkt für UI-Thread-Testbarkeit) — der Web Worker (§49) macht
+// die vollen Budgets wieder möglich, aber SKILL_LEVELS war nie zurückgesetzt worden. "Meister"
+// lief dadurch mit ~12 % Budget und einer Tiefe weniger; jede darauf gebaute Kalibrierung wäre
+// wertlos gewesen.
+// ⚠️ RISIKO-VERMERK (Walter-Entscheid 11.7., minDepth 2 statt 1): minDepth 2 garantiert Tiefe 2
+// OHNE Zeitschranke (Intra-Tiefen-Abbruch greift erst bei depth>minDepth, §61e-8). Auf Altgeräten
+// kann das zusammen mit findImmediateWin+movesAllowingOpponentWin den Haupt-Thread-Timeout reißen
+// → aiWorkerBroken-Kaskade (§61e-4). Beim Kalibrieren/Testen auf schwachen Geräten beobachten;
+// ggf. harte Wanduhr-Obergrenze auch für minDepth-Tiefen nachrüsten (§61e-8-Fix).
 const SKILL_LEVELS = {
-  // NOTLÖSUNG §44 (7. Juli): Budgets radikal gesenkt + minDepth=1, damit pickMove den
-  // UI-Thread nie lange blockiert und die MvKI-LOGIK (Bonuszug/Regeln/Animation) testbar wird.
-  // Das opfert Spielstärke bewusst. Echte Budgets (§37d) kommen zurück, sobald die KI-Suche
-  // im Web Worker läuft (dann blockiert sie den UI-Thread nicht mehr). Werte hier = Testwerte.
-  einsteiger:      { timeBudgetMs: 150, maxDepth: 3, minDepth: 1, rankPool: 3, blockRate: 0.8, minThinkMs: 500 },
-  fortgeschritten: { timeBudgetMs: 250, maxDepth: 3, minDepth: 1, rankPool: 2, blockRate: 1.0, minThinkMs: 500 },
-  stark:           { timeBudgetMs: 400, maxDepth: 4, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 500 },
-  meister:         { timeBudgetMs: 600, maxDepth: 4, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 500 },
+  einsteiger:      { timeBudgetMs: 800,  maxDepth: 5, minDepth: 2, rankPool: 3, blockRate: 0.8, minThinkMs: 600 },
+  fortgeschritten: { timeBudgetMs: 1500, maxDepth: 5, minDepth: 2, rankPool: 2, blockRate: 1.0, minThinkMs: 700 },
+  stark:           { timeBudgetMs: 3000, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 800 },
+  meister:         { timeBudgetMs: 5000, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 900 },
 };
-// ── ORIGINAL-Budgets (§37d, für Web-Worker-Version wiederherstellen) ──
-// einsteiger 800/maxD5/minD2/rank3/block.8 · fortgeschritten 1500/5/2/2/1 ·
-// stark 3000/5/2/1/1 · meister 5000/5/2/1/1 · alle minThink 600-900
 
 // Zeitquelle: performance.now im Browser, Date.now sonst. Injizierbar für Tests.
 const _now = (typeof performance !== 'undefined' && performance.now)
@@ -64,10 +77,19 @@ function movesAllowingOpponentWin(b, player, p1parity){
   for(const m of getLegalMoves(b, player, p1parity)){
     const nb = applyMoveOn(b, m.fr, m.fc, m.tr, m.tc, player);
     if(checkFourOn(nb)) continue; // das ist ein eigener Sieg, nicht schlecht
-    applyLockOn(nb);
-    // Bonuszug? Wenn dieser Zug einen Dreier bildet, zieht player nochmal — dann
-    // ist der Gegner nicht dran. Konservativ: nur prüfen wenn KEIN Bonus.
-    const triple = checkFourOn(nb) ? null : null; // (Vierer schon oben behandelt)
+    const triple = applyLockOn(nb);
+    // §61b-1/§65b: BONUSZUG-AUSNAHME. Bildet dieser Zug einen Dreier, zieht PLAYER laut Regel
+    // nochmal — der Gegner ist gar nicht dran. Vorher stand hier toter Code
+    // (`checkFourOn(nb) ? null : null`), sodass dreier-bildende Züge fälschlich auf Gegner-
+    // Sofortsieg geprüft und bei blockRate 1.0 deterministisch gefiltert wurden — das Dreier-
+    // Tempo (Kernmechanismus) wurde systematisch sabotiert (§48e-Sorge, Referenz Q84Y).
+    // Korrektur: existiert nach dem Dreier ein Bonuszug, prüfen wir NICHT den Gegner-Sofortsieg
+    // für diesen Zug (der Spieler kann mit dem Bonuszug reagieren/gewinnen). Nur wenn KEIN
+    // Bonuszug existiert (Dreier ohne Folgemove), gilt der reguläre Check.
+    if(triple){
+      const bonusMoves = getLegalMoves(nb, player, p1parity);
+      if(bonusMoves.length > 0) continue; // Bonuszug existiert → dieser Zug ist nicht "bad"
+    }
     if(findImmediateWin(nb, opp, p1parity)) bad.add(m.fr+','+m.fc+','+m.tr+','+m.tc);
   }
   return bad;
@@ -81,7 +103,7 @@ function pickMove(board, player, p1parity, config, seenPositions){
   const cfg = (typeof config === 'string') ? SKILL_LEVELS[config] : config;
   if(!cfg) throw new Error('pickMove: unbekannte Config/Stufe');
   const t0 = _now();
-  const legal = getLegalMoves(board, player, p1parity);
+  let legal = getLegalMoves(board, player, p1parity);
   if(legal.length === 0) return { move: null, meta: { reason: 'no-moves' } };
 
   // ── §37f (a): eigener Sofortsieg → immer nehmen ──
@@ -106,6 +128,11 @@ function pickMove(board, player, p1parity, config, seenPositions){
     let localBest = -Infinity, localMove = null;
     const scored = [];
     let aborted = false;
+    // §61e-5/§65e: Wurzel-Alpha nur bei rankPool===1 (stark/meister). Bei rankPool>1 brauchen
+    // wir ECHTE Scores für ALLE Züge (Pool-Auswahl), da darf Alpha nicht kürzen → dann volles
+    // Fenster. rootAlpha wird über die Wurzelzüge mitgeführt (bester bekannter Wert).
+    const useRootAlpha = (cfg.rankPool === 1);
+    let rootAlpha = -Infinity;
     for(const m of legal){
       // Sicherheitsnetz: Gegner-Sieg-ermöglichende Züge meiden, solange es Alternativen gibt
       if(blockActive && isBad(m) && badMoves.size < legal.length) continue;
@@ -121,12 +148,15 @@ function pickMove(board, player, p1parity, config, seenPositions){
       const nextPlayer = bonus ? player : opp;
       const nbHash = boardHash(nb, nextPlayer);
       const branchSet = new Set(pathSet); branchSet.add(nbHash);
+      // §61e-5: bei Wurzel-Alpha das Suchfenster (rootAlpha, +∞) statt (−∞,+∞) übergeben.
+      const aWin = useRootAlpha ? rootAlpha : -Infinity;
       let v = bonus
-        ? negamax(nb, depth, -Infinity, Infinity, player, bonus, branchSet)
-        : -negamax(nb, depth, -Infinity, Infinity, opp, null, branchSet);
+        ? negamax(nb, depth, aWin, Infinity, player, bonus, branchSet)
+        : -negamax(nb, depth, -Infinity, -aWin, opp, null, branchSet);
       if(triple && Math.abs(v) < 90000) v += DREIER_FORM_BONUS;
       scored.push({m, v});
       if(v > localBest){ localBest = v; localMove = m; }
+      if(useRootAlpha && v > rootAlpha) rootAlpha = v; // besten Wurzelwert für Pruning mitführen
     }
     // Bei Abbruch mitten in der Tiefe: diese unvollständige Tiefe NICHT übernehmen
     // (bestMove bleibt auf dem Ergebnis der letzten vollständigen Tiefe).
@@ -141,6 +171,14 @@ function pickMove(board, player, p1parity, config, seenPositions){
         bestMove = localMove;
       }
       reachedDepth = depth;
+      // §61e-6/§65e: ID-Zugsortierung. Die vollständige scored-Liste dieser Tiefe nach Wert
+      // sortieren und legal in DIESER Reihenfolge für die nächste Tiefe durchlaufen → bester
+      // Vortiefen-Zug zuerst → frühe Alpha-Cuts. Klassischer ID-Hauptnutzen, vorher verschenkt
+      // (legal lief in unveränderter Reihenfolge). Nur wenn nicht abgebrochen (scored komplett).
+      if(scored.length === legal.length){
+        scored.sort((a,b) => b.v - a.v);
+        legal = scored.map(s => s.m);
+      }
     }
     const elapsed = _now() - t0;
     // Abbruch: Budget erreicht UND Mindesttiefe erfüllt
@@ -539,6 +577,7 @@ function antisymmetrySelfTest(p1parity){
 // ── Export (Node-Test + spätere Einbindung) ──
 if(typeof module !== 'undefined' && module.exports){
   module.exports = { pickMove, evaluate, negamax, antisymmetrySelfTest, SKILL_LEVELS,
+    HEURISTIC_VERSION,
     parityCtrlJS, asingleControlJS, doubleThreatJS,
     findImmediateWin, movesAllowingOpponentWin };
 }
