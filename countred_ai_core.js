@@ -28,7 +28,11 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.0';
+const HEURISTIC_VERSION = 'countred-ai-1.1';
+// §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
+// bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
+// Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
+// 1.0 und 1.1 nicht mischen (Standing Rule Firebase-Versionierung).
 // §65f-BUGFIX: countred_ai_core.js ist ein KLASSISCHES Script, der Hauptcode in countred.html
 // ein MODUL. Ein top-level `const` eines klassischen Scripts landet im globalen LEXIKALISCHEN
 // Environment — auf das ein Modul NICHT zugreift (Module lesen undeklarierte Namen von globalThis).
@@ -102,6 +106,17 @@ function movesAllowingOpponentWin(b, player, p1parity){
 function pickMove(board, player, p1parity, config, seenPositions){
   const cfg = (typeof config === 'string') ? SKILL_LEVELS[config] : config;
   if(!cfg) throw new Error('pickMove: unbekannte Config/Stufe');
+  // §61b-3/§F4: PARITY_P1-Doppelquelle absichern. pickMove nimmt p1parity als PARAMETER
+  // (→ getLegalMoves/findImmediateWin), aber negamax()/evaluate() lesen die GLOBALE PARITY_P1.
+  // Weichen beide ab, entsteht eine STILLE Schere: Wurzel-Legalität unter Parität A,
+  // Blattbewertung unter Parität B — keine Exception, nur falsche Züge. Fail-fast:
+  // fehlt die Globale, wird sie aus dem Parameter gesetzt (Node-Tests werden dadurch
+  // selbsttragend); widerspricht sie ihm, ist das ein Aufruffehler → sofort werfen.
+  if(typeof globalThis!=='undefined'){
+    if(typeof globalThis.PARITY_P1==='undefined') globalThis.PARITY_P1 = p1parity;
+    else if(globalThis.PARITY_P1!==p1parity)
+      throw new Error('pickMove: p1parity-Parameter ('+p1parity+') != globale PARITY_P1 ('+globalThis.PARITY_P1+')');
+  }
   const t0 = _now();
   let legal = getLegalMoves(board, player, p1parity);
   if(legal.length === 0) return { move: null, meta: { reason: 'no-moves' } };
@@ -127,15 +142,25 @@ function pickMove(board, player, p1parity, config, seenPositions){
   for(let depth = 1; depth <= cfg.maxDepth; depth++){
     let localBest = -Infinity, localMove = null;
     const scored = [];
+    const skipped = []; // §F3: vom Sicherheitsnetz gefilterte Züge — für die ID-Sortierung merken
     let aborted = false;
     // §61e-5/§65e: Wurzel-Alpha nur bei rankPool===1 (stark/meister). Bei rankPool>1 brauchen
     // wir ECHTE Scores für ALLE Züge (Pool-Auswahl), da darf Alpha nicht kürzen → dann volles
-    // Fenster. rootAlpha wird über die Wurzelzüge mitgeführt (bester bekannter Wert).
+    // Fenster.
+    // §F2 (Korrektur zu §65e): Die Pruning-Latte ist localBest — aber localBest kann den
+    // POST-HOC addierten DREIER_FORM_BONUS enthalten, den die Suche selbst nie liefert.
+    // Deshalb: (a) Fenster für dreier-bildende Kandidaten um die Bonus-Marge absenken, sonst
+    // fallen Züge ins Fail-Low, die mit ihrem eigenen +Bonus konkurrenzfähig wären;
+    // (b) scored-Werte von Fail-Low-Zügen sind nur Schranken (Fail-Soft) — für die Zugwahl
+    // unerheblich (sie können localBest beweisbar nicht schlagen), für die ID-Sortierung
+    // eine tolerierte Unschärfe.
+    // Soundness: Nicht-Dreier-Kandidat exakt für v > localBest (Fenster localBest,+∞);
+    // Dreier-Kandidat exakt für raw > localBest−BONUS ⇔ raw+BONUS > localBest. Alles darunter
+    // kann die Zugwahl nicht ändern.
     const useRootAlpha = (cfg.rankPool === 1);
-    let rootAlpha = -Infinity;
     for(const m of legal){
       // Sicherheitsnetz: Gegner-Sieg-ermöglichende Züge meiden, solange es Alternativen gibt
-      if(blockActive && isBad(m) && badMoves.size < legal.length) continue;
+      if(blockActive && isBad(m) && badMoves.size < legal.length){ skipped.push(m); continue; }
       // INTRA-TIEFEN-ABBRUCH (Notlösung §44): wenn das Budget schon während dieser Tiefe
       // reißt UND minDepth bereits vollständig gerechnet wurde, brich ab und BEHALTE das
       // Ergebnis der letzten VOLLSTÄNDIGEN Tiefe (bestMove von depth-1). Verhindert, dass
@@ -148,15 +173,16 @@ function pickMove(board, player, p1parity, config, seenPositions){
       const nextPlayer = bonus ? player : opp;
       const nbHash = boardHash(nb, nextPlayer);
       const branchSet = new Set(pathSet); branchSet.add(nbHash);
-      // §61e-5: bei Wurzel-Alpha das Suchfenster (rootAlpha, +∞) statt (−∞,+∞) übergeben.
-      const aWin = useRootAlpha ? rootAlpha : -Infinity;
+      // §61e-5/§F2: Suchfenster (localBest − Dreier-Marge, +∞) statt (−∞,+∞). −∞−BONUS = −∞
+      // in JS, daher kein Sonderfall für den ersten Zug nötig.
+      const margin = triple ? DREIER_FORM_BONUS : 0;
+      const aWin = useRootAlpha ? (localBest - margin) : -Infinity;
       let v = bonus
         ? negamax(nb, depth, aWin, Infinity, player, bonus, branchSet)
         : -negamax(nb, depth, -Infinity, -aWin, opp, null, branchSet);
       if(triple && Math.abs(v) < 90000) v += DREIER_FORM_BONUS;
       scored.push({m, v});
       if(v > localBest){ localBest = v; localMove = m; }
-      if(useRootAlpha && v > rootAlpha) rootAlpha = v; // besten Wurzelwert für Pruning mitführen
     }
     // Bei Abbruch mitten in der Tiefe: diese unvollständige Tiefe NICHT übernehmen
     // (bestMove bleibt auf dem Ergebnis der letzten vollständigen Tiefe).
@@ -171,13 +197,18 @@ function pickMove(board, player, p1parity, config, seenPositions){
         bestMove = localMove;
       }
       reachedDepth = depth;
-      // §61e-6/§65e: ID-Zugsortierung. Die vollständige scored-Liste dieser Tiefe nach Wert
-      // sortieren und legal in DIESER Reihenfolge für die nächste Tiefe durchlaufen → bester
-      // Vortiefen-Zug zuerst → frühe Alpha-Cuts. Klassischer ID-Hauptnutzen, vorher verschenkt
-      // (legal lief in unveränderter Reihenfolge). Nur wenn nicht abgebrochen (scored komplett).
-      if(scored.length === legal.length){
+      // §61e-6/§65e/§F3: ID-Zugsortierung. Die scored-Liste dieser Tiefe nach Wert sortieren
+      // und legal in DIESER Reihenfolge für die nächste Tiefe durchlaufen → bester Vortiefen-
+      // Zug zuerst → frühe Alpha-Cuts. §F3-Korrektur: vorher galt scored.length===legal.length —
+      // sobald das Sicherheitsnetz auch nur einen Zug filterte, fiel die Sortierung aus, und
+      // zwar genau in taktischen Stellungen (wo sie am meisten bringt). Jetzt zählen die
+      // gefilterten Züge mit und werden hinten angehängt (die Filterentscheidung fällt pro
+      // Tiefe ohnehin neu über isBad — die Reihenfolge darf sie nicht verlieren).
+      // Bedingung weiterhin: kein Intra-Tiefen-Abbruch und kein früher Sieg-Break (sonst
+      // ist scored unvollständig und die Sortierung würde Züge verlieren).
+      if(scored.length + skipped.length === legal.length){
         scored.sort((a,b) => b.v - a.v);
-        legal = scored.map(s => s.m);
+        legal = scored.map(s => s.m).concat(skipped);
       }
     }
     const elapsed = _now() - t0;
@@ -551,7 +582,14 @@ function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet){
 // ═══════════════════════════════════════════════════════════════════
 function antisymmetrySelfTest(p1parity){
   const prev = (typeof PARITY_P1 !== 'undefined') ? PARITY_P1 : undefined;
-  // PARITY_P1 muss gesetzt sein, damit getLegalMoves etc. funktionieren
+  // §61b-2/§F4: evaluate() liest die GLOBALE PARITY_P1, die Zugerzeugung unten den PARAMETER
+  // p1parity. Ohne Gleichschaltung testete der Test eine Chimäre (Züge unter Parität A,
+  // Bewertung unter Parität B) und konnte „bestanden" für eine nie gespielte Konfiguration
+  // melden. Fix: Globale für die Testdauer auf die Testparität setzen, danach über `prev`
+  // restaurieren (prev war seit §40c deklariert, aber nie benutzt — Rest der nie fertig
+  // gebauten Save/Restore-Logik).
+  if(typeof globalThis!=='undefined') globalThis.PARITY_P1 = p1parity;
+  try {
   let worst = 0, tested = 0;
   for(let g=0; g<60; g++){
     let tb = initBoard(); let p = P1;
@@ -572,6 +610,11 @@ function antisymmetrySelfTest(p1parity){
     throw new Error('ANTISYMMETRIE VERLETZT (Δ='+worst+') — KI-Kern gesperrt. Heuristik prüfen!');
   }
   return { tested, worst };
+  } finally {
+    // Globale IMMER restaurieren — auch im Sperr-Fall (throw), sonst hinterließe der Test
+    // eine fremde Parität im laufenden Prozess.
+    if(typeof globalThis!=='undefined') globalThis.PARITY_P1 = prev;
+  }
 }
 
 // ── Export (Node-Test + spätere Einbindung) ──

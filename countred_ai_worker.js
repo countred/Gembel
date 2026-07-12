@@ -31,7 +31,19 @@
 
 'use strict';
 
-importScripts('gembel_rules.js', 'countred_ai_core.js');
+// §61e-3/§65e: Cache-Busting-Query (?v=NN) synchron zu countred.html halten (dort v66).
+// Sonst kann der Worker alte Kern-/Regeldateien aus dem Cache laden, während das Hauptfenster
+// neue nutzt — gemischte Versionen (§51-Klasse).
+importScripts('gembel_rules.js?v=66', 'countred_ai_core.js?v=66');
+
+// §61b-2/§F4: Antisymmetrie-Selbsttest VERDRAHTEN. Der Kern-Kommentar („bleibt verbaut, sperrt
+// bei Verletzung") stimmte bis 12.7. nicht — die Funktion wurde nirgends aufgerufen, die Sperre
+// sperrte nichts. Jetzt: einmalig pro Parität beim ERSTEN Auftrag (lazy, ~50–150 ms im Worker,
+// blockiert den UI-Thread nicht). Bei Verletzung wirft pickMove-vorgelagert der Test → die
+// Antwort geht als { id, error } zurück — exakt der im Protokoll-Kopf seit §47 dokumentierte
+// Fall „Antisymmetrie-Sperre". countred.html respektiert die Sperre im Fallback-Pfad
+// (kein synchrones Weiterspielen mit kaputter Heuristik, s. maybeTriggerAI §F4).
+const _antisymTestDone = {};
 
 self.onmessage = function(e){
   const { id, board, player, p1parity, skill, seenPositions } = e.data;
@@ -40,6 +52,10 @@ self.onmessage = function(e){
     // evaluate()/negamax()) — im Worker-Scope ist `self` das globale Objekt,
     // genau wie `window.PARITY_P1` im Haupt-Thread (countred.html §42d-Kommentar).
     self.PARITY_P1 = p1parity;
+    if(!_antisymTestDone[p1parity]){
+      antisymmetrySelfTest(p1parity); // wirft bei Verletzung → Sperre (s.o.); restauriert PARITY_P1 selbst
+      _antisymTestDone[p1parity] = true;
+    }
     const res = pickMove(board, player, p1parity, skill, seenPositions);
     self.postMessage({ id, res });
   } catch(err){
