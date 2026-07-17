@@ -34,7 +34,7 @@
 // §61e-3/§65e: Cache-Busting-Query (?v=NN) synchron zu countred.html halten (dort v68).
 // Sonst kann der Worker alte Kern-/Regeldateien aus dem Cache laden, während das Hauptfenster
 // neue nutzt — gemischte Versionen (§51-Klasse).
-importScripts('gembel_rules.js?v=72', 'countred_ai_core.js?v=72');
+importScripts('gembel_rules.js?v=73', 'countred_ai_core.js?v=73');
 
 // §61b-2/§F4: Antisymmetrie-Selbsttest VERDRAHTEN. Der Kern-Kommentar („bleibt verbaut, sperrt
 // bei Verletzung") stimmte bis 12.7. nicht — die Funktion wurde nirgends aufgerufen, die Sperre
