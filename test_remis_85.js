@@ -108,7 +108,11 @@ vm.runInContext(fs.readFileSync(__dirname+'/gembel_rules.js','utf8') +
 Object.assign(globalThis, rulesSb.__R);
 const core = require('./countred_ai_core.js');
 globalThis.PARITY_P1 = 'odd';
-ok(core.HEURISTIC_VERSION === 'countred-ai-1.2', "HEURISTIC_VERSION === 'countred-ai-1.2'");
+// §87-Anpassung: Die exakte Versionsnummer pinnt die jeweils AKTUELLE Suite (test_core_87).
+// Diese Suite prüft das 1.2-FEATURE selbst (meta.score ab 1.2), damit sie bei künftigen
+// Bumps (1.3, …) nicht fälschlich rot wird.
+const verNum = parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/)||[])[1]);
+ok(verNum >= 1.2, "HEURISTIC_VERSION ist countred-ai-\u22651.2 (score-Feature vorhanden; aktuell: "+core.HEURISTIC_VERSION+")");
 
 const cfg = { timeBudgetMs: 400, maxDepth: 2, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 0 };
 const r0 = core.pickMove(initBoard(), 1, 'odd', cfg, []);

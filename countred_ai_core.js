@@ -28,11 +28,35 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.1';
+const HEURISTIC_VERSION = 'countred-ai-1.3';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
 // 1.0 und 1.1 nicht mischen (Standing Rule Firebase-Versionierung).
+// 1.1 → 1.2 (18.7., §85 Remis-Paket): meta.score NEU — der Suchwert des tatsächlich gewählten
+// Zuges (aus KI-Sicht; bei rankPool>1 der Wert des Pool-Zuges, nicht localBest; bei Sofortsieg
+// 100000). Grundlage für das Remis-Verhalten in countred.html (aiScoreHistory statt statischer
+// evaluate()-Momentaufnahme) und neues Kalibrierfeld 'score' in games_countred_moves/.
+// SPIELVERHALTEN IDENTISCH zu 1.1: keine Änderung an Suche, Bewertung oder Zugwahl — 1.1- und
+// 1.2-Partien dürfen ausnahmsweise gemischt ausgewertet werden; der Bump macht nur das neue
+// Feld versioniert sichtbar (Standing Rule).
+// 1.2 → 1.3 (18.7., §87 — Rest des Review-1er-Pakets): ÄNDERT DIE ZUGWAHL — Kalibrierdaten
+// aus 1.2 und 1.3 NICHT mischen. Drei Bausteine:
+//  1C  Wurzel-Wiederholung: Ein Wurzelzug, dessen Zielstellung bereits in pathSet liegt
+//      (reale Partiehistorie + aktuelle Stellung), wird wie in negamax (R31) mit
+//      REP_DRAW_SCORE bewertet statt voll durchsucht. Schloss die Blindstelle, dass eine
+//      GEWINNENDE KI am Root ahnungslos in die 5. Wiederholung (Zwangsremis, §56/§77) oder
+//      die 3. (Einforderungsrecht des Menschen, §60) laufen konnte; eine VERLIERENDE KI
+//      findet die Rettungs-Wiederholung jetzt auch am Root.
+//  1I  colHasThreat: Eine Spalte mit n>=3, deren Restfeld mit einem STAPEL versiegelt ist,
+//      zählt nicht mehr als Drohung (Abgleich mit dem R32-SIEGFELD-VETO in evaluate) —
+//      ihre Stapel fließen damit regulär in asingleControl (W_SINGLE) ein.
+//  (1H Bewertungs-Cache: GEBAUT, GEMESSEN, VERWORFEN — Sackgasse, s. HANDOVER_ERKENNTNISSE:
+//      Blatt-Transpositionsquote nur 12–25 %, Faktor 0.88x/1.01x bei Tiefe 3/4 (Median aus 3,
+//      getrennte Prozesse, identische Seed-Stellungen). doubleThreatJS ist nur in Doppel-
+//      drohungs-KANDIDATEN-Stellungen teuer; normal dominieren parityCtrl/asingleControl
+//      (~11–20 µs/evaluate). Künftige Beschleunigung müsste eine echte Transpositionstabelle
+//      für SUCHWERTE mit Bound-Flags sein — größerer, eigener Schritt.)
 // §65f-BUGFIX: countred_ai_core.js ist ein KLASSISCHES Script, der Hauptcode in countred.html
 // ein MODUL. Ein top-level `const` eines klassischen Scripts landet im globalen LEXIKALISCHEN
 // Environment — auf das ein Modul NICHT zugreift (Module lesen undeklarierte Namen von globalThis).
@@ -123,7 +147,7 @@ function pickMove(board, player, p1parity, config, seenPositions){
 
   // ── §37f (a): eigener Sofortsieg → immer nehmen ──
   const win = findImmediateWin(board, player, p1parity);
-  if(win) return { move: win, meta: { safety: 'took-win', depth: 0, ms: _now()-t0 } };
+  if(win) return { move: win, meta: { safety: 'took-win', depth: 0, ms: _now()-t0, score: 100000 } }; // §85: Sofortsieg = Mate-Wert
 
   // ── §37f (b): Gegner-Sofortsieg-Züge markieren (Ausschluss je blockRate) ──
   const badMoves = movesAllowingOpponentWin(board, player, p1parity);
@@ -136,7 +160,7 @@ function pickMove(board, player, p1parity, config, seenPositions){
   pathSet.add(boardHash(board, player));
 
   // ── Iterative Deepening ──
-  let bestMove = legal[0], reachedDepth = 0, budgetHit = false;
+  let bestMove = legal[0], bestScore = null, reachedDepth = 0, budgetHit = false; // §85: bestScore = Suchwert des GEWAEHLTEN Zuges (letzte vollstaendige Tiefe)
   const opp = player === P1 ? P2 : P1;
 
   for(let depth = 1; depth <= cfg.maxDepth; depth++){
@@ -172,6 +196,20 @@ function pickMove(board, player, p1parity, config, seenPositions){
       const bonus = triple ? (getLegalMoves(nb, player, p1parity).length > 0 ? player : null) : null;
       const nextPlayer = bonus ? player : opp;
       const nbHash = boardHash(nb, nextPlayer);
+      // §87-1C: WURZEL-Wiederholung — dieselbe R31-Semantik wie in negamax, die am Root bisher
+      // FEHLTE: liegt die Zielstellung schon in pathSet (reale Partiehistorie inkl. aktueller
+      // Stellung), ist der Zug eine Wiederholung → Remiswert statt Vollsuche. Vorher wurde ein
+      // solcher Zug mit vollem Suchwert bewertet: eine gewinnende KI konnte in die 5. (Zwangs-
+      // remis) bzw. 3. Wiederholung (Einforderungsrecht) hineinziehen, eine verlierende fand
+      // die rettende Wiederholung am Root nicht. KEIN Regelverstoß: reine Bewertung, keine
+      // Zugfilterung. (triple ist hier immer null: Locks sind innerhalb einer Partie monoton —
+      // eine wiederholte Stellung hat identische Locks, applyLockOn findet nichts Neues.)
+      if(pathSet.has(nbHash)){
+        const v = REP_DRAW_SCORE;
+        scored.push({m, v});
+        if(v > localBest){ localBest = v; localMove = m; }
+        continue;
+      }
       const branchSet = new Set(pathSet); branchSet.add(nbHash);
       // §61e-5/§F2: Suchfenster (localBest − Dreier-Marge, +∞) statt (−∞,+∞). −∞−BONUS = −∞
       // in JS, daher kein Sonderfall für den ersten Zug nötig.
@@ -192,9 +230,12 @@ function pickMove(board, player, p1parity, config, seenPositions){
       if(cfg.rankPool > 1){
         scored.sort((a,b) => b.v - a.v);
         const pool = scored.slice(0, Math.min(cfg.rankPool, scored.length));
-        bestMove = pool[Math.floor(Math.random() * pool.length)].m;
+        const pick = pool[Math.floor(Math.random() * pool.length)];
+        bestMove = pick.m;
+        bestScore = pick.v; // §85: der Wert des GEZOGENEN Pool-Zuges, nicht localBest
       } else {
         bestMove = localMove;
+        bestScore = localBest; // §85
       }
       reachedDepth = depth;
       // §61e-6/§65e/§F3: ID-Zugsortierung. Die scored-Liste dieser Tiefe nach Wert sortieren
@@ -224,6 +265,7 @@ function pickMove(board, player, p1parity, config, seenPositions){
       budgetHit,
       safety: (blockActive && badMoves.size > 0) ? 'blocked' : 'none',
       rankPool: cfg.rankPool,
+      score: bestScore, // §85 (ab 1.2): Suchwert des gewaehlten Zuges aus Sicht des Ziehenden
     }
   };
 }
@@ -263,7 +305,12 @@ function colHasThreat(b,c,p1parity){
   for(const color of ['red','black']){
     const br=colBaseRows(b,c,color), n=br.length;
     if(n>=3){
-      for(let r=0;r<4;r++) if(!br.includes(r)) return true; // emptyRow existiert
+      // §87-1I (R32-Abgleich): Trägt das Restfeld einen STAPEL, ist die Spalte VERSIEGELT —
+      // die Basis unter dem Stapel bleibt stehen, die Reihe ist keine Drohung. evaluate()
+      // behandelt genau diesen Fall seit R32 mit dem Siegfeld-Veto (±80); colHasThreat meldete
+      // ihn trotzdem als Drohung und schloss die Spalte damit fälschlich aus asingleControl aus.
+      // Ein EINZELSTEIN auf dem Restfeld bleibt dagegen Drohung (latent: er kann wegziehen).
+      for(let r=0;r<4;r++) if(!br.includes(r) && !b[r][c].stack) return true;
     }
     if(n===2){
       for(let t=0;t<4;t++){
@@ -622,5 +669,6 @@ if(typeof module !== 'undefined' && module.exports){
   module.exports = { pickMove, evaluate, negamax, antisymmetrySelfTest, SKILL_LEVELS,
     HEURISTIC_VERSION,
     parityCtrlJS, asingleControlJS, doubleThreatJS,
+    colHasThreat, // §87: für Node-Tests (1I-Einheit)
     findImmediateWin, movesAllowingOpponentWin };
 }
