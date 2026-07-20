@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.3';
+const HEURISTIC_VERSION = 'countred-ai-1.4';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -57,6 +57,17 @@ const HEURISTIC_VERSION = 'countred-ai-1.3';
 //      drohungs-KANDIDATEN-Stellungen teuer; normal dominieren parityCtrl/asingleControl
 //      (~11–20 µs/evaluate). Künftige Beschleunigung müsste eine echte Transpositionstabelle
 //      für SUCHWERTE mit Bound-Flags sein — größerer, eigener Schritt.)
+// 1.3 → 1.4 (18.7., §91 Remis-Uhr — Blindstelle 1 aus dem §90-Katalog): Die Suche kennt jetzt
+//      den 50-Halbzug-Zähler. pickMove nimmt optional drawClock={halfmoves,limit}; die Uhr
+//      läuft im Suchbaum mit (jeder Halbzug −1, DREIER resettet auf limit), abgelaufene Uhr
+//      = harter Remiswert 0 am Knoten, und die Blattbewertung wird in den letzten
+//      DRAW_CLOCK_SOFT Halbzügen linear gegen 0 gedämpft (Schach-Praxis 50-Züge-Skalierung).
+//      LIVE-BELEG der Blindstelle: LQLVG5CT (meister) stand 25 KI-Züge konstant bei +218…225
+//      und lief ins no-progress-Remis. OHNE drawClock-Parameter ist 1.4 zugwahl-identisch zu
+//      1.3 (Uhr=∞, Faktor=1) — live wird aber IMMER mit Uhr gespielt → Kalibrierdaten aus
+//      1.3 und 1.4 NICHT mischen. evaluate() selbst bleibt unverändert & zustandslos
+//      (Kernregel 5); die Dämpfung ist ein symmetrischer Faktor am Blattaufruf → Antisymmetrie
+//      unberührt, Selbsttest bleibt scharf.
 // §65f-BUGFIX: countred_ai_core.js ist ein KLASSISCHES Script, der Hauptcode in countred.html
 // ein MODUL. Ein top-level `const` eines klassischen Scripts landet im globalen LEXIKALISCHEN
 // Environment — auf das ein Modul NICHT zugreift (Module lesen undeklarierte Namen von globalThis).
@@ -127,9 +138,14 @@ function movesAllowingOpponentWin(b, player, p1parity){
 // Rechnet Tiefe für Tiefe (1,2,3…) bis Budget erreicht oder maxDepth; behält den
 // besten Zug der letzten VOLLSTÄNDIG abgeschlossenen Tiefe. minDepth wird notfalls
 // über das Budget hinaus garantiert. Gibt {move, meta} zurück (§37.3, §37h-Logging).
-function pickMove(board, player, p1parity, config, seenPositions){
+function pickMove(board, player, p1parity, config, seenPositions, drawClock){
   const cfg = (typeof config === 'string') ? SKILL_LEVELS[config] : config;
   if(!cfg) throw new Error('pickMove: unbekannte Config/Stufe');
+  // §91 Remis-Uhr: drawClock={halfmoves,limit} optional — fehlt er (Tests, Alt-Aufrufer), ist
+  // die Uhr ∞ und 1.4 verhält sich exakt wie 1.3. clockLimit ist der Reset-Wert nach Dreier.
+  const clockLimit = (drawClock && typeof drawClock.limit==='number') ? drawClock.limit : Infinity;
+  const clock0 = (drawClock && typeof drawClock.halfmoves==='number' && clockLimit!==Infinity)
+    ? Math.max(0, clockLimit - drawClock.halfmoves) : Infinity;
   // §61b-3/§F4: PARITY_P1-Doppelquelle absichern. pickMove nimmt p1parity als PARAMETER
   // (→ getLegalMoves/findImmediateWin), aber negamax()/evaluate() lesen die GLOBALE PARITY_P1.
   // Weichen beide ab, entsteht eine STILLE Schere: Wurzel-Legalität unter Parität A,
@@ -210,14 +226,25 @@ function pickMove(board, player, p1parity, config, seenPositions){
         if(v > localBest){ localBest = v; localMove = m; }
         continue;
       }
+      // §91 Remis-Uhr am Root: dieser Halbzug verbraucht 1 (DREIER resettet auf clockLimit).
+      // Läuft die Uhr damit ab, ist die Zielstellung per §56-Automatik REMIS → Wert 0, keine
+      // Vollsuche. (Viererreihe schlägt die Uhr — der Sieg-Fall wurde oben bereits abgefangen,
+      // exakt wie nextTurn() erst den Sieg und dann die Automatik prüft.)
+      const childClock = triple ? clockLimit : (clock0===Infinity ? Infinity : clock0 - 1);
+      if(childClock <= 0){
+        const v = 0;
+        scored.push({m, v});
+        if(v > localBest){ localBest = v; localMove = m; }
+        continue;
+      }
       const branchSet = new Set(pathSet); branchSet.add(nbHash);
       // §61e-5/§F2: Suchfenster (localBest − Dreier-Marge, +∞) statt (−∞,+∞). −∞−BONUS = −∞
       // in JS, daher kein Sonderfall für den ersten Zug nötig.
       const margin = triple ? DREIER_FORM_BONUS : 0;
       const aWin = useRootAlpha ? (localBest - margin) : -Infinity;
       let v = bonus
-        ? negamax(nb, depth, aWin, Infinity, player, bonus, branchSet)
-        : -negamax(nb, depth, -Infinity, -aWin, opp, null, branchSet);
+        ? negamax(nb, depth, aWin, Infinity, player, bonus, branchSet, childClock, clockLimit)
+        : -negamax(nb, depth, -Infinity, -aWin, opp, null, branchSet, childClock, clockLimit);
       if(triple && Math.abs(v) < 90000) v += DREIER_FORM_BONUS;
       scored.push({m, v});
       if(v > localBest){ localBest = v; localMove = m; }
@@ -281,6 +308,15 @@ const W_SINGLE = 3;   // Achse-B: Stapelbesitz drohungsfreie Spalten
 const W_DOUBLE = 150; // Achse-B: unblockbare Doppeldrohung
 const DREIER_FORM_BONUS = 80;
 const REP_DRAW_SCORE = 0;   // Wiederholung = Remiswert (Contempt)
+// §91: Remis-Uhr. Innerhalb der letzten DRAW_CLOCK_SOFT Halbzüge vor dem Zwangsremis wird die
+// Blattbewertung linear gegen 0 gedämpft — die überlegene Seite verliert dadurch ihren
+// statischen Vorsprung, WENN sie keinen Dreier erzwingt (der die Uhr resettet), und priorisiert
+// den Dreier von selbst; die unterlegene Seite spielt auf Zeit. Feinwert, beim Testen justierbar.
+const DRAW_CLOCK_SOFT = 16;
+function drawClockFactor(clockLeft){
+  if(clockLeft===Infinity) return 1;
+  return Math.max(0, Math.min(1, clockLeft / DRAW_CLOCK_SOFT));
+}
 // PARITY_P1 wird EXTERN gesetzt (pro Spiel, da Parität wechselt — §38d).
 
 function makesRunJS(rows, k){
@@ -565,20 +601,25 @@ function evaluate(b, forPlayer){
   return score;
 }
 
-function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet){
+function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet, clockLeft, clockLimit){
   const player = bonusPlayer || activePlayer;
   const opp = player===P1 ? P2 : P1;
+  if(clockLeft===undefined){ clockLeft=Infinity; clockLimit=Infinity; } // Alt-Aufrufer (Tests): Uhr aus
 
   if(checkFourOn(b)) return -100000 - depth; // previous move won → bad for current player (§12b: Mate-Band ±100000 gehärtet)
+  // §91: abgelaufene Remis-Uhr = Zwangsremis (§56) — NACH dem Vierer-Check (Sieg schlägt Uhr).
+  if(clockLeft <= 0) return 0;
 
-  if(depth===0) return evaluate(b, player);
+  // §91: Blatt-Dämpfung — symmetrischer Faktor, evaluate() selbst bleibt zustandslos (Kernregel 5).
+  if(depth===0) return evaluate(b, player) * drawClockFactor(clockLeft);
 
   const moves = getLegalMoves(b, player, PARITY_P1);
   if(moves.length===0){
     const om = getLegalMoves(b, opp, PARITY_P1);
     if(om.length===0) return 0;
     // opponent plays again — negate because perspective flips
-    return -negamax(b, depth-1, -beta, -alpha, opp, null, pathSet);
+    // §91: KEIN ausgeführter Halbzug → Uhr unverändert (der Zähler zählt nur echte Züge, §56).
+    return -negamax(b, depth-1, -beta, -alpha, opp, null, pathSet, clockLeft, clockLimit);
   }
 
   let best = -Infinity;
@@ -605,9 +646,12 @@ function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet){
       continue;
     }
     pathSet.add(nbHash);
+    // §91: Halbzug verbraucht 1 Uhr-Einheit; DREIER resettet auf clockLimit. Ablauf erledigt
+    // der Entry-Check der Rekursion (nach dem Vierer-Check — Sieg schlägt Uhr).
+    const childClock = triple ? clockLimit : (clockLeft===Infinity ? Infinity : clockLeft - 1);
     const val = bonus
-      ? negamax(nb, depth-1, alpha, beta, player, bonus, pathSet)
-      : -negamax(nb, depth-1, -beta, -alpha, opp, null, pathSet);
+      ? negamax(nb, depth-1, alpha, beta, player, bonus, pathSet, childClock, clockLimit)
+      : -negamax(nb, depth-1, -beta, -alpha, opp, null, pathSet, childClock, clockLimit);
     pathSet.delete(nbHash);
     // SCHRITT 1: Bilden einer Dreierreihe (dieser Zug von `player`) wird direkt in
     // der Zugbewertung honoriert — Urheber ist `player` (Schleifenkontext).
@@ -670,5 +714,6 @@ if(typeof module !== 'undefined' && module.exports){
     HEURISTIC_VERSION,
     parityCtrlJS, asingleControlJS, doubleThreatJS,
     colHasThreat, // §87: für Node-Tests (1I-Einheit)
+    drawClockFactor, DRAW_CLOCK_SOFT, // §91: für Node-Tests (Uhr-Dämpfung)
     findImmediateWin, movesAllowingOpponentWin };
 }

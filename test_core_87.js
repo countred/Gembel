@@ -26,7 +26,10 @@ Object.assign(globalThis, rb.__R);
 const core = require('./countred_ai_core.js');
 globalThis.PARITY_P1 = 'odd';
 
-ok(core.HEURISTIC_VERSION === 'countred-ai-1.3', "HEURISTIC_VERSION === 'countred-ai-1.3'");
+// §91-Anpassung: exakter Versions-Pin wandert per Konvention in die jeweils NEUESTE Suite
+// (aktuell test_clock_91). Diese Suite prüft die 1.3-FEATURES selbst (1C/1I unten).
+const verNum = parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/)||[])[1]);
+ok(verNum >= 1.3, "HEURISTIC_VERSION ist countred-ai-\u22651.3 (1C/1I-Features; aktuell: "+core.HEURISTIC_VERSION+")");
 
 // ── 1C: Wurzel-Wiederholung ──
 console.log('\u00a787-1C \u2014 Wurzel-Wiederholung wird remisbewertet:');
@@ -105,7 +108,7 @@ console.log('\u00a787-1I \u2014 colHasThreat: Versiegelung (R32-Abgleich):');
 // ── 1G: Selbsttest im Sync-Fallback (Verdrahtung) ──
 console.log('\u00a787-1G \u2014 Sync-Fallback:');
 ok(/const syncAntisymDone=\{\};/.test(html), 'Zustand syncAntisymDone deklariert');
-const fb = html.match(/Fallback auf synchrone Berechnung[\s\S]{0,1600}?res=pickMove\(board, aiPlayer, PARITY_P1, aiSkill, seenPositions\);/);
+const fb = html.match(/Fallback auf synchrone Berechnung[\s\S]{0,1900}?res=pickMove\(board, aiPlayer, PARITY_P1, aiSkill, seenPositions[\s\S]{0,120}?\);/);
 ok(!!fb && /antisymmetrySelfTest\(PARITY_P1\)/.test(fb[0]) && /aiThinking=false; return;/.test(fb[0]),
    'Fallback: Selbsttest laeuft VOR dem synchronen pickMove und sperrt bei Verletzung sichtbar');
 

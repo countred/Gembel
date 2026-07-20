@@ -21,7 +21,8 @@
 //   Walters Setup (GitHub Pages, https) ist das unkritisch.
 //
 // PROTOKOLL:
-//   Haupt-Thread → Worker:  { id, board, player, p1parity, skill, seenPositions }
+//   Haupt-Thread → Worker:  { id, board, player, p1parity, skill, seenPositions, drawClock }
+//     drawClock (§91): {halfmoves, limit} — Remis-Uhr für die Suche; optional (fehlt → Uhr ∞).
 //   Worker → Haupt-Thread:  { id, res }              bei Erfolg (res = pickMove-Rückgabe)
 //                            { id, error: <string> }  bei Fehler (z.B. Antisymmetrie-Sperre)
 //   Der Haupt-Thread ordnet Antworten per `id` einem laufenden Auftrag zu und verwirft
@@ -31,10 +32,10 @@
 
 'use strict';
 
-// §61e-3/§65e: Cache-Busting-Query (?v=NN) synchron zu countred.html halten (dort v80).
+// §61e-3/§65e: Cache-Busting-Query (?v=NN) synchron zu countred.html halten (dort v82).
 // Sonst kann der Worker alte Kern-/Regeldateien aus dem Cache laden, während das Hauptfenster
 // neue nutzt — gemischte Versionen (§51-Klasse).
-importScripts('gembel_rules.js?v=80', 'countred_ai_core.js?v=80');
+importScripts('gembel_rules.js?v=82', 'countred_ai_core.js?v=82');
 
 // §61b-2/§F4: Antisymmetrie-Selbsttest VERDRAHTEN. Der Kern-Kommentar („bleibt verbaut, sperrt
 // bei Verletzung") stimmte bis 12.7. nicht — die Funktion wurde nirgends aufgerufen, die Sperre
@@ -46,7 +47,7 @@ importScripts('gembel_rules.js?v=80', 'countred_ai_core.js?v=80');
 const _antisymTestDone = {};
 
 self.onmessage = function(e){
-  const { id, board, player, p1parity, skill, seenPositions } = e.data;
+  const { id, board, player, p1parity, skill, seenPositions, drawClock } = e.data; // §91: Uhr durchreichen
   try {
     // PARITY_P1 wird vom KI-Kern als GLOBAL erwartet (siehe countred_ai_core.js
     // evaluate()/negamax()) — im Worker-Scope ist `self` das globale Objekt,
@@ -56,7 +57,7 @@ self.onmessage = function(e){
       antisymmetrySelfTest(p1parity); // wirft bei Verletzung → Sperre (s.o.); restauriert PARITY_P1 selbst
       _antisymTestDone[p1parity] = true;
     }
-    const res = pickMove(board, player, p1parity, skill, seenPositions);
+    const res = pickMove(board, player, p1parity, skill, seenPositions, drawClock);
     self.postMessage({ id, res });
   } catch(err){
     self.postMessage({ id, error: String((err && err.message) || err) });
