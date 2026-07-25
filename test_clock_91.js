@@ -26,7 +26,10 @@ Object.assign(globalThis, rb.__R);
 const core = require('./countred_ai_core.js');
 globalThis.PARITY_P1 = 'odd';
 
-ok(core.HEURISTIC_VERSION === 'countred-ai-1.4', "HEURISTIC_VERSION === 'countred-ai-1.4'");
+// §96-Anpassung: der exakte Versions-Pin wandert per Konvention in die jeweils NEUESTE Suite
+// (jetzt test_margin_96). Diese Suite prueft ihre eigenen Features (§91-Uhr) und nur noch >=1.4.
+const _v = parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/)||[])[1]);
+ok(_v >= 1.4, "HEURISTIC_VERSION ist countred-ai->=1.4 (\u00a791-Uhr; aktuell: "+core.HEURISTIC_VERSION+")");
 
 const cfg = { timeBudgetMs: 800, maxDepth: 2, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 0 };
 

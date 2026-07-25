@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.4';
+const HEURISTIC_VERSION = 'countred-ai-1.5';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -68,6 +68,28 @@ const HEURISTIC_VERSION = 'countred-ai-1.4';
 //      1.3 und 1.4 NICHT mischen. evaluate() selbst bleibt unverändert & zustandslos
 //      (Kernregel 5); die Dämpfung ist ein symmetrischer Faktor am Blattaufruf → Antisymmetrie
 //      unberührt, Selbsttest bleibt scharf.
+// 1.4 -> 1.5 (25.7., §96 — Dreier-Marge am INNEREN Knoten): SUCHFEHLER behoben, AENDERT DIE
+//      ZUGWAHL -> Kalibrierdaten aus 1.4 und 1.5 NICHT mischen. negamax addierte
+//      DREIER_FORM_BONUS nach der Kindsuche (valB = val + 80), suchte das Kind aber gegen das
+//      unverschobene Fenster (alpha, beta). Dreier-bildende Kinder gingen dadurch fail-low,
+//      und die lockere Fail-Soft-Schranke + 80 wurde im Elternknoten wie ein exakter Wert
+//      behandelt. FOLGE: der Suchwert war FENSTERABHAENGIG — dieselbe Stellung lieferte je nach
+//      Alpha unterschiedliche Werte, und die Zugwahl konnte auf einen Zug fallen, den die
+//      Bewertung bei korrekter Rechnung nicht fuer den besten haelt.
+//      BELEG (Referenz = derselbe Kern OHNE Pruning, also wahrer Minimax-Wert):
+//        Tiefe 3, 49 reale Stellungen aus 1.4/meister — VORHER 12 Stellungen / 26 Zugwerte
+//        abweichend, 1 falsche Zugwahl; NACHHER 0 / 0 / 0.
+//        Tiefe 5, 9HEYHDSX i=11 — VORHER 4 von 9 Zugwerten falsch (80 statt 79, 84 statt 78,
+//        76 statt 77, 79 statt 73) und falsche Zugwahl (4C->4A statt 1A->4D); NACHHER alle
+//        neun Werte exakt, Zugwahl identisch zur Referenz.
+//      Die §F2-Marge am ROOT bleibt unveraendert noetig (dort dieselbe Ursache, dort schon in
+//      1.1 behoben). KOSTEN 1,00x (Median 65 vs 66 ms bei Tiefe 3). evaluate(), Regelschicht,
+//      Antisymmetrie und die §91-Uhr sind UNBERUEHRT.
+//      WICHTIG fuer Auswertungen: die in 1.2-1.4 geloggten `score`-Werte koennen ueberhoeht
+//      sein (sie reproduzieren die Produktionslogik exakt, aber die war nicht wertneutral).
+//      Score-Verlaeufe aus 1.2-1.4 nicht als exakte Suchwerte lesen.
+// DAUERSCHUTZ: test_margin_96.js vergleicht die Suche gegen eine pruning-freie Referenz, die
+//      zur Testlaufzeit aus DIESER Datei erzeugt wird — ein Rueckfall faellt sofort auf.
 // §65f-BUGFIX: countred_ai_core.js ist ein KLASSISCHES Script, der Hauptcode in countred.html
 // ein MODUL. Ein top-level `const` eines klassischen Scripts landet im globalen LEXIKALISCHEN
 // Environment — auf das ein Modul NICHT zugreift (Module lesen undeklarierte Namen von globalThis).
@@ -649,9 +671,22 @@ function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet, cloc
     // §91: Halbzug verbraucht 1 Uhr-Einheit; DREIER resettet auf clockLimit. Ablauf erledigt
     // der Entry-Check der Rekursion (nach dem Vierer-Check — Sieg schlägt Uhr).
     const childClock = triple ? clockLimit : (clockLeft===Infinity ? Infinity : clockLeft - 1);
+    // §96 DREIER-MARGE AM INNEREN KNOTEN (Fensterfehler, der die Suche wertverfaelschend machte):
+    // Unten wird valB = val + DREIER_FORM_BONUS gebildet, das Kind wurde aber gegen das
+    // UNVERSCHOBENE Fenster (alpha, beta) gesucht. Ein dreier-bildendes Kind ging dadurch
+    // fail-low, obwohl es MIT seinem eigenen +80 ueber alpha gelegen haette — die lockere
+    // Fail-Soft-Schranke plus 80 landete als scheinbar exakter Wert im Elternknoten.
+    // Exakt dieselbe Korrektur steht seit §F2 am ROOT (dort als `margin`); an den inneren
+    // Knoten fehlte sie. Richtig ist der Massstabswechsel: das Kind sucht im val-Massstab,
+    // der Elternknoten vergleicht im valB-Massstab = val + BONUS. Also Fenster um BONUS senken.
+    // Soundness: Kind exakt fuer alpha-BONUS < val < beta-BONUS  <=>  alpha < val+BONUS < beta.
+    // KOSTEN: keine (gemessen 1,00x) — das Fenster wird verschoben, nicht geoeffnet.
+    const marginIn = (triple ? DREIER_FORM_BONUS : 0);
+    const alphaIn  = (alpha === -Infinity) ? -Infinity : alpha - marginIn;
+    const betaIn   = (beta  ===  Infinity) ?  Infinity : beta  - marginIn;
     const val = bonus
-      ? negamax(nb, depth-1, alpha, beta, player, bonus, pathSet, childClock, clockLimit)
-      : -negamax(nb, depth-1, -beta, -alpha, opp, null, pathSet, childClock, clockLimit);
+      ? negamax(nb, depth-1, alphaIn, betaIn, player, bonus, pathSet, childClock, clockLimit)
+      : -negamax(nb, depth-1, -betaIn, -alphaIn, opp, null, pathSet, childClock, clockLimit);
     pathSet.delete(nbHash);
     // SCHRITT 1: Bilden einer Dreierreihe (dieser Zug von `player`) wird direkt in
     // der Zugbewertung honoriert — Urheber ist `player` (Schleifenkontext).
