@@ -69,6 +69,43 @@ console.log('\u00a797 \u2014 Timing: Remis-Angebot:');
   ok(lo > 900, 'Angebot dauert deutlich l\u00e4nger als jede normale Zugpause (900 ms Bonusfall)');
 }
 
+console.log('\u00a798 \u2014 Meldungs-Toggle f\u00fcr ALLE Erkl\u00e4rungsf\u00e4lle:');
+{
+  // Quellcode-W\u00e4chter: der Zweig „Figur ist hebbar" darf lastFailCell NUR noch beim echten
+  // Aktivieren l\u00f6schen. Das unbedingte `lastFailCell=null;` davor war der Fehler.
+  ok(/if\(targets\.length>0\)\{selected=\[r,c\];validTargets=targets;lastFailCell=null;setLog\(''\);\}\s*\n\s*else explainOrToggle\(r,c,'keine Zielfelder'\);/.test(html),
+     'hebbare Figur ohne Zielfeld geht durch explainOrToggle (kein unbedingtes Zur\u00fccksetzen mehr)');
+  ok(/\} else \{\s*\n\s*explainOrToggle\(r,c,''\);\s*\n\s*\}/.test(html),
+     'nicht hebbare Figur geht durch dieselbe Funktion (eine Stelle statt zwei)');
+
+  // Verhaltenstest: die Toggle-Funktion wird aus der Auslieferung herausgel\u00f6st und mit
+  // Attrappen f\u00fcr setLog/debugLog gefahren \u2014 pr\u00fcft die Semantik, nicht nur den Wortlaut.
+  const src = (html.match(/function explainOrToggle\(r,c,extra\)\{[\s\S]*?\n\}/)||[])[0];
+  ok(!!src, 'explainOrToggle l\u00e4sst sich aus der Auslieferung herausl\u00f6sen');
+  if(src){
+    const vm2 = require('vm');
+    const ctx = { lastFailCell:null, log:null, calls:[],
+                  setLog(h){ ctx.log = h; },
+                  debugLog(r,c,extra){ ctx.calls.push([r,c,extra]); ctx.log = 'MELDUNG '+r+','+c; } };
+    vm2.createContext(ctx);
+    vm2.runInContext(src, ctx);
+    const tap = (r,c,extra) => vm2.runInContext('explainOrToggle('+r+','+c+',"'+(extra||'')+'")', ctx);
+    tap(1,2);            const s1 = ctx.log;
+    tap(1,2);            const s2 = ctx.log;
+    tap(1,2);            const s3 = ctx.log;
+    ok(s1 === 'MELDUNG 1,2' && s2 === '' && s3 === 'MELDUNG 1,2',
+       '1. Tipp erkl\u00e4rt \u2192 2. Tipp blendet aus \u2192 3. Tipp erkl\u00e4rt wieder');
+    ctx.lastFailCell = null; ctx.log = null;
+    tap(1,2); tap(3,0);
+    ok(ctx.log === 'MELDUNG 3,0' && ctx.lastFailCell.join() === '3,0',
+       'Tipp auf eine ANDERE Zelle erkl\u00e4rt sofort (kein Ausblenden)');
+    ctx.calls.length = 0; ctx.lastFailCell = null;
+    tap(2,2,'keine Zielfelder');
+    ok(ctx.calls.length === 1 && ctx.calls[0][2] === 'keine Zielfelder',
+       'der Zusatz „keine Zielfelder" wird unver\u00e4ndert durchgereicht');
+  }
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
