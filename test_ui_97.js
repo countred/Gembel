@@ -21,9 +21,12 @@ ok(/>🤖 Gegen Max Michu<\/button>/.test(html) && !/Spiele gegen Max Michu/.tes
    'Startmen\u00fc: „Gegen Max Michu" (ohne „Spiele")');
 ok(/onclick="showNeuMenu\(\)">☰ Optionen<\/button>/.test(html) && !/>☰ Men\u00fc</.test(html),
    'Werkzeugleiste: „\u2630 Optionen" statt „\u21ba Neu"');
-ok(!/oder \u21ba Neu f\u00fcr weitere Optionen/.test(html) &&
-   (html.match(/oder ☰ Optionen \u00f6ffnen/g)||[]).length === 2,
-   'Schlussbild verweist in BEIDEN Modi auf „\u2630 Optionen" (MvM + MvKI)');
+// Auf die AUSGEGEBENE Auszeichnung pruefen, nicht auf den Fliesstext: der Quelltext erwaehnt
+// die entfernte Zeile weiterhin im Kommentar (Wiedereinbau-Schutz).
+ok(!/>oder \u21ba Neu f\u00fcr weitere Optionen/.test(html) && !/>oder ☰ Optionen/.test(html),
+   'Schlussbild ohne Zusatzzeile „oder \u2630 Optionen \u2026" (in BEIDEN Modi entfernt)');
+ok((html.match(/winArea\.innerHTML = bannerHtml \+ rematchBtn;/g)||[]).length === 2,
+   'Schlussbild besteht in beiden Modi nur noch aus Banner + „Nochmal"-Button');
 ok(/\u21ba Neu \(anderer Modus\/Stufe\)/.test(html),
    '„\u21ba Neu (anderer Modus/Stufe)" im Men\u00fc bleibt \u2014 das startet wirklich etwas Neues');
 
