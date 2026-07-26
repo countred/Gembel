@@ -185,7 +185,8 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
 
   // ── §37f (a): eigener Sofortsieg → immer nehmen ──
   const win = findImmediateWin(board, player, p1parity);
-  if(win) return { move: win, meta: { safety: 'took-win', depth: 0, ms: _now()-t0, score: 100000 } }; // §85: Sofortsieg = Mate-Wert
+  if(win) return { move: win, meta: { safety: 'took-win', depth: 0, ms: _now()-t0, score: 100000,
+    raw: 100000, prevBest: null, sec: null, rank: 1, nRoot: null, nSkip: null, exact: null } }; // §85: Sofortsieg = Mate-Wert
 
   // ── §37f (b): Gegner-Sofortsieg-Züge markieren (Ausschluss je blockRate) ──
   const badMoves = movesAllowingOpponentWin(board, player, p1parity);
@@ -198,6 +199,7 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
   pathSet.add(boardHash(board, player));
 
   // ── Iterative Deepening ──
+  let obs = null;   // §99: Beobachtungsdaten der letzten vollstaendigen Tiefe (s.u.)
   let bestMove = legal[0], bestScore = null, reachedDepth = 0, budgetHit = false; // §85: bestScore = Suchwert des GEWAEHLTEN Zuges (letzte vollstaendige Tiefe)
   const opp = player === P1 ? P2 : P1;
 
@@ -220,6 +222,18 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
     // Dreier-Kandidat exakt für raw > localBest−BONUS ⇔ raw+BONUS > localBest. Alles darunter
     // kann die Zugwahl nicht ändern.
     const useRootAlpha = (cfg.rankPool === 1);
+    // §99 INSTRUMENTIERUNG (reine Beobachtung — aendert KEINE Zugwahl, KEIN Versionsbump).
+    //   rawByMove : Suchwert VOR DREIER_FORM_BONUS, je Zug. Macht H5 abfragbar
+    //               (Bonus entscheidet gegen das Suchurteil), ohne Offline-Nachrechnung.
+    //   prevByMove: der localBest, den DIESER Zug ueberboten hat. Wichtig: localBest ist immer
+    //               der EXAKTE Wert eines real gesuchten Zuges (er lag in seinem Fenster) —
+    //               anders als die scored-Werte der Fail-Low-Zuege, die nur Schranken sind.
+    //               Damit ist raw < prevBest ein SAUBERER Vergleich zweier exakter Werte, auch
+    //               unter Wurzel-Alpha. Er findet H5-Faelle nur, wenn die bessere Alternative
+    //               VOR dem gewaehlten Zug lag — dank ID-Sortierung ist das der Normalfall,
+    //               aber die Zaehlung bleibt eine UNTERGRENZE.
+    const rawByMove = new Map(), prevByMove = new Map();
+    const _key = m => m.fr+','+m.fc+','+m.tr+','+m.tc;
     for(const m of legal){
       // Sicherheitsnetz: Gegner-Sieg-ermöglichende Züge meiden, solange es Alternativen gibt
       if(blockActive && isBad(m) && badMoves.size < legal.length){ skipped.push(m); continue; }
@@ -229,7 +243,8 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       // eine teure Tiefe den UI-Thread sekundenlang blockiert.
       if(depth > cfg.minDepth && (_now() - t0) >= cfg.timeBudgetMs){ aborted = true; break; }
       const nb = applyMoveOn(board, m.fr, m.fc, m.tr, m.tc, player);
-      if(checkFourOn(nb)){ localBest = 100000; localMove = m; scored.push({m, v: 100000}); break; }
+      if(checkFourOn(nb)){ rawByMove.set(_key(m),100000); prevByMove.set(_key(m), localBest===-Infinity?null:localBest);
+        localBest = 100000; localMove = m; scored.push({m, v: 100000}); break; }
       const triple = applyLockOn(nb);
       const bonus = triple ? (getLegalMoves(nb, player, p1parity).length > 0 ? player : null) : null;
       const nextPlayer = bonus ? player : opp;
@@ -244,8 +259,8 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       // eine wiederholte Stellung hat identische Locks, applyLockOn findet nichts Neues.)
       if(pathSet.has(nbHash)){
         const v = REP_DRAW_SCORE;
-        scored.push({m, v});
-        if(v > localBest){ localBest = v; localMove = m; }
+        scored.push({m, v}); rawByMove.set(_key(m), v);
+        if(v > localBest){ prevByMove.set(_key(m), localBest===-Infinity?null:localBest); localBest = v; localMove = m; }
         continue;
       }
       // §91 Remis-Uhr am Root: dieser Halbzug verbraucht 1 (DREIER resettet auf clockLimit).
@@ -255,8 +270,8 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       const childClock = triple ? clockLimit : (clock0===Infinity ? Infinity : clock0 - 1);
       if(childClock <= 0){
         const v = 0;
-        scored.push({m, v});
-        if(v > localBest){ localBest = v; localMove = m; }
+        scored.push({m, v}); rawByMove.set(_key(m), v);
+        if(v > localBest){ prevByMove.set(_key(m), localBest===-Infinity?null:localBest); localBest = v; localMove = m; }
         continue;
       }
       const branchSet = new Set(pathSet); branchSet.add(nbHash);
@@ -267,9 +282,10 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       let v = bonus
         ? negamax(nb, depth, aWin, Infinity, player, bonus, branchSet, childClock, clockLimit)
         : -negamax(nb, depth, -Infinity, -aWin, opp, null, branchSet, childClock, clockLimit);
+      const vRaw = v;                                    // §99: vor dem Bonus festhalten
       if(triple && Math.abs(v) < 90000) v += DREIER_FORM_BONUS;
-      scored.push({m, v});
-      if(v > localBest){ localBest = v; localMove = m; }
+      scored.push({m, v}); rawByMove.set(_key(m), vRaw);
+      if(v > localBest){ prevByMove.set(_key(m), localBest===-Infinity?null:localBest); localBest = v; localMove = m; }
     }
     // Bei Abbruch mitten in der Tiefe: diese unvollständige Tiefe NICHT übernehmen
     // (bestMove bleibt auf dem Ergebnis der letzten vollständigen Tiefe).
@@ -286,6 +302,18 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
         bestMove = localMove;
         bestScore = localBest; // §85
       }
+      // §99: Kennzahlen der zuletzt VOLLSTAENDIG gerechneten Tiefe einfrieren.
+      const _sorted = scored.slice().sort((a,b) => b.v - a.v);
+      const _bk = _key(bestMove);
+      obs = {
+        raw:      rawByMove.has(_bk) ? rawByMove.get(_bk) : bestScore,
+        prevBest: prevByMove.has(_bk) ? prevByMove.get(_bk) : null,
+        sec:      _sorted.length > 1 ? _sorted[1].v : null,
+        rank:     _sorted.findIndex(x => _key(x.m) === _bk) + 1,
+        nRoot:    legal.length,
+        nSkip:    skipped.length,
+        exact:    !useRootAlpha   // nur dann sind sec/rank Werte statt Fail-Low-Schranken
+      };
       reachedDepth = depth;
       // §61e-6/§65e/§F3: ID-Zugsortierung. Die scored-Liste dieser Tiefe nach Wert sortieren
       // und legal in DIESER Reihenfolge für die nächste Tiefe durchlaufen → bester Vortiefen-
@@ -315,6 +343,15 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       safety: (blockActive && badMoves.size > 0) ? 'blocked' : 'none',
       rankPool: cfg.rankPool,
       score: bestScore, // §85 (ab 1.2): Suchwert des gewaehlten Zuges aus Sicht des Ziehenden
+      // §99: Beobachtung ohne Wirkung. raw + prevBest sind unter JEDER Stufe exakt;
+      // sec + rank nur wenn exact===true (rankPool>1, also ohne Wurzel-Alpha).
+      raw:      obs ? obs.raw      : null,
+      prevBest: obs ? obs.prevBest : null,
+      sec:      obs ? obs.sec      : null,
+      rank:     obs ? obs.rank     : null,
+      nRoot:    obs ? obs.nRoot    : null,
+      nSkip:    obs ? obs.nSkip    : null,
+      exact:    obs ? obs.exact    : null,
     }
   };
 }
@@ -744,8 +781,35 @@ function antisymmetrySelfTest(p1parity){
 }
 
 // ── Export (Node-Test + spätere Einbindung) ──
+// ═══════════════════════════════════════════════════════════════════
+// §99 GERAETE-BENCHMARK — feste, identische Last auf jedem Geraet.
+// Die Spielstaerke haengt ueber timeBudgetMs an der Rechenleistung (§92-Befund: die Stufen
+// trennen sich ueber das Budget nicht; H7: in der Eroeffnung reisst meister das Budget und
+// rechnet nur Tiefe 4, wo die Zugwahl nachweislich kippt). Im Testrelease spielt derselbe
+// „meister" auf schneller und langsamer Hardware unterschiedlich stark — ein Stoerfaktor,
+// der mit dem SPIELER korreliert. Diese Zahl macht ihn auswertbar.
+// Bewusst KEIN userAgent, keine Bildschirmdaten: gemessen wird genau das, worauf es ankommt,
+// und sonst nichts.
+const BENCH_REPS = 5;   // gemessene Wiederholungen (nach einem Aufwaermlauf)
+function deviceBenchMs(){
+  // Last: Tiefe 1 ab Startbrett, mehrfach. Warum genau das:
+  //   - deterministisch und ueberall identisch (kein Zufall, rankPool 1, blockRate 1.0),
+  //   - laeuft durch den ECHTEN Suchpfad (cloneBoard, applyMoveOn, boardHash, evaluate),
+  //   - klein genug fuer den Hintergrund: rund 150 ms auf einem schnellen Rechner.
+  // Tiefe 2 waere mit ~900 ms zu teuer, ein reiner evaluate()-Zaehler zu unrepraesentativ.
+  const cfg = { timeBudgetMs: 1e9, maxDepth: 1, minDepth: 1, rankPool: 1, blockRate: 1.0, minThinkMs: 0 };
+  const prev = globalThis.PARITY_P1;
+  globalThis.PARITY_P1 = 'odd';
+  try {
+    pickMove(initBoard(), P1, 'odd', cfg, []);      // Aufwaermlauf, nicht gemessen (JIT)
+    const t = _now();
+    for(let i = 0; i < BENCH_REPS; i++) pickMove(initBoard(), P1, 'odd', cfg, []);
+    return Math.round(_now() - t);
+  } finally { globalThis.PARITY_P1 = prev; }
+}
+
 if(typeof module !== 'undefined' && module.exports){
-  module.exports = { pickMove, evaluate, negamax, antisymmetrySelfTest, SKILL_LEVELS,
+  module.exports = { pickMove, evaluate, negamax, antisymmetrySelfTest, SKILL_LEVELS, deviceBenchMs,
     HEURISTIC_VERSION,
     parityCtrlJS, asingleControlJS, doubleThreatJS,
     colHasThreat, // §87: für Node-Tests (1I-Einheit)
