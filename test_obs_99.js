@@ -138,6 +138,33 @@ ok(/perfMs: \(typeof devicePerfMs==='number'\) \? devicePerfMs : null/.test(html
    'perfMs wird ins Partie-Ergebnis geschrieben (Stratifizierung nach Rechenleistung)');
 ok(!/navigator\.userAgent/.test(html), 'kein userAgent im Log \u2014 nur die gemessene Rechenzeit');
 
+console.log('\u00a7102 \u2014 Build-Nummer im Log (nicht nur in der Konsole):');
+{
+  // WARUM: \u00a797/\u00a798/\u00a7101 haben das Verhalten ge\u00e4ndert, OHNE HEURISTIC_VERSION zu bumpen. Zwei
+  // Partien k\u00f6nnen also beide 'countred-ai-1.5' sagen und nach verschiedenen Regeln gelaufen
+  // sein. Beim Testrelease w\u00e4re das ohne Build-Nummer nicht mehr aufzul\u00f6sen.
+  const mk = (html.match(/const BUILD_MARKER='(\u00b7 Build v\d+)';/)||[])[1];
+  ok(!!mk, 'BUILD_MARKER als Konstante vorhanden (' + mk + ')');
+  ok(/const BUILD_NO=parseInt\(\(BUILD_MARKER\.match\(\/v\(\\d\+\)\/\)\|\|\[\]\)\[1\],10\);/.test(html),
+     'BUILD_NO wird AUS dem Marker abgeleitet \u2014 Anzeige und Logfeld k\u00f6nnen nicht auseinanderlaufen');
+  ok(/\n\s+BUILD_MARKER\);/.test(html) && !/'\u00b7 Build v\d+'\);/.test(html),
+     'die Konsolenzeile nutzt die Konstante, kein zweites Literal mehr');
+
+  // Die Ableitung wirklich ausf\u00fchren, nicht nur den Text pr\u00fcfen.
+  const vm2 = require('vm'); const c2 = {}; vm2.createContext(c2);
+  vm2.runInContext(html.match(/const BUILD_MARKER=[^\n]+\n[^\n]+/)[0] + ';__B=BUILD_NO;', c2);
+  const vMark = parseInt((html.match(/Build v(\d+)/)||[])[1], 10);
+  ok(c2.__B === vMark && Number.isInteger(c2.__B),
+     'BUILD_NO ergibt zur Laufzeit ' + c2.__B + ' \u2014 identisch mit dem Marker im Quelltext');
+  ok(c2.__B === parseInt((html.match(/countred_ai_core\.js\?v=(\d+)/)||[])[1], 10),
+     'BUILD_NO stimmt mit dem Cache-Bust \u00fcberein (eine Zahl f\u00fcr Deploy, Konsole und Log)');
+
+  ok(/heuristicVersion: HEURISTIC_VERSION, build: BUILD_NO,/.test(html),
+     '\u00a789b-Kopf schreibt build \u2014 damit sind auch WAISEN (\u00a7100) einem Build zuzuordnen');
+  ok(/heuristicVersion: HEURISTIC_VERSION,\s*\n\s*build: BUILD_NO,/.test(html),
+     'Partie-Ergebnis schreibt build neben heuristicVersion');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
@@ -148,7 +175,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 84, 'auf v\u226584 hochgez\u00e4hlt (der Kern hat sich ge\u00e4ndert)');
+  ok(parseInt(vRules,10) >= 86, 'auf v\u226586 hochgez\u00e4hlt (\u00a7102 \u00e4ndert countred.html)');
 }
 
 console.log('');
