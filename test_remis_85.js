@@ -47,7 +47,8 @@ function P(over){
   return Object.assign({
     scores: [5,-10,0,15,-5,10], windowN: 6, leadMax: 40,
     repCount: 0, halfmoves: 10, limit: 50, noProgressFrac: 0.6,
-    offers: true, band: 20, blocked: false, cooldown: false
+    offers: true, band: 20, blocked: false, cooldown: false,
+    lateFrac: 0.8, lateUsed: false                      // \u00a7103
   }, over||{});
 }
 
@@ -87,6 +88,31 @@ ok(aiDrawOfferDecision(P({offers:false})) === false, 'Stufen-Policy offers:false
 ok(aiDrawOfferDecision(P({scores:[20,-20,20,-20,20,-20]})) === true, 'exakt \u00b1band \u2192 z\u00e4hlt als stabil (\u2264)');
 ok(aiDrawOfferDecision(P({scores:[0,0,0]})) === false, 'Fenster nicht voll \u2192 kein Angebot');
 
+console.log('\u00a7103 \u2014 EIN sp\u00e4tes Angebot trotz Riegel (Livebefund 52JVRVFU):');
+{
+  // Reales Endfenster aus 52JVRVFU (27.7.): Max Michu bot bei Halbzug 12 an, Walter lehnte ab,
+  // danach 45 Halbz\u00fcge Schweigen bis zur Automatik. Alles war erf\u00fcllt \u2014 nur der Riegel stand.
+  const L = over => P(Object.assign({leadMax:25, scores:[-33,0,0,0,0,0], blocked:true}, over));
+  ok(aiDrawOfferDecision(L({halfmoves:45})) === true,
+     'Riegel gesetzt, aber 45/50 (\u2265 80 %) und noch nicht genutzt \u2192 EIN Angebot geht durch');
+  ok(aiDrawOfferDecision(L({halfmoves:45, lateUsed:true})) === false,
+     'derselbe Fall zum zweiten Mal \u2192 kein Angebot (genau EINS, kein Nerven)');
+  ok(aiDrawOfferDecision(L({halfmoves:39})) === false,
+     '39/50 liegt unter der 80-%-Marke \u2192 der Riegel h\u00e4lt (Mitte der Partie unver\u00e4ndert)');
+  ok(aiDrawOfferDecision(L({halfmoves:40})) === true &&
+     aiDrawOfferDecision(L({halfmoves:49})) === true,
+     'Grenze 40/50 greift, bis zur Automatik bleibt es dabei');
+  ok(aiDrawOfferDecision(L({halfmoves:45, scores:[76,74,72,68,68,52]})) === false,
+     '\u00a7101 bleibt \u00fcber \u00a7103: klar vorn \u2192 auch das SP\u00c4TE Angebot unterbleibt');
+  ok(aiDrawOfferDecision(P({blocked:true, halfmoves:45, lateFrac:0.8, scores:[5,-10,0,25,-5,10]})) === true,
+     'sp\u00e4tes Angebot h\u00e4ngt am Stillstand, nicht am \u00b1band (Wert au\u00dferhalb des Bands, trotzdem Angebot)');
+  // Ohne Riegel \u00e4ndert \u00a7103 nichts.
+  ok(aiDrawOfferDecision(L({halfmoves:45, blocked:false})) === true &&
+     aiDrawOfferDecision(L({halfmoves:10, blocked:false, scores:[5,-10,0,15,-5,10]})) === true &&
+     aiDrawOfferDecision(L({halfmoves:10, blocked:false})) === false,
+     'ohne Riegel unver\u00e4ndert: Stillstand ODER \u00b1band entscheidet wie bisher (\u221233 im Fenster, fr\u00fch \u2192 nein)');
+}
+
 console.log('\u00a7101 \u2014 die drei realen Angebotsmomente aus den 1.5-Partien:');
 {
   // Fenster = die letzten 6 geloggten Suchwerte vor dem jeweiligen Angebot, meister (leadMax 25),
@@ -114,7 +140,8 @@ for(let i=0;i<5000;i++){
     repCount: Math.floor(Math.random()*4),
     halfmoves: Math.floor(Math.random()*55), limit: 50,
     offers: Math.random()<0.8, band: 20,
-    blocked: Math.random()<0.3, cooldown: Math.random()<0.3
+    blocked: Math.random()<0.3, cooldown: Math.random()<0.3,
+    lateFrac: 0.8, lateUsed: Math.random()<0.5          // \u00a7103: auch den sp\u00e4ten Pfad mitpr\u00fcfen
   });
   if(aiDrawOfferDecision(p)){
     offered++;
@@ -241,6 +268,14 @@ console.log('\u00a7101 \u2014 Quellcode-W\u00e4chter:');
      'geblieben sind genau zwei Wege: einforderbare Wiederholung ODER einseitiges Wertfenster');
   ok(/noProgress/.test(extractFn('aiDrawOfferDecision')),
      'der Halbzug-Z\u00e4hler bleibt ANGEBOTS-Ausl\u00f6ser (nur die Zusage darunter wurde gesch\u00e4rft)');
+  ok(/const lateWindow = !p\.lateUsed && p\.halfmoves >= Math\.round\(p\.limit \* p\.lateFrac\);/.test(
+       extractFn('aiDrawOfferDecision')) &&
+     /if\(p\.blocked && !lateWindow\) return false;/.test(extractFn('aiDrawOfferDecision')),
+     '\u00a7103: der Riegel wird nur im sp\u00e4ten Fenster und nur einmal durchbrochen');
+  ok(/if\(formedTriple\)\{ aiOfferBlockedUntilProgress=false;[\s\S]{0,120}aiLateOfferUsed=false;/.test(html),
+     '\u00a7103: ein Dreier setzt Riegel UND sp\u00e4ten Durchgriff zur\u00fcck (neue Stillstands-Phase)');
+  ok(/aiLateOfferUsed=false;\s+\/\/ \u00a7103: sp\u00e4ter Durchgriff pro Partie neu/.test(html),
+     '\u00a7103: Zustand wird beim Partiestart zur\u00fcckgesetzt');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
