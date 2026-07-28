@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.5';
+const HEURISTIC_VERSION = 'countred-ai-1.6';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -109,7 +109,7 @@ if(typeof globalThis!=='undefined'){ globalThis.HEURISTIC_VERSION = HEURISTIC_VE
 // → aiWorkerBroken-Kaskade (§61e-4). Beim Kalibrieren/Testen auf schwachen Geräten beobachten;
 // ggf. harte Wanduhr-Obergrenze auch für minDepth-Tiefen nachrüsten (§61e-8-Fix).
 const SKILL_LEVELS = {
-  einsteiger:      { timeBudgetMs: 800,  maxDepth: 5, minDepth: 2, rankPool: 3, blockRate: 0.8, minThinkMs: 600 },
+  einsteiger:      { timeBudgetMs: 800,  maxDepth: 5, minDepth: 2, rankPool: 3, blockRate: 1.0, minThinkMs: 600 },  // §108: 0.8 war messbar wirkungslos (32,8 % gegen meister mit und ohne)
   fortgeschritten: { timeBudgetMs: 1500, maxDepth: 5, minDepth: 2, rankPool: 2, blockRate: 1.0, minThinkMs: 700 },
   stark:           { timeBudgetMs: 3000, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 800 },
   meister:         { timeBudgetMs: 5000, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 900 },
@@ -280,7 +280,7 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       const margin = triple ? DREIER_FORM_BONUS : 0;
       const aWin = useRootAlpha ? (localBest - margin) : -Infinity;
       let v = bonus
-        ? negamax(nb, depth, aWin, Infinity, player, bonus, branchSet, childClock, clockLimit)
+        ? negamax(nb, depth+1, aWin, Infinity, player, bonus, branchSet, childClock, clockLimit)   // §105: Bonuszug kostet keine Ply
         : -negamax(nb, depth, -Infinity, -aWin, opp, null, branchSet, childClock, clockLimit);
       const vRaw = v;                                    // §99: vor dem Bonus festhalten
       if(triple && Math.abs(v) < 90000) v += DREIER_FORM_BONUS;
@@ -474,6 +474,78 @@ function doubleThreatJS(b,ai,p1parity){
   return val;
 }
 
+
+// ── §107: Paritätshoheit über Vierer-Spalten mit ZWEI leeren Feldern ──────
+// Erfasst das Endspielmotiv aus AG8VAPGM: ein Spieler kann beide leeren Zellen
+// einer sonst einfarbigen Spalte mit ZWEI VERSCHIEDENEN Figuren besetzen, die
+// beide Tops SEINER EIGENEN Stapel sind. Solche Figuren sind unantastbar (auf
+// einen Stapel darf nicht gestapelt werden) und ohne Paritätsprüfung hebbar
+// (canLift auf Stapel prüft nur formedBy). Die Reihenfolge wird durchgespielt:
+// das Setzen der ersten Figur verändert die Rot-Nachbarzählung der zweiten,
+// wenn die Siegfarbe rot ist.
+// GATE: nur wenn irgendwo gesperrt ist — vorher gibt es das Thema nicht, und so
+// bleibt die Eröffnung (wo das Zeitbudget bindet) unbelastet. Gemessene Kosten 1,05×.
+// BELEGLAGE: Mechanik aus der Regelschicht hergeleitet; das Muster trat in 8 von
+// 245 realen Stellungen auf und der meldende Spieler gewann in 7 davon. Ein
+// STÄRKENACHWEIS im Selbstspiel liegt NICHT vor — das Muster entsteht dort in nur
+// 1 von 40 Partien, weil die KI es gegen sich selbst nicht aufbaut. Aufnahme
+// erfolgte auf Mechanik, nicht auf Messung.
+const W_HOHEIT = 300;
+
+function _hoheitEigeneTops(b, stripe, color, P){
+  const out=[];
+  for(let r=0;r<4;r++) for(let c=0;c<4;c++){
+    const cell=b[r][c];
+    if(cell.stack && cell.stack.formedBy===P){
+      const t=cell.stack.top;
+      if(t.stripe===stripe && t.color===color) out.push({r,c});
+    }
+  }
+  return out;
+}
+
+function _hoheitFuer(b, P, p1parity){
+  let gefunden=0;
+  for(let c=0;c<4;c++){
+    let col=null; const leer=[]; let ok=true;
+    for(let r=0;r<4;r++){
+      const cell=b[r][c];
+      const base=cell.stack?cell.stack.bottom:cell.piece;
+      if(!base){ leer.push(r); continue; }
+      if(col===null) col=base.color;
+      else if(base.color!==col){ ok=false; break; }
+    }
+    if(!ok || col===null || leer.length!==2) continue;
+    const [ra,rb]=leer;
+    let treffer=false;
+    for(const [t1,t2] of [[ra,rb],[rb,ra]]){
+      for(const k1 of _hoheitEigeneTops(b,t1,col,P)){
+        if(!canLift(b,k1.r,k1.c,P,p1parity)) continue;
+        if(!canDrop(b,k1.r,k1.c,t1,c,P,p1parity)) continue;
+        const nb=applyMoveOn(b,k1.r,k1.c,t1,c,P);
+        for(const k2 of _hoheitEigeneTops(b,t2,col,P)){
+          if(k2.r===k1.r && k2.c===k1.c) continue;
+          if(!canLift(nb,k2.r,k2.c,P,p1parity)) continue;
+          if(canDrop(nb,k2.r,k2.c,t2,c,P,p1parity)){ treffer=true; break; }
+        }
+        if(treffer) break;
+      }
+      if(treffer) break;
+    }
+    if(treffer) gefunden++;
+  }
+  return gefunden;
+}
+
+// Antisymmetrisch by construction: Differenz zweier spielerneutraler Zählungen.
+function hoheitJS(b, ai, p1parity){
+  let gesperrt=false;
+  for(let r=0;r<4 && !gesperrt;r++) for(let c=0;c<4;c++) if(b[r][c].locked){ gesperrt=true; break; }
+  if(!gesperrt) return 0;
+  const geg = ai===P1 ? P2 : P1;
+  return _hoheitFuer(b,ai,p1parity) - _hoheitFuer(b,geg,p1parity);
+}
+
 function evaluate(b, forPlayer){
   const AI_=forPlayer, HUMAN_=forPlayer===P1?P2:P1;
   let score=0;
@@ -656,6 +728,7 @@ function evaluate(b, forPlayer){
   score += parityCtrlJS(b, AI_, PARITY_P1) * W_PARITY;
   score += asingleControlJS(b, AI_, PARITY_P1) * W_SINGLE;
   score += doubleThreatJS(b, AI_, PARITY_P1) * W_DOUBLE;
+  score += hoheitJS(b, AI_, PARITY_P1) * W_HOHEIT;          // §107
 
   return score;
 }
@@ -722,7 +795,7 @@ function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet, cloc
     const alphaIn  = (alpha === -Infinity) ? -Infinity : alpha - marginIn;
     const betaIn   = (beta  ===  Infinity) ?  Infinity : beta  - marginIn;
     const val = bonus
-      ? negamax(nb, depth-1, alphaIn, betaIn, player, bonus, pathSet, childClock, clockLimit)
+      ? negamax(nb, depth,   alphaIn, betaIn, player, bonus, pathSet, childClock, clockLimit)      // §105: Bonuszug kostet keine Ply
       : -negamax(nb, depth-1, -betaIn, -alphaIn, opp, null, pathSet, childClock, clockLimit);
     pathSet.delete(nbHash);
     // SCHRITT 1: Bilden einer Dreierreihe (dieser Zug von `player`) wird direkt in
