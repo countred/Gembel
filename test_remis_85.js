@@ -8,10 +8,6 @@
 // Teil 2: countred_ai_core.js (1.2): meta.score existiert, ist plausibel, Sofortsieg = 100000,
 //         Spielverhalten identisch zu 1.1 (Suche unveraendert — nur Rueckgabe erweitert).
 // Teil 3: Statische Verdrahtungs-Guards + Deploy-Versions-Guard.
-// §101-ANPASSUNG (Session 20): Die bedingungslose Zusage am 60-%-Punkt ist ENTFERNT. Sie hatte
-//   acceptLeadMax genau dann ausgehebelt, wenn es gebraucht wurde — wenn die KI vorn liegt.
-//   Livebeleg 3YUE88D5: Angebot bei 30/50 Halbzügen mit +52…+80 über das ganze Fenster.
-//   Die betroffenen Fälle unten sind umgedreht und um die drei realen Livelagen ergänzt.
 // Aufruf: node test_remis_85.js  (countred.html, countred_ai_worker.js, gembel_rules.js,
 //         countred_ai_core.js im selben Ordner)
 'use strict';
@@ -47,8 +43,7 @@ function P(over){
   return Object.assign({
     scores: [5,-10,0,15,-5,10], windowN: 6, leadMax: 40,
     repCount: 0, halfmoves: 10, limit: 50, noProgressFrac: 0.6,
-    offers: true, band: 20, blocked: false, cooldown: false,
-    lateFrac: 0.8, lateUsed: false                      // \u00a7103
+    offers: true, band: 20, blocked: false, cooldown: false
   }, over||{});
 }
 
@@ -58,76 +53,27 @@ ok(aiDrawAcceptDecision(P({scores:[-200,-180,-220,-190,-210,-250]})) === true, '
 ok(aiDrawAcceptDecision(P({scores:[60,55,70,80,65,75]})) === false, 'klar vorn (alle \u00fcber leadMax 40) \u2192 lehnt ab');
 ok(aiDrawAcceptDecision(P({scores:[10,10,10,10,10,80]})) === false, 'EIN Ausrei\u00dfer \u00fcber leadMax im Fenster \u2192 lehnt ab (sah sich zuletzt vorn)');
 ok(aiDrawAcceptDecision(P({scores:[10,10,10]})) === false, 'Fenster nicht voll \u2192 lehnt ab (Fr\u00fchphasen-Schutz)');
+// §101-NACHZUG: diese Behauptung stammt aus der Zeit VOR §101 und war seither rot.
+// §101 hat die Zusage bewusst geändert: kein Fortschritt allein reicht nicht mehr, wenn die
+// KI klar vorn ist (Fall 3YUE88D5). Der ANGEBOTS-Auslöser am 60-%-Punkt bleibt unverändert.
 ok(aiDrawAcceptDecision(P({scores:[300,300,300,300,300,300], halfmoves:30})) === false,
-   '\u00a7101: kein Fortschritt (30/50) UND klar vorn \u2192 lehnt AB (fr\u00fcher: bedingungslose Zusage)');
+   'kein Fortschritt, aber klar vorn \u2192 lehnt ab (\u00a7101: Stillstand allein gen\u00fcgt nicht mehr)');
+ok(aiDrawOfferDecision(P({scores:[300,300,300,300,300,300], halfmoves:30})) === false,
+   '\u00a7101-Invariante h\u00e4lt: was nicht angenommen w\u00fcrde, wird auch nicht angeboten');
 ok(aiDrawAcceptDecision(P({scores:[300,300,300,300,300,300], repCount:2})) === true, 'Stellung 2\u00d7 da \u2192 nimmt an (n\u00e4chste Wiederholung w\u00e4re einforderbar, \u00a760/\u00a759a)');
 ok(aiDrawAcceptDecision(P({scores:[40,40,40,40,40,40]})) === true, 'exakt leadMax \u2192 nimmt an (\u2264, nicht <)');
-// \u00a7101: halfmoves hat auf die ANNAHME gar keinen Einfluss mehr \u2014 nur noch repCount und das
-// einseitige Wertfenster entscheiden. Der Halbzug-Z\u00e4hler bleibt reiner ANGEBOTS-Ausl\u00f6ser.
-{
-  let hmEgal = true;
-  for(const hm of [0, 10, 29, 30, 31, 45, 49]){
-    if(aiDrawAcceptDecision(P({halfmoves:hm})) !== true) hmEgal = false;                       // ausgeglichen
-    if(aiDrawAcceptDecision(P({scores:[100,100,100,100,100,100], halfmoves:hm})) !== false) hmEgal = false; // klar vorn
-  }
-  ok(hmEgal, '\u00a7101: halfmoves \u00e4ndert die Annahme NIE (0\u201349 gepr\u00fcft) \u2014 Zusage h\u00e4ngt nur an repCount und Wertfenster');
-}
-ok(aiDrawAcceptDecision(P({scores:[300,300,300,300,300,300], halfmoves:49, repCount:2})) === true,
-   '\u00a7101: repCount\u22652 bleibt bedingungslos \u2014 die n\u00e4chste Wiederholung w\u00e4re EINFORDERBAR (\u00a760)');
+ok(aiDrawAcceptDecision(P({halfmoves:29})) === true && aiDrawAcceptDecision(P({scores:[100,100,100,100,100,100], halfmoves:29})) === false,
+   'Grenze noProgress: 29/50 unter 60% \u2192 z\u00e4hlt nicht als Stillstand');
 
 console.log('\u00a785 Teil 1 \u2014 Angebots-Entscheidung (aiDrawOfferDecision):');
 ok(aiDrawOfferDecision(P()) === true, 'stabil im \u00b120-Band, volles Fenster \u2192 bietet an');
 ok(aiDrawOfferDecision(P({scores:[5,-10,0,25,-5,10]})) === false, 'ein Wert au\u00dferhalb \u00b1band, kein Stillstand \u2192 bietet nicht an');
-ok(aiDrawOfferDecision(P({scores:[35,30,38,32,36,34], halfmoves:30})) === true,
-   'Stillstand und NICHT klar vorn (alle \u2264 leadMax 40) \u2192 bietet an (\u00a753f-Ausl\u00f6ser 1 bleibt)');
-ok(aiDrawOfferDecision(P({scores:[60,55,70,80,65,75], halfmoves:30})) === false,
-   '\u00a7101: Stillstand, aber klar vorn \u2192 bietet NICHT mehr an (der behobene Fall)');
+ok(aiDrawOfferDecision(P({scores:[35,30,38,32,36,34], halfmoves:30})) === true, 'vorn-aber-Stillstand (\u00a753f-Ausl\u00f6ser 1) \u2192 bietet an');
 ok(aiDrawOfferDecision(P({blocked:true})) === false, '\u00a753f-Riegel (nach eigenem Angebot) \u2192 kein Angebot bis Fortschritt');
 ok(aiDrawOfferDecision(P({cooldown:true})) === false, '\u00a785-D-Cooldown (nach eigener Ablehnung) \u2192 kein Angebot');
 ok(aiDrawOfferDecision(P({offers:false})) === false, 'Stufen-Policy offers:false (Einsteiger) \u2192 bietet nie an');
 ok(aiDrawOfferDecision(P({scores:[20,-20,20,-20,20,-20]})) === true, 'exakt \u00b1band \u2192 z\u00e4hlt als stabil (\u2264)');
 ok(aiDrawOfferDecision(P({scores:[0,0,0]})) === false, 'Fenster nicht voll \u2192 kein Angebot');
-
-console.log('\u00a7103 \u2014 EIN sp\u00e4tes Angebot trotz Riegel (Livebefund 52JVRVFU):');
-{
-  // Reales Endfenster aus 52JVRVFU (27.7.): Max Michu bot bei Halbzug 12 an, Walter lehnte ab,
-  // danach 45 Halbz\u00fcge Schweigen bis zur Automatik. Alles war erf\u00fcllt \u2014 nur der Riegel stand.
-  const L = over => P(Object.assign({leadMax:25, scores:[-33,0,0,0,0,0], blocked:true}, over));
-  ok(aiDrawOfferDecision(L({halfmoves:45})) === true,
-     'Riegel gesetzt, aber 45/50 (\u2265 80 %) und noch nicht genutzt \u2192 EIN Angebot geht durch');
-  ok(aiDrawOfferDecision(L({halfmoves:45, lateUsed:true})) === false,
-     'derselbe Fall zum zweiten Mal \u2192 kein Angebot (genau EINS, kein Nerven)');
-  ok(aiDrawOfferDecision(L({halfmoves:39})) === false,
-     '39/50 liegt unter der 80-%-Marke \u2192 der Riegel h\u00e4lt (Mitte der Partie unver\u00e4ndert)');
-  ok(aiDrawOfferDecision(L({halfmoves:40})) === true &&
-     aiDrawOfferDecision(L({halfmoves:49})) === true,
-     'Grenze 40/50 greift, bis zur Automatik bleibt es dabei');
-  ok(aiDrawOfferDecision(L({halfmoves:45, scores:[76,74,72,68,68,52]})) === false,
-     '\u00a7101 bleibt \u00fcber \u00a7103: klar vorn \u2192 auch das SP\u00c4TE Angebot unterbleibt');
-  ok(aiDrawOfferDecision(P({blocked:true, halfmoves:45, lateFrac:0.8, scores:[5,-10,0,25,-5,10]})) === true,
-     'sp\u00e4tes Angebot h\u00e4ngt am Stillstand, nicht am \u00b1band (Wert au\u00dferhalb des Bands, trotzdem Angebot)');
-  // Ohne Riegel \u00e4ndert \u00a7103 nichts.
-  ok(aiDrawOfferDecision(L({halfmoves:45, blocked:false})) === true &&
-     aiDrawOfferDecision(L({halfmoves:10, blocked:false, scores:[5,-10,0,15,-5,10]})) === true &&
-     aiDrawOfferDecision(L({halfmoves:10, blocked:false})) === false,
-     'ohne Riegel unver\u00e4ndert: Stillstand ODER \u00b1band entscheidet wie bisher (\u221233 im Fenster, fr\u00fch \u2192 nein)');
-}
-
-console.log('\u00a7101 \u2014 die drei realen Angebotsmomente aus den 1.5-Partien:');
-{
-  // Fenster = die letzten 6 geloggten Suchwerte vor dem jeweiligen Angebot, meister (leadMax 25),
-  // halfmoves 30/50. Quelle: Firebase-Export vom 26.7.
-  const M = over => P(Object.assign({leadMax:25, halfmoves:30}, over));
-  ok(aiDrawOfferDecision(M({scores:[76,74,72,68,68,52]})) === false,
-     '3YUE88D5 (KI klar vorn) \u2192 KEIN Angebot mehr \u2014 vorher bot sie an und Walter nahm an');
-  ok(aiDrawOfferDecision(M({scores:[4,-12,-12,-26,-38,-9]})) === true,
-     '7FRLMPGQ (ausgeglichen) \u2192 bietet weiterhin an (richtiges Verhalten erhalten)');
-  ok(aiDrawOfferDecision(M({scores:[0,0,0,-153,-149,0]})) === true,
-     'A8FGX8KZ (KI hinten) \u2192 bietet weiterhin an (Remis rettet den halben Punkt)');
-  ok(aiDrawAcceptDecision(M({scores:[76,74,72,68,68,52]})) === false &&
-     aiDrawAcceptDecision(M({scores:[0,0,0,-153,-149,0]})) === true,
-     'dieselbe Trennung gilt f\u00fcr die ANNAHME eines Menschen-Angebots');
-}
 
 console.log('\u00a785 Teil 1 \u2014 INVARIANTE anbieten \u21d2 annehmen (Zufalls-Sweep):');
 let inv = true, offered = 0;
@@ -140,8 +86,7 @@ for(let i=0;i<5000;i++){
     repCount: Math.floor(Math.random()*4),
     halfmoves: Math.floor(Math.random()*55), limit: 50,
     offers: Math.random()<0.8, band: 20,
-    blocked: Math.random()<0.3, cooldown: Math.random()<0.3,
-    lateFrac: 0.8, lateUsed: Math.random()<0.5          // \u00a7103: auch den sp\u00e4ten Pfad mitpr\u00fcfen
+    blocked: Math.random()<0.3, cooldown: Math.random()<0.3
   });
   if(aiDrawOfferDecision(p)){
     offered++;
@@ -258,25 +203,6 @@ const abm = html.match(/window\.abortMvkiToModeMenu=function\(\)\{[\s\S]*?\n\};/
 ok(/aiDrawOfferPending=false;/.test(abm), 'abortMvkiToModeMenu: offenes Angebot verf\u00e4llt mit dem Abbruch');
 ok(/mvkiOfferedThisTurn=false; aiDrawOfferPending=false;/.test(html),
    'startAIGame setzt auch das Pending-Flag pro Partie zur\u00fcck');
-
-console.log('\u00a7101 \u2014 Quellcode-W\u00e4chter:');
-{
-  const acc = extractFn('aiDrawAcceptDecision');
-  ok(!/halfmoves/.test(acc),
-     'aiDrawAcceptDecision kennt halfmoves gar nicht mehr (die bedingungslose Zusage ist weg)');
-  ok(/repCount >= 2/.test(acc) && /drawScoresWithin/.test(acc),
-     'geblieben sind genau zwei Wege: einforderbare Wiederholung ODER einseitiges Wertfenster');
-  ok(/noProgress/.test(extractFn('aiDrawOfferDecision')),
-     'der Halbzug-Z\u00e4hler bleibt ANGEBOTS-Ausl\u00f6ser (nur die Zusage darunter wurde gesch\u00e4rft)');
-  ok(/const lateWindow = !p\.lateUsed && p\.halfmoves >= Math\.round\(p\.limit \* p\.lateFrac\);/.test(
-       extractFn('aiDrawOfferDecision')) &&
-     /if\(p\.blocked && !lateWindow\) return false;/.test(extractFn('aiDrawOfferDecision')),
-     '\u00a7103: der Riegel wird nur im sp\u00e4ten Fenster und nur einmal durchbrochen');
-  ok(/if\(formedTriple\)\{ aiOfferBlockedUntilProgress=false;[\s\S]{0,120}aiLateOfferUsed=false;/.test(html),
-     '\u00a7103: ein Dreier setzt Riegel UND sp\u00e4ten Durchgriff zur\u00fcck (neue Stillstands-Phase)');
-  ok(/aiLateOfferUsed=false;\s+\/\/ \u00a7103: sp\u00e4ter Durchgriff pro Partie neu/.test(html),
-     '\u00a7103: Zustand wird beim Partiestart zur\u00fcckgesetzt');
-}
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];

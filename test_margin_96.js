@@ -42,7 +42,9 @@ Object.assign(globalThis, rb.__R);
 const core = require('./countred_ai_core.js');
 globalThis.PARITY_P1 = 'odd';
 
-ok(core.HEURISTIC_VERSION === 'countred-ai-1.5', "HEURISTIC_VERSION === 'countred-ai-1.5'");
+// §107-Anpassung: exakter Pin wandert in test_hoheit_107. Die §96-Marge gibt es ab 1.5.
+const verNum = parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/)||[])[1]);
+ok(verNum >= 1.5, "HEURISTIC_VERSION ist countred-ai-≥1.5 (§96-Marge vorhanden; aktuell: "+core.HEURISTIC_VERSION+")");
 
 // ── REFERENZ: derselbe Kern, aber ohne Alpha-Beta-Abbruch ──
 const PRUNE_LINE = /^\s*if\(beta <= alpha\) break;\s*$/gm;
@@ -58,7 +60,10 @@ const ref = refCtx.__REF;
 console.log('\u00a796 \u2014 Quellcode-W\u00e4chter (Marge innen UND am Root):');
 ok(/const marginIn = \(triple \? DREIER_FORM_BONUS : 0\);/.test(coreSrc),
    'innere Marge vorhanden (marginIn)');
-ok(/negamax\(nb, depth-1, alphaIn, betaIn, player, bonus/.test(coreSrc) &&
+// §105-Anpassung: die Tiefenangabe des BONUSKINDES ist seit 1.6 `depth` statt `depth-1`
+// (Bonuszug verbraucht keine Ply). Geprüft wird hier die FENSTERVERSCHIEBUNG — das ist der
+// Gegenstand von §96 —, nicht die Tiefe. Deshalb ist die Tiefe im Muster flexibel.
+ok(/negamax\(nb, depth[^,]*,\s*alphaIn, betaIn, player, bonus/.test(coreSrc) &&
    /-negamax\(nb, depth-1, -betaIn, -alphaIn, opp, null/.test(coreSrc),
    'beide Kindaufrufe suchen gegen das VERSCHOBENE Fenster');
 ok(/const margin = triple \? DREIER_FORM_BONUS : 0;/.test(coreSrc),

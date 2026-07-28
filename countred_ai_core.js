@@ -886,6 +886,7 @@ if(typeof module !== 'undefined' && module.exports){
     HEURISTIC_VERSION,
     parityCtrlJS, asingleControlJS, doubleThreatJS,
     colHasThreat, // §87: für Node-Tests (1I-Einheit)
+    hoheitJS, // §107: für Node-Tests (Gate, Antisymmetrie, AG8VAPGM-Anker)
     drawClockFactor, DRAW_CLOCK_SOFT, // §91: für Node-Tests (Uhr-Dämpfung)
     findImmediateWin, movesAllowingOpponentWin };
 }
