@@ -40,7 +40,9 @@ Object.assign(globalThis, rb.__R);
 const core = require('./countred_ai_core.js');
 globalThis.PARITY_P1 = 'odd';
 
-ok(core.HEURISTIC_VERSION === 'countred-ai-1.6', "HEURISTIC_VERSION === 'countred-ai-1.6' (exakter Pin, neueste Suite)");
+// \u00a7109-Anpassung: exakter Pin wandert in test_stufen_109. \u00a7105/\u00a7107 gibt es ab 1.6.
+const verNum = parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/)||[])[1]);
+ok(verNum >= 1.6, "HEURISTIC_VERSION ist countred-ai-\u22651.6 (\u00a7105/\u00a7107 vorhanden; aktuell: "+core.HEURISTIC_VERSION+")");
 
 const ANCHOR = {"parity":"odd","hz19":[[{"stripe":0,"piece":{"color":"red","stripe":0},"stack":null,"locked":false},{"stripe":0,"piece":{"color":"black","stripe":0},"stack":{"bottom":{"color":"black","stripe":0},"top":{"color":"red","stripe":1},"formedBy":1},"locked":false},{"stripe":0,"piece":{"color":"red","stripe":0},"stack":{"bottom":{"color":"red","stripe":0},"top":{"color":"black","stripe":1},"formedBy":1},"locked":true},{"stripe":0,"piece":null,"stack":null,"locked":false}],[{"stripe":1,"piece":null,"stack":null,"locked":false},{"stripe":1,"piece":null,"stack":null,"locked":false},{"stripe":1,"piece":{"color":"red","stripe":1},"stack":null,"locked":true},{"stripe":1,"piece":null,"stack":null,"locked":false}],[{"stripe":2,"piece":null,"stack":null,"locked":false},{"stripe":2,"piece":{"color":"black","stripe":2},"stack":{"bottom":{"color":"black","stripe":2},"top":{"color":"red","stripe":2},"formedBy":1},"locked":false},{"stripe":2,"piece":{"color":"red","stripe":2},"stack":{"bottom":{"color":"red","stripe":2},"top":{"color":"red","stripe":3},"formedBy":2},"locked":true},{"stripe":2,"piece":{"color":"black","stripe":2},"stack":{"bottom":{"color":"black","stripe":2},"top":{"color":"black","stripe":0},"formedBy":2},"locked":false}],[{"stripe":3,"piece":null,"stack":null,"locked":false},{"stripe":3,"piece":null,"stack":null,"locked":false},{"stripe":3,"piece":{"color":"black","stripe":3},"stack":{"bottom":{"color":"black","stripe":3},"top":{"color":"red","stripe":3},"formedBy":1},"locked":false},{"stripe":3,"piece":{"color":"black","stripe":3},"stack":{"bottom":{"color":"black","stripe":3},"top":{"color":"black","stripe":1},"formedBy":2},"locked":false}]],"hz5":[[{"stripe":0,"piece":null,"stack":null,"locked":false},{"stripe":0,"piece":{"color":"black","stripe":0},"stack":{"bottom":{"color":"black","stripe":0},"top":{"color":"black","stripe":0},"formedBy":2},"locked":false},{"stripe":0,"piece":{"color":"red","stripe":0},"stack":{"bottom":{"color":"red","stripe":0},"top":{"color":"black","stripe":1},"formedBy":1},"locked":false},{"stripe":0,"piece":null,"stack":null,"locked":false}],[{"stripe":1,"piece":{"color":"black","stripe":1},"stack":null,"locked":false},{"stripe":1,"piece":{"color":"red","stripe":1},"stack":{"bottom":{"color":"red","stripe":1},"top":{"color":"red","stripe":0},"formedBy":2},"locked":false},{"stripe":1,"piece":null,"stack":null,"locked":false},{"stripe":1,"piece":{"color":"red","stripe":1},"stack":null,"locked":false}],[{"stripe":2,"piece":null,"stack":null,"locked":false},{"stripe":2,"piece":{"color":"black","stripe":2},"stack":{"bottom":{"color":"black","stripe":2},"top":{"color":"red","stripe":2},"formedBy":1},"locked":false},{"stripe":2,"piece":{"color":"red","stripe":2},"stack":null,"locked":false},{"stripe":2,"piece":{"color":"black","stripe":2},"stack":null,"locked":false}],[{"stripe":3,"piece":{"color":"black","stripe":3},"stack":null,"locked":false},{"stripe":3,"piece":{"color":"red","stripe":3},"stack":null,"locked":false},{"stripe":3,"piece":{"color":"black","stripe":3},"stack":null,"locked":false},{"stripe":3,"piece":{"color":"red","stripe":3},"stack":null,"locked":false}]]};
 
@@ -95,8 +97,11 @@ console.log('\u00a7107 \u2014 Anker aus AG8VAPGM (Walters Gewinnplan):');
 console.log('\u00a7108 \u2014 einsteiger: blockRate zur\u00fcck auf 1.0:');
 ok(core.SKILL_LEVELS.einsteiger.blockRate === 1.0,
    'blockRate 1.0 \u2014 0.8 war messbar wirkungslos (32,8 % gegen meister mit UND ohne) und war der falsche Hebel');
-ok(core.SKILL_LEVELS.einsteiger.rankPool === 3,
-   'rankPool 3 unver\u00e4ndert \u2014 er leistet die gesamte Absenkung');
+// \u00a7109-NACHZUG: bis 1.6 leistete rankPool 3 die gesamte Absenkung (gemessen 32,8 % gegen
+// meister, mit und ohne blockRate). Seit 1.7 kommt sie aus dem WERTFENSTER, rankPool steht
+// \u00fcberall auf 1. Die Fensterwerte selbst pr\u00fcft test_stufen_109.
+ok(core.SKILL_LEVELS.einsteiger.rankPool === 1,
+   'rankPool stillgelegt \u2014 die Absenkung kommt seit \u00a7109 aus dem Wertfenster');
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {

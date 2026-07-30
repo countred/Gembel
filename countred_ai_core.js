@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.6';
+const HEURISTIC_VERSION = 'countred-ai-1.7';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -108,11 +108,33 @@ if(typeof globalThis!=='undefined'){ globalThis.HEURISTIC_VERSION = HEURISTIC_VE
 // kann das zusammen mit findImmediateWin+movesAllowingOpponentWin den Haupt-Thread-Timeout reißen
 // → aiWorkerBroken-Kaskade (§61e-4). Beim Kalibrieren/Testen auf schwachen Geräten beobachten;
 // ggf. harte Wanduhr-Obergrenze auch für minDepth-Tiefen nachrüsten (§61e-8-Fix).
+// §109 STUFEN (1.7): Die Absenkung kommt aus dem WERTFENSTER — nicht mehr aus rankPool und
+// ausdrücklich nicht aus der Suchtiefe. Deshalb haben ALLE Stufen dasselbe Zeitbudget: sonst
+// erreichte eine schwache Stufe in der Eröffnung weniger Tiefe als meister, und die Absenkung
+// käme dort teils aus verlorener Tiefe statt aus dem Fenster — genau der §92-Störfaktor, den
+// die Kalibrierung nicht kennt. 2500 ms ist der Mittelweg: die Eröffnung ist für alle gleich
+// gekappt, die Wartezeit gegenüber den früheren 5000 ms halbiert.
+//   poolWindow — wie weit hinter dem besten Zug ein Zug noch in Frage kommt (harte Grenze).
+//                Leitplanke: höchstens ~110, denn 80 ist ein ganzer Dreier-Bonus. Breiter wäre
+//                nicht mehr „vertretbar anders", sondern ein sichtbarer Patzer.
+//   poolTemp   — wie oft die schlechteren gewählt werden. ACHTUNG, nicht monoton: 0 bedeutet
+//                GLEICHVERTEILUNG im Fenster (schwächste Einstellung), kleine Werte sind fast
+//                greedy, große nähern sich wieder der Gleichverteilung.
+// GEMESSEN (feste Tiefe 5, je 32 Partien gegen meister, gepaart über acht Eröffnungen):
+//   einsteiger 26,6 % · fortgeschritten 40,6 % · meister 50 % (Referenz).
+//   Faustregel: rund 50 Fensterpunkte entsprechen 9 Ergebnispunkten.
+// rankPool steht überall auf 1: durch das Fenster ist der alte Top-k-Pool wirkungslos, und ein
+// wirkungsloser Parameter führt beim nächsten Mal jemanden in die Irre.
 const SKILL_LEVELS = {
-  einsteiger:      { timeBudgetMs: 800,  maxDepth: 5, minDepth: 2, rankPool: 3, blockRate: 1.0, minThinkMs: 600 },  // §108: 0.8 war messbar wirkungslos (32,8 % gegen meister mit und ohne)
-  fortgeschritten: { timeBudgetMs: 1500, maxDepth: 5, minDepth: 2, rankPool: 2, blockRate: 1.0, minThinkMs: 700 },
-  stark:           { timeBudgetMs: 3000, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 800 },
-  meister:         { timeBudgetMs: 5000, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 900 },
+  einsteiger:      { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 600, poolWindow: 110, poolTemp: 30 },
+  fortgeschritten: { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 700, poolWindow:  30, poolTemp: 10 },
+  // stark: NICHT ENTFERNEN. Die Stufe wird nirgends angeboten (countred.html ruft nur einsteiger,
+  // fortgeschritten und meister) und ist bewusst unsichtbar — sie muss aber in der Konfiguration
+  // bleiben: Altpartien tragen skillLevel:"stark" im _meta-Kopf und im Meta-Eintrag und müssen im
+  // Replay und in jeder Auswertung ladbar bleiben; AI_DRAW_POLICY führt denselben Schlüssel
+  // (test_remis_85 prüft auf vier Zeilen). Unkalibriert, kein Fenster.
+  stark:           { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 800 },
+  meister:         { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 900 },
 };
 
 // Zeitquelle: performance.now im Browser, Date.now sonst. Injizierbar für Tests.
@@ -221,7 +243,18 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
     // Soundness: Nicht-Dreier-Kandidat exakt für v > localBest (Fenster localBest,+∞);
     // Dreier-Kandidat exakt für raw > localBest−BONUS ⇔ raw+BONUS > localBest. Alles darunter
     // kann die Zugwahl nicht ändern.
-    const useRootAlpha = (cfg.rankPool === 1);
+    // §109 Hebel 1: das Wertfenster braucht EXAKTE Wurzelwerte — mit unverändertem Wurzel-Alpha
+    // wären die Werte der Nicht-Bestzüge Fail-Low-Schranken, und das Fenster würde auf
+    // Phantomwerte reagieren (gemessen: im Schnitt 6 Phantom-Gleichstände je Stellung).
+    // §109b: DESHALB wird das Alpha nicht ABGESCHALTET (das kostete Faktor 4 an Rechenzeit und
+    // hätte live über das Zeitbudget Tiefe gekostet), sondern um die FENSTERBREITE gesenkt.
+    // Beweis der Verhaltensgleichheit: ein Zug fällt nur dann low, wenn sein echter Wert
+    // <= localBest − margin − poolWindow ist; dann liegt er ohnehin AUSSERHALB des Fensters und
+    // wird von der Auswahl verworfen. Jeder Zug INNERHALB des Fensters kommt exakt zurück.
+    // Da localBest während der Schleife nur steigt, gilt das auch für früh gesuchte Züge.
+    const _poolOn   = (typeof cfg.poolWindow === 'number');
+    const poolSlack = _poolOn ? cfg.poolWindow : 0;
+    const useRootAlpha = _poolOn ? true : (cfg.rankPool === 1);
     // §99 INSTRUMENTIERUNG (reine Beobachtung — aendert KEINE Zugwahl, KEIN Versionsbump).
     //   rawByMove : Suchwert VOR DREIER_FORM_BONUS, je Zug. Macht H5 abfragbar
     //               (Bonus entscheidet gegen das Suchurteil), ohne Offline-Nachrechnung.
@@ -278,7 +311,11 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       // §61e-5/§F2: Suchfenster (localBest − Dreier-Marge, +∞) statt (−∞,+∞). −∞−BONUS = −∞
       // in JS, daher kein Sonderfall für den ersten Zug nötig.
       const margin = triple ? DREIER_FORM_BONUS : 0;
-      const aWin = useRootAlpha ? (localBest - margin) : -Infinity;
+      // §109b: das zusätzliche Epsilon ist NICHT Kosmetik. Ohne es fällt ein Zug, dessen echter
+      // Wert GENAU auf der Fenstergrenze liegt, gegen alpha low und verschwindet aus der Auswahl,
+      // während er mit abgeschaltetem Alpha noch drin wäre (Filter prüft <=). Gemessen: 2 von 32
+      // Stellungen wichen dadurch ab, bis das Epsilon drin war.
+      const aWin = useRootAlpha ? (localBest - margin - poolSlack - (_poolOn ? 1e-6 : 0)) : -Infinity;
       let v = bonus
         ? negamax(nb, depth+1, aWin, Infinity, player, bonus, branchSet, childClock, clockLimit)   // §105: Bonuszug kostet keine Ply
         : -negamax(nb, depth, -Infinity, -aWin, opp, null, branchSet, childClock, clockLimit);
@@ -292,7 +329,37 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
     if(aborted){ budgetHit = true; break; }
     if(localMove){
       // rankPool: aus den Top-k Zügen wählen (Feinjustierung untere Stufen, §37d)
-      if(cfg.rankPool > 1){
+      if(typeof cfg.poolWindow === 'number'){
+        // ── §109 HEBEL 1: Wertfenster + Softmax statt Top-k-uniform ──────────────
+        // Top-k-uniform ignoriert den WERTABSTAND: der drittbeste Zug wird gleich oft
+        // gespielt wie der beste, egal ob er 2 oder 200 Punkte schlechter ist. Livebeleg
+        // 6XDY5WCE: 4×Rang 1, 6×Rang 2, 4×Rang 3, praktisch gleichverteilt.
+        // Hier stattdessen: nur Züge innerhalb von poolWindow Punkten hinter dem Besten
+        // kommen überhaupt in Frage, und innerhalb des Fensters fällt die Wahrscheinlichkeit
+        // exponentiell mit dem Abstand (Temperatur poolTemp).
+        //   poolWindow  → WIE SCHLECHT darf ein Zug höchstens sein (harte Grenze)
+        //   poolTemp    → WIE OFT werden schlechtere gewählt (weiche Gewichtung)
+        // poolTemp <= 0 ⇒ Gleichverteilung im Fenster (nur die harte Grenze wirkt).
+        // Der Reiz gegenüber rankPool: in scharfen Stellungen, wo der beste Zug weit vorne
+        // liegt, schrumpft das Fenster von selbst auf einen Zug — die Stufe spielt dort
+        // korrekt und irrt nur dort, wo es wirklich mehrere vertretbare Züge gibt.
+        scored.sort((a,b) => b.v - a.v);
+        const top = scored[0].v;
+        const cand = scored.filter(x => (top - x.v) <= cfg.poolWindow);
+        const temp = (typeof cfg.poolTemp === 'number') ? cfg.poolTemp : 0;
+        let pick;
+        if(temp > 0){
+          const w = cand.map(x => Math.exp(-(top - x.v) / temp));
+          const sum = w.reduce((a,b) => a+b, 0);
+          let r = Math.random() * sum, i = 0;
+          while(i < w.length - 1 && r > w[i]){ r -= w[i]; i++; }
+          pick = cand[i];
+        } else {
+          pick = cand[Math.floor(Math.random() * cand.length)];
+        }
+        bestMove = pick.m;
+        bestScore = pick.v;
+      } else if(cfg.rankPool > 1){
         scored.sort((a,b) => b.v - a.v);
         const pool = scored.slice(0, Math.min(cfg.rankPool, scored.length));
         const pick = pool[Math.floor(Math.random() * pool.length)];
