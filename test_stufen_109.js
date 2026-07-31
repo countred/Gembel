@@ -41,7 +41,10 @@ const core = require('./countred_ai_core.js');
 globalThis.PARITY_P1 = 'odd';
 const L = core.SKILL_LEVELS;
 
-ok(core.HEURISTIC_VERSION === 'countred-ai-1.7', "HEURISTIC_VERSION === 'countred-ai-1.7' (exakter Pin, neueste Suite)");
+// §111-Anpassung: der EXAKTE Pin wandert per Konvention in die jeweils NEUESTE Suite
+// (jetzt test_dreier_111). Diese Suite prüft das §109-FEATURE selbst — das gibt es ab 1.7.
+const verNum = parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/)||[])[1]);
+ok(verNum >= 1.7, "HEURISTIC_VERSION ist countred-ai-\u22651.7 (\u00a7109-Fenster vorhanden; aktuell: "+core.HEURISTIC_VERSION+")");
 
 console.log('\u00a7109 \u2014 kalibrierte Fensterwerte:');
 ok(L.einsteiger.poolWindow === 110 && L.einsteiger.poolTemp === 30,
@@ -62,8 +65,17 @@ console.log('\u00a7109 \u2014 einheitliches Zeitbudget (sonst kommt Tiefe als zw
 {
   const b = Object.keys(L).map(k => L[k].timeBudgetMs);
   ok(new Set(b).size === 1, 'alle Stufen haben dasselbe Budget (' + b[0] + ' ms)');
-  const d = Object.keys(L).map(k => L[k].maxDepth + '/' + L[k].minDepth);
-  ok(new Set(d).size === 1, 'alle Stufen haben dieselben Tiefengrenzen (' + d[0] + ')');
+  // §111-NACHZUG: diese Behauptung stammt aus §109 und war dort richtig — die Absenkung sollte
+  // AUSSCHLIESSLICH aus dem Fenster kommen. §111 hat sie bewusst aufgehoben: einsteiger rechnet
+  // jetzt nur noch bis Tiefe 3, weil das Fenster innerhalb von Walters Leitplanke (≤110) nicht
+  // genug hergibt. Geprüft wird deshalb ab jetzt die neue Absicht — Tiefe ist ein ERLAUBTER,
+  // aber ausdrücklich einsteiger-EXKLUSIVER Hebel.
+  ok(L.meister.maxDepth === 5 && L.fortgeschritten.maxDepth === 5 && L.stark.maxDepth === 5,
+     'meister/fortgeschritten/stark unverändert auf maxDepth 5');
+  ok(L.einsteiger.maxDepth < L.meister.maxDepth,
+     'einsteiger rechnet flacher als meister (§111: maxDepth ' + L.einsteiger.maxDepth + ')');
+  const mins = Object.keys(L).map(k => L[k].minDepth);
+  ok(new Set(mins).size === 1, 'minDepth bei allen Stufen gleich (' + mins[0] + ')');
 }
 
 console.log('\u00a7109 \u2014 Wurzel-Alpha wird GESENKT, nicht abgeschaltet:');
@@ -126,7 +138,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 90, 'Cache-Bust auf v\u226590 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 91, 'Cache-Bust auf v\u226591 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');

@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.7';
+const HEURISTIC_VERSION = 'countred-ai-1.8';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -90,6 +90,18 @@ const HEURISTIC_VERSION = 'countred-ai-1.7';
 //      Score-Verlaeufe aus 1.2-1.4 nicht als exakte Suchwerte lesen.
 // DAUERSCHUTZ: test_margin_96.js vergleicht die Suche gegen eine pruning-freie Referenz, die
 //      zur Testlaufzeit aus DIESER Datei erzeugt wird — ein Rueckfall faellt sofort auf.
+// 1.7 → 1.8 (31.7., §111 einsteiger-Paket): ZWEI Aenderungen, BEIDE ausschliesslich an der
+//      Stufe `einsteiger`. meister, fortgeschritten und stark sind UNBERUEHRT — nachgewiesen
+//      per Bit-Identitaetslauf (42 Stellungen, Zug UND score, 1.7 gegen 1.8, null Abweichungen).
+//      (a) maxDepth 3 statt 5 (GRADUELLE Skalierung). Gemessen: Tiefe 4 gegen Tiefe 3 = 83,3 %,
+//          eine Ply ist rund 33 Punkte wert — der einzige Hebel mit gemessener Muskelkraft.
+//          Nebeneffekt: das 2500-ms-Budget bindet bei Tiefe 3 kaum noch, die bis 1.7
+//          UNFREIWILLIGE Tiefenstreuung (live nur 75 % Tiefe 5 statt 97 %) wird dadurch zu
+//          einer kontrollierten Groesse.
+//      (b) forceTriple (DIREKTE Manipulation — Walter-Auflage: gut dokumentieren, moeglichst
+//          die einzige ihrer Art). Siehe den ausfuehrlichen Block an der Fundstelle in pickMove.
+//      MISCH-REGEL: einsteiger-Partien aus 1.7 und 1.8 NICHT mischen. meister- und
+//      fortgeschritten-Partien sind ueber 1.7/1.8 hinweg poolbar (wie schon 1.6/1.7).
 // §65f-BUGFIX: countred_ai_core.js ist ein KLASSISCHES Script, der Hauptcode in countred.html
 // ein MODUL. Ein top-level `const` eines klassischen Scripts landet im globalen LEXIKALISCHEN
 // Environment — auf das ein Modul NICHT zugreift (Module lesen undeklarierte Namen von globalThis).
@@ -126,7 +138,8 @@ if(typeof globalThis!=='undefined'){ globalThis.HEURISTIC_VERSION = HEURISTIC_VE
 // rankPool steht überall auf 1: durch das Fenster ist der alte Top-k-Pool wirkungslos, und ein
 // wirkungsloser Parameter führt beim nächsten Mal jemanden in die Irre.
 const SKILL_LEVELS = {
-  einsteiger:      { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 600, poolWindow: 110, poolTemp: 30 },
+  // §111: maxDepth 3 (graduell) + forceTriple (direkte Manipulation, s. pickMove). NUR hier.
+  einsteiger:      { timeBudgetMs: 2500, maxDepth: 3, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 600, poolWindow: 110, poolTemp: 30, forceTriple: true },
   fortgeschritten: { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 700, poolWindow:  30, poolTemp: 10 },
   // stark: NICHT ENTFERNEN. Die Stufe wird nirgends angeboten (countred.html ruft nur einsteiger,
   // fortgeschritten und meister) und ist bewusst unsichtbar — sie muss aber in der Konfiguration
@@ -266,6 +279,10 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
     //               VOR dem gewaehlten Zug lag — dank ID-Sortierung ist das der Normalfall,
     //               aber die Zaehlung bleibt eine UNTERGRENZE.
     const rawByMove = new Map(), prevByMove = new Map();
+    // §111: welche Wurzelzüge bilden einen Dreier? Wird nur unter cfg.forceTriple ausgewertet,
+    // aber immer gefüllt — die Menge ist winzig und der Zweig bleibt dadurch frei von
+    // Sonderfällen. Ohne forceTriple hat sie KEINE Wirkung (meister-Pfad unberührt).
+    const tripleSet = new Set();
     const _key = m => m.fr+','+m.fc+','+m.tr+','+m.tc;
     for(const m of legal){
       // Sicherheitsnetz: Gegner-Sieg-ermöglichende Züge meiden, solange es Alternativen gibt
@@ -279,6 +296,7 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       if(checkFourOn(nb)){ rawByMove.set(_key(m),100000); prevByMove.set(_key(m), localBest===-Infinity?null:localBest);
         localBest = 100000; localMove = m; scored.push({m, v: 100000}); break; }
       const triple = applyLockOn(nb);
+      if(triple) tripleSet.add(_key(m)); // §111
       const bonus = triple ? (getLegalMoves(nb, player, p1parity).length > 0 ? player : null) : null;
       const nextPlayer = bonus ? player : opp;
       const nbHash = boardHash(nb, nextPlayer);
@@ -315,7 +333,16 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       // Wert GENAU auf der Fenstergrenze liegt, gegen alpha low und verschwindet aus der Auswahl,
       // während er mit abgeschaltetem Alpha noch drin wäre (Filter prüft <=). Gemessen: 2 von 32
       // Stellungen wichen dadurch ab, bis das Epsilon drin war.
-      const aWin = useRootAlpha ? (localBest - margin - poolSlack - (_poolOn ? 1e-6 : 0)) : -Infinity;
+      // §111: unter forceTriple entscheidet das MATE-BAND darüber, ob ein Dreier genommen wird.
+      // Diese Prüfung darf nicht auf einer Fail-Low-Schranke fußen: eine Schranke ist eine OBERE
+      // Grenze des wahren Wertes, ein in Wahrheit verlorener Dreier könnte damit über −90000
+      // landen und durchrutschen. Deshalb bekommen genau diese wenigen Züge das volle Fenster.
+      // Kosten: dreierbildende Wurzelzüge sind selten (live rund 6 % der KI-Züge haben überhaupt
+      // einen), und die Stufe rechnet nur bis Tiefe 3.
+      const _exactTriple = (cfg.forceTriple === true) && !!triple;
+      const aWin = (useRootAlpha && !_exactTriple)
+        ? (localBest - margin - poolSlack - (_poolOn ? 1e-6 : 0))
+        : -Infinity;
       let v = bonus
         ? negamax(nb, depth+1, aWin, Infinity, player, bonus, branchSet, childClock, clockLimit)   // §105: Bonuszug kostet keine Ply
         : -negamax(nb, depth, -Infinity, -aWin, opp, null, branchSet, childClock, clockLimit);
@@ -328,6 +355,38 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
     // (bestMove bleibt auf dem Ergebnis der letzten vollständigen Tiefe).
     if(aborted){ budgetHit = true; break; }
     if(localMove){
+      // ── §111 DREIER-VORRANG (cfg.forceTriple) ────────────────────────────────
+      // WALTER-AUFLAGE, wörtlich: „Alle Dreier, außer die, bei denen der Gegner unmittelbar zu
+      // einem Vierer käme, sollte Max Michu mitnehmen." Begründung ist NICHT Spielstärke,
+      // sondern WIRKUNG: ein liegengelassener Dreier ist für einen Einsteiger der sichtbarste
+      // denkbare Patzer und widerspricht der Design-Auflage, dass der Mensch nicht gewinnen
+      // soll, weil Max Offensichtliches liegen lässt.
+      //
+      // WARUM DAS ÜBERHAUPT NÖTIG IST: poolWindow ist bei einsteiger 110, DREIER_FORM_BONUS
+      // ist 80. Das Fenster ist damit BREITER als der gesamte Dreier-Bonus — ein Dreier, der
+      // nur durch seinen Bonus vorne liegt, ist per Konstruktion überstimmbar. Bei
+      // fortgeschritten (Fenster 30) tritt der Fall kaum auf, deshalb trägt nur einsteiger
+      // das Flag.
+      //
+      // ⚠️ DIES IST EINE DIREKTE MANIPULATION — die erste im Projekt. Walters Grundsatz lautet:
+      // jede GRADUELLE Skalierung ist besser, und sie soll möglichst die einzige ihrer Art
+      // bleiben. Wer hier etwas anbaut, prüfe zuerst, ob ein Regler dasselbe leistet.
+      //
+      // ABGRENZUNG (bewusst etwas strenger als „unmittelbar"): ausgeschlossen wird jeder Dreier,
+      // dessen SUCHWERT im Mate-Band liegt (≤ −90000) — das deckt den unmittelbaren Gegen-Vierer
+      // ab und zusätzlich den, der ein, zwei Züge später erzwungen wird. Strenger heißt hier
+      // sicherer und wirkt nie wie ein Patzer.
+      // Bleibt kein Dreier übrig, läuft die normale Auswahl (Fenster/Softmax) über ALLE Züge.
+      // Bleibt mehr als einer, entscheidet das Fenster INNERHALB der Dreier-Menge.
+      // Die Werte dieser Züge sind exakt (s. _exactTriple oben), die Prüfung fußt also nicht
+      // auf Schranken. Der §99-Beobachtungsblock bleibt unverändert: `rank` wird weiterhin
+      // gegen ALLE Wurzelzüge gebildet und zeigt damit, wie weit der erzwungene Dreier vom
+      // Suchurteil abweicht — genau die Zahl, die man später auswerten will.
+      let _base = scored;
+      if(cfg.forceTriple === true){
+        const _tri = scored.filter(x => tripleSet.has(_key(x.m)) && x.v > -90000);
+        if(_tri.length) _base = _tri;
+      }
       // rankPool: aus den Top-k Zügen wählen (Feinjustierung untere Stufen, §37d)
       if(typeof cfg.poolWindow === 'number'){
         // ── §109 HEBEL 1: Wertfenster + Softmax statt Top-k-uniform ──────────────
@@ -343,9 +402,9 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
         // Der Reiz gegenüber rankPool: in scharfen Stellungen, wo der beste Zug weit vorne
         // liegt, schrumpft das Fenster von selbst auf einen Zug — die Stufe spielt dort
         // korrekt und irrt nur dort, wo es wirklich mehrere vertretbare Züge gibt.
-        scored.sort((a,b) => b.v - a.v);
-        const top = scored[0].v;
-        const cand = scored.filter(x => (top - x.v) <= cfg.poolWindow);
+        _base.sort((a,b) => b.v - a.v);   // §111: _base === scored, außer der Dreier-Vorrang griff
+        const top = _base[0].v;
+        const cand = _base.filter(x => (top - x.v) <= cfg.poolWindow);
         const temp = (typeof cfg.poolTemp === 'number') ? cfg.poolTemp : 0;
         let pick;
         if(temp > 0){
@@ -360,11 +419,17 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
         bestMove = pick.m;
         bestScore = pick.v;
       } else if(cfg.rankPool > 1){
-        scored.sort((a,b) => b.v - a.v);
-        const pool = scored.slice(0, Math.min(cfg.rankPool, scored.length));
+        _base.sort((a,b) => b.v - a.v);
+        const pool = _base.slice(0, Math.min(cfg.rankPool, _base.length));
         const pick = pool[Math.floor(Math.random() * pool.length)];
         bestMove = pick.m;
         bestScore = pick.v; // §85: der Wert des GEZOGENEN Pool-Zuges, nicht localBest
+      } else if(_base !== scored){
+        // §111: forceTriple OHNE Fenster. Kommt in keiner ausgelieferten Stufe vor, muss aber
+        // definiert sein — sonst wäre das Flag von der Fenster-Einstellung abhängig.
+        _base.sort((a,b) => b.v - a.v);
+        bestMove = _base[0].m;
+        bestScore = _base[0].v;
       } else {
         bestMove = localMove;
         bestScore = localBest; // §85
