@@ -48,8 +48,10 @@ const core = require('./countred_ai_core.js');
 globalThis.PARITY_P1 = 'odd';
 const L = core.SKILL_LEVELS;
 
-ok(core.HEURISTIC_VERSION === 'countred-ai-1.8',
-   "HEURISTIC_VERSION === 'countred-ai-1.8' (exakter Pin, neueste Suite)");
+// §114-Anpassung: der EXAKTE Pin wandert per Konvention in die jeweils NEUESTE Suite
+// (jetzt test_jitter_114). Diese Suite prüft das §111/§113-PAKET selbst — das gibt es ab 1.8.
+const verNum = parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/)||[])[1]);
+ok(verNum >= 1.8, "HEURISTIC_VERSION ist countred-ai-\u22651.8 (\u00a7111-Paket vorhanden; aktuell: "+core.HEURISTIC_VERSION+")");
 
 console.log('\u00a7111 \u2014 der Eingriff steht NUR bei einsteiger:');
 ok(L.einsteiger.forceTriple === true, 'einsteiger tr\u00e4gt forceTriple: true');
@@ -264,7 +266,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 92, 'Cache-Bust auf v\u226592 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 94, 'Cache-Bust auf v\u226594 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');

@@ -100,12 +100,40 @@ const bandMatch = html.match(/const AI_DRAW_OFFER_BAND=(\d+)/);
 let polOk = !!polMatch && !!bandMatch;
 if(polOk){
   const band = Number(bandMatch[1]);
-  const rows = [...polMatch[1].matchAll(/offers:(true|false),\s*acceptLeadMax:\s*(\d+)/g)];
-  polOk = rows.length===4 && rows.every(r => r[1]==='false' || Number(r[2])>=band);
+  // §116: zwischen offers und acceptLeadMax steht jetzt accepts — Muster nachgezogen.
+  const rows = [...polMatch[1].matchAll(/offers:(true|false),\s*accepts:(?:true|false),\s*acceptLeadMax:\s*(\d+)/g)];
+  polOk = rows.length===4 && rows.every(r => r[1]==='false' || Number(r[2])>=band); // §116: accepts ist non-capturing, acceptLeadMax bleibt Gruppe 2
 }
 ok(polOk, 'AI_DRAW_POLICY: jede anbietende Stufe hat acceptLeadMax \u2265 AI_DRAW_OFFER_BAND');
 
 // ── Teil 2: Core 1.2 — meta.score ──
+console.log('\u00a7116 \u2014 Remis-Einsch\u00e4tzung speist sich aus dem BESTWERT, nicht aus dem gezogenen Zug:');
+ok(/aiScoreHistory\.push\(\(typeof res\.meta\.best === 'number'\) \? res\.meta\.best : res\.meta\.score\)/.test(html),
+   'aiScoreHistory liest meta.best (Fallback score f\u00fcr Alt-Kerne) \u2014 die VERDRAHTUNG, nicht nur die Rechnung');
+ok(/best:\s+\(meta&&typeof meta\.best==='number'\)/.test(html),
+   'das Zug-Log schreibt `best` mit (macht den Befund k\u00fcnftig abfragbar)');
+
+console.log('\u00a7116 \u2014 Stufen-Riegel accepts:');
+{
+  const pol = html.match(/const AI_DRAW_POLICY=\{([\s\S]*?)\};/)[1];
+  const rows = [...pol.matchAll(/(\w+):\s*\{\s*offers:(true|false),\s*accepts:(true|false)/g)];
+  ok(rows.length === 4, 'alle vier Stufen tragen ein accepts-Feld (' + rows.length + ')');
+  const ein = rows.find(r => r[1] === 'einsteiger');
+  ok(!!ein && ein[3] === 'false', 'einsteiger: accepts false (Walter-Entscheid \u2014 nie Remis annehmen)');
+  for(const r of rows) if(r[1] !== 'einsteiger')
+    ok(r[3] === 'true', r[1] + ': accepts true (Remis ab fortgeschritten erlaubt)');
+  // §85-Invariante strukturell: was nicht angenommen wird, darf auch nicht angeboten werden.
+  ok(rows.every(r => r[3] === 'true' || r[2] === 'false'),
+     'keine Stufe bietet an, ohne annehmen zu k\u00f6nnen (\u00a785-Invariante bleibt erf\u00fcllt)');
+  const fn = html.match(/function aiWouldAcceptDraw\(\)\{[\s\S]*?\n\}/)[0];
+  // Kommentare ausblenden — der Erklaertext ueber dem Riegel nennt aiDrawAcceptDecision
+  // selbst, sonst misst der Vergleich den Kommentar statt den Code.
+  const fnCode = fn.replace(/\/\/[^\n]*/g, '');
+  ok(/_pol\.accepts === false\) return false/.test(fnCode) &&
+     fnCode.indexOf('accepts === false') < fnCode.indexOf('aiDrawAcceptDecision('),
+     'der Riegel greift VOR der Bewertung (aiDrawAcceptDecision bleibt eine reine Funktion)');
+}
+
 console.log('\u00a785 Teil 2 \u2014 countred_ai_core.js (meta.score, Version 1.2):');
 const rulesSb = {console};
 vm.createContext(rulesSb);
@@ -124,6 +152,22 @@ const cfg = { timeBudgetMs: 400, maxDepth: 2, minDepth: 2, rankPool: 1, blockRat
 const r0 = core.pickMove(initBoard(), 1, 'odd', cfg, []);
 ok(r0.move && typeof r0.meta.score === 'number' && isFinite(r0.meta.score) && Math.abs(r0.meta.score) < 100000,
    'Startstellung: meta.score ist endliche Zahl unterhalb des Mate-Bands (' + r0.meta.score + ')');
+// §116: meta.best — bei meister identisch zu score, bei Fenster-Stufen darueber, NIE darunter.
+{
+  const m0 = core.pickMove(initBoard(), 1, 'odd', cfg, []);
+  ok(typeof m0.meta.best === 'number' && m0.meta.best === m0.meta.score,
+     'ohne Fenster: meta.best === meta.score (' + m0.meta.best + ')');
+  let unter = 0, drueber = 0;
+  for(let i = 0; i < 10; i++){
+    const w = core.pickMove(initBoard(), 1, 'odd',
+      Object.assign({}, cfg, {poolWindow:110, poolTemp:30, forceTriple:true}), []);
+    if(w.meta.best < w.meta.score) unter++;
+    if(w.meta.best > w.meta.score) drueber++;
+  }
+  ok(unter === 0, 'mit Fenster: meta.best liegt NIE unter meta.score (der Bestwert ist eine obere Schranke)');
+  ok(drueber > 0, 'mit Fenster: meta.best liegt tats\u00e4chlich \u00fcber meta.score (' + drueber +
+     ' von 10 L\u00e4ufen) \u2014 genau die L\u00fccke, die den Remis-Fehler verursacht hat');
+}
 const rp = core.pickMove(initBoard(), 1, 'odd', Object.assign({}, cfg, {rankPool:3}), []);
 ok(rp.move && typeof rp.meta.score === 'number', 'rankPool 3: meta.score ist der Wert des GEZOGENEN Pool-Zuges (Zahl vorhanden)');
 
@@ -169,7 +213,14 @@ ok((mta.match(/aiShouldOfferDraw\(\)/g)||[]).length === 1 && mta.indexOf('aiShou
    'alter Nach-nextTurn-Angebotsblock ist entfernt (nur noch das eine Gate am Anfang)');
 ok(!/aiEvalHistory/.test(html) && !/function isStablyBalanced/.test(html) && !/AI_OFFER_LEAD_MIN/.test(html),
    'alte statische Bewertungs-Maschinerie restlos entfernt (nur Historien-Kommentare erlaubt)');
-ok(/aiScoreHistory\.push\(res\.meta\.score\)/.test(html), 'aiScoreHistory wird aus res.meta.score gespeist (Suchwert-Basis B)');
+// §116-NACHZUG: diese Zusage stammt aus §85 und war dort richtig — damals galt
+// score === Bestwert der Wurzel, weil es noch kein Wertfenster gab. §109 hat die beiden
+// Groessen auseinanderlaufen lassen, ohne dass dieser Leser mitgezogen wurde; Max hielt sich
+// dadurch fuer schlechter als er stand (Livebeleg RF6HLE9F). Die Basis ist jetzt meta.best.
+ok(/aiScoreHistory\.push\(\(typeof res\.meta\.best === 'number'\)/.test(html),
+   'aiScoreHistory wird aus res.meta.best gespeist (Suchwert-Basis B, seit \u00a7116 der BESTWERT)');
+ok(!/aiScoreHistory\.push\(res\.meta\.score\)/.test(html),
+   'die alte Verdrahtung auf meta.score ist wirklich weg (Wiedereinbau-Schutz)');
 const aad = html.match(/window\.answerAIDraw=function\(yes\)\{[\s\S]*?\n\};/m)[0];
 ok(/Remis abgelehnt[\s\S]*maybeTriggerAI\(\)/.test(aad), 'answerAIDraw: nach Ablehnung zieht die KI (maybeTriggerAI)');
 const odm = html.match(/window\.offerDrawMvki=function\(\)\{[\s\S]*?\n\};/m)[0];
