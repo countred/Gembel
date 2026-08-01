@@ -102,6 +102,11 @@ const HEURISTIC_VERSION = 'countred-ai-1.8';
 //          die einzige ihrer Art). Siehe den ausfuehrlichen Block an der Fundstelle in pickMove.
 //      MISCH-REGEL: einsteiger-Partien aus 1.7 und 1.8 NICHT mischen. meister- und
 //      fortgeschritten-Partien sind ueber 1.7/1.8 hinweg poolbar (wie schon 1.6/1.7).
+// v91 -> v92 (31.7., §113): einsteiger minThinkMs 600 -> 1000. KEIN HEURISTIC-Bump —
+//      minThinkMs steuert ausschliesslich die Wanduhr vor dem Erscheinen des Zuges und
+//      beruehrt die Zugwahl mit keinem Zeichen. HEURISTIC bleibt 'countred-ai-1.8',
+//      einsteiger-Partien aus v91 und v92 sind daher POOLBAR. Begruendung s. Kasten
+//      ueber der einsteiger-Zeile in SKILL_LEVELS.
 // §65f-BUGFIX: countred_ai_core.js ist ein KLASSISCHES Script, der Hauptcode in countred.html
 // ein MODUL. Ein top-level `const` eines klassischen Scripts landet im globalen LEXIKALISCHEN
 // Environment — auf das ein Modul NICHT zugreift (Module lesen undeklarierte Namen von globalThis).
@@ -138,8 +143,31 @@ if(typeof globalThis!=='undefined'){ globalThis.HEURISTIC_VERSION = HEURISTIC_VE
 // rankPool steht überall auf 1: durch das Fenster ist der alte Top-k-Pool wirkungslos, und ein
 // wirkungsloser Parameter führt beim nächsten Mal jemanden in die Irre.
 const SKILL_LEVELS = {
-  // §111: maxDepth 3 (graduell) + forceTriple (direkte Manipulation, s. pickMove). NUR hier.
-  einsteiger:      { timeBudgetMs: 2500, maxDepth: 3, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 600, poolWindow: 110, poolTemp: 30, forceTriple: true },
+  // ┌─ EINSTEIGER-PAKET — bitte als EINHEIT behandeln ─────────────────────────────────┐
+  // │ Diese Stufe traegt vier Abweichungen, die AUFEINANDER aufbauen. Wer eine davon   │
+  // │ aendert, entfernt oder auf eine andere Stufe kopiert, muss die anderen mitdenken.│
+  // │ Die Pruefungen in test_dreier_111.js halten das fest — auch fuer den Fall, dass  │
+  // │ diese Konfiguration eines Tages unter einem ANDEREN Stufennamen laeuft.          │
+  // │                                                                                  │
+  // │ 1. poolWindow 110 / poolTemp 30 (§109) — die eigentliche Absenkung.              │
+  // │ 2. forceTriple (§111) — FOLGT AUS 1: das Fenster ist mit 110 breiter als der      │
+  // │    DREIER_FORM_BONUS von 80, ein Dreier waere sonst per Konstruktion              │
+  // │    ueberstimmbar. Grund ist Wirkung, nicht Staerke (Walter: ein liegengelassener  │
+  // │    Dreier wirkt gegenueber einem Einsteiger befremdlich). Bei fortgeschritten mit │
+  // │    Fenster 30 tritt der Fall kaum auf — deshalb steht das Flag NUR hier.          │
+  // │ 3. maxDepth 3 (§111) — graduelle Absenkung. Gemessen 7,8 % gegen meister.         │
+  // │ 4. minThinkMs 1000 (§113) — FOLGT AUS 3: bei Tiefe 3 ist die Suche im Median in   │
+  // │    80 ms fertig (bei Tiefe 5 waren es 1570 ms). minThinkMs traegt seither die     │
+  // │    SICHTBARE Zuganimation: die Wartezeit fliesst in countred.html als Phase A in  │
+  // │    animateAIMove, also in das blaue Aufheben. Mit den alten 600 ms zog Max        │
+  // │    „fast zu schnell" (Walter) und die Animation ging unter. Die Stufen mit        │
+  // │    Tiefe 5 brauchen das nicht — dort dauert die Suche selbst lang genug.          │
+  // │                                                                                  │
+  // │ WENN DIESE STUFE UMZIEHT (z. B. einsteiger -> fortgeschritten): alle vier Werte   │
+  // │ wandern GEMEINSAM mit. Ein neuer, schwaecherer einsteiger braucht dann eigene     │
+  // │ Werte — nicht die hier stehenden teilen.                                         │
+  // └──────────────────────────────────────────────────────────────────────────────────┘
+  einsteiger:      { timeBudgetMs: 2500, maxDepth: 3, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 110, poolTemp: 30, forceTriple: true },
   fortgeschritten: { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 700, poolWindow:  30, poolTemp: 10 },
   // stark: NICHT ENTFERNEN. Die Stufe wird nirgends angeboten (countred.html ruft nur einsteiger,
   // fortgeschritten und meister) und ist bewusst unsichtbar — sie muss aber in der Konfiguration

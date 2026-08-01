@@ -59,11 +59,49 @@ ok(L.einsteiger.maxDepth === 3, 'einsteiger maxDepth 3 (graduelle Skalierung)');
 for(const k of ['meister','fortgeschritten','stark'])
   ok(L[k].maxDepth === 5, k + ': maxDepth unver\u00e4ndert 5');
 
+console.log('\u00a7113 \u2014 k\u00fcnstliche Denkzeit (minThinkMs) tr\u00e4gt jetzt die Animation:');
+ok(L.einsteiger.minThinkMs === 1000,
+   'einsteiger minThinkMs 1000 (war 600; bei Tiefe 3 ist die Suche im Median in 80 ms fertig, ' +
+   'die Wartezeit ist die sichtbare Blau-Phase)');
+ok(L.fortgeschritten.minThinkMs === 700 && L.stark.minThinkMs === 800 && L.meister.minThinkMs === 900,
+   'fortgeschritten 700 / stark 800 / meister 900 unver\u00e4ndert \u2014 die rechnen auf Tiefe 5 lang genug');
+
+console.log('\u00a7113 \u2014 das Einsteiger-PAKET h\u00e4lt zusammen (auch unter anderem Stufennamen):');
+{
+  // Diese Pr\u00fcfungen h\u00e4ngen bewusst NICHT am Namen \u201eeinsteiger\u201c. Zieht die Konfiguration
+  // eines Tages auf eine andere Stufe um, wandern die Auflagen mit — und ein neu gebauter,
+  // schw\u00e4cherer einsteiger erbt sie nicht versehentlich halb.
+  const DREIER_FORM_BONUS = Number((coreSrc.match(/const DREIER_FORM_BONUS\s*=\s*(\d+)/)||[])[1]);
+  ok(DREIER_FORM_BONUS === 80, 'DREIER_FORM_BONUS aus dem Kern gelesen (' + DREIER_FORM_BONUS + ')');
+  const keys = Object.keys(L);
+
+  const mitFenster = keys.filter(k => typeof L[k].poolWindow === 'number');
+  const zuBreit = mitFenster.filter(k => L[k].poolWindow > DREIER_FORM_BONUS);
+  ok(zuBreit.every(k => L[k].forceTriple === true),
+     'jede Stufe mit Fenster > ' + DREIER_FORM_BONUS + ' tr\u00e4gt forceTriple (sonst ist der Dreier ' +
+     '\u00fcberstimmbar) \u2014 betrifft: ' + (zuBreit.join(', ') || 'keine'));
+  const mitFlagg = keys.filter(k => L[k].forceTriple === true);
+  ok(mitFlagg.every(k => typeof L[k].poolWindow === 'number' && L[k].poolWindow > DREIER_FORM_BONUS),
+     'umgekehrt tr\u00e4gt KEINE Stufe forceTriple ohne den Grund daf\u00fcr (Walter: die direkte ' +
+     'Manipulation soll m\u00f6glichst die einzige bleiben)');
+  ok(mitFlagg.length === 1, 'genau EINE Stufe tr\u00e4gt das Paket (' + mitFlagg.join(', ') + ')');
+
+  const flach = keys.filter(k => L[k].maxDepth <= 3);
+  ok(flach.every(k => L[k].minThinkMs >= 1000),
+     'jede Stufe mit maxDepth \u2264 3 hat minThinkMs \u2265 1000 (sonst zieht Max ohne sichtbare ' +
+     'Animation) \u2014 betrifft: ' + (flach.join(', ') || 'keine'));
+  ok(flach.length === 1 && flach[0] === mitFlagg[0],
+     'flache Tiefe und forceTriple sitzen auf DERSELBEN Stufe \u2014 das Paket ist nicht auseinandergefallen');
+}
+
 console.log('\u00a7111 \u2014 Quellcode-W\u00e4chter:');
 ok(/cfg\.forceTriple === true/.test(coreSrc) && /tripleSet\.has\(_key\(x\.m\)\) && x\.v > -90000/.test(coreSrc),
    'Dreier-Vorrang vorhanden, Ausschluss \u00fcber das Mate-Band (\u2265 \u221290000)');
 ok(/DIREKTE MANIPULATION/.test(coreSrc) && /Walter/.test(coreSrc),
    'Begr\u00fcndung steht als Kommentar an der Fundstelle (Walter-Auflage: gut dokumentieren)');
+ok(/EINSTEIGER-PAKET \u2014 bitte als EINHEIT behandeln/.test(coreSrc) &&
+   /WENN DIESE STUFE UMZIEHT/.test(coreSrc),
+   'der Erkl\u00e4rkasten \u00fcber der einsteiger-Zeile steht samt Umzugs-Warnung');
 ok(/const _exactTriple = \(cfg\.forceTriple === true\) && !!triple;/.test(coreSrc) &&
    /useRootAlpha && !_exactTriple/.test(coreSrc),
    'dreierbildende Wurzelz\u00fcge suchen unter forceTriple mit vollem Fenster (keine Schranken)');
@@ -226,7 +264,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 91, 'Cache-Bust auf v\u226591 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 92, 'Cache-Bust auf v\u226592 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');
