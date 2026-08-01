@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.8';
+const HEURISTIC_VERSION = 'countred-ai-1.9';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -102,11 +102,41 @@ const HEURISTIC_VERSION = 'countred-ai-1.8';
 //          die einzige ihrer Art). Siehe den ausfuehrlichen Block an der Fundstelle in pickMove.
 //      MISCH-REGEL: einsteiger-Partien aus 1.7 und 1.8 NICHT mischen. meister- und
 //      fortgeschritten-Partien sind ueber 1.7/1.8 hinweg poolbar (wie schon 1.6/1.7).
+// 1.8 -> 1.9 (1.8., §114 Eval-Jitter, Hebel 3): negamax addiert am BLATT einen aus
+//      (Seed, Stellung) abgeleiteten Rauschwert. Greift NUR bei gesetztem cfg.jitterAmp —
+//      ohne das Feld rechnet der Kern bit-identisch wie 1.8 (an 42 Stellungen geprueft).
+//      Ausfuehrliche Begruendung im Kasten bei _jitterOf. Vorerst traegt KEINE Stufe das
+//      Feld: der Mechanismus steht, der Wert wird erst gemessen (Walters Grundsatz — nie
+//      unterhalb der real gespielten Tiefe entscheiden, K1).
 // v91 -> v92 (31.7., §113): einsteiger minThinkMs 600 -> 1000. KEIN HEURISTIC-Bump —
 //      minThinkMs steuert ausschliesslich die Wanduhr vor dem Erscheinen des Zuges und
 //      beruehrt die Zugwahl mit keinem Zeichen. HEURISTIC bleibt 'countred-ai-1.8',
 //      einsteiger-Partien aus v91 und v92 sind daher POOLBAR. Begruendung s. Kasten
 //      ueber der einsteiger-Zeile in SKILL_LEVELS.
+// ═══════════════════════════════════════════════════════════════════
+// VERBRAUCHER-REGISTER der meta-Felder (§116) — VOR JEDER AENDERUNG LESEN
+// ═══════════════════════════════════════════════════════════════════
+//   Wer eine dieser Bedeutungen aendert, aendert damit ALLE genannten Leser mit. Genau das
+//   ist einmal passiert: §109 hat das Wertfenster eingefuehrt und damit `score` von „Bestwert
+//   der Wurzel" zu „Wert des gewaehlten Zuges" gemacht. Die Remis-Logik in countred.html las
+//   weiter `score`, hielt Max fuer schlechter als er stand und nahm Remis an, die er nicht
+//   haette annehmen muessen (Livebeleg RF6HLE9F). Aufgefallen ist es erst Wochen spaeter, weil
+//   test_remis_85 die Entscheidungsfunktion mit SYNTHETISCHEN Werten prueft — die Rechnung war
+//   korrekt, nur die Zuleitung falsch.
+//
+//   FELD       BEDEUTUNG                                  GELESEN VON
+//   score      Wert des GEWAEHLTEN Zuges                   Zug-Log (Analyse), Replay
+//   best       Wert des BESTEN Zuges (Lagebeurteilung)     aiScoreHistory → Remis-Logik (§116)
+//   raw        score ohne DREIER_FORM_BONUS                Zug-Log, H5-Abfrage
+//   prevBest   ueberbotener Wert                           Zug-Log
+//   sec        zweitbester Wurzelwert                      Zug-Log, Fenster-Pruefungen
+//   rank       Rang des gewaehlten Zuges                   Zug-Log, Fenster-Pruefungen
+//   depth/ms/budgetHit  Suchaufwand                        Zug-Log, Tiefenauswertung
+//   safety     'took-win' | 'blocked' | 'none'             Zug-Log
+//
+//   PRUEFFRAGE bei jedem Eingriff: „Welche bisher gueltige Gleichung wird dadurch ungueltig?"
+//   Vor §109 galt score === best. Heute gilt das nur noch fuer Stufen ohne Fenster.
+// ═══════════════════════════════════════════════════════════════════
 // §65f-BUGFIX: countred_ai_core.js ist ein KLASSISCHES Script, der Hauptcode in countred.html
 // ein MODUL. Ein top-level `const` eines klassischen Scripts landet im globalen LEXIKALISCHEN
 // Environment — auf das ein Modul NICHT zugreift (Module lesen undeklarierte Namen von globalThis).
@@ -226,6 +256,13 @@ function movesAllowingOpponentWin(b, player, p1parity){
 function pickMove(board, player, p1parity, config, seenPositions, drawClock){
   const cfg = (typeof config === 'string') ? SKILL_LEVELS[config] : config;
   if(!cfg) throw new Error('pickMove: unbekannte Config/Stufe');
+  // §114: Jitter-Zustand fuer DIESEN Zug setzen. Frischer Seed je Aufruf (s. Kasten bei
+  // _jitterOf); cfg.jitterSeed friert ihn fuer Messstand/Suiten ein. Ohne cfg.jitterAmp
+  // ist der Jitter aus und der Kern rechnet bit-identisch wie vor §114.
+  _jitterAmp  = (typeof cfg.jitterAmp === 'number' && cfg.jitterAmp > 0) ? cfg.jitterAmp : 0;
+  _jitterSeed = (typeof cfg.jitterSeed === 'number')
+    ? (cfg.jitterSeed >>> 0)
+    : ((Math.random() * 4294967296) >>> 0);
   // §91 Remis-Uhr: drawClock={halfmoves,limit} optional — fehlt er (Tests, Alt-Aufrufer), ist
   // die Uhr ∞ und 1.4 verhält sich exakt wie 1.3. clockLimit ist der Reset-Wert nach Dreier.
   const clockLimit = (drawClock && typeof drawClock.limit==='number') ? drawClock.limit : Infinity;
@@ -249,6 +286,7 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
   // ── §37f (a): eigener Sofortsieg → immer nehmen ──
   const win = findImmediateWin(board, player, p1parity);
   if(win) return { move: win, meta: { safety: 'took-win', depth: 0, ms: _now()-t0, score: 100000,
+    best: 100000, // §116: bei Sofortsieg sind score und best per Definition gleich
     raw: 100000, prevBest: null, sec: null, rank: 1, nRoot: null, nSkip: null, exact: null } }; // §85: Sofortsieg = Mate-Wert
 
   // ── §37f (b): Gegner-Sofortsieg-Züge markieren (Ausschluss je blockRate) ──
@@ -264,6 +302,10 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
   // ── Iterative Deepening ──
   let obs = null;   // §99: Beobachtungsdaten der letzten vollstaendigen Tiefe (s.u.)
   let bestMove = legal[0], bestScore = null, reachedDepth = 0, budgetHit = false; // §85: bestScore = Suchwert des GEWAEHLTEN Zuges (letzte vollstaendige Tiefe)
+  // §116: bestRootValue = Suchwert des BESTEN Wurzelzuges derselben Tiefe. localBest lebt nur
+  // INNERHALB der Tiefenschleife, deshalb hier aussen mitgefuehrt. Beide werden am selben Ort
+  // gesetzt, damit score und best garantiert aus derselben abgeschlossenen Iteration stammen.
+  let bestRootValue = null;
   const opp = player === P1 ? P2 : P1;
 
   for(let depth = 1; depth <= cfg.maxDepth; depth++){
@@ -445,22 +487,22 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
           pick = cand[Math.floor(Math.random() * cand.length)];
         }
         bestMove = pick.m;
-        bestScore = pick.v;
+        bestScore = pick.v; bestRootValue = localBest; // §116
       } else if(cfg.rankPool > 1){
         _base.sort((a,b) => b.v - a.v);
         const pool = _base.slice(0, Math.min(cfg.rankPool, _base.length));
         const pick = pool[Math.floor(Math.random() * pool.length)];
         bestMove = pick.m;
-        bestScore = pick.v; // §85: der Wert des GEZOGENEN Pool-Zuges, nicht localBest
+        bestScore = pick.v; bestRootValue = localBest; // §85 / §116
       } else if(_base !== scored){
         // §111: forceTriple OHNE Fenster. Kommt in keiner ausgelieferten Stufe vor, muss aber
         // definiert sein — sonst wäre das Flag von der Fenster-Einstellung abhängig.
         _base.sort((a,b) => b.v - a.v);
         bestMove = _base[0].m;
-        bestScore = _base[0].v;
+        bestScore = _base[0].v; bestRootValue = localBest; // §116
       } else {
         bestMove = localMove;
-        bestScore = localBest; // §85
+        bestScore = localBest; bestRootValue = localBest; // §85 / §116
       }
       // §99: Kennzahlen der zuletzt VOLLSTAENDIG gerechneten Tiefe einfrieren.
       const _sorted = scored.slice().sort((a,b) => b.v - a.v);
@@ -502,7 +544,13 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       budgetHit,
       safety: (blockActive && badMoves.size > 0) ? 'blocked' : 'none',
       rankPool: cfg.rankPool,
-      score: bestScore, // §85 (ab 1.2): Suchwert des gewaehlten Zuges aus Sicht des Ziehenden
+      score: bestScore, // §85 (ab 1.2): Suchwert des GEWAEHLTEN Zuges aus Sicht des Ziehenden
+      // §116: Suchwert des BESTEN Zuges — was die Suche fuer richtig haelt, unabhaengig davon,
+      // was die Stufe daraus macht. Bei meister identisch zu `score`; bei Fenster-/forceTriple-
+      // Stufen liegt `best` darueber. Wer die LAGE beurteilen will, nimmt best, nicht score.
+      // (Anlass: die Remis-Logik las bis v93 `score` und hielt Max deshalb fuer schlechter,
+      //  als seine Stellung war — s. Verbraucher-Register im Dateikopf.)
+      best: bestRootValue,
       // §99: Beobachtung ohne Wirkung. raw + prevBest sind unter JEDER Stufe exakt;
       // sec + rank nur wenn exact===true (rankPool>1, also ohne Wurzel-Alpha).
       raw:      obs ? obs.raw      : null,
@@ -893,6 +941,48 @@ function evaluate(b, forPlayer){
   return score;
 }
 
+// ── §114 EVAL-JITTER (Hebel 3) ─────────────────────────────────────────────────────
+// ZWECK: Die schwachen Stufen sollen sich VERSCHAETZEN, nicht bloss schlechter waehlen.
+//   Das Wertfenster (§109) sitzt an der WURZEL: Max weiss dort, welcher Zug der beste ist,
+//   und spielt trotzdem manchmal einen anderen. Der Jitter sitzt am BLATT: Max bewertet
+//   Stellungen falsch und folgt seinem falschen Urteil dann konsequent. Das ist die
+//   Maia-Lehre — ein Mensch irrt in der EINSCHAETZUNG, nicht in der Auswahl.
+//
+// WARUM DER SEED PRO ZUG NEU GEZOGEN WIRD (Walters Einwand, 31.7.):
+//   Alpha-Beta braucht KONSISTENTE Blattwerte innerhalb EINER Suche — wuerfelte man je
+//   Aufruf, lieferte dieselbe Stellung in zwei Suchzweigen verschiedene Werte und das
+//   Ergebnis haenge von der Suchreihenfolge ab. Konsistenz ist also PFLICHT, aber nur
+//   innerhalb eines Zuges. Ein ueber die ganze Partie fester Jitter waere darueber hinaus
+//   „eindimensional" (Walter): Max haette immer denselben eingefrorenen Irrtum. Deshalb:
+//   ein frischer Seed je pickMove-Aufruf, innerhalb der Suche eingefroren.
+//   cfg.jitterSeed setzt den Seed fest — NUR fuer Messstand und Suiten (Reproduzierbarkeit).
+//
+// ANTISYMMETRIE (Kernregel 6): evaluate(b,1) === -evaluate(b,2) muss weiter gelten. Der
+//   Stellungsschluessel wird deshalb mit FESTEM Spieler 1 gebildet (boardHash haengt sonst
+//   vom Spieler ab), und das Vorzeichen kommt erst danach aus `player`. Beide Seiten sehen
+//   damit denselben Betrag mit umgekehrtem Vorzeichen — der Selbsttest prueft das.
+//
+// MATE-BAND BLEIBT UNANGETASTET: ein verjitterter Gewinn-/Verlustwert koennte Max einen
+//   Vierer uebersehen lassen — genau der sichtbare Patzer, den Walters Design-Auflage
+//   verbietet. Der Jitter greift nur unterhalb von 90000.
+let _jitterAmp = 0;      // 0 = aus. Wird je pickMove aus cfg.jitterAmp gesetzt.
+let _jitterSeed = 0;
+
+// 32-Bit-Mischfunktion ueber den Stellungsschluessel; deterministisch fuer (Seed, Stellung).
+function _jitterOf(b, player){
+  if(_jitterAmp <= 0) return 0;
+  const key = boardHash(b, P1);            // fester Spieler → spielerunabhaengiger Schluessel
+  let h = _jitterSeed ^ 0x9e3779b9;
+  for(let i = 0; i < key.length; i++){
+    h ^= key.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;    // FNV-artig, danach noch einmal mischen
+  }
+  h ^= h >>> 15; h = Math.imul(h, 0x2545f491) >>> 0; h ^= h >>> 13;
+  const u = (h >>> 0) / 4294967296;        // [0,1)
+  const j = (u * 2 - 1) * _jitterAmp;      // [-amp, +amp)
+  return player === P1 ? j : -j;           // Antisymmetrie
+}
+
 function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet, clockLeft, clockLimit){
   const player = bonusPlayer || activePlayer;
   const opp = player===P1 ? P2 : P1;
@@ -903,7 +993,11 @@ function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet, cloc
   if(clockLeft <= 0) return 0;
 
   // §91: Blatt-Dämpfung — symmetrischer Faktor, evaluate() selbst bleibt zustandslos (Kernregel 5).
-  if(depth===0) return evaluate(b, player) * drawClockFactor(clockLeft);
+  if(depth===0){
+    const v = evaluate(b, player) * drawClockFactor(clockLeft);
+    // §114: Jitter NUR unterhalb des Mate-Bands (s. Kasten oben). evaluate() bleibt unberuehrt.
+    return (Math.abs(v) < 90000) ? v + _jitterOf(b, player) : v;
+  }
 
   const moves = getLegalMoves(b, player, PARITY_P1);
   if(moves.length===0){
@@ -1048,5 +1142,6 @@ if(typeof module !== 'undefined' && module.exports){
     colHasThreat, // §87: für Node-Tests (1I-Einheit)
     hoheitJS, // §107: für Node-Tests (Gate, Antisymmetrie, AG8VAPGM-Anker)
     drawClockFactor, DRAW_CLOCK_SOFT, // §91: für Node-Tests (Uhr-Dämpfung)
-    findImmediateWin, movesAllowingOpponentWin };
+    findImmediateWin, movesAllowingOpponentWin,
+    _jitterOf, _setJitterForTest: (amp, seed) => { _jitterAmp = amp; _jitterSeed = seed >>> 0; } }; // §114
 }
