@@ -108,6 +108,11 @@ const HEURISTIC_VERSION = 'countred-ai-1.9';
 //      Ausfuehrliche Begruendung im Kasten bei _jitterOf. Vorerst traegt KEINE Stufe das
 //      Feld: der Mechanismus steht, der Wert wird erst gemessen (Walters Grundsatz — nie
 //      unterhalb der real gespielten Tiefe entscheiden, K1).
+// v94 -> v95 (1.8., §117): (a) Jitter wird von der §91-Uhr mitgedaempft — vorher haette er
+//      kurz vor der Remis-Automatik die Bewertung dominiert; (b) neue Invariante in
+//      test_jitter_114: eine Stufe mit jitterAmp darf kein Remis ANNEHMEN, weil auch `best`
+//      aus verjitterten Blaettern stammt und die Lageeinschaetzung damit verrauscht ist.
+//      Beides ohne Wirkung, solange keine Stufe jitterAmp traegt — KEIN HEURISTIC-Bump.
 // v91 -> v92 (31.7., §113): einsteiger minThinkMs 600 -> 1000. KEIN HEURISTIC-Bump —
 //      minThinkMs steuert ausschliesslich die Wanduhr vor dem Erscheinen des Zuges und
 //      beruehrt die Zugwahl mit keinem Zeichen. HEURISTIC bleibt 'countred-ai-1.8',
@@ -133,6 +138,11 @@ const HEURISTIC_VERSION = 'countred-ai-1.9';
 //   rank       Rang des gewaehlten Zuges                   Zug-Log, Fenster-Pruefungen
 //   depth/ms/budgetHit  Suchaufwand                        Zug-Log, Tiefenauswertung
 //   safety     'took-win' | 'blocked' | 'none'             Zug-Log
+//
+//   ⚠️ §117-VORBEHALT: traegt eine Stufe `jitterAmp`, stammen score UND best aus VERJITTERTEN
+//   Blaettern. `best` ist dann zwar weiterhin der beste Zug DIESER Suche, aber keine saubere
+//   Lagebeurteilung mehr. Eine solche Stufe darf deshalb kein Remis annehmen (Invariante in
+//   test_jitter_114) — oder braeuchte eine zweite, ungejitterte Bewertung.
 //
 //   PRUEFFRAGE bei jedem Eingriff: „Welche bisher gueltige Gleichung wird dadurch ungueltig?"
 //   Vor §109 galt score === best. Heute gilt das nur noch fuer Stufen ohne Fenster.
@@ -994,9 +1004,14 @@ function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet, cloc
 
   // §91: Blatt-Dämpfung — symmetrischer Faktor, evaluate() selbst bleibt zustandslos (Kernregel 5).
   if(depth===0){
-    const v = evaluate(b, player) * drawClockFactor(clockLeft);
+    const damp = drawClockFactor(clockLeft);
+    const v = evaluate(b, player) * damp;
     // §114: Jitter NUR unterhalb des Mate-Bands (s. Kasten oben). evaluate() bleibt unberuehrt.
-    return (Math.abs(v) < 90000) ? v + _jitterOf(b, player) : v;
+    // §117: Der Jitter wird MIT DEMSELBEN Faktor gedaempft wie die Bewertung. Ohne das dominiert
+    // er kurz vor der Remis-Automatik: §91 schrumpft den echten Wert gegen null, der Jitter
+    // stuende voll da — Max wuerfelte genau dort, wo er aufs Remis zusteuern soll. Der Faktor
+    // ist symmetrisch und laesst die Antisymmetrie unberuehrt.
+    return (Math.abs(v) < 90000) ? v + _jitterOf(b, player) * damp : v;
   }
 
   const moves = getLegalMoves(b, player, PARITY_P1);

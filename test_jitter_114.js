@@ -49,7 +49,7 @@ ok(core.HEURISTIC_VERSION === 'countred-ai-1.9',
    "HEURISTIC_VERSION === 'countred-ai-1.9' (exakter Pin, neueste Suite)");
 
 console.log('\u00a7114 \u2014 Quellcode-W\u00e4chter (der Jitter sitzt am BLATT, nicht an der Wurzel):');
-ok(/if\(depth===0\)\{[\s\S]{0,260}_jitterOf\(b, player\)/.test(coreSrc),
+ok(/if\(depth===0\)\{[\s\S]{0,700}_jitterOf\(b, player\)/.test(coreSrc),  // §117: Fenster geweitet, der Kommentar wuchs
    'der Jitter wird im Blattzweig von negamax addiert (depth===0)');
 ok(/Math\.abs\(v\) < 90000\) \? v \+ _jitterOf/.test(coreSrc),
    'nur unterhalb des Mate-Bands \u2014 Gewinn- und Verlustwerte bleiben unverjittert');
@@ -148,6 +148,44 @@ console.log('\u00a7114 \u2014 MATE-BAND: der Sofortsieg wird auch bei starkem Ji
      'kein Sofortsieg verpasst, obwohl die Amplitude (200) das Bewertungsband weit \u00fcbersteigt');
 }
 
+console.log('\u00a7117 \u2014 der Jitter wird von der Remis-Uhr MITGED\u00c4MPFT:');
+ok(/const damp = drawClockFactor\(clockLeft\);/.test(coreSrc) &&
+   /_jitterOf\(b, player\) \* damp/.test(coreSrc),
+   'Bewertung und Jitter tragen denselben D\u00e4mpfungsfaktor');
+{
+  // Verhaltensprobe: kurz vor der Automatik muss der Blattwert klein bleiben, auch mit
+  // starkem Jitter. Ohne die D\u00e4mpfung st\u00fcnde dort die volle Amplitude.
+  const nah  = { timeBudgetMs: 1e9, maxDepth: 1, minDepth: 1, rankPool: 1, blockRate: 1.0,
+                 minThinkMs: 0, jitterAmp: 400, jitterSeed: 4242 };
+  let maxAbs = 0;
+  for(let hm = 46; hm <= 49; hm++){
+    const r = core.pickMove(initBoard(), 1, 'odd', nah, [], {halfmoves: hm, limit: 50});
+    maxAbs = Math.max(maxAbs, Math.abs(r.meta.score));
+  }
+  ok(maxAbs < 400,
+     'bei Amplitude 400 und fast abgelaufener Uhr bleibt |score| unter der Amplitude (' +
+     Math.round(maxAbs) + ') \u2014 der Jitter w\u00fcrfelt dort nicht mehr');
+  const r49 = core.pickMove(initBoard(), 1, 'odd', nah, [], {halfmoves: 49, limit: 50});
+  ok(r49.meta.score === 0,
+     '\u00a791 harte Uhr schl\u00e4gt den Jitter weiterhin durch (1 Halbzug vorher \u2192 score exakt 0)');
+}
+
+console.log('\u00a7117 \u2014 INVARIANTE: eine Jitter-Stufe darf kein Remis annehmen:');
+{
+  // Begr\u00fcndung: mit jitterAmp stammen score UND best aus verjitterten Bl\u00e4ttern. `best` ist
+  // dann der beste Zug DIESER Suche, aber keine saubere Lagebeurteilung — und genau die
+  // speist seit \u00a7116 die Remis-Entscheidung. Die Pr\u00fcfung h\u00e4ngt bewusst NICHT am Stufennamen,
+  // damit sie einen Umzug der Konfiguration \u00fcberlebt.
+  const pol = html.match(/const AI_DRAW_POLICY=\{([\s\S]*?)\};/)[1];
+  const accepts = {};
+  for(const m of pol.matchAll(/(\w+):\s*\{[^}]*accepts:(true|false)/g)) accepts[m[1]] = (m[2] === 'true');
+  const mitJitter = Object.keys(L).filter(k => typeof L[k].jitterAmp === 'number' && L[k].jitterAmp > 0);
+  ok(mitJitter.every(k => accepts[k] === false),
+     'jede Stufe mit jitterAmp hat accepts:false \u2014 betrifft: ' + (mitJitter.join(', ') || 'keine'));
+  ok(/\u00a7117-VORBEHALT/.test(coreSrc),
+     'der Vorbehalt steht im Verbraucher-Register (sonst f\u00e4llt beim n\u00e4chsten Umbau niemandem auf, warum)');
+}
+
 console.log('\u00a7114 \u2014 noch keine Stufe tr\u00e4gt den Jitter (erst messen, dann setzen):');
 for(const k of Object.keys(L))
   ok(!('jitterAmp' in L[k]), k + ': kein jitterAmp \u2014 der Wert wird erst kalibriert');
@@ -175,7 +213,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 94, 'Cache-Bust auf v\u226594 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 95, 'Cache-Bust auf v\u226595 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');
