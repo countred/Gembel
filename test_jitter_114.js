@@ -49,7 +49,7 @@ ok(core.HEURISTIC_VERSION === 'countred-ai-1.9',
    "HEURISTIC_VERSION === 'countred-ai-1.9' (exakter Pin, neueste Suite)");
 
 console.log('\u00a7114 \u2014 Quellcode-W\u00e4chter (der Jitter sitzt am BLATT, nicht an der Wurzel):');
-ok(/if\(depth===0\)\{[\s\S]{0,700}_jitterOf\(b, player\)/.test(coreSrc),  // §117: Fenster geweitet, der Kommentar wuchs
+ok(/if\(depth===0\)\{[\s\S]{0,1400}_jitterOf\(b, player\)/.test(coreSrc),  // §117: Fenster geweitet, der Kommentar wuchs
    'der Jitter wird im Blattzweig von negamax addiert (depth===0)');
 ok(/Math\.abs\(v\) < 90000\) \? v \+ _jitterOf/.test(coreSrc),
    'nur unterhalb des Mate-Bands \u2014 Gewinn- und Verlustwerte bleiben unverjittert');
@@ -148,26 +148,26 @@ console.log('\u00a7114 \u2014 MATE-BAND: der Sofortsieg wird auch bei starkem Ji
      'kein Sofortsieg verpasst, obwohl die Amplitude (200) das Bewertungsband weit \u00fcbersteigt');
 }
 
-console.log('\u00a7117 \u2014 der Jitter wird von der Remis-Uhr MITGED\u00c4MPFT:');
-ok(/const damp = drawClockFactor\(clockLeft\);/.test(coreSrc) &&
-   /_jitterOf\(b, player\) \* damp/.test(coreSrc),
-   'Bewertung und Jitter tragen denselben D\u00e4mpfungsfaktor');
+console.log('\u00a7119 \u2014 der Jitter wird NICHT von der Uhr ged\u00e4mpft (\u00a7117 zur\u00fcckgenommen):');
+ok(!/_jitterOf\(b, player\) \* damp/.test(coreSrc),
+   'keine D\u00e4mpfung des Jitters \u2014 \u00a7117 ist wirklich raus (Wiedereinbau-Schutz)');
+ok(/\u00a7119 \(1\.8\.\)/.test(coreSrc) && /3 Siege : 24 bei 5 Remis/.test(coreSrc),
+   'die MESSUNG steht als Begr\u00fcndung an der Fundstelle (nicht nur die Entscheidung)');
 {
-  // Verhaltensprobe: kurz vor der Automatik muss der Blattwert klein bleiben, auch mit
-  // starkem Jitter. Ohne die D\u00e4mpfung st\u00fcnde dort die volle Amplitude.
-  const nah  = { timeBudgetMs: 1e9, maxDepth: 1, minDepth: 1, rankPool: 1, blockRate: 1.0,
-                 minThinkMs: 0, jitterAmp: 400, jitterSeed: 4242 };
-  let maxAbs = 0;
-  for(let hm = 46; hm <= 49; hm++){
-    const r = core.pickMove(initBoard(), 1, 'odd', nah, [], {halfmoves: hm, limit: 50});
-    maxAbs = Math.max(maxAbs, Math.abs(r.meta.score));
-  }
-  ok(maxAbs < 400,
-     'bei Amplitude 400 und fast abgelaufener Uhr bleibt |score| unter der Amplitude (' +
-     Math.round(maxAbs) + ') \u2014 der Jitter w\u00fcrfelt dort nicht mehr');
+  // Der Schutz, auf den es ankommt, bleibt: abgelaufene Uhr = harte 0, VOR dem Blattzweig.
+  const nah = { timeBudgetMs: 1e9, maxDepth: 1, minDepth: 1, rankPool: 1, blockRate: 1.0,
+                minThinkMs: 0, jitterAmp: 400, jitterSeed: 4242 };
   const r49 = core.pickMove(initBoard(), 1, 'odd', nah, [], {halfmoves: 49, limit: 50});
   ok(r49.meta.score === 0,
-     '\u00a791 harte Uhr schl\u00e4gt den Jitter weiterhin durch (1 Halbzug vorher \u2192 score exakt 0)');
+     '\u00a791 harte Uhr schl\u00e4gt den Jitter durch (1 Halbzug vor der Automatik \u2192 score exakt 0)');
+  // Kommentare ausblenden: der §119-Erklaertext nennt _jitterOf selbst, sonst misst der
+  // Vergleich den Kommentar statt den Code.
+  const codeOnly = coreSrc.replace(/\/\/[^\n]*/g, '');
+  ok(/if\(clockLeft <= 0\) return 0;/.test(codeOnly) &&
+     // Nach der VERWENDUNGSSTELLE suchen, nicht nach dem Namen: `function _jitterOf(b, player)`
+     // steht weiter oben in der Datei und wuerde den Vergleich sonst verfaelschen.
+     codeOnly.indexOf('if(clockLeft <= 0) return 0;') < codeOnly.indexOf('+ _jitterOf(b, player)'),
+     'der harte Uhr-Zweig steht VOR dem Blattzweig \u2014 dort kann kein Jitter mehr hineinwirken');
 }
 
 console.log('\u00a7117 \u2014 INVARIANTE: eine Jitter-Stufe darf kein Remis annehmen:');
@@ -182,7 +182,7 @@ console.log('\u00a7117 \u2014 INVARIANTE: eine Jitter-Stufe darf kein Remis anne
   const mitJitter = Object.keys(L).filter(k => typeof L[k].jitterAmp === 'number' && L[k].jitterAmp > 0);
   ok(mitJitter.every(k => accepts[k] === false),
      'jede Stufe mit jitterAmp hat accepts:false \u2014 betrifft: ' + (mitJitter.join(', ') || 'keine'));
-  ok(/\u00a7117-VORBEHALT/.test(coreSrc),
+  ok(/\u00a7117\/\u00a7119-VORBEHALT/.test(coreSrc),
      'der Vorbehalt steht im Verbraucher-Register (sonst f\u00e4llt beim n\u00e4chsten Umbau niemandem auf, warum)');
 }
 
@@ -213,7 +213,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 95, 'Cache-Bust auf v\u226595 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 96, 'Cache-Bust auf v\u226596 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');

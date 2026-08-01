@@ -78,15 +78,15 @@ ok(selfOk, 'Antisymmetrie-Selbsttest odd+even besteht (evaluate() selbst unver\u
 const coreSrc = fs.readFileSync(__dirname+'/countred_ai_core.js','utf8');
 ok(/if\(clockLeft <= 0\) return 0;/.test(coreSrc) && coreSrc.indexOf('checkFourOn(b)) return -100000') < coreSrc.indexOf('if(clockLeft <= 0) return 0;'),
    'Knoten-Reihenfolge: Vierer-Check VOR Uhr-Check (Sieg schl\u00e4gt Uhr, wie nextTurn)');
-// §117-NACHZUG: der Faktor steht seit §117 in `damp`, weil der §114-Jitter DENSELBEN
-// Faktor braucht (sonst dominiert er kurz vor der Automatik). Gepr\u00fcft wird weiterhin das
-// Wesentliche: die D\u00e4mpfung sitzt AM BLATTAUFRUF, evaluate() selbst bleibt zustandslos.
-ok(/const damp = drawClockFactor\(clockLeft\);/.test(coreSrc) &&
-   /evaluate\(b, player\) \* damp/.test(coreSrc) &&
+// §119-NACHZUG: §117 hatte den Faktor in `damp` ausgelagert, weil der Jitter ihn mittragen
+// sollte. §119 hat das zurueckgenommen (gemessen schaedlich), der Ausdruck steht wieder direkt
+// am Blattaufruf. Geprueft wird das Wesentliche: die Daempfung sitzt AM BLATTAUFRUF,
+// evaluate() selbst bleibt zustandslos — und der Jitter traegt sie AUSDRUECKLICH NICHT.
+ok(/evaluate\(b, player\) \* drawClockFactor\(clockLeft\)/.test(coreSrc) &&
    !/function evaluate\(b, forPlayer\)\{[\s\S]{0,4000}drawClockFactor/.test(coreSrc),
-   'D\u00e4mpfung als Faktor AM BLATTAUFRUF \u2014 evaluate() bleibt zustandslos');
-ok(/_jitterOf\(b, player\) \* damp/.test(coreSrc),
-   '\u00a7117: der Jitter tr\u00e4gt denselben D\u00e4mpfungsfaktor wie die Bewertung');
+   'Daempfung als Faktor AM BLATTAUFRUF — evaluate() bleibt zustandslos');
+ok(!/_jitterOf\(b, player\) \* damp/.test(coreSrc),
+   '\u00a7119: der Jitter traegt die Daempfung NICHT (Wiedereinbau-Schutz gegen \u00a7117)');
 ok(/clockLeft, clockLimit\)/.test(coreSrc.match(/opponent plays again[\s\S]{0,300}/)[0]),
    'Kein-Zug-Zweig reicht die Uhr UNVER\u00c4NDERT durch (kein ausgef\u00fchrter Halbzug)');
 

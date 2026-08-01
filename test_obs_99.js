@@ -76,7 +76,9 @@ console.log('\u00a799 \u2014 Felder und ihre Bedeutung (rankPool 1, mit Wurzel-A
     if(m.safety === 'took-win'){ tookWin++; if(m.exact !== null || m.depth !== 0) badExact++; continue; }
     const d = m.score - m.raw;                       // 0 oder genau der Dreier-Bonus
     if(!(Math.abs(d) < 1e-9 || Math.abs(d - 80) < 1e-9)) badBonus++;
-    if(m.exact !== false) badExact++;                 // Wurzel-Alpha an ⇒ sec/rank sind Schranken
+    // §120: ohne Fenster (hier: cfg1) bleibt exact false — Wurzel-Alpha an, sec/rank sind
+    // Schranken. Mit Fenster meldet exact seit §120 true, das prüft der Block weiter unten.
+    if(m.exact !== false) badExact++;
     if(m.rank !== 1) badRank++;                       // ohne Pool ist der gew\u00e4hlte Zug immer Rang 1
     if(typeof m.prevBest === 'number'){ withPrev++; if(!(m.prevBest < m.score + 1e-9)) badPrev++; }
     if(!(m.nRoot >= 1 && m.nSkip >= 0 && m.nSkip < m.nRoot)) badField++;
@@ -88,6 +90,31 @@ console.log('\u00a799 \u2014 Felder und ihre Bedeutung (rankPool 1, mit Wurzel-A
   ok(badRank === 0, 'rank===1 bei rankPool 1');
   ok(withPrev > 0 && badPrev === 0,
      'prevBest ist der \u00fcberbotene Wert und liegt unter score (' + withPrev + ' F\u00e4lle gepr\u00fcft)');
+}
+
+console.log('\u00a7120 \u2014 mit WERTFENSTER sind sec/rank ebenfalls belastbar:');
+{
+  // Bis §120 stand exact auf `!useRootAlpha` und war deshalb bei JEDER ausgelieferten Stufe
+  // false — das Flag war strukturell tot (375 Live-Züge, kein einziges true). Richtig ist:
+  // bei gesetztem Fenster wird die Wurzel-Alpha um poolSlack GESENKT, jeder Zug innerhalb
+  // des Fensters bekommt damit einen exakten Wert.
+  const cfgW = { timeBudgetMs: 1e9, maxDepth: 3, minDepth: 3, rankPool: 1, blockRate: 1.0,
+                 minThinkMs: 0, poolWindow: 110, poolTemp: 30 };
+  let n = 0, badExact = 0, badSec = 0, mitRang2 = 0;
+  for(const parity of ['odd','even']) for(const pos of positions(8, parity, 6)){
+    globalThis.PARITY_P1 = parity;
+    const m = core.pickMove(pos.b, pos.p, parity, cfgW, []).meta;
+    if(m.safety === 'took-win') continue;
+    n++;
+    if(m.exact !== true) badExact++;
+    if(m.rank > 1){ mitRang2++; if(typeof m.sec !== 'number') badSec++; }
+  }
+  ok(n >= 8, 'Testmaterial: ' + n + ' Stellungen mit Fenster gerechnet');
+  ok(badExact === 0, 'exact===true bei gesetztem poolWindow \u2014 das Flag ist nicht mehr tot');
+  ok(badSec === 0, 'sec ist gesetzt, sobald ein anderer als der beste Zug gespielt wurde (' +
+     mitRang2 + ' F\u00e4lle)');
+  ok(/exact:    \(!useRootAlpha\) \|\| _poolOn/.test(fs.readFileSync(__dirname+'/countred_ai_core.js','utf8')),
+     'die Regel steht im Kern: exact = kein Wurzel-Alpha ODER Fenster gesetzt');
 }
 
 console.log('\u00a799 \u2014 rankPool > 1: sec und rank werden zu echten Werten:');

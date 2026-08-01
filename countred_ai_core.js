@@ -108,6 +108,10 @@ const HEURISTIC_VERSION = 'countred-ai-1.9';
 //      Ausfuehrliche Begruendung im Kasten bei _jitterOf. Vorerst traegt KEINE Stufe das
 //      Feld: der Mechanismus steht, der Wert wird erst gemessen (Walters Grundsatz — nie
 //      unterhalb der real gespielten Tiefe entscheiden, K1).
+// v95 -> v96 (1.8.): §119 nimmt §117 zurueck (Jitter NICHT von der Uhr daempfen — gemessen
+//      schaedlich, s. Kommentar an der Fundstelle). §120 stellt das `exact`-Flag richtig:
+//      bei gesetztem Fenster sind sec/rank belastbar, das Flag meldet das jetzt.
+//      Beides ohne Wirkung auf die Zugwahl bei Stufen ohne jitterAmp — KEIN HEURISTIC-Bump.
 // v94 -> v95 (1.8., §117): (a) Jitter wird von der §91-Uhr mitgedaempft — vorher haette er
 //      kurz vor der Remis-Automatik die Bewertung dominiert; (b) neue Invariante in
 //      test_jitter_114: eine Stufe mit jitterAmp darf kein Remis ANNEHMEN, weil auch `best`
@@ -139,7 +143,7 @@ const HEURISTIC_VERSION = 'countred-ai-1.9';
 //   depth/ms/budgetHit  Suchaufwand                        Zug-Log, Tiefenauswertung
 //   safety     'took-win' | 'blocked' | 'none'             Zug-Log
 //
-//   ⚠️ §117-VORBEHALT: traegt eine Stufe `jitterAmp`, stammen score UND best aus VERJITTERTEN
+//   ⚠️ §117/§119-VORBEHALT: traegt eine Stufe `jitterAmp`, stammen score UND best aus VERJITTERTEN
 //   Blaettern. `best` ist dann zwar weiterhin der beste Zug DIESER Suche, aber keine saubere
 //   Lagebeurteilung mehr. Eine solche Stufe darf deshalb kein Remis annehmen (Invariante in
 //   test_jitter_114) — oder braeuchte eine zweite, ungejitterte Bewertung.
@@ -524,7 +528,16 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
         rank:     _sorted.findIndex(x => _key(x.m) === _bk) + 1,
         nRoot:    legal.length,
         nSkip:    skipped.length,
-        exact:    !useRootAlpha   // nur dann sind sec/rank Werte statt Fail-Low-Schranken
+        // §120 (1.8.): `exact` meldet, ob sec/rank belastbare WERTE sind oder blosse
+        // Fail-Low-Schranken. Bis hierher stand `!useRootAlpha` — und weil seit §109 JEDE
+        // Stufe entweder ein Fenster oder rankPool 1 hat, war useRootAlpha immer true und
+        // exact damit in ALLEN 375 geloggten Zuegen false. Das Flag war strukturell tot.
+        // Richtig ist: bei gesetztem Fenster wird die Wurzel-Alpha um poolSlack GESENKT,
+        // also bekommt jeder Zug INNERHALB des Fensters einen exakten Wert; nur Zuege
+        // ausserhalb gehen fail-low, und die sortiert derselbe Schwellwert ohnehin aus.
+        // Empirisch bestaetigt an 38 Live-Zuegen mit rank >= 2: null Verstoesse gegen die
+        // Fenstergrenze, groesster Abstand sec-score 44 (bei Fenster 110).
+        exact:    (!useRootAlpha) || _poolOn
       };
       reachedDepth = depth;
       // §61e-6/§65e/§F3: ID-Zugsortierung. Die scored-Liste dieser Tiefe nach Wert sortieren
@@ -1004,14 +1017,19 @@ function negamax(b, depth, alpha, beta, activePlayer, bonusPlayer, pathSet, cloc
 
   // §91: Blatt-Dämpfung — symmetrischer Faktor, evaluate() selbst bleibt zustandslos (Kernregel 5).
   if(depth===0){
-    const damp = drawClockFactor(clockLeft);
-    const v = evaluate(b, player) * damp;
+    const v = evaluate(b, player) * drawClockFactor(clockLeft);
     // §114: Jitter NUR unterhalb des Mate-Bands (s. Kasten oben). evaluate() bleibt unberuehrt.
-    // §117: Der Jitter wird MIT DEMSELBEN Faktor gedaempft wie die Bewertung. Ohne das dominiert
-    // er kurz vor der Remis-Automatik: §91 schrumpft den echten Wert gegen null, der Jitter
-    // stuende voll da — Max wuerfelte genau dort, wo er aufs Remis zusteuern soll. Der Faktor
-    // ist symmetrisch und laesst die Antisymmetrie unberuehrt.
-    return (Math.abs(v) < 90000) ? v + _jitterOf(b, player) * damp : v;
+    // §119 (1.8.): Der Jitter wird NICHT von der Uhr gedaempft — §117 hatte das eingebaut und
+    // ist ZURUECKGENOMMEN. Begruendung damals: der Jitter koennte kurz vor der Remis-Automatik
+    // die gegen null geschrumpfte Bewertung dominieren. Das war eine VERMUTUNG ohne Beleg.
+    // Gemessen (gleicher Seed 20260727, Tiefe 5, nur der Kern verschieden): ohne Daempfung
+    // 3 Siege : 24 bei 5 Remis, mit Daempfung 8 : 9 bei 15 Remis. Die Daempfung hat den Hebel
+    // praktisch abgeschaltet und die Remis verdreifacht — sie kostete genau dort Wirkung, wo
+    // ein schwacher Spieler Fehler machen soll (zaehe Partien nahe der Uhr).
+    // Der Schutz, auf den es ankommt, bleibt ohnehin: bei clockLeft <= 0 gibt der Knoten oben
+    // hart 0 zurueck, ungejittert. LEHRE: keine Absicherung gegen ein Problem bauen, das sich
+    // in keiner Messung gezeigt hat.
+    return (Math.abs(v) < 90000) ? v + _jitterOf(b, player) : v;
   }
 
   const moves = getLegalMoves(b, player, PARITY_P1);
