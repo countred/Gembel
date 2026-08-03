@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-2.0';
+const HEURISTIC_VERSION = 'countred-ai-2.1';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -108,6 +108,12 @@ const HEURISTIC_VERSION = 'countred-ai-2.0';
 //      Ausfuehrliche Begruendung im Kasten bei _jitterOf. Vorerst traegt KEINE Stufe das
 //      Feld: der Mechanismus steht, der Wert wird erst gemessen (Walters Grundsatz — nie
 //      unterhalb der real gespielten Tiefe entscheiden, K1).
+// 2.0 -> 2.1 (3.8., §122 STUFEN GERUECKT): einsteiger(alt) -> fortgeschritten,
+//      fortgeschritten(alt) -> stark. Die neue einsteiger ist die §121-Stufe. Sichtbar
+//      bleiben einsteiger / fortgeschritten / meister; stark bleibt geparkt.
+//      ⚠️ ALTPARTIEN: derselbe skillLevel-Name bedeutet vor und nach v98 verschiedene
+//      Konfigurationen — beim Auswerten IMMER build + skillLevel zusammen lesen.
+//      Neu ausserdem: die STUFENLEITER-Tabelle ueber SKILL_LEVELS als einzige Uebersicht.
 // 1.9 -> 2.0 (2.8., §121 Neuling-Absenkung): einsteiger auf maxDepth 2, poolWindow 250/60
 //      und jitterAmp 80. Begruendung im Kasten ueber der Stufe.
 //      ⚠️ WARUM 2.0 UND NICHT 1.10: die Suiten lesen die Version mit parseFloat, und
@@ -192,58 +198,68 @@ if(typeof globalThis!=='undefined'){ globalThis.HEURISTIC_VERSION = HEURISTIC_VE
 // rankPool steht überall auf 1: durch das Fenster ist der alte Top-k-Pool wirkungslos, und ein
 // wirkungsloser Parameter führt beim nächsten Mal jemanden in die Irre.
 const SKILL_LEVELS = {
-  // ┌─ EINSTEIGER-PAKET — bitte als EINHEIT behandeln ─────────────────────────────────┐
-  // │ §121 (2.8.): DEUTLICH abgesenkt, weil erstmals ECHTE ANFAENGERDATEN vorlagen.     │
-  // │ Fuenf Partien eines Neulings gegen die alte Einstellung: 0:5, und die Partien     │
-  // │ waren nach durchschnittlich SIEBEN eigenen Zuegen vorbei, eine nach einem         │
-  // │ einzigen. Er verpasste dabei WEDER Sofortsiege NOCH Dreier — er kam gar nicht     │
-  // │ erst in solche Stellungen. Dieselbe Einstellung stand gegen Walter (Erfinder des  │
-  // │ Spiels) ausgeglichen bei 7:6:3.                                                   │
-  // │ LEHRE: „7,8 % gegen meister" sagt fast nichts ueber die Wirkung auf einen         │
-  // │ Menschen. Selbstspiel-Quote und menschliche Erfahrung sind ZWEI ACHSEN. Deshalb   │
-  // │ hier keine Feinjustierung um Prozente, sondern alle drei Hebel gleichzeitig.      │
-  // │ Diese Stufe traegt vier Abweichungen, die AUFEINANDER aufbauen. Wer eine davon   │
-  // │ aendert, entfernt oder auf eine andere Stufe kopiert, muss die anderen mitdenken.│
-  // │ Die Pruefungen in test_dreier_111.js halten das fest — auch fuer den Fall, dass  │
-  // │ diese Konfiguration eines Tages unter einem ANDEREN Stufennamen laeuft.          │
-  // │                                                                                  │
-  // │ 1. poolWindow 110 / poolTemp 30 (§109) — die eigentliche Absenkung.              │
-  // │ 2. forceTriple (§111) — FOLGT AUS 1: das Fenster ist mit 110 breiter als der      │
-  // │    DREIER_FORM_BONUS von 80, ein Dreier waere sonst per Konstruktion              │
-  // │    ueberstimmbar. Grund ist Wirkung, nicht Staerke (Walter: ein liegengelassener  │
-  // │    Dreier wirkt gegenueber einem Einsteiger befremdlich). Bei fortgeschritten mit │
-  // │    Fenster 30 tritt der Fall kaum auf — deshalb steht das Flag NUR hier.          │
-  // │ 3. maxDepth 2 (§111/§121) — graduelle Absenkung. Mit Tiefe 3 sah Max den          │
-  // │    Vierer-Aufbau drei Halbzuege voraus; das reichte fuer einen Sieg in sieben      │
-  // │    Zuegen gegen einen Anfaenger.                                                  │
-  // │ 4. minThinkMs 1000 (§113) — FOLGT AUS 3: bei Tiefe 3 ist die Suche im Median in   │
-  // │    80 ms fertig (bei Tiefe 5 waren es 1570 ms). minThinkMs traegt seither die     │
-  // │    SICHTBARE Zuganimation: die Wartezeit fliesst in countred.html als Phase A in  │
-  // │    animateAIMove, also in das blaue Aufheben. Mit den alten 600 ms zog Max        │
-  // │    „fast zu schnell" (Walter) und die Animation ging unter. Die Stufen mit        │
-  // │    Tiefe 5 brauchen das nicht — dort dauert die Suche selbst lang genug.          │
-  // │                                                                                  │
-  // │ WENN DIESE STUFE UMZIEHT (z. B. einsteiger -> fortgeschritten): alle vier Werte   │
-  // │ wandern GEMEINSAM mit. Ein neuer, schwaecherer einsteiger braucht dann eigene     │
-  // │ Werte — nicht die hier stehenden teilen.                                         │
+  // ═══════════════════════════════════════════════════════════════════════════════════
+  // STUFENLEITER — Stand §122 (3.8.). Diese Tabelle ist die EINZIGE Uebersicht; wer eine
+  // Stufe aendert, aktualisiert sie hier mit. Prozente sind Punktquoten gegen `meister`
+  // im Selbstspiel (selfplay, 8 Eroeffnungen, Seed 20260727, 32 Partien, gepaart).
+  //
+  //   STUFE            TIEFE  FENSTER   JITTER  forceTriple  gegen meister   sichtbar
+  //   einsteiger         2    250/60      80        ja       ungemessen        ja
+  //   fortgeschritten    3    110/30       —        ja       7,8 % (31.7.)     ja
+  //   stark              5     30/10       —        nein     40,6 % (§109)     NEIN
+  //   meister            5      —          —        nein     50 % (Referenz)   ja
+  //
+  // ⚠️ DIE PROZENTE SIND NUR EINE DER ZWEI ACHSEN. Fuenf Partien eines echten Neulings
+  //   gegen die 7,8-%-Stufe: 0:5, Partien nach durchschnittlich SIEBEN eigenen Zuegen
+  //   vorbei. Dieselbe Stufe stand gegen Walter (Erfinder des Spiels) bei 7:6:3. Die
+  //   Selbstspiel-Quote sagt also wenig ueber die Wirkung auf einen Menschen — das
+  //   brauchbarere Mass am Brett ist die PARTIEDAUER.
+  //
+  // §122: die Stufen sind an diesem Tag GERUECKT. Was bis v97 `einsteiger` hiess, ist
+  //   jetzt `fortgeschritten`; was `fortgeschritten` hiess, ist jetzt `stark`. `einsteiger`
+  //   ist neu (§121). Beim Auswerten von Altpartien deshalb IMMER build + skillLevel
+  //   zusammen lesen — derselbe Name bedeutet vor und nach v98 verschiedene Konfigurationen.
+  // ═══════════════════════════════════════════════════════════════════════════════════
+  //
+  // ┌─ EINSTEIGER (neu, §121) — bitte als EINHEIT behandeln ───────────────────────────┐
+  // │ Anlass: die Neulingsdaten oben. Keine Feinjustierung um Prozente, sondern alle    │
+  // │ Hebel gleichzeitig. Die vier Werte bauen AUFEINANDER auf:                         │
+  // │ 1. poolWindow 250 / poolTemp 60 — die Auswahl wird vom Suchurteil entkoppelt.     │
+  // │    Walters alte Leitplanke „hoechstens 110" hatte GENAU EINEN Grund: ein          │
+  // │    breiteres Fenster macht einen Dreier ueberstimmbar. forceTriple deckt das ab.  │
+  // │ 2. forceTriple — FOLGT AUS 1, weil 250 > DREIER_FORM_BONUS (80). Grund ist        │
+  // │    Wirkung, nicht Staerke: ein liegengelassener Dreier ist der sichtbarste        │
+  // │    Patzer gegenueber einem Anfaenger.                                            │
+  // │ 3. maxDepth 2 — mit Tiefe 3 sah Max den Vierer-Aufbau weit genug voraus, um in    │
+  // │    sieben Zuegen zu gewinnen.                                                    │
+  // │ 4. jitterAmp 80 — der kraeftigste Einzelhebel (bei Tiefe 5 allein 3 Siege : 24).  │
+  // │    ⚠️ NICHT ueber 80: bei ±160 wurde die Stufe ZAEH statt schwach (16 von 32       │
+  // │    Partien remis). Der Hebel ist nicht monoton.                                   │
+  // │    ⚠️ Der Jitter verrauscht auch `best`, deshalb darf diese Stufe kein Remis       │
+  // │    ANNEHMEN — accepts:false in AI_DRAW_POLICY, geprueft in test_jitter_114.       │
+  // │ 5. minThinkMs 1000 — FOLGT AUS 3: bei flacher Tiefe ist die Suche in ~80 ms       │
+  // │    fertig, und minThinkMs traegt seither die sichtbare Zuganimation (Phase A in   │
+  // │    animateAIMove = das blaue Aufheben). Mit 600 ms zog Max „fast zu schnell".     │
   // └──────────────────────────────────────────────────────────────────────────────────┘
-  // │ 5. jitterAmp 80 (§114/§121) — der gemessen kraeftigste Einzelhebel (bei Tiefe 5   │
-  // │    allein 3 Siege : 24 gegen meister). ⚠️ Er verrauscht auch `best`, deshalb darf  │
-  // │    diese Stufe kein Remis annehmen — accepts:false in AI_DRAW_POLICY, geprueft in │
-  // │    test_jitter_114. Ueber ±80 hinaus NICHT erhoehen: bei ±160 wurde die Stufe      │
-  // │    zaeh statt schwach (16 von 32 Partien remis).                                  │
-  // │ 6. poolWindow 250 (§121) — die alte Leitplanke „hoechstens 110, weil 80 ein       │
-  // │    ganzer Dreier-Bonus ist" hatte GENAU EINEN Grund: ein breiteres Fenster macht  │
-  // │    den Dreier ueberstimmbar. forceTriple verhindert das seit §111, die Grenze ist │
-  // │    damit hinfaellig.                                                              │
   einsteiger:      { timeBudgetMs: 2500, maxDepth: 2, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 250, poolTemp: 60, forceTriple: true, jitterAmp: 80 },
-  fortgeschritten: { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 700, poolWindow:  30, poolTemp: 10 },
-  // stark: NICHT ENTFERNEN. Die Stufe wird nirgends angeboten (countred.html ruft nur einsteiger,
-  // fortgeschritten und meister) und ist bewusst unsichtbar — sie muss aber in der Konfiguration
-  // bleiben: Altpartien tragen skillLevel:"stark" im _meta-Kopf und im Meta-Eintrag und müssen im
-  // Replay und in jeder Auswertung ladbar bleiben; AI_DRAW_POLICY führt denselben Schlüssel
-  // (test_remis_85 prüft auf vier Zeilen). Unkalibriert, kein Fenster.
-  stark:           { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 800 },
+  // ┌─ FORTGESCHRITTEN (§122: war bis v97 `einsteiger`) ───────────────────────────────┐
+  // │ Gemessen 7,8 % gegen meister. Walter stand hier ueber 13 Partien bei 6:6:1 —      │
+  // │ das ist die ehrliche „fortgeschritten"-Stufe. Dieselben Abhaengigkeiten wie oben: │
+  // │ Fenster 110 > Bonus 80 ⇒ forceTriple; Tiefe 3 ⇒ minThinkMs 1000.                  │
+  // │ KEIN jitterAmp — diese Stufe darf ihre Lage sauber einschaetzen und Remis         │
+  // │ annehmen (accepts:true).                                                          │
+  // └──────────────────────────────────────────────────────────────────────────────────┘
+  fortgeschritten: { timeBudgetMs: 2500, maxDepth: 3, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 110, poolTemp: 30, forceTriple: true },
+  // ┌─ STARK (§122: war bis v97 `fortgeschritten`) — GEPARKT, NICHT ENTFERNEN ─────────┐
+  // │ Gemessen 40,6 % gegen meister (§109, t = −3,0, p ≈ 0,02). Die Stufe wird in       │
+  // │ countred.html NICHT angeboten — Walter entscheidet spaeter, ob sie erscheint.     │
+  // │ Sie muss aber in der Konfiguration bleiben: Altpartien tragen skillLevel:"stark"  │
+  // │ und muessen im Replay und in jeder Auswertung ladbar sein; AI_DRAW_POLICY fuehrt  │
+  // │ denselben Schluessel (test_remis_85 prueft auf vier Zeilen).                      │
+  // │ Fenster 30 < Bonus 80 ⇒ KEIN forceTriple noetig, der Dreier ist hier ohnehin      │
+  // │ nicht ueberstimmbar.                                                              │
+  // └──────────────────────────────────────────────────────────────────────────────────┘
+  stark:           { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 800, poolWindow:  30, poolTemp: 10 },
   meister:         { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 900 },
 };
 

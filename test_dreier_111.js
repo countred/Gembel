@@ -55,18 +55,28 @@ ok(verNum >= 1.8, "HEURISTIC_VERSION ist countred-ai-\u22651.8 (\u00a7111-Paket 
 
 console.log('\u00a7111 \u2014 der Eingriff steht NUR bei einsteiger:');
 ok(L.einsteiger.forceTriple === true, 'einsteiger tr\u00e4gt forceTriple: true');
-for(const k of ['meister','fortgeschritten','stark'])
+// §122-NACHZUG: nach dem Rücken trägt AUCH fortgeschritten das Paket (es ist die
+// Konfiguration, die bis v97 einsteiger hieß). meister und stark bleiben frei.
+ok(L.fortgeschritten.forceTriple === true,
+   'fortgeschritten tr\u00e4gt forceTriple (\u00a7122: die alte einsteiger-Konfiguration ist hierher ger\u00fcckt)');
+for(const k of ['meister','stark'])
   ok(!('forceTriple' in L[k]), k + ': KEIN forceTriple (Walter-Auflage: meister unber\u00fchrt)');
 ok(L.einsteiger.maxDepth === 2, 'einsteiger maxDepth 2 (\u00a7121-Absenkung nach den Neuling-Partien)');
-for(const k of ['meister','fortgeschritten','stark'])
+ok(L.fortgeschritten.maxDepth === 3, 'fortgeschritten maxDepth 3 (\u00a7122 ger\u00fcckt)');
+for(const k of ['meister','stark'])
   ok(L[k].maxDepth === 5, k + ': maxDepth unver\u00e4ndert 5');
 
 console.log('\u00a7113 \u2014 k\u00fcnstliche Denkzeit (minThinkMs) tr\u00e4gt jetzt die Animation:');
 ok(L.einsteiger.minThinkMs === 1000,
    'einsteiger minThinkMs 1000 (war 600; bei Tiefe 3 ist die Suche im Median in 80 ms fertig, ' +
    'die Wartezeit ist die sichtbare Blau-Phase)');
-ok(L.fortgeschritten.minThinkMs === 700 && L.stark.minThinkMs === 800 && L.meister.minThinkMs === 900,
-   'fortgeschritten 700 / stark 800 / meister 900 unver\u00e4ndert \u2014 die rechnen auf Tiefe 5 lang genug');
+// §122-NACHZUG: fortgeschritten rechnet nach dem Rücken auf Tiefe 3 und braucht deshalb
+// selbst minThinkMs 1000 — die Zusage „700, die rechnen lang genug" galt für Tiefe 5.
+// Die namensunabhängige Regel unten (maxDepth ≤ 3 ⇒ minThinkMs ≥ 1000) deckt das ab.
+ok(L.fortgeschritten.minThinkMs === 1000,
+   'fortgeschritten minThinkMs 1000 (\u00a7122: rechnet jetzt auf Tiefe 3)');
+ok(L.stark.minThinkMs === 800 && L.meister.minThinkMs === 900,
+   'stark 800 / meister 900 unver\u00e4ndert \u2014 die rechnen auf Tiefe 5 lang genug');
 
 console.log('\u00a7113 \u2014 das Einsteiger-PAKET h\u00e4lt zusammen (auch unter anderem Stufennamen):');
 {
@@ -86,14 +96,20 @@ console.log('\u00a7113 \u2014 das Einsteiger-PAKET h\u00e4lt zusammen (auch unte
   ok(mitFlagg.every(k => typeof L[k].poolWindow === 'number' && L[k].poolWindow > DREIER_FORM_BONUS),
      'umgekehrt tr\u00e4gt KEINE Stufe forceTriple ohne den Grund daf\u00fcr (Walter: die direkte ' +
      'Manipulation soll m\u00f6glichst die einzige bleiben)');
-  ok(mitFlagg.length === 1, 'genau EINE Stufe tr\u00e4gt das Paket (' + mitFlagg.join(', ') + ')');
+  // §122: seit dem Rücken tragen ZWEI Stufen das Paket (einsteiger und fortgeschritten).
+  // Die Zahl ist nicht das Wesentliche — die BEDINGUNG oben ist es. Geprüft wird deshalb
+  // nur noch, dass es überhaupt eine gibt und dass die stärksten Stufen frei bleiben.
+  ok(mitFlagg.length >= 1, 'mindestens eine Stufe tr\u00e4gt das Paket (' + mitFlagg.join(', ') + ')');
+  ok(!mitFlagg.includes('meister') && !mitFlagg.includes('stark'),
+     'meister und stark tragen es NICHT \u2014 dort ist das Dreierverhalten m\u00fchsam definiert worden');
 
   const flach = keys.filter(k => L[k].maxDepth <= 3);
   ok(flach.every(k => L[k].minThinkMs >= 1000),
      'jede Stufe mit maxDepth \u2264 3 hat minThinkMs \u2265 1000 (sonst zieht Max ohne sichtbare ' +
      'Animation) \u2014 betrifft: ' + (flach.join(', ') || 'keine'));
-  ok(flach.length === 1 && flach[0] === mitFlagg[0],
-     'flache Tiefe und forceTriple sitzen auf DERSELBEN Stufe \u2014 das Paket ist nicht auseinandergefallen');
+  ok(flach.every(k => mitFlagg.includes(k)),
+     'jede flach rechnende Stufe tr\u00e4gt auch forceTriple \u2014 das Paket ist nicht auseinandergefallen ' +
+     '(flach: ' + (flach.join(', ') || 'keine') + ')');
 }
 
 console.log('\u00a7111 \u2014 Quellcode-W\u00e4chter:');
@@ -101,9 +117,12 @@ ok(/cfg\.forceTriple === true/.test(coreSrc) && /tripleSet\.has\(_key\(x\.m\)\) 
    'Dreier-Vorrang vorhanden, Ausschluss \u00fcber das Mate-Band (\u2265 \u221290000)');
 ok(/DIREKTE MANIPULATION/.test(coreSrc) && /Walter/.test(coreSrc),
    'Begr\u00fcndung steht als Kommentar an der Fundstelle (Walter-Auflage: gut dokumentieren)');
-ok(/EINSTEIGER-PAKET \u2014 bitte als EINHEIT behandeln/.test(coreSrc) &&
-   /WENN DIESE STUFE UMZIEHT/.test(coreSrc),
-   'der Erkl\u00e4rkasten \u00fcber der einsteiger-Zeile steht samt Umzugs-Warnung');
+// §122: der Kasten heißt jetzt „EINSTEIGER (neu, §121)", und die Umzugs-Warnung ist durch
+// die STUFENLEITER-Tabelle ersetzt worden — dort steht, welche Stufe woher kam.
+ok(/EINSTEIGER \(neu, \u00a7121\) \u2014 bitte als EINHEIT behandeln/.test(coreSrc) &&
+   /STUFENLEITER \u2014 Stand/.test(coreSrc) &&
+   /war bis v97 `einsteiger`/.test(coreSrc),
+   'Erkl\u00e4rkasten und Stufenleiter-Tabelle stehen, inklusive Herkunft jeder Stufe');
 ok(/const _exactTriple = \(cfg\.forceTriple === true\) && !!triple;/.test(coreSrc) &&
    /useRootAlpha && !_exactTriple/.test(coreSrc),
    'dreierbildende Wurzelz\u00fcge suchen unter forceTriple mit vollem Fenster (keine Schranken)');
@@ -266,7 +285,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 97, 'Cache-Bust auf v\u226597 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 98, 'Cache-Bust auf v\u226598 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');

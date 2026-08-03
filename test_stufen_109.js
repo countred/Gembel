@@ -51,11 +51,18 @@ console.log('\u00a7109 \u2014 kalibrierte Fensterwerte:');
 // (0:5 bei sieben Zuegen je Partie). Fenster 250/60 statt 110/30.
 ok(L.einsteiger.poolWindow === 250 && L.einsteiger.poolTemp === 60,
    'einsteiger: Fenster 250 / Temp 60 (\u00a7121-Absenkung nach den Neuling-Partien)');
-ok(L.fortgeschritten.poolWindow === 30 && L.fortgeschritten.poolTemp === 10,
-   'fortgeschritten: Fenster 30 / Temp 10 (gemessen 40,6 %)');
+ok(L.stark.poolWindow === 30 && L.stark.poolTemp === 10,
+   'stark: Fenster 30 / Temp 10 \u2014 die 40,6-%-Konfiguration, \u00a7122 von fortgeschritten hierher ger\u00fcckt');
+// §122-NACHZUG: die Stufen sind gerückt. fortgeschritten trägt jetzt die Konfiguration,
+// die bis v97 einsteiger hieß (gemessen 7,8 %, Walter 6:6:1 über 13 Partien).
+ok(L.fortgeschritten.poolWindow === 110 && L.fortgeschritten.poolTemp === 30,
+   'fortgeschritten: Fenster 110 / Temp 30 (gemessen 7,8 %, \u00a7122 von einsteiger hierher ger\u00fcckt)');
 ok(!('poolWindow' in L.meister), 'meister hat KEIN Fenster \u2014 spielt immer den besten Zug');
 ok(L.einsteiger.poolWindow > L.fortgeschritten.poolWindow,
    'Reihenfolge stimmt: das breitere Fenster geh\u00f6rt zur schw\u00e4cheren Stufe');
+// §122: die STUFENLEITER-Tabelle über SKILL_LEVELS ist die einzige Übersicht — sie muss da sein.
+ok(/STUFENLEITER — Stand/.test(coreSrc) && /einsteiger\s+2\s+250\/60/.test(coreSrc),
+   'die Stufenleiter-Tabelle steht im Kern und nennt die aktuellen Werte');
 // §121-NACHZUG: Walters Leitplanke „hoechstens 110" hatte GENAU EINEN Grund — ein breiteres
 // Fenster macht einen Dreier ueberstimmbar, und ein liegengelassener Dreier ist der sichtbarste
 // Patzer. forceTriple (§111) verhindert das seit v91 strukturell, die Grenze ist damit
@@ -78,8 +85,19 @@ console.log('\u00a7109 \u2014 einheitliches Zeitbudget (sonst kommt Tiefe als zw
   // jetzt nur noch bis Tiefe 3, weil das Fenster innerhalb von Walters Leitplanke (≤110) nicht
   // genug hergibt. Geprüft wird deshalb ab jetzt die neue Absicht — Tiefe ist ein ERLAUBTER,
   // aber ausdrücklich einsteiger-EXKLUSIVER Hebel.
-  ok(L.meister.maxDepth === 5 && L.fortgeschritten.maxDepth === 5 && L.stark.maxDepth === 5,
-     'meister/fortgeschritten/stark unverändert auf maxDepth 5');
+  // §122: nach dem Rücken rechnet fortgeschritten auf Tiefe 3. Geprüft wird die ORDNUNG
+  // der Leiter statt fester Zahlen — das überlebt das nächste Rücken.
+  ok(L.meister.maxDepth === 5 && L.stark.maxDepth === 5,
+     'meister und stark auf maxDepth 5');
+  ok(L.einsteiger.maxDepth <= L.fortgeschritten.maxDepth &&
+     L.fortgeschritten.maxDepth <= L.stark.maxDepth &&
+     L.stark.maxDepth <= L.meister.maxDepth,
+     'die Tiefen sind \u00fcber die Leiter aufsteigend (' +
+     [L.einsteiger, L.fortgeschritten, L.stark, L.meister].map(x => x.maxDepth).join(' \u2264 ') + ')');
+  ok(L.einsteiger.poolWindow > L.fortgeschritten.poolWindow &&
+     L.fortgeschritten.poolWindow > L.stark.poolWindow && !('poolWindow' in L.meister),
+     'die Fenster werden \u00fcber die Leiter enger und verschwinden bei meister (' +
+     L.einsteiger.poolWindow + ' > ' + L.fortgeschritten.poolWindow + ' > ' + L.stark.poolWindow + ' > kein Fenster)');
   ok(L.einsteiger.maxDepth < L.meister.maxDepth,
      'einsteiger rechnet flacher als meister (§121: maxDepth ' + L.einsteiger.maxDepth + ')');
   const mins = Object.keys(L).map(k => L[k].minDepth);
@@ -101,7 +119,8 @@ ok(/Math\.exp\(-\(top - x\.v\) \/ temp\)/.test(coreSrc),
 
 console.log('\u00a7109 \u2014 `stark` bleibt (Wiedereinbau-Schutz):');
 ok(!!L.stark, "SKILL_LEVELS enth\u00e4lt weiterhin 'stark' \u2014 Altpartien tragen den Schl\u00fcssel im Log");
-ok(/stark: NICHT ENTFERNEN/.test(coreSrc), 'Begr\u00fcndung steht als Kommentar an der Zeile');
+ok(/STARK \(\u00a7122: war bis v97 `fortgeschritten`\) \u2014 GEPARKT, NICHT ENTFERNEN/.test(coreSrc),
+   'Begr\u00fcndung steht als Kommentar an der Zeile');
 ok(!/startAIGame\('stark'\)/.test(html), "'stark' wird weiterhin NICHT angeboten (unsichtbar)");
 
 console.log('\u00a7109 \u2014 Verhalten:');
@@ -149,7 +168,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 97, 'Cache-Bust auf v\u226597 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 98, 'Cache-Bust auf v\u226598 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');

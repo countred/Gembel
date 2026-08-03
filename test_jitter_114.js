@@ -45,8 +45,8 @@ const L = core.SKILL_LEVELS;
 const K = m => m.fr+','+m.fc+','+m.tr+','+m.tc;
 const BASE = { timeBudgetMs: 1e9, maxDepth: 3, minDepth: 3, rankPool: 1, blockRate: 1.0, minThinkMs: 0 };
 
-ok(core.HEURISTIC_VERSION === 'countred-ai-2.0',
-   "HEURISTIC_VERSION === 'countred-ai-2.0' (exakter Pin, neueste Suite)");
+ok(core.HEURISTIC_VERSION === 'countred-ai-2.1',
+   "HEURISTIC_VERSION === 'countred-ai-2.1' (exakter Pin, neueste Suite)");
 // §121: WARUM 2.0 UND NICHT 1.10 — die Versionspruefungen der aelteren Suiten lesen die
 // Nummer mit parseFloat, und parseFloat('1.10') ergibt 1.1. Jede Pruefung `>= 1.8` waere
 // still fehlgeschlagen. Nach 2.9 muss der Vergleich umgebaut werden, nicht weitergezaehlt.
@@ -229,7 +229,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 97, 'Cache-Bust auf v\u226597 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 98, 'Cache-Bust auf v\u226598 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');
