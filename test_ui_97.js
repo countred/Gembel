@@ -121,12 +121,25 @@ ok(/function trackEvent\(name,params\)\{\s*\/\* absichtlich leer/.test(html),
 ok(/\u00a7126[\s\S]{0,700}WER ES WIEDER EINBAUEN WILL/.test(html),
    'die Begr\u00fcndung samt Warnung steht im Dateikopf (Wiedereinbau-Schutz)');
 ok(/id="legal-footer"/.test(html) &&
-   /showOverlay\('impressum-overlay'\)/.test(html) && /showOverlay\('datenschutz-overlay'\)/.test(html),
+   /getElementById\('impressum-overlay'\)\.classList\.remove\('hidden'\)/.test(html) &&
+   /getElementById\('datenschutz-overlay'\)\.classList\.remove\('hidden'\)/.test(html),
    'Fu\u00dfzeile mit Impressum und Datenschutz im Startmen\u00fc');
+// §127: die Links MUESSEN ohne Funktionsaufruf auskommen. Der Hauptblock ist ein Modul —
+// dort deklarierte Funktionen sind nicht global, inline-onclick findet sie NICHT. Genau
+// daran sind die Links in §126 gescheitert (sichtbar, aber tot).
+ok(!/onclick="showOverlay\(/.test(html) && !/onclick="hideOverlay\(/.test(html),
+   'kein inline-onclick auf Modul-interne Funktionen (\u00a7127-Fehler: showOverlay/hideOverlay waren nicht global)');
+{
+  const foot = html.match(/<div id="legal-footer">[\s\S]*?<\/div>/)[0];
+  ok(/<button type="button" class="legal-link"/.test(foot),
+     'echte <button>-Elemente statt <span> \u2014 tastaturbedienbar und sichtbar klickbar');
+}
+ok(/\.legal-link\{[^}]*font-size:12px/.test(html) && /text-decoration:underline/.test(html),
+   '\u00a7127: 12px und unterstrichen \u2014 mit 10.5px in --text3 war die Zeile auf dem Rechner unsichtbar');
 ok(/'impressum-overlay','datenschutz-overlay'\]/.test(html),
    'beide Overlays stehen in der Overlay-Liste (sonst schlie\u00dfen sie sich nicht sauber)');
-ok(/#legal-footer\{[^}]*font-size:10\.5px/.test(html) && /@media \(max-width:520px\)\{ #legal-footer/.test(html),
-   'Fu\u00dfzeile klein auf dem Rechner, gr\u00f6\u00dfer nur mobil (Walters Auflage: Desktop nicht verschieben)');
+ok(/@media \(max-width:520px\)\{ #legal-footer/.test(html),
+   'mobile Feinjustierung vorhanden, ohne den Rechner zu verschieben (Walters Auflage)');
 // Der Datenschutztext MUSS zum tatsaechlichen Verhalten passen — sonst ist er schlimmer als keiner.
 ok(/setzt keine Cookies/.test(html) && !/googletagmanager/.test(html),
    'die Zusage „keine Cookies" deckt sich mit dem Code (kein Analytics eingebunden)');
