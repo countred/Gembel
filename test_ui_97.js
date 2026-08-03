@@ -136,6 +136,25 @@ ok(!/onclick="showOverlay\(/.test(html) && !/onclick="hideOverlay\(/.test(html),
 }
 ok(/\.legal-link\{[^}]*font-size:12px/.test(html) && /text-decoration:underline/.test(html),
    '\u00a7127: 12px und unterstrichen \u2014 mit 10.5px in --text3 war die Zeile auf dem Rechner unsichtbar');
+// §128: zwei gleichzeitig sichtbare Overlays waren der zweite Fehler — auf dem Telefon
+// gewann das spätere DOM-Element, auf dem Rechner nicht (backdrop-filter erzeugt einen
+// eigenen Stacking-Context). Beide Absicherungen müssen stehen.
+{
+  const foot = html.match(/<div id="legal-footer">[\s\S]*?<\/div>/)[0];
+  ok((foot.match(/getElementById\('mode-overlay'\)\.classList\.add\('hidden'\)/g)||[]).length === 2,
+     'beide Links blenden das Startmen\u00fc aus, bevor sie ihr Overlay zeigen');
+  ok(/#impressum-overlay, #datenschutz-overlay\{z-index:200;\}/.test(html),
+     'beide Rechts-Overlays liegen per z-index \u00fcber den \u00fcbrigen (zweite Absicherung)');
+  // Direkt im ganzen Dokument suchen: das Schliessen-Muster ist eindeutig genug, und ein
+  // Ausschnitts-Regex ueber verschachtelte <div> ist fehleranfaellig (erster Versuch schlug
+  // genau daran fehl — er endete vor dem Button).
+  for(const id of ['impressum','datenschutz']){
+    const muster = new RegExp("getElementById\\('" + id +
+      "-overlay'\\)\\.classList\\.add\\('hidden'\\);document\\.getElementById\\('mode-overlay'\\)\\.classList\\.remove\\('hidden'\\)");
+    ok(muster.test(html),
+       id + ': Schlie\u00dfen holt das Startmen\u00fc zur\u00fcck (sonst steht der Nutzer vor einem leeren Bildschirm)');
+  }
+}
 ok(/'impressum-overlay','datenschutz-overlay'\]/.test(html),
    'beide Overlays stehen in der Overlay-Liste (sonst schlie\u00dfen sie sich nicht sauber)');
 ok(/@media \(max-width:520px\)\{ #legal-footer/.test(html),
