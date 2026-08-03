@@ -57,7 +57,7 @@ console.log('\u00a7111 \u2014 der Eingriff steht NUR bei einsteiger:');
 ok(L.einsteiger.forceTriple === true, 'einsteiger tr\u00e4gt forceTriple: true');
 for(const k of ['meister','fortgeschritten','stark'])
   ok(!('forceTriple' in L[k]), k + ': KEIN forceTriple (Walter-Auflage: meister unber\u00fchrt)');
-ok(L.einsteiger.maxDepth === 3, 'einsteiger maxDepth 3 (graduelle Skalierung)');
+ok(L.einsteiger.maxDepth === 2, 'einsteiger maxDepth 2 (\u00a7121-Absenkung nach den Neuling-Partien)');
 for(const k of ['meister','fortgeschritten','stark'])
   ok(L[k].maxDepth === 5, k + ': maxDepth unver\u00e4ndert 5');
 
@@ -266,7 +266,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 96, 'Cache-Bust auf v\u226596 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 97, 'Cache-Bust auf v\u226597 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');

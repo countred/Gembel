@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-1.9';
+const HEURISTIC_VERSION = 'countred-ai-2.0';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -108,6 +108,11 @@ const HEURISTIC_VERSION = 'countred-ai-1.9';
 //      Ausfuehrliche Begruendung im Kasten bei _jitterOf. Vorerst traegt KEINE Stufe das
 //      Feld: der Mechanismus steht, der Wert wird erst gemessen (Walters Grundsatz — nie
 //      unterhalb der real gespielten Tiefe entscheiden, K1).
+// 1.9 -> 2.0 (2.8., §121 Neuling-Absenkung): einsteiger auf maxDepth 2, poolWindow 250/60
+//      und jitterAmp 80. Begruendung im Kasten ueber der Stufe.
+//      ⚠️ WARUM 2.0 UND NICHT 1.10: die Suiten lesen die Version mit parseFloat, und
+//      parseFloat('1.10') ergibt 1.1 — jede Pruefung `>= 1.8` waere still fehlgeschlagen.
+//      Nach 2.9 muss der Vergleich umgebaut werden, nicht die Nummer weitergezaehlt.
 // v95 -> v96 (1.8.): §119 nimmt §117 zurueck (Jitter NICHT von der Uhr daempfen — gemessen
 //      schaedlich, s. Kommentar an der Fundstelle). §120 stellt das `exact`-Flag richtig:
 //      bei gesetztem Fenster sind sec/rank belastbar, das Flag meldet das jetzt.
@@ -188,6 +193,15 @@ if(typeof globalThis!=='undefined'){ globalThis.HEURISTIC_VERSION = HEURISTIC_VE
 // wirkungsloser Parameter führt beim nächsten Mal jemanden in die Irre.
 const SKILL_LEVELS = {
   // ┌─ EINSTEIGER-PAKET — bitte als EINHEIT behandeln ─────────────────────────────────┐
+  // │ §121 (2.8.): DEUTLICH abgesenkt, weil erstmals ECHTE ANFAENGERDATEN vorlagen.     │
+  // │ Fuenf Partien eines Neulings gegen die alte Einstellung: 0:5, und die Partien     │
+  // │ waren nach durchschnittlich SIEBEN eigenen Zuegen vorbei, eine nach einem         │
+  // │ einzigen. Er verpasste dabei WEDER Sofortsiege NOCH Dreier — er kam gar nicht     │
+  // │ erst in solche Stellungen. Dieselbe Einstellung stand gegen Walter (Erfinder des  │
+  // │ Spiels) ausgeglichen bei 7:6:3.                                                   │
+  // │ LEHRE: „7,8 % gegen meister" sagt fast nichts ueber die Wirkung auf einen         │
+  // │ Menschen. Selbstspiel-Quote und menschliche Erfahrung sind ZWEI ACHSEN. Deshalb   │
+  // │ hier keine Feinjustierung um Prozente, sondern alle drei Hebel gleichzeitig.      │
   // │ Diese Stufe traegt vier Abweichungen, die AUFEINANDER aufbauen. Wer eine davon   │
   // │ aendert, entfernt oder auf eine andere Stufe kopiert, muss die anderen mitdenken.│
   // │ Die Pruefungen in test_dreier_111.js halten das fest — auch fuer den Fall, dass  │
@@ -199,7 +213,9 @@ const SKILL_LEVELS = {
   // │    ueberstimmbar. Grund ist Wirkung, nicht Staerke (Walter: ein liegengelassener  │
   // │    Dreier wirkt gegenueber einem Einsteiger befremdlich). Bei fortgeschritten mit │
   // │    Fenster 30 tritt der Fall kaum auf — deshalb steht das Flag NUR hier.          │
-  // │ 3. maxDepth 3 (§111) — graduelle Absenkung. Gemessen 7,8 % gegen meister.         │
+  // │ 3. maxDepth 2 (§111/§121) — graduelle Absenkung. Mit Tiefe 3 sah Max den          │
+  // │    Vierer-Aufbau drei Halbzuege voraus; das reichte fuer einen Sieg in sieben      │
+  // │    Zuegen gegen einen Anfaenger.                                                  │
   // │ 4. minThinkMs 1000 (§113) — FOLGT AUS 3: bei Tiefe 3 ist die Suche im Median in   │
   // │    80 ms fertig (bei Tiefe 5 waren es 1570 ms). minThinkMs traegt seither die     │
   // │    SICHTBARE Zuganimation: die Wartezeit fliesst in countred.html als Phase A in  │
@@ -211,7 +227,16 @@ const SKILL_LEVELS = {
   // │ wandern GEMEINSAM mit. Ein neuer, schwaecherer einsteiger braucht dann eigene     │
   // │ Werte — nicht die hier stehenden teilen.                                         │
   // └──────────────────────────────────────────────────────────────────────────────────┘
-  einsteiger:      { timeBudgetMs: 2500, maxDepth: 3, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 110, poolTemp: 30, forceTriple: true },
+  // │ 5. jitterAmp 80 (§114/§121) — der gemessen kraeftigste Einzelhebel (bei Tiefe 5   │
+  // │    allein 3 Siege : 24 gegen meister). ⚠️ Er verrauscht auch `best`, deshalb darf  │
+  // │    diese Stufe kein Remis annehmen — accepts:false in AI_DRAW_POLICY, geprueft in │
+  // │    test_jitter_114. Ueber ±80 hinaus NICHT erhoehen: bei ±160 wurde die Stufe      │
+  // │    zaeh statt schwach (16 von 32 Partien remis).                                  │
+  // │ 6. poolWindow 250 (§121) — die alte Leitplanke „hoechstens 110, weil 80 ein       │
+  // │    ganzer Dreier-Bonus ist" hatte GENAU EINEN Grund: ein breiteres Fenster macht  │
+  // │    den Dreier ueberstimmbar. forceTriple verhindert das seit §111, die Grenze ist │
+  // │    damit hinfaellig.                                                              │
+  einsteiger:      { timeBudgetMs: 2500, maxDepth: 2, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 250, poolTemp: 60, forceTriple: true, jitterAmp: 80 },
   fortgeschritten: { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 700, poolWindow:  30, poolTemp: 10 },
   // stark: NICHT ENTFERNEN. Die Stufe wird nirgends angeboten (countred.html ruft nur einsteiger,
   // fortgeschritten und meister) und ist bewusst unsichtbar — sie muss aber in der Konfiguration

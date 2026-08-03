@@ -45,8 +45,13 @@ const L = core.SKILL_LEVELS;
 const K = m => m.fr+','+m.fc+','+m.tr+','+m.tc;
 const BASE = { timeBudgetMs: 1e9, maxDepth: 3, minDepth: 3, rankPool: 1, blockRate: 1.0, minThinkMs: 0 };
 
-ok(core.HEURISTIC_VERSION === 'countred-ai-1.9',
-   "HEURISTIC_VERSION === 'countred-ai-1.9' (exakter Pin, neueste Suite)");
+ok(core.HEURISTIC_VERSION === 'countred-ai-2.0',
+   "HEURISTIC_VERSION === 'countred-ai-2.0' (exakter Pin, neueste Suite)");
+// §121: WARUM 2.0 UND NICHT 1.10 — die Versionspruefungen der aelteren Suiten lesen die
+// Nummer mit parseFloat, und parseFloat('1.10') ergibt 1.1. Jede Pruefung `>= 1.8` waere
+// still fehlgeschlagen. Nach 2.9 muss der Vergleich umgebaut werden, nicht weitergezaehlt.
+ok(parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/)||[])[1]) >= 1.9,
+   'die Nummer bleibt fuer parseFloat aufsteigend (Falle: 1.10 waere kleiner als 1.9)');
 
 console.log('\u00a7114 \u2014 Quellcode-W\u00e4chter (der Jitter sitzt am BLATT, nicht an der Wurzel):');
 ok(/if\(depth===0\)\{[\s\S]{0,1400}_jitterOf\(b, player\)/.test(coreSrc),  // §117: Fenster geweitet, der Kommentar wuchs
@@ -186,9 +191,20 @@ console.log('\u00a7117 \u2014 INVARIANTE: eine Jitter-Stufe darf kein Remis anne
      'der Vorbehalt steht im Verbraucher-Register (sonst f\u00e4llt beim n\u00e4chsten Umbau niemandem auf, warum)');
 }
 
-console.log('\u00a7114 \u2014 noch keine Stufe tr\u00e4gt den Jitter (erst messen, dann setzen):');
-for(const k of Object.keys(L))
-  ok(!('jitterAmp' in L[k]), k + ': kein jitterAmp \u2014 der Wert wird erst kalibriert');
+console.log('\u00a7121 \u2014 welche Stufe tr\u00e4gt den Jitter:');
+{
+  const mit = Object.keys(L).filter(k => typeof L[k].jitterAmp === 'number' && L[k].jitterAmp > 0);
+  ok(mit.length === 1 && mit[0] === 'einsteiger',
+     'genau EINE Stufe tr\u00e4gt jitterAmp, und es ist einsteiger (' + mit.join(', ') + ')');
+  ok(L.einsteiger.jitterAmp === 80,
+     'Amplitude 80 \u2014 der gemessene Arbeitspunkt (bei Tiefe 5 allein 3 Siege : 24 gegen meister)');
+  // Obergrenze mit Begruendung: bei ±160 wurde die Stufe ZAEH statt schwach (16 von 32 Partien
+  // remis, 10:6 in den entschiedenen). Der Hebel hat ein Optimum, er ist nicht monoton.
+  ok(L.einsteiger.jitterAmp <= 80,
+     'Amplitude nicht \u00fcber 80 \u2014 dar\u00fcber wird die Stufe z\u00e4h statt schwach (\u00b1160: 16 von 32 Remis)');
+  for(const k of Object.keys(L)) if(k !== 'einsteiger')
+    ok(!('jitterAmp' in L[k]), k + ': kein jitterAmp');
+}
 
 console.log('\u00a7114 \u2014 Architektur unber\u00fchrt:');
 {
@@ -213,7 +229,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 96, 'Cache-Bust auf v\u226596 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 97, 'Cache-Bust auf v\u226597 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');

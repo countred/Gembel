@@ -47,15 +47,23 @@ const verNum = parseFloat((core.HEURISTIC_VERSION.match(/countred-ai-(\d+\.\d+)/
 ok(verNum >= 1.7, "HEURISTIC_VERSION ist countred-ai-\u22651.7 (\u00a7109-Fenster vorhanden; aktuell: "+core.HEURISTIC_VERSION+")");
 
 console.log('\u00a7109 \u2014 kalibrierte Fensterwerte:');
-ok(L.einsteiger.poolWindow === 110 && L.einsteiger.poolTemp === 30,
-   'einsteiger: Fenster 110 / Temp 30 (gemessen 26,6 % gegen meister)');
+// §121-NACHZUG: einsteiger wurde nach den ersten ECHTEN Anfaengerdaten deutlich abgesenkt
+// (0:5 bei sieben Zuegen je Partie). Fenster 250/60 statt 110/30.
+ok(L.einsteiger.poolWindow === 250 && L.einsteiger.poolTemp === 60,
+   'einsteiger: Fenster 250 / Temp 60 (\u00a7121-Absenkung nach den Neuling-Partien)');
 ok(L.fortgeschritten.poolWindow === 30 && L.fortgeschritten.poolTemp === 10,
    'fortgeschritten: Fenster 30 / Temp 10 (gemessen 40,6 %)');
 ok(!('poolWindow' in L.meister), 'meister hat KEIN Fenster \u2014 spielt immer den besten Zug');
 ok(L.einsteiger.poolWindow > L.fortgeschritten.poolWindow,
    'Reihenfolge stimmt: das breitere Fenster geh\u00f6rt zur schw\u00e4cheren Stufe');
-ok(L.einsteiger.poolWindow <= 110,
-   'Leitplanke: Fenster h\u00f6chstens 110 \u2014 80 ist ein ganzer Dreier-Bonus, breiter w\u00e4re ein sichtbarer Patzer');
+// §121-NACHZUG: Walters Leitplanke „hoechstens 110" hatte GENAU EINEN Grund — ein breiteres
+// Fenster macht einen Dreier ueberstimmbar, und ein liegengelassener Dreier ist der sichtbarste
+// Patzer. forceTriple (§111) verhindert das seit v91 strukturell, die Grenze ist damit
+// hinfaellig. Geprueft wird jetzt die BEDINGUNG statt der Zahl: wer ein Fenster ueber dem
+// Dreier-Bonus faehrt, muss forceTriple tragen. (Die namensunabhaengige Fassung dieser Regel
+// steht in test_dreier_111 und gilt fuer ALLE Stufen.)
+ok(L.einsteiger.poolWindow <= 80 || L.einsteiger.forceTriple === true,
+   'Fenster > Dreier-Bonus nur MIT forceTriple (Fenster ' + L.einsteiger.poolWindow + ')');
 
 console.log('\u00a7109 \u2014 rankPool ist stillgelegt:');
 for(const k of Object.keys(L))
@@ -73,9 +81,12 @@ console.log('\u00a7109 \u2014 einheitliches Zeitbudget (sonst kommt Tiefe als zw
   ok(L.meister.maxDepth === 5 && L.fortgeschritten.maxDepth === 5 && L.stark.maxDepth === 5,
      'meister/fortgeschritten/stark unverändert auf maxDepth 5');
   ok(L.einsteiger.maxDepth < L.meister.maxDepth,
-     'einsteiger rechnet flacher als meister (§111: maxDepth ' + L.einsteiger.maxDepth + ')');
+     'einsteiger rechnet flacher als meister (§121: maxDepth ' + L.einsteiger.maxDepth + ')');
   const mins = Object.keys(L).map(k => L[k].minDepth);
   ok(new Set(mins).size === 1, 'minDepth bei allen Stufen gleich (' + mins[0] + ')');
+  ok(L.einsteiger.maxDepth >= L.einsteiger.minDepth,
+     '\u00a7121: maxDepth ' + L.einsteiger.maxDepth + ' \u2265 minDepth ' + L.einsteiger.minDepth +
+     ' (bei Tiefe 2 fallen beide zusammen \u2014 die Suche darf nicht unter minDepth rutschen)');
 }
 
 console.log('\u00a7109 \u2014 Wurzel-Alpha wird GESENKT, nicht abgeschaltet:');
@@ -138,7 +149,7 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
      !!vImport && vImport[1]===vRules && vImport[2]===vRules,
      'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
-  ok(parseInt(vRules,10) >= 96, 'Cache-Bust auf v\u226596 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
+  ok(parseInt(vRules,10) >= 97, 'Cache-Bust auf v\u226597 hochgez\u00e4hlt (Kern ge\u00e4ndert \u2192 Pflicht, sonst \u00a751-Mischversion)');
 }
 
 console.log('');
