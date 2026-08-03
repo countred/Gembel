@@ -28,7 +28,7 @@
 // sie beim Aufbau des games_countred/-Log-Eintrags. Ohne sie warf jeder Spielende-Pfad einen
 // ReferenceError VOR dem await/.catch → still als unhandled rejection verschluckt → KEIN einziges
 // MvKI-Ergebnis wurde je geloggt. Muss auch in module.exports (Node-Tests/Analyse).
-const HEURISTIC_VERSION = 'countred-ai-2.1';
+const HEURISTIC_VERSION = 'countred-ai-2.2';
 // §F-VERSIONSHISTORIE: 1.0 → 1.1 (12.7.): §F2 (Wurzel-Alpha-Fenster mit Dreier-Marge statt
 // bonus-verfälschter Latte) + §F3 (ID-Sortierung auch bei aktivem Sicherheitsnetz) ändern die
 // Zugwahl/Suchreihenfolge bei rankPool 1 bzw. in taktischen Stellungen → Kalibrierdaten aus
@@ -108,6 +108,11 @@ const HEURISTIC_VERSION = 'countred-ai-2.1';
 //      Ausfuehrliche Begruendung im Kasten bei _jitterOf. Vorerst traegt KEINE Stufe das
 //      Feld: der Mechanismus steht, der Wert wird erst gemessen (Walters Grundsatz — nie
 //      unterhalb der real gespielten Tiefe entscheiden, K1).
+// 2.1 -> 2.2 (3.8., §123 Fehlerrate): neues Stufenfeld `randomRate`. einsteiger: 0.30.
+//      Erster Hebel, der nicht die Bewertung, sondern die AUSWAHL selbst aussetzt — alle
+//      frueheren wirkten nur positionell, waehrend die taktische Kompetenz in der Suche
+//      steckt (gemessen: blockRate ist REDUNDANT, s. Kommentar am Schalter).
+//      meta.safety meldet 'random', wenn der Schalter gegriffen hat.
 // 2.0 -> 2.1 (3.8., §122 STUFEN GERUECKT): einsteiger(alt) -> fortgeschritten,
 //      fortgeschritten(alt) -> stark. Die neue einsteiger ist die §121-Stufe. Sichtbar
 //      bleiben einsteiger / fortgeschritten / meister; stark bleibt geparkt.
@@ -203,11 +208,11 @@ const SKILL_LEVELS = {
   // Stufe aendert, aktualisiert sie hier mit. Prozente sind Punktquoten gegen `meister`
   // im Selbstspiel (selfplay, 8 Eroeffnungen, Seed 20260727, 32 Partien, gepaart).
   //
-  //   STUFE            TIEFE  FENSTER   JITTER  forceTriple  gegen meister   sichtbar
-  //   einsteiger         2    250/60      80        ja       ungemessen        ja
-  //   fortgeschritten    3    110/30       —        ja       7,8 % (31.7.)     ja
-  //   stark              5     30/10       —        nein     40,6 % (§109)     NEIN
-  //   meister            5      —          —        nein     50 % (Referenz)   ja
+  //   STUFE            TIEFE  FENSTER   JITTER  forceTriple  ZUFALL  gegen meister  sichtbar
+  //   einsteiger         2    250/60      80        ja        30 %   ungemessen       ja
+  //   fortgeschritten    3    110/30       —        ja         —    7,8 % (31.7.)    ja
+  //   stark              5     30/10       —        nein       —    40,6 % (§109)    NEIN
+  //   meister            5      —          —        nein       —    50 % (Referenz)  ja
   //
   // ⚠️ DIE PROZENTE SIND NUR EINE DER ZWEI ACHSEN. Fuenf Partien eines echten Neulings
   //   gegen die 7,8-%-Stufe: 0:5, Partien nach durchschnittlich SIEBEN eigenen Zuegen
@@ -237,11 +242,15 @@ const SKILL_LEVELS = {
   // │    Partien remis). Der Hebel ist nicht monoton.                                   │
   // │    ⚠️ Der Jitter verrauscht auch `best`, deshalb darf diese Stufe kein Remis       │
   // │    ANNEHMEN — accepts:false in AI_DRAW_POLICY, geprueft in test_jitter_114.       │
-  // │ 5. minThinkMs 1000 — FOLGT AUS 3: bei flacher Tiefe ist die Suche in ~80 ms       │
+  // │ 5. randomRate 0.30 (§123) — der einzige Hebel, der den TAKTISCHEN Kern erreicht.    │
+  // │    Jeder dritte Zug ist planlos. Sofortsieg, Dreier und das Mate-Band bleiben       │
+  // │    ausgenommen (Details am Schalter in pickMove). Ohne diesen Hebel bleibt Max      │
+  // │    gegen einen Anfaenger eine Wand, egal wie stark Fenster und Jitter gedreht sind. │
+  // │ 6. minThinkMs 1000 — FOLGT AUS 3: bei flacher Tiefe ist die Suche in ~80 ms       │
   // │    fertig, und minThinkMs traegt seither die sichtbare Zuganimation (Phase A in   │
   // │    animateAIMove = das blaue Aufheben). Mit 600 ms zog Max „fast zu schnell".     │
   // └──────────────────────────────────────────────────────────────────────────────────┘
-  einsteiger:      { timeBudgetMs: 2500, maxDepth: 2, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 250, poolTemp: 60, forceTriple: true, jitterAmp: 80 },
+  einsteiger:      { timeBudgetMs: 2500, maxDepth: 2, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 250, poolTemp: 60, forceTriple: true, jitterAmp: 80, randomRate: 0.3 },
   // ┌─ FORTGESCHRITTEN (§122: war bis v97 `einsteiger`) ───────────────────────────────┐
   // │ Gemessen 7,8 % gegen meister. Walter stand hier ueber 13 Partien bei 6:6:1 —      │
   // │ das ist die ehrliche „fortgeschritten"-Stufe. Dieselben Abhaengigkeiten wie oben: │
@@ -361,6 +370,12 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
   // INNERHALB der Tiefenschleife, deshalb hier aussen mitgefuehrt. Beide werden am selben Ort
   // gesetzt, damit score und best garantiert aus derselben abgeschlossenen Iteration stammen.
   let bestRootValue = null;
+  let _randomUsed = false;   // §123: fuer meta.safety
+  // §123: Der Wuerfel faellt EINMAL pro Zug, nicht je Tiefen-Iteration. Sonst haette jede
+  // Iteration eine eigene Chance und die effektive Rate laege ueber der konfigurierten
+  // (gemessen: 51 % statt 30 % bei zwei Iterationen). Gleiche Logik wie beim Jitter-Seed.
+  const _randomRoll = (typeof cfg.randomRate === 'number' && cfg.randomRate > 0)
+    && (Math.random() < cfg.randomRate);
   const opp = player === P1 ? P2 : P1;
 
   for(let depth = 1; depth <= cfg.maxDepth; depth++){
@@ -512,8 +527,37 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
         const _tri = scored.filter(x => tripleSet.has(_key(x.m)) && x.v > -90000);
         if(_tri.length) _base = _tri;
       }
+      // ── §123 FEHLERRATE (cfg.randomRate) ─────────────────────────────────────
+      // WOZU: Alle bisherigen Hebel (Fenster, Jitter, Tiefe, Temperatur) wirken nur auf die
+      // POSITIONELLE Bewertung. Die TAKTISCHE Kompetenz steckt in der Suche selbst und war
+      // damit nicht erreichbar — gemessen: an 60 Stellungen mit vermeidbaren Verlustzuegen
+      // waehlte einsteiger in NULL von 240 Laeufen einen davon, auch mit blockRate 0 und bei
+      // Tiefe 1. Schon eine einzige Ply reicht, damit negamax den Gegner-Sofortsieg sieht.
+      // Gegen einen Anfaenger ist genau das die Wand: jede seiner Drohungen wird erkannt.
+      //
+      // WAS DIESER SCHALTER TUT: mit Wahrscheinlichkeit randomRate wird ein BELIEBIGER Zug
+      // aus _base gespielt statt des gesuchten. Max spielt dann PLANLOS — nicht falsch.
+      //
+      // WAS ER AUSDRUECKLICH NICHT TUT (Walters Design-Auflage):
+      //   · Der Sofortsieg-Pfad (findImmediateWin -> safety 'took-win') liegt VOR dieser
+      //     Stelle und ist unberuehrt. Max laesst NIE einen Vierer liegen.
+      //   · forceTriple hat _base bereits auf die Dreier eingeschraenkt, falls es welche
+      //     gibt — der Zufall waehlt dann UNTER den Dreiern. Max laesst NIE einen Dreier aus.
+      //   · Zuege im Mate-Band (v <= -90000) sind ausgeschlossen. Max laeuft NIE sehenden
+      //     Auges ins Messer — das waere ein sichtbarer Patzer, kein Anfaengerzug.
+      // Uebrig bleibt genau das, was ein Anfaenger tut: einen Zug ohne Plan.
+      let _randomPick = null;
+      if(_randomRoll){
+        const _safe = _base.filter(x => x.v > -90000);
+        if(_safe.length) _randomPick = _safe[Math.floor(Math.random() * _safe.length)];
+      }
       // rankPool: aus den Top-k Zügen wählen (Feinjustierung untere Stufen, §37d)
-      if(typeof cfg.poolWindow === 'number'){
+      if(_randomPick){                       // §123: Fehlerrate schlaegt Fenster und Softmax
+        _randomUsed = true;
+        bestMove = _randomPick.m;
+        bestScore = _randomPick.v;
+        bestRootValue = localBest;
+      } else if(typeof cfg.poolWindow === 'number'){
         // ── §109 HEBEL 1: Wertfenster + Softmax statt Top-k-uniform ──────────────
         // Top-k-uniform ignoriert den WERTABSTAND: der drittbeste Zug wird gleich oft
         // gespielt wie der beste, egal ob er 2 oder 200 Punkte schlechter ist. Livebeleg
@@ -606,7 +650,9 @@ function pickMove(board, player, p1parity, config, seenPositions, drawClock){
       depth: reachedDepth,
       ms: _now() - t0,
       budgetHit,
-      safety: (blockActive && badMoves.size > 0) ? 'blocked' : 'none',
+      // §123: 'random' hat Vorrang in der Meldung — sonst waere im Log nicht zu sehen, dass
+      // der Zug gar nicht aus der Suche kam. Macht die Fehlerrate im Nachhinein abfragbar.
+      safety: _randomUsed ? 'random' : ((blockActive && badMoves.size > 0) ? 'blocked' : 'none'),
       rankPool: cfg.rankPool,
       score: bestScore, // §85 (ab 1.2): Suchwert des GEWAEHLTEN Zuges aus Sicht des Ziehenden
       // §116: Suchwert des BESTEN Zuges — was die Suche fuer richtig haelt, unabhaengig davon,
