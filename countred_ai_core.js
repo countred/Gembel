@@ -108,6 +108,11 @@ const HEURISTIC_VERSION = 'countred-ai-2.2';
 //      Ausfuehrliche Begruendung im Kasten bei _jitterOf. Vorerst traegt KEINE Stufe das
 //      Feld: der Mechanismus steht, der Wert wird erst gemessen (Walters Grundsatz — nie
 //      unterhalb der real gespielten Tiefe entscheiden, K1).
+// v100 -> v101 (3.8., §125): minThinkMs bei ALLEN Stufen auf 1000 vereinheitlicht (war
+//      1000/1000/800/900). Walters Punkt: die Bedenkzeit darf die Spielstaerke nicht
+//      verraten. Sie ist ohnehin nur eine UNTERGRENZE — meister rechnet auf Tiefe 5
+//      meist laenger und merkt nichts davon; bei den flachen Stufen traegt sie die
+//      sichtbare Zuganimation (§113). KEIN HEURISTIC-Bump: die Zugwahl ist nicht betroffen.
 // 2.1 -> 2.2 (3.8., §123 Fehlerrate): neues Stufenfeld `randomRate`. einsteiger: 0.30.
 //      Erster Hebel, der nicht die Bewertung, sondern die AUSWAHL selbst aussetzt — alle
 //      frueheren wirkten nur positionell, waehrend die taktische Kompetenz in der Suche
@@ -268,8 +273,8 @@ const SKILL_LEVELS = {
   // │ Fenster 30 < Bonus 80 ⇒ KEIN forceTriple noetig, der Dreier ist hier ohnehin      │
   // │ nicht ueberstimmbar.                                                              │
   // └──────────────────────────────────────────────────────────────────────────────────┘
-  stark:           { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 800, poolWindow:  30, poolTemp: 10 },
-  meister:         { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 900 },
+  stark:           { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow:  30, poolTemp: 10 },
+  meister:         { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000 },
 };
 
 // Zeitquelle: performance.now im Browser, Date.now sonst. Injizierbar für Tests.
