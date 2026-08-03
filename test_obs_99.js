@@ -168,6 +168,26 @@ ok(/perfMs: \(typeof devicePerfMs==='number'\) \? devicePerfMs : null/.test(html
    'perfMs wird ins Partie-Ergebnis geschrieben (Stratifizierung nach Rechenleistung)');
 ok(!/navigator\.userAgent/.test(html), 'kein userAgent im Log \u2014 nur die gemessene Rechenzeit');
 
+console.log('\u00a7124 \u2014 anonyme Zufallskennung:');
+ok(/localStorage\.getItem\('countred_pkey'\)/.test(html) &&
+   /localStorage\.setItem\('countred_pkey', k\)/.test(html),
+   'der Schl\u00fcssel wird EINMAL erzeugt und im Browser behalten');
+ok(/getRandomValues/.test(html),
+   'aus dem Krypto-Zufall erzeugt \u2014 keine Zeit- oder Ger\u00e4tekomponente, aus der sich etwas ableiten lie\u00dfe');
+ok(/playerKey: PLAYER_KEY/.test(html),
+   'playerKey steht im _meta-Kopf (deckt auch abgebrochene Partien ab, \u00a789b)');
+ok(!/navigator\.userAgent/.test(html) && !/screen\.width/.test(html) && !/navigator\.platform/.test(html),
+   'weiterhin KEINE Ger\u00e4tekennung \u2014 nur die Zufallskennung und die gemessene perfMs (\u00a799)');
+{
+  // Reihenfolge: die Konstante muss VOR ihrer Verwendung stehen, sonst ReferenceError
+  // beim ersten Partiestart (temporal dead zone bei const).
+  ok(html.indexOf('const PLAYER_KEY') < html.indexOf('playerKey: PLAYER_KEY'),
+     'PLAYER_KEY ist deklariert, bevor startAIGame es liest');
+  const fn = html.match(/function getPlayerKey\(\)\{[\s\S]*?\n\}/)[0];
+  ok(/catch\(e\)\{[\s\S]*return null;/.test(fn),
+     'gesperrter Speicher (privater Modus) liefert null statt eines Absturzes');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
