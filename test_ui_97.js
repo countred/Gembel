@@ -65,8 +65,15 @@ console.log('\u00a797 \u2014 Timing: Remis-Angebot:');
 {
   const lo = parseInt((html.match(/const AI_DRAW_OFFER_DELAY_MIN=(\d+);/)||[])[1], 10);
   const hi = parseInt((html.match(/const AI_DRAW_OFFER_DELAY_MAX=(\d+);/)||[])[1], 10);
-  ok(lo >= 3000 && hi > lo, 'Bedenkzeit vor dem Angebot verl\u00e4ngert (' + lo + '\u2013' + hi + ' ms)');
-  ok(lo > 900, 'Angebot dauert deutlich l\u00e4nger als jede normale Zugpause (900 ms Bonusfall)');
+  // §125-NACHZUG: §97 hatte die Bedenkzeit auf 3200–5200 VERLÄNGERT, weil die Suche
+  // damals kurz war und das Angebot sonst überging. Seit §121/§123 dauert ein normaler
+  // Zug rund 1900 ms — die lange Pause kündigte das Angebot dadurch an (Walter, 3.8.).
+  // Geprüft wird jetzt das BLEIBENDE Ziel: deutlich über jeder normalen Zugpause, aber
+  // nicht so lang, dass sie das Angebot verrät.
+  ok(lo >= 1800 && lo <= 3000 && hi > lo,
+     'Bedenkzeit vor dem Angebot im Zielband (' + lo + '\u2013' + hi + ' ms)');
+  ok(lo > 900, 'Angebot dauert l\u00e4nger als jede normale Zugpause (900 ms Bonusfall)');
+  ok(hi - lo >= 500, 'die Spanne bleibt breit genug, damit die Pause nicht immer gleich wirkt (' + (hi-lo) + ' ms)');
 }
 
 console.log('\u00a798 \u2014 Meldungs-Toggle f\u00fcr ALLE Erkl\u00e4rungsf\u00e4lle:');
@@ -105,6 +112,26 @@ console.log('\u00a798 \u2014 Meldungs-Toggle f\u00fcr ALLE Erkl\u00e4rungsf\u00e
        'der Zusatz „keine Zielfelder" wird unver\u00e4ndert durchgereicht');
   }
 }
+
+console.log('\u00a7126 \u2014 kein Tracking, rechtliche Fu\u00dfzeile:');
+ok(!/googletagmanager|gtag\('config'|dataLayer/.test(html),
+   'Google Analytics ist restlos entfernt (kein gtag, kein dataLayer, kein Skript-Einbindung)');
+ok(/function trackEvent\(name,params\)\{\s*\/\* absichtlich leer/.test(html),
+   'trackEvent bleibt als leere H\u00fclle \u2014 die sechs Aufrufstellen mussten nicht angefasst werden');
+ok(/\u00a7126[\s\S]{0,700}WER ES WIEDER EINBAUEN WILL/.test(html),
+   'die Begr\u00fcndung samt Warnung steht im Dateikopf (Wiedereinbau-Schutz)');
+ok(/id="legal-footer"/.test(html) &&
+   /showOverlay\('impressum-overlay'\)/.test(html) && /showOverlay\('datenschutz-overlay'\)/.test(html),
+   'Fu\u00dfzeile mit Impressum und Datenschutz im Startmen\u00fc');
+ok(/'impressum-overlay','datenschutz-overlay'\]/.test(html),
+   'beide Overlays stehen in der Overlay-Liste (sonst schlie\u00dfen sie sich nicht sauber)');
+ok(/#legal-footer\{[^}]*font-size:10\.5px/.test(html) && /@media \(max-width:520px\)\{ #legal-footer/.test(html),
+   'Fu\u00dfzeile klein auf dem Rechner, gr\u00f6\u00dfer nur mobil (Walters Auflage: Desktop nicht verschieben)');
+// Der Datenschutztext MUSS zum tatsaechlichen Verhalten passen — sonst ist er schlimmer als keiner.
+ok(/setzt keine Cookies/.test(html) && !/googletagmanager/.test(html),
+   'die Zusage „keine Cookies" deckt sich mit dem Code (kein Analytics eingebunden)');
+ok(/zuf\u00e4llige Kennung/.test(html) && /countred_pkey/.test(html),
+   'die Zusage zur Zufallskennung deckt sich mit \u00a7124 (playerKey wirklich vorhanden)');
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
