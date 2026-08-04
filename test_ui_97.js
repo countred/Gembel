@@ -165,6 +165,24 @@ ok(/setzt keine Cookies/.test(html) && !/googletagmanager/.test(html),
 ok(/zuf\u00e4llige Kennung/.test(html) && /countred_pkey/.test(html),
    'die Zusage zur Zufallskennung deckt sich mit \u00a7124 (playerKey wirklich vorhanden)');
 
+console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr):');
+{
+  // Ein Impressum mit eckigen Klammern ist schlimmer als keines — es sieht aus wie eines,
+  // erf\u00fcllt aber nichts. Diese Pr\u00fcfung f\u00e4ngt ein Ausliefern mit Restplatzhaltern ab.
+  const platzhalter = html.match(/\[(Vor- und Nachname|Stra\u00dfe und Hausnummer|PLZ und Ort|adresse@example\.de|Datum)\]/g);
+  ok(!platzhalter, 'keine Platzhalter mehr im Impressum/Datenschutz' +
+     (platzhalter ? ' \u2014 offen: ' + platzhalter.join(', ') : ''));
+  const imp = html.match(/id="impressum-overlay"[\s\S]*?Schlie\u00dfen<\/button>/)[0];
+  ok(/Guldeinstr/.test(imp) && /80339/.test(imp) && /M\u00fcnchen/.test(imp),
+     'ladungsf\u00e4hige Anschrift steht im Impressum (\u00a7 5 DDG verlangt sie, eine E-Mail allein gen\u00fcgt nicht)');
+  ok(/mailto:info@countred\.com/.test(imp),
+     'E-Mail als anklickbarer mailto-Link');
+  ok(/Verantwortlich f\u00fcr den Inhalt/.test(imp) && /Walter Rehm, Anschrift wie oben/.test(imp),
+     'inhaltlich Verantwortlicher benannt');
+  ok(/Stand: 4\. August 2026/.test(html),
+     'die Datenschutzerkl\u00e4rung tr\u00e4gt ein Datum');
+}
+
 console.log('\u00a7132 \u2014 Wartungsflag:');
 {
   ok(/get\(ref\(db,'config'\)\)/.test(html),
