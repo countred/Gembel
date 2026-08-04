@@ -375,18 +375,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   </div>
 </div>
 
-<!-- §126: Impressum. INHALT IST EIN PLATZHALTER — die eckigen Klammern muessen vor der
-     Oeffnung durch echte Angaben ersetzt werden. -->
+<!-- §133 (4.8.): Impressum AUSGEFUELLT. Die Angaben stammen von Walter selbst.
+     ⚠️ Wer hier etwas aendert, muss die Datenschutzerklaerung mitziehen — dort steht
+     „Verantwortlich ist die im Impressum genannte Person". -->
 <div class="overlay hidden" id="impressum-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(360px,94vw);">
     <h2 style="text-align:center;font-size:18px;">Impressum</h2>
     <div style="font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Angaben gemäß § 5 DDG</strong><br>
-        [Vor- und Nachname]<br>[Straße und Hausnummer]<br>[PLZ und Ort]<br>Deutschland</div>
+        Walter Rehm<br>Guldeinstr. 32 A<br>80339 München<br>Deutschland</div>
       <div><strong style="color:var(--text);">Kontakt</strong><br>
-        E-Mail: [adresse@example.de]</div>
+        E-Mail: <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a></div>
       <div><strong style="color:var(--text);">Verantwortlich für den Inhalt</strong><br>
-        [Vor- und Nachname], Anschrift wie oben</div>
+        Walter Rehm, Anschrift wie oben</div>
       <div style="font-size:12px;color:var(--text3);">
         Count Red ist ein privates, nicht kommerzielles Projekt. Das Spiel erschien 1998
         erstmals als Brettspiel unter dem Namen Gembel.</div>
@@ -426,7 +427,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Kennung. Für Auskunft oder Löschung genügt eine Nachricht an die im Impressum
         genannte Adresse.</div>
       <div style="font-size:12px;color:var(--text3);">
-        Verantwortlich ist die im Impressum genannte Person. Stand: [Datum]</div>
+        Verantwortlich ist die im Impressum genannte Person. Stand: 4. August 2026</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('datenschutz-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
@@ -648,7 +649,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts). AKTUELL: v82. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=105" charset="utf-8"></script>
+<script src="gembel_rules.js?v=106" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -660,7 +661,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=105" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=106" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1064,7 +1065,7 @@ function getPlayerKey(){
 }
 const PLAYER_KEY = getPlayerKey();
 
-const BUILD_MARKER='· Build v105';
+const BUILD_MARKER='· Build v106';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1381,7 +1382,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=105'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=106'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
