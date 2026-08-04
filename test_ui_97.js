@@ -165,6 +165,29 @@ ok(/setzt keine Cookies/.test(html) && !/googletagmanager/.test(html),
 ok(/zuf\u00e4llige Kennung/.test(html) && /countred_pkey/.test(html),
    'die Zusage zur Zufallskennung deckt sich mit \u00a7124 (playerKey wirklich vorhanden)');
 
+console.log('\u00a7132 \u2014 Wartungsflag:');
+{
+  ok(/get\(ref\(db,'config'\)\)/.test(html),
+     'der GANZE config-Knoten wird gelesen \u2014 sonst sieht man nicht, was Firebase liefert');
+  ok(/const WARTUNG_WAHR = \[true, 'true', 1, '1', 'on', 'yes', 'ja', 'offline', 'wartung'\]/.test(html),
+     'mehrere Schreibweisen gelten als aktiv (der harte ===true war der Fehler)');
+  ok(/console\.warn\('\u00a7132 Wartungsflag NICHT lesbar/.test(html),
+     'der catch-Block schweigt nicht mehr \u2014 fehlende Leserechte sahen fr\u00fcher aus wie „Flag steht auf false"');
+  ok(/\u00a7132 config gelesen:/.test(html) && /kein Feld `maintenance` unter config/.test(html),
+     'beide Diagnosef\u00e4lle melden sich in der Konsole (Knoten fehlt / Feld fehlt)');
+  // Die Erkennung selbst als VERHALTEN pruefen, nicht nur als Wortlaut.
+  const teil = html.match(/const WARTUNG_WAHR = \[[\s\S]*?const istWartung = v => WARTUNG_WAHR\.some\(w =>[\s\S]*?\);/)[0];
+  const c = {}; require('vm').createContext(c);
+  require('vm').runInContext(teil + '\n;__f=istWartung;', c);
+  const f = c.__f;
+  ok(f(true) && f('true') && f('TRUE') && f(' true ') && f('on') && f(1) && f('offline'),
+     'true, "true", "TRUE", " true ", "on", 1 und "offline" sperren das Spiel');
+  ok(!f(false) && !f('false') && !f('off') && !f(0) && !f('') && !f(null) && !f(undefined),
+     'false, "false", "off", 0, leer, null und undefined sperren NICHT');
+  ok(!f('vielleicht') && !f('maintenance'),
+     'unbekannte Werte sperren NICHT \u2014 ein Tippfehler darf das Spiel nicht stilllegen');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
