@@ -171,6 +171,14 @@ ok(/setzt keine Cookies/.test(html) && !/googletagmanager/.test(html),
    'die Zusage „keine Cookies" deckt sich mit dem Code (kein Analytics eingebunden)');
 ok(/zuf\u00e4llige Kennung/.test(html) && /countred_pkey/.test(html),
    'die Zusage zur Zufallskennung deckt sich mit \u00a7124 (playerKey wirklich vorhanden)');
+// \u00a7136: der Text darf nicht MEHR zusagen, als der Code haelt. Eine pseudonyme Kennung ist
+// nach DSGVO ein personenbezogenes Datum — die Kurzfassung „es wird nichts erfasst, woraus sich
+// eine Person bestimmen laesst" stand gegen den Absatz zwei Zeilen darunter, der genau so eine
+// Kennung beschreibt. Beide Pruefungen zusammen halten die Kurzfassung ehrlich.
+ok(!/nichts erfasst, woraus sich eine Person bestimmen/.test(html),
+   'keine Absolut-Zusage zur Anonymitaet mehr (Wiedereinbau-Schutz)');
+ok(/werden nicht erhoben/.test(html) && /Spielverlauf und eine zuf\u00e4llige Kennung/.test(html),
+   'die Kurzfassung benennt konkret, was NICHT und was DOCH gespeichert wird');
 
 console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr):');
 {
@@ -186,8 +194,10 @@ console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr
      'E-Mail als anklickbarer mailto-Link');
   ok(/Verantwortlich f\u00fcr den Inhalt/.test(imp) && /Walter Rehm, Anschrift wie oben/.test(imp),
      'inhaltlich Verantwortlicher benannt');
-  ok(/Stand: 4\. August 2026/.test(html),
-     'die Datenschutzerkl\u00e4rung tr\u00e4gt ein Datum');
+  // \u00a7136: KEIN festes Datum mehr pruefen. Jede Textaenderung zieht das Datum mit, ein
+  // gepflegter Erwartungswert waere beim naechsten Mal wieder falsch. Geprueft wird die FORM.
+  ok(/Stand: \d{1,2}\. (Januar|Februar|M\u00e4rz|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember) \d{4}/.test(html),
+     'die Datenschutzerkl\u00e4rung tr\u00e4gt ein Datum in lesbarer Form');
 }
 
 console.log('\u00a7132 \u2014 Wartungsflag:');

@@ -242,6 +242,22 @@ console.log('\u00a7134 \u2014 die Kennung ist jetzt IMMER 12 Zeichen lang:');
   ok(a1===a2, 'zweiter Aufruf liefert dieselbe Kennung aus dem Speicher (kein Neuziehen)');
 }
 
+console.log('\u00a7136 \u2014 MvM-Abbruch: jeder Abbruch bekommt einen EIGENEN Schluessel:');
+{
+  // Die Firebase-Regel fuer games_countred/$code lautet `!data.exists()`. Bis v107 hiess der
+  // Schluessel nur mvmabort_<roomCode> — ein Raum ueberlebt aber mehrere Partien, und jeder
+  // weitere Abbruch wurde STILL abgewiesen (PERMISSION_DENIED, gefangen im catch, nur
+  // console.error). Der Schluessel muss deshalb Generation UND Zeitstempel tragen.
+  const m = html.match(/games_countred\/mvmabort_\$\{[^`]*\}/);
+  ok(!!m, 'Abbruchpfad im Quelltext gefunden');
+  ok(!!m && /mvmGameGen/.test(m[0]) && /Date\.now\(\)/.test(m[0]),
+     'der Schluessel traegt Generation und Zeitstempel \u2014 kein Abbruch ueberschreibt einen anderen');
+  ok(!/games_countred\/mvmabort_\$\{roomCode\}`/.test(html),
+     'der alte Ein-Eintrag-Pfad ist wirklich weg (Wiedereinbau-Schutz)');
+  ok(/mvmabort_/.test(html),
+     'das Praefix bleibt vorn \u2014 alle Auswertungen filtern darauf');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];

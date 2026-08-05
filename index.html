@@ -433,7 +433,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <div style="font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Kurz gesagt</strong><br>
         Diese Seite setzt keine Cookies, bindet keine Werbung ein und verwendet kein
-        Analyse-Werkzeug. Es wird nichts erfasst, woraus sich eine Person bestimmen lässt.</div>
+        Analyse-Werkzeug. Name, E-Mail-Adresse und Gerätedaten werden nicht erhoben —
+        gespeichert werden nur der Spielverlauf und eine zufällige Kennung deines Browsers.</div>
       <div><strong style="color:var(--text);">Was gespeichert wird</strong><br>
         Beim Spielen werden der Spielverlauf (Züge, Zeitpunkte, Ergebnis, gewählte Spielstärke)
         und technische Kennzahlen zur Spielstärke-Auswertung gespeichert. Dazu gehört eine
@@ -454,7 +455,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Kennung. Für Auskunft oder Löschung genügt eine Nachricht an die im Impressum
         genannte Adresse.</div>
       <div style="font-size:12px;color:var(--text3);">
-        Verantwortlich ist die im Impressum genannte Person. Stand: 4. August 2026</div>
+        Verantwortlich ist die im Impressum genannte Person. Stand: 5. August 2026</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('datenschutz-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
@@ -676,7 +677,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts). AKTUELL: v82. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=107" charset="utf-8"></script>
+<script src="gembel_rules.js?v=108" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -688,7 +689,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=107" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=108" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -940,7 +941,14 @@ async function finalizeOppAbort(msg, reason){
 async function logMvmAbort(reason, offlineForMs){
   if(gameMode!=='mvm' || !roomCode) return; // No-Op außerhalb MvM / ohne Raum
   try{
-    await update(ref(db,`games_countred/mvmabort_${roomCode}`),{
+    // §136: Der Schluessel trug bis v107 NUR den roomCode. Die Firebase-Regel fuer
+    // games_countred/$code erlaubt aber `.write: "!data.exists()"` — je Raum war damit genau
+    // EIN Abbruchdatensatz schreibbar. Ein Raum ueberlebt mehrere Partien (mvmGameGen zaehlt
+    // sie), also ging jeder weitere Abbruch STILL verloren: PERMISSION_DENIED, gefangen im
+    // catch, nur console.error, auf dem Brett unsichtbar. Jetzt traegt der Schluessel Generation
+    // UND Zeitstempel — jeder Abbruch ist ein NEUER Eintrag, die strenge Regel bleibt unberuehrt.
+    // Das 'mvmabort_'-Praefix bleibt vorn, alle Auswertungen filtern darauf.
+    await update(ref(db,`games_countred/mvmabort_${roomCode}_g${mvmGameGen}_${Date.now()}`),{
       gameMode:'mvm',
       reason: reason||'disconnect-abort',
       abortedByRole: myRole||null,   // wer noch onscreen war und abbrach
@@ -1103,7 +1111,7 @@ if(PLAYER_KEY){
   if(_tk && _tv){ _tv.textContent=PLAYER_KEY; _tk.classList.remove('hidden'); }
 }
 
-const BUILD_MARKER='· Build v107';
+const BUILD_MARKER='· Build v108';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1420,7 +1428,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=107'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=108'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
