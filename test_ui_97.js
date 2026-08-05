@@ -5,10 +5,17 @@
 // Punkt ist KEINE Kosmetik: die Stufen-ANZEIGE wurde groß geschrieben, der SCHLÜSSEL muss
 // klein bleiben — SKILL_LEVELS, AI_DRAW_POLICY, das Firebase-Feld `skillLevel` und das
 // Replay-Werkzeug lesen ihn so. Diese Suite hält genau das fest.
-// Aufruf: node test_ui_97.js   (countred.html im selben Ordner)
+// Aufruf: node test_ui_97.js   (index.html im selben Ordner)
 'use strict';
 const fs = require('fs');
-const html = fs.readFileSync(__dirname + '/countred.html', 'utf8');
+// §134: Die Startdatei heisst seit v98 index.html. Diese Suite las bis v106 `countred.html`
+// — je nach Ordnerinhalt brach sie entweder ab ODER pruefte eine ALTE Kopie und meldete
+// gruen, waehrend die Auslieferung ungeprueft blieb. Beides ist schlimmer als ein Fehlschlag.
+// Liegt die Altdatei noch daneben, wird ausdruecklich gewarnt.
+const HTML_PATH = __dirname + '/index.html';
+if(fs.existsSync(__dirname + '/countred.html'))
+  console.log('  \u26a0\ufe0f  countred.html liegt noch im Ordner \u2014 ALTKOPIE, wird NICHT geprueft.');
+const html = fs.readFileSync(HTML_PATH, 'utf8');
 
 let pass = 0, fail = 0;
 function ok(cond, name){
@@ -204,6 +211,45 @@ console.log('\u00a7132 \u2014 Wartungsflag:');
      'false, "false", "off", 0, leer, null und undefined sperren NICHT');
   ok(!f('vielleicht') && !f('maintenance'),
      'unbekannte Werte sperren NICHT \u2014 ein Tippfehler darf das Spiel nicht stilllegen');
+}
+
+console.log('\u00a7134 \u2014 Startmen\u00fc: zwei Kn\u00f6pfe, gestapelt, feste Reihenfolge:');
+{
+  const menu = html.match(/<p>Wie m\u00f6chtest du spielen\?<\/p>[\s\S]*?<\/div>/)[0];
+  ok(/class="card-col"/.test(menu) && !/class="card-row"/.test(menu),
+     'card-col statt card-row \u2014 beide Kn\u00f6pfe gleich breit, untereinander (wie die Stufen, \u00a795)');
+  const btns = menu.match(/<button[\s\S]*?<\/button>/g) || [];
+  ok(btns.length === 2, 'genau ZWEI Kn\u00f6pfe im Startmen\u00fc (' + btns.length + ' gefunden)');
+  ok(/Mit Code zu zweit/.test(btns[0]||'') && /primary/.test(btns[0]||''),
+     '„Mit Code zu zweit" steht OBEN und ist hervorgehoben (Walters Vorgabe: die Leute sollen das Spiel weitertragen)');
+  ok(/Gegen Max Michu/.test(btns[1]||'') && !/primary/.test(btns[1]||''),
+     '„Gegen Max Michu" steht darunter, nicht hervorgehoben');
+  // Auf die KNÖPFE prüfen, nicht auf den Menü-Ausschnitt: der Erläuterungskommentar daneben
+  // nennt showMarkedGames absichtlich weiter (Hinweis zum Wiedereinhängen).
+  ok(!btns.some(b => /showMarkedGames/.test(b)),
+     'kein Einstieg mehr in „Markierte Partien" \u2014 Entwicklerwerkzeug, kein Testspielerknopf');
+}
+ok(/window\.showMarkedGames=async function/.test(html) && /id="marks-overlay"/.test(html),
+   'showMarkedGames und marks-overlay bleiben im Quelltext \u2014 wieder einh\u00e4ngbar ohne Neubau');
+
+console.log('\u00a7134 \u2014 Marker in Freundessprache:');
+ok(!/markieren \(f\u00fcr Analyse\)/.test(html),
+   'die Entwicklerbeschriftung „markieren (f\u00fcr Analyse)" ist raus (beide Stellen)');
+ok((html.match(/📌 Hier stimmt(e)? was nicht/g)||[]).length === 2,
+   'beide Men\u00fczust\u00e4nde (laufend/beendet) tragen die neue Beschriftung');
+ok((html.match(/onclick="closeNeuMenu\(\);markMvkiPosition\(\)"/g)||[]).length === 2,
+   'die Funktion dahinter ist unver\u00e4ndert dieselbe');
+
+console.log('\u00a7134 \u2014 sichtbare Test-Kennung:');
+{
+  ok(/<div id="test-key" class="hidden">Test-Kennung: <span id="test-key-val"><\/span><\/div>/.test(html),
+     'Zeile steht im Startmen\u00fc, anf\u00e4nglich verborgen');
+  ok(/#test-key\.hidden\{display:none;\}/.test(html),
+     '.hidden ist F\u00dcR DIESES ELEMENT definiert \u2014 die Klasse ist in dieser Datei NICHT global');
+  ok(/if\(PLAYER_KEY\)\{[\s\S]{0,240}_tk\.classList\.remove\('hidden'\)/.test(html),
+     'die Zeile wird nur eingeblendet, wenn es wirklich eine Kennung gibt (privater Modus: bleibt weg)');
+  ok(html.indexOf('id="test-key"') < html.indexOf("getElementById('test-key')"),
+     'das Element steht im Dokument, bevor das Skript es sucht');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');

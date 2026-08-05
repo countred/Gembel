@@ -258,6 +258,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 }
 /* §95: Buttons gestapelt, alle gleich breit und gleich hoch (kein flex:1-Dehnen in der Zeile). */
 .card-col{display:flex;flex-direction:column;gap:8px;width:100%;}
+/* §134: Test-Kennung unter der Rechtszeile — klein, grau, monospace (der Schluessel wird
+   vorgelesen oder abgetippt, da hilft eine Festbreitenschrift). */
+#test-key{font-size:11px;color:var(--text3);text-align:center;margin-top:2px;letter-spacing:0.3px;}
+/* .hidden ist in dieser Datei NICHT global, sondern je Element definiert (vgl. #draw-counter). */
+#test-key.hidden{display:none;}
+#test-key span{font-family:monospace;letter-spacing:1px;}
 .card-col .big-btn{flex:none;width:100%;}
 .big-btn{
   flex:1;padding:16px 8px;border-radius:14px;border:1.5px solid var(--border);
@@ -357,10 +363,19 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
     </div>
     <p>Wie möchtest du spielen?</p>
-    <div class="card-row">
+    <!-- §134 (Walter, 5.8.): NUR NOCH ZWEI Knoepfe. „Markierte Partien (Analyse)" ist ein
+         Entwicklerwerkzeug und war fuer Testspieler ein Raetselknopf; ausserdem fuellte sich
+         seine Zwanzigerliste mit fremden Eintraegen, sobald mehrere Leute markieren.
+         showMarkedGames() und das marks-overlay BLEIBEN im Quelltext — nur der Einstieg ist
+         weg, damit der Knopf ohne Neubau wieder eingehaengt werden kann.
+         card-col statt card-row aus demselben Grund wie bei den drei Stufen (§95): die
+         Flex-ZEILE machte die Knoepfe nach Textlaenge unterschiedlich breit. Reihenfolge und
+         Hervorhebung sind Walters Vorgabe — „Mit Code zu zweit" oben und blau, weil die Leute
+         das Spiel spaeter weitertragen sollen; fuer den Freundestest kommt die Ansage
+         „gegen Max, Stufe Einsteiger" ohnehin per Nachricht mit. -->
+    <div class="card-col">
       <button class="big-btn primary" onclick="showLobby()">👥 Mit Code zu zweit</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
-      <button class="big-btn" style="font-size:12.5px;opacity:0.85;" onclick="showMarkedGames()">📌 Markierte Partien (Analyse)</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -372,6 +387,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <button type="button" class="legal-link"
         onclick="document.getElementById('mode-overlay').classList.add('hidden');document.getElementById('datenschutz-overlay').classList.remove('hidden')">Datenschutz</button>
     </div>
+    <!-- §134: SICHTBARE Test-Kennung. Es ist exakt die Zufallskennung aus §124, die ohnehin
+         in jeder Partie mitgeschrieben wird — hier nur lesbar gemacht, damit ein Testspieler
+         sie einmal durchgeben kann und seine Partien zuordenbar sind. Kein neues Datum, keine
+         Geraetekennung. Bleibt LEER (und die Zeile unsichtbar), wenn der Speicher gesperrt ist. -->
+    <div id="test-key" class="hidden">Test-Kennung: <span id="test-key-val"></span></div>
   </div>
 </div>
 
@@ -649,7 +669,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts). AKTUELL: v82. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=106" charset="utf-8"></script>
+<script src="gembel_rules.js?v=107" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -661,7 +681,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=106" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=107" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1051,7 +1071,11 @@ function getPlayerKey(){
     if(!k){
       // 12 Zeichen aus dem Krypto-Zufall; keine Zeit- oder Geraetekomponente, damit sich
       // aus dem Schluessel selbst nichts rekonstruieren laesst.
-      const a = new Uint8Array(9);
+      // §134-BUGFIX: 9 Bytes ergeben GENAU 12 base64-Zeichen — enthaelt die Ausgabe ein
+      // „+" oder „/", strich der Filter sie weg und der Schluessel wurde 11 (oder 10) Zeichen
+      // lang. Genau das war an zwei von Walters vier Kennungen zu sehen. Jetzt wird
+      // grosszuegig gezogen und danach geschnitten, die Laenge ist damit immer 12.
+      const a = new Uint8Array(15);
       (self.crypto||window.crypto).getRandomValues(a);
       k = btoa(String.fromCharCode(...a)).replace(/[^A-Za-z0-9]/g,'').slice(0,12);
       localStorage.setItem('countred_pkey', k);
@@ -1065,7 +1089,14 @@ function getPlayerKey(){
 }
 const PLAYER_KEY = getPlayerKey();
 
-const BUILD_MARKER='· Build v106';
+// §134: die Kennung im Startmenue anzeigen. Ohne Kennung (privater Modus) bleibt die Zeile
+// verborgen — eine leere „Test-Kennung:"-Zeile waere schlimmer als keine.
+if(PLAYER_KEY){
+  const _tk=document.getElementById('test-key'), _tv=document.getElementById('test-key-val');
+  if(_tk && _tv){ _tv.textContent=PLAYER_KEY; _tk.classList.remove('hidden'); }
+}
+
+const BUILD_MARKER='· Build v107';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1382,7 +1413,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=106'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=107'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -1550,7 +1581,7 @@ window.showNeuMenu=function(){
       }
       btnsEl.innerHTML=`
         <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">Weiterspielen</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Stellung markieren (für Analyse)</button>
+        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmt was nicht</button>
         ${drawBtn}
         <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvki()">🏳️ Aufgeben</button>
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();">↺ Neu (anderer Modus/Stufe)</button>
@@ -1561,7 +1592,7 @@ window.showNeuMenu=function(){
       descEl.textContent='';
       btnsEl.innerHTML=`
         <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu();startAIGame('${aiSkill}')">🔄 Nochmal (${skillLabel(aiSkill)})</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Partie markieren (für Analyse)</button>
+        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmte was nicht</button>
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();">↺ Neu (anderer Modus/Stufe)</button>
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu()">↩ Zurück zum Brett</button>
         <div style="font-size:11.5px;color:var(--text3);text-align:center;">Partie <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
@@ -3500,7 +3531,9 @@ window.markMvkiPosition=async function(){
     if(mvkiMarkCount===1){
       await update(ref(db,`games_countred_marks/${mvkiGameCode}`),{
         code:mvkiGameCode, ts:Date.now(), skill:aiSkill,
-        heuristicVersion:HEURISTIC_VERSION, parityP1:PARITY_P1, humanPlayer:myPlayer });
+        heuristicVersion:HEURISTIC_VERSION, build:BUILD_NO, // §134: wie im Archiv
+        playerKey:PLAYER_KEY,   // §134: ein Marker ohne Absender ist bei mehreren Testspielern wertlos
+        parityP1:PARITY_P1, humanPlayer:myPlayer });
     }
     await update(ref(db,`games_countred_marks/${mvkiGameCode}/marks/m${String(mvkiMarkCount).padStart(2,'0')}`),
       { hm, moveNo:mvkiMoveIndex, phase, ts:Date.now() });
@@ -3691,6 +3724,8 @@ async function finalizeMvkiGame(winner, reason){
       gameMode:'mvki',
       heuristicVersion: HEURISTIC_VERSION,
       build: BUILD_NO,        // §102: Verhaltensänderungen ohne Heuristik-Bump bleiben zuordenbar
+      playerKey: PLAYER_KEY,  // §134: stand bisher NUR im _meta-Kopf der Zuege — die Auswertung
+                              // musste dafuer joinen. Hier steht sie jetzt direkt.
       skillLevel: aiSkill,
       parityP1: PARITY_P1,
       humanPlayer: myPlayer,

@@ -32,10 +32,12 @@
 
 'use strict';
 
-// §61e-3/§65e: Cache-Busting-Query (?v=NN) synchron zu countred.html halten (dort v106).
+// §61e-3/§65e: Cache-Busting-Query (?v=NN) synchron zur Startdatei halten (dort v107).
+// §134-NAMENSHINWEIS: Die Startdatei heisst seit v98 index.html, NICHT mehr countred.html.
+// Die Kommentare unten nennen stellenweise noch den alten Namen — gemeint ist immer index.html.
 // Sonst kann der Worker alte Kern-/Regeldateien aus dem Cache laden, während das Hauptfenster
 // neue nutzt — gemischte Versionen (§51-Klasse).
-importScripts('gembel_rules.js?v=106', 'countred_ai_core.js?v=106');
+importScripts('gembel_rules.js?v=107', 'countred_ai_core.js?v=107');
 
 // §61b-2/§F4: Antisymmetrie-Selbsttest VERDRAHTEN. Der Kern-Kommentar („bleibt verbaut, sperrt
 // bei Verletzung") stimmte bis 12.7. nicht — die Funktion wurde nirgends aufgerufen, die Sperre

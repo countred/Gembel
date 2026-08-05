@@ -15,7 +15,14 @@
 const fs = require('fs');
 const vm = require('vm');
 
-const html   = fs.readFileSync(__dirname + '/countred.html', 'utf8');
+// §134: Die Startdatei heisst seit v98 index.html. Diese Suite las bis v106 `countred.html`
+// — je nach Ordnerinhalt brach sie entweder ab ODER pruefte eine ALTE Kopie und meldete
+// gruen, waehrend die Auslieferung ungeprueft blieb. Beides ist schlimmer als ein Fehlschlag.
+// Liegt die Altdatei noch daneben, wird ausdruecklich gewarnt.
+const HTML_PATH = __dirname + '/index.html';
+if(fs.existsSync(__dirname + '/countred.html'))
+  console.log('  \u26a0\ufe0f  countred.html liegt noch im Ordner \u2014 ALTKOPIE, wird NICHT geprueft.');
+const html   = fs.readFileSync(HTML_PATH, 'utf8');
 const worker = fs.readFileSync(__dirname + '/countred_ai_worker.js', 'utf8');
 
 let pass = 0, fail = 0;
@@ -156,7 +163,7 @@ console.log('\u00a799 \u2014 Ger\u00e4te-Benchmark:');
   ok(!/navigator|userAgent|screen\./.test(codeOnly), 'keine Ger\u00e4tekennung im KERN-CODE \u2014 gemessen wird nur Tempo');
 }
 
-console.log('\u00a799 \u2014 Verdrahtung in countred.html:');
+console.log('\u00a799 \u2014 Verdrahtung in index.html:');
 for(const f of ['raw','prevBest','sec','rank','nRoot','nSkip','exact'])
   ok(new RegExp('^\\s*'+f+':\\s+\\(meta&&typeof meta\\.'+f, 'm').test(html),
      'mvkiLogEntry schreibt `' + f + '`');
@@ -186,6 +193,53 @@ ok(!/navigator\.userAgent/.test(html) && !/screen\.width/.test(html) && !/naviga
   const fn = html.match(/function getPlayerKey\(\)\{[\s\S]*?\n\}/)[0];
   ok(/catch\(e\)\{[\s\S]*return null;/.test(fn),
      'gesperrter Speicher (privater Modus) liefert null statt eines Absturzes');
+}
+
+console.log('\u00a7134 \u2014 die Kennung steht jetzt in ALLEN DREI Knoten:');
+{
+  // Bis v106 stand playerKey NUR im _meta-Kopf der Zuege. Der Zusammenfassungsknoten kannte
+  // ihn nicht (im Export von Walters 135 Partien: null Treffer), der Marks-Datensatz auch
+  // nicht — ein Marker war damit bei mehreren Testspielern ohne Absender.
+  const fin = html.match(/await update\(ref\(db,`games_countred\/\$\{mvkiGameCode\}`\),\{[\s\S]*?\}\);/);
+  ok(!!fin && /playerKey: PLAYER_KEY/.test(fin[0]),
+     'Zusammenfassung games_countred/ schreibt playerKey (kein Join mehr noetig)');
+  ok(!!fin && /build: BUILD_NO/.test(fin[0]),
+     'Zusammenfassung schreibt weiterhin build (\u00a7102)');
+  const mk = html.match(/function\(\)\{[\s\S]*?games_countred_marks\/\$\{mvkiGameCode\}`\),\{[\s\S]*?\}\);/);
+  ok(!!mk && /playerKey:PLAYER_KEY/.test(mk[0]),
+     'Marks-Datensatz schreibt playerKey \u2014 ein Marker hat einen Absender');
+  ok(!!mk && /build:BUILD_NO/.test(mk[0]),
+     'Marks-Datensatz schreibt build \u2014 sonst weiss man nicht, gegen WELCHE Stufe markiert wurde');
+  // Auf den BEZEICHNER prüfen, nicht auf das Feld `playerKey` — das kommt schon im
+  // §124-Kommentarkopf vor, lange vor jedem Code.
+  const declIdx = html.indexOf('const PLAYER_KEY');
+  ok(html.search(/\bPLAYER_KEY\b/) === declIdx + 'const '.length,
+     'die erste Nennung von PLAYER_KEY IST die Deklaration (keine temporal dead zone)');
+}
+
+console.log('\u00a7134 \u2014 die Kennung ist jetzt IMMER 12 Zeichen lang:');
+{
+  // Befund an Walters Live-Daten: von vier Kennungen waren zwei 11 Zeichen lang. Ursache:
+  // 9 Zufallsbytes ergeben genau 12 base64-Zeichen, und der Filter strich ein enthaltenes
+  // „+" oder „/" ersatzlos weg. Verhaltenstest statt Wortlautpruefung.
+  const src = html.match(/function getPlayerKey\(\)\{[\s\S]*?\n\}/)[0];
+  const vm3 = require('vm');
+  const store = {};
+  const ctx = { localStorage:{ getItem:k=>(k in store?store[k]:null), setItem:(k,v)=>{store[k]=v;} },
+                self:{ crypto:{ getRandomValues:a=>{ for(let i=0;i<a.length;i++) a[i]=Math.floor(Math.random()*256); return a; } } },
+                btoa:x=>Buffer.from(x,'binary').toString('base64') };
+  ctx.window = ctx.self;
+  vm3.createContext(ctx);
+  vm3.runInContext(src + '\n;__g=getPlayerKey;', ctx);
+  const laengen = new Set(); const gesehen = new Set();
+  for(let i=0;i<400;i++){ delete store['countred_pkey']; const k=ctx.__g(); laengen.add(k.length); gesehen.add(k); }
+  ok(laengen.size===1 && laengen.has(12),
+     '400 Ziehungen, alle genau 12 Zeichen (gemessene Laengen: ' + [...laengen].join(',') + ')');
+  ok(gesehen.size===400, '400 Ziehungen, 400 verschiedene Kennungen (keine Kollision)');
+  // Zweiter Aufruf darf NICHT neu ziehen — sonst zerfaellt die Zuordnung nach jedem Neuladen.
+  delete store['countred_pkey'];
+  const a1 = ctx.__g(), a2 = ctx.__g();
+  ok(a1===a2, 'zweiter Aufruf liefert dieselbe Kennung aus dem Speicher (kein Neuziehen)');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
