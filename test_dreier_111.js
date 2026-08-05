@@ -29,7 +29,14 @@
 const fs = require('fs');
 const vm = require('vm');
 
-const html    = fs.readFileSync(__dirname + '/countred.html', 'utf8');
+// §134: Die Startdatei heisst seit v98 index.html. Diese Suite las bis v106 `countred.html`
+// — je nach Ordnerinhalt brach sie entweder ab ODER pruefte eine ALTE Kopie und meldete
+// gruen, waehrend die Auslieferung ungeprueft blieb. Beides ist schlimmer als ein Fehlschlag.
+// Liegt die Altdatei noch daneben, wird ausdruecklich gewarnt.
+const HTML_PATH = __dirname + '/index.html';
+if(fs.existsSync(__dirname + '/countred.html'))
+  console.log('  \u26a0\ufe0f  countred.html liegt noch im Ordner \u2014 ALTKOPIE, wird NICHT geprueft.');
+const html    = fs.readFileSync(HTML_PATH, 'utf8');
 const worker  = fs.readFileSync(__dirname + '/countred_ai_worker.js', 'utf8');
 const coreSrc = fs.readFileSync(__dirname + '/countred_ai_core.js', 'utf8');
 
@@ -75,8 +82,15 @@ ok(L.einsteiger.minThinkMs === 1000,
 // Die namensunabhängige Regel unten (maxDepth ≤ 3 ⇒ minThinkMs ≥ 1000) deckt das ab.
 ok(L.fortgeschritten.minThinkMs === 1000,
    'fortgeschritten minThinkMs 1000 (\u00a7122: rechnet jetzt auf Tiefe 3)');
-ok(L.stark.minThinkMs === 800 && L.meister.minThinkMs === 900,
-   'stark 800 / meister 900 unver\u00e4ndert \u2014 die rechnen auf Tiefe 5 lang genug');
+// §125-NACHZUG (hier nachgeholt): minThinkMs wurde bei ALLEN Stufen auf 1000 vereinheitlicht.
+// Diese Zeile stand noch auf 800/900 und war seit §125 ROT — unbemerkt, weil die Suite an der
+// readFileSync-Zeile darüber gegen eine countred.html lief, die es nicht mehr gibt.
+// Geprüft wird jetzt die Vereinheitlichung selbst, nicht mehr zwei Einzelzahlen.
+{
+  const alle = Object.keys(L).map(k => L[k].minThinkMs);
+  ok(new Set(alle).size === 1 && alle[0] === 1000,
+     '\u00a7125: minThinkMs bei ALLEN Stufen gleich 1000 (' + Object.keys(L).map(k => k+':'+L[k].minThinkMs).join(', ') + ')');
+}
 
 console.log('\u00a7113 \u2014 das Einsteiger-PAKET h\u00e4lt zusammen (auch unter anderem Stufennamen):');
 {

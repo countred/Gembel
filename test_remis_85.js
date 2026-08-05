@@ -3,18 +3,25 @@
 //                    Timing-Fix (Angebot VOR dem KI-Zug), Cooldowns, meta.score (1.2)
 // ═══════════════════════════════════════════════════════════════════
 // Teil 1: Reine Entscheidungslogik (drawScoresWithin/drawScoresBand/aiDrawAcceptDecision/
-//         aiDrawOfferDecision) — per Regex aus der ECHTEN countred.html extrahiert (kein Nachbau).
+//         aiDrawOfferDecision) — per Regex aus der ECHTEN index.html extrahiert (kein Nachbau).
 //         Inkl. Zufalls-Sweep der Invariante: anbieten ⇒ annehmen, für alle Parameterlagen.
 // Teil 2: countred_ai_core.js (1.2): meta.score existiert, ist plausibel, Sofortsieg = 100000,
 //         Spielverhalten identisch zu 1.1 (Suche unveraendert — nur Rueckgabe erweitert).
 // Teil 3: Statische Verdrahtungs-Guards + Deploy-Versions-Guard.
-// Aufruf: node test_remis_85.js  (countred.html, countred_ai_worker.js, gembel_rules.js,
+// Aufruf: node test_remis_85.js  (index.html, countred_ai_worker.js, gembel_rules.js,
 //         countred_ai_core.js im selben Ordner)
 'use strict';
 const fs = require('fs');
 const vm = require('vm');
 
-const html = fs.readFileSync(__dirname + '/countred.html', 'utf8');
+// §134: Die Startdatei heisst seit v98 index.html. Diese Suite las bis v106 `countred.html`
+// — je nach Ordnerinhalt brach sie entweder ab ODER pruefte eine ALTE Kopie und meldete
+// gruen, waehrend die Auslieferung ungeprueft blieb. Beides ist schlimmer als ein Fehlschlag.
+// Liegt die Altdatei noch daneben, wird ausdruecklich gewarnt.
+const HTML_PATH = __dirname + '/index.html';
+if(fs.existsSync(__dirname + '/countred.html'))
+  console.log('  \u26a0\ufe0f  countred.html liegt noch im Ordner \u2014 ALTKOPIE, wird NICHT geprueft.');
+const html = fs.readFileSync(HTML_PATH, 'utf8');
 const worker = fs.readFileSync(__dirname + '/countred_ai_worker.js', 'utf8');
 
 let pass = 0, fail = 0;
@@ -23,7 +30,7 @@ function ok(cond, name){
   else    { fail++; console.log('  \u2717 FAIL: ' + name); }
 }
 
-// ── Teil 1: Reine Entscheidungsfunktionen aus countred.html extrahieren ──
+// ── Teil 1: Reine Entscheidungsfunktionen aus index.html extrahieren ──
 function extractFn(name){
   const re = new RegExp('function ' + name + '\\([^)]*\\)\\{[\\s\\S]*?\\n\\}', 'm');
   const m = html.match(re);
@@ -205,7 +212,7 @@ ok(a.move.fr===b2.move.fr && a.move.fc===b2.move.fc && a.move.tr===b2.move.tr &&
    'rankPool 1 deterministisch: zweimal dieselbe Stellung \u2192 identischer Zug (Spielverhalten unangetastet)');
 
 // ── Teil 3: Verdrahtungs-Guards ──
-console.log('\u00a785 Teil 3 \u2014 Verdrahtung in countred.html:');
+console.log('\u00a785 Teil 3 \u2014 Verdrahtung in index.html:');
 const mta = html.match(/async function maybeTriggerAI\(\)\{[\s\S]*?\n\}/m)[0];
 ok(mta.indexOf('aiShouldOfferDraw()') > -1 && mta.indexOf('aiShouldOfferDraw()') < mta.indexOf('pickMoveAsync'),
    'Angebots-Gate steht VOR der Suche (Timing-Fix A: Angebot am eigenen Zug)');

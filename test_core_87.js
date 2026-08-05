@@ -2,13 +2,20 @@
 // test_core_87.js — §87 Rest-1er-Paket (HEURISTIC 1.3):
 //   1C Wurzel-Wiederholung remisbewertet · 1I colHasThreat/versiegelte Spalte
 //   1G Antisymmetrie-Selbsttest im Sync-Fallback · 1H als gemessene Sackgasse dokumentiert
-// Aufruf: node test_core_87.js (countred.html, countred_ai_worker.js, gembel_rules.js,
+// Aufruf: node test_core_87.js (index.html, countred_ai_worker.js, gembel_rules.js,
 //         countred_ai_core.js im selben Ordner)
 'use strict';
 const fs = require('fs');
 const vm = require('vm');
 
-const html = fs.readFileSync(__dirname + '/countred.html', 'utf8');
+// §134: Die Startdatei heisst seit v98 index.html. Diese Suite las bis v106 `countred.html`
+// — je nach Ordnerinhalt brach sie entweder ab ODER pruefte eine ALTE Kopie und meldete
+// gruen, waehrend die Auslieferung ungeprueft blieb. Beides ist schlimmer als ein Fehlschlag.
+// Liegt die Altdatei noch daneben, wird ausdruecklich gewarnt.
+const HTML_PATH = __dirname + '/index.html';
+if(fs.existsSync(__dirname + '/countred.html'))
+  console.log('  \u26a0\ufe0f  countred.html liegt noch im Ordner \u2014 ALTKOPIE, wird NICHT geprueft.');
+const html = fs.readFileSync(HTML_PATH, 'utf8');
 const worker = fs.readFileSync(__dirname + '/countred_ai_worker.js', 'utf8');
 
 let pass = 0, fail = 0;

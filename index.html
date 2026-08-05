@@ -372,9 +372,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          Flex-ZEILE machte die Knoepfe nach Textlaenge unterschiedlich breit. Reihenfolge und
          Hervorhebung sind Walters Vorgabe — „Mit Code zu zweit" oben und blau, weil die Leute
          das Spiel spaeter weitertragen sollen; fuer den Freundestest kommt die Ansage
-         „gegen Max, Stufe Einsteiger" ohnehin per Nachricht mit. -->
+         „gegen Max, Stufe Einsteiger" ohnehin per Nachricht mit.
+         KEINE VORAUSWAHL (Walter, 5.8.): `.big-btn.primary` und `.big-btn:hover` setzen
+         EXAKT dieselben drei Eigenschaften (sel-bg / sel-bd / sel-bd). Ein hervorgehobener
+         Knopf ist dadurch von einem ueberfahrenen nicht zu unterscheiden — beim Ueberfahren
+         des zweiten leuchteten beide, ohne dass der erste „abwaehlt". Das ist kein Stilfehler,
+         sondern ein Bedeutungskonflikt: blau heisst in dieser Datei „unter dem Zeiger", und
+         genau so halten es alle Untermenues (Stufenauswahl: drei Knoepfe, keiner primary).
+         Die Betonung traegt jetzt allein die REIHENFOLGE — „Mit Code zu zweit" steht oben. -->
     <div class="card-col">
-      <button class="big-btn primary" onclick="showLobby()">👥 Mit Code zu zweit</button>
+      <button class="big-btn" onclick="showLobby()">👥 Mit Code zu zweit</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor

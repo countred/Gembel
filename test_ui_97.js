@@ -220,10 +220,15 @@ console.log('\u00a7134 \u2014 Startmen\u00fc: zwei Kn\u00f6pfe, gestapelt, feste
      'card-col statt card-row \u2014 beide Kn\u00f6pfe gleich breit, untereinander (wie die Stufen, \u00a795)');
   const btns = menu.match(/<button[\s\S]*?<\/button>/g) || [];
   ok(btns.length === 2, 'genau ZWEI Kn\u00f6pfe im Startmen\u00fc (' + btns.length + ' gefunden)');
-  ok(/Mit Code zu zweit/.test(btns[0]||'') && /primary/.test(btns[0]||''),
-     '„Mit Code zu zweit" steht OBEN und ist hervorgehoben (Walters Vorgabe: die Leute sollen das Spiel weitertragen)');
-  ok(/Gegen Max Michu/.test(btns[1]||'') && !/primary/.test(btns[1]||''),
-     '„Gegen Max Michu" steht darunter, nicht hervorgehoben');
+  ok(/Mit Code zu zweit/.test(btns[0]||''),
+     '„Mit Code zu zweit" steht OBEN (Walters Vorgabe: die Leute sollen das Spiel weitertragen)');
+  ok(/Gegen Max Michu/.test(btns[1]||''),
+     '„Gegen Max Michu" steht darunter');
+  // KEINE VORAUSWAHL: .big-btn.primary und .big-btn:hover setzen dieselben drei Eigenschaften —
+  // ein hervorgehobener Knopf ist von einem überfahrenen nicht zu unterscheiden. Im Startmenü
+  // heißt blau deshalb ausschließlich „unter dem Zeiger", wie in allen Untermenüs.
+  ok(!btns.some(b => /primary/.test(b)),
+     'KEIN Knopf ist vorausgewählt — blau bleibt der Hover-Zustand (Walter, 5.8.)');
   // Auf die KNÖPFE prüfen, nicht auf den Menü-Ausschnitt: der Erläuterungskommentar daneben
   // nennt showMarkedGames absichtlich weiter (Hinweis zum Wiedereinhängen).
   ok(!btns.some(b => /showMarkedGames/.test(b)),
