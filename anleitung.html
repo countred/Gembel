@@ -97,6 +97,7 @@ body{padding:max(env(safe-area-inset-top),12px) max(env(safe-area-inset-right),1
 #head .n{font-size:11px;color:var(--text3);}
 #bar{height:4px;border-radius:2px;background:var(--bg2);overflow:hidden;}
 #bar > i{display:block;height:100%;background:var(--sel-bd);width:0;transition:width .25s;}
+#fassung{font-size:10.5px;color:var(--text3);letter-spacing:.2px;margin-top:-4px;}
 
 /* ── Erklaertext ── */
 #lesson{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:12px 14px;}
@@ -172,6 +173,7 @@ body{padding:max(env(safe-area-inset-top),12px) max(env(safe-area-inset-right),1
     <span class="n" id="stepno"></span>
   </div>
   <div id="bar"><i id="barfill"></i></div>
+  <div id="fassung"></div>
 
   <div id="selftest"></div>
 
@@ -216,6 +218,14 @@ body{padding:max(env(safe-area-inset-top),12px) max(env(safe-area-inset-right),1
 // Erklaertext sonst nicht "du brauchst ungerade" sagen koennte. Der letzte
 // Schritt sagt ausdruecklich, dass es im echten Spiel gespiegelt sein kann.
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
+
+// Fassungsstempel. Steht sichtbar unter der Kopfzeile, damit die Frage "sehe ich die
+// neue Datei?" nachgesehen und nicht geraten werden muss. EINE Quelle: die Konstante
+// hier, die Anzeige liest sie, die Suite prueft sie gegen die Vorschaufassung.
+// REGEL: JEDE Auslieferung zaehlt die Fassung hoch — auch wenn sich nur Innenleben
+// aendert. Sonst steht derselbe Stempel auf zwei verschiedenen Dateien, und genau
+// diese Frage ("sehe ich die neue?") war der Anlass fuer den Stempel.
+const ANL_FASSUNG = 'Anleitung · Fassung 5 · 20.08.2026';
 
 let board = null;        // aktuelles Brett (Regelschicht-Format)
 let selected = null;     // [r,c] oder null
@@ -853,10 +863,15 @@ function bail(titel, text){
   if(el){ el.style.display='block'; el.innerHTML='<b>'+titel+'</b> '+text; }
   ['lesson','board-area','nav','why','bar'].forEach(id=>{
     const n=document.getElementById(id); if(n) n.style.display='none';
-  });
+  });   // #fassung bleibt sichtbar — sonst ist im Fehlerfall nicht erkennbar, welche Datei laeuft
   console.error('anleitung.html: '+titel+' '+text.replace(/<[^>]+>/g,''));
 }
 function init(){
+  // 0 · Der Stempel zuerst — er muss auch dann dastehen, wenn danach etwas schiefgeht.
+  const fs_=document.getElementById('fassung'); if(fs_) fs_.textContent=ANL_FASSUNG;
+  // Wie im Spiel: eine Zeile in der Konsole. Beim Deploy die schnellste Probe, welche
+  // Datei der Browser wirklich geladen hat.
+  console.log('Count Red · ' + ANL_FASSUNG + ' · Regelschicht: gembel_rules.js');
   // 1 · Ist die kanonische Regelschicht ueberhaupt da?
   const noetig=['initBoard','canLift','canDrop','canStack','canPlaceOnEmpty','parityOk',
                 'countRedNeighbors','countRedsInStack','getMovingPiece','getBasePiece',

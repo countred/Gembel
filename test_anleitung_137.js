@@ -107,6 +107,13 @@ function stapelTreu(brett) {
   return true;
 }
 t('A21 Ziel-Stellung haelt die Stapel-Invariante', stapelTreu(z));
+
+// A23 · Sichtbarer Fassungsstempel — damit "sehe ich die neue Datei?" nachsehbar ist.
+const stempel = (htmlSrc.match(/const ANL_FASSUNG\s*=\s*'([^']+)'/) || [])[1];
+t('A23 Fassungsstempel vorhanden und wird angezeigt',
+  !!stempel && /id="fassung"/.test(htmlSrc) && /fs_\.textContent\s*=\s*ANL_FASSUNG/.test(pageCode));
+t('A24 Fassung wird auch in die Konsole geschrieben',
+  /console\.log\([^)]*ANL_FASSUNG/.test(pageCode));
 {
   // ueber die ganze Lehrpartie mitfuehren
   let bb = null, alleTreu = true;
@@ -324,6 +331,9 @@ function blockD() {
   // wird deshalb das Geruest OHNE Skriptinhalte — es darf gar keine externe Quelle geben.
   const geruest = vor.replace(/<script(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/g, '<script></script>');
   t('D8  Vorschau laedt gar keine externe Datei', !/<script[^>]*\bsrc=/.test(geruest));
+  const vstempel = (vor.match(/const ANL_FASSUNG\s*=\s*'([^']+)'/) || [])[1];
+  t('D9  Vorschau traegt denselben Fassungsstempel', !!vstempel && vstempel === stempel);
+  t('D10 Stempel steht im gerenderten Kopf', dv.getElementById('fassung').textContent === stempel);
 }
 
 // ── Lauf ───────────────────────────────────────────────────────────
