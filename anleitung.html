@@ -377,7 +377,10 @@ function doMove(b, fr, fc, tr, tc, player){
 const STEPS = [
 
 { id:'ziel', mode:'move', title:'Das Ziel',
-  setup: () => ({board: fromSpec(ZIELSPEC, OPPONENT)}),
+  // formedBy=LEARNER, nicht OPPONENT: der Stapel auf 1A enthaelt EINE rote Figur,
+  // also ungerade — und canStack laesst nur den ungeraden Spieler einen solchen
+  // Stapel bilden. Mit OPPONENT waere die Stellung nicht erreichbar. Siehe selfTest.
+  setup: () => ({board: fromSpec(ZIELSPEC, LEARNER)}),
   text: `<p>Gewonnen hat, wer <b>vier gleichfarbige Figuren in einer Spalte</b> stehen hat — A, B, C oder D.</p>
          <p>In Spalte B stehen schon drei schwarze. Der orange Rahmen heißt: diese drei sind <b>gesperrt</b>, dazu gleich mehr. Oben auf 1B ist noch Platz.</p>
          <p>Auf 1D steht eine schwarze Figur. <b>Es gibt keine Zugweite und keine Zugrichtung</b> — jede Figur darf auf jedes Feld, auch über andere hinweg.</p>`,
@@ -762,6 +765,15 @@ function selfTest(){
   //   BEIDE abgelehnt, kann der Grund nicht die Paritaet sein — dann greift die
   //   Regel, um die es hier geht.
   const bothReject = (fn) => !fn(1) && !fn(2);
+  // Umkehrung desselben Tricks: einen bestimmten Stapel darf GENAU EINER der beiden
+  // bilden — das ist dieselbe Aussage wie die Stapelhoheit. Duerfen es beide, ist die
+  // Stapel-Paritaet ausgehebelt (Befund der Negativkontrolle C8).
+  const genauEiner = (fn) => fn(1) !== fn(2);
+  {
+    const T=initBoard();                                   // 1B (rot-3) auf 2B (schwarz-2) = 1 rot
+    if(!genauEiner(pl=>canDrop(T,3,1,2,1,pl,PARITY)))
+      err.push('Regelschicht: den Stapel 1B->2B duerfen beide oder keiner bilden — die Stapel-Paritaet wirkt nicht');
+  }
   if(snapStapel){
     const A=snapStapel;                                  // 1B leer (3 Punkte), 2B Stapel von Spieler 1
     // "Auf ein leeres Feld darf nur, was zur Punktzahl passt."
@@ -785,6 +797,38 @@ function selfTest(){
     if(!canLift(B,2,1,1,PARITY))
       err.push('Regelschicht: der eigene Stapel auf dem gesperrten Feld 2B ist nicht hebbar');
   } else err.push('Selbsttest: Stellung nach der Dreierreihe nicht erfasst');
+
+  // 2c · STAPEL-INVARIANTE.
+  //   canStack prueft die Paritaet der roten Figuren im neuen Stapel — damit ist
+  //   formedBy durch den Inhalt des Stapels bereits festgelegt: 1 rot = ungerade,
+  //   0 oder 2 rot = gerade. Eine Stellung, in der ein Stapel dazu nicht passt, kann
+  //   in keiner echten Partie entstehen. Das betrifft JEDE von Hand gesetzte Stellung.
+  const stapelPruefen = (brett, wo) => {
+    for(let r=0;r<4;r++) for(let c=0;c<4;c++){
+      const st=brett[r][c].stack; if(!st) continue;
+      const n=countRedsInStack(st.bottom, st.top);
+      if(!parityOk(n, st.formedBy, PARITY))
+        err.push(wo+': der Stapel auf '+lab(r,c)+' hat '+n+' rote Figuren ('
+          +(n%2?'ungerade':'gerade')+'), ist aber Spieler '+st.formedBy
+          +' zugeordnet — so eine Stellung ist nicht erreichbar');
+    }
+  };
+  stapelPruefen(fromSpec(ZIELSPEC, LEARNER), 'Ziel-Stellung');
+  {
+    let bb=null;
+    for(const s2 of STEPS){
+      if(s2.setup!=='keep') bb=s2.setup().board;
+      if(!bb) continue;
+      stapelPruefen(bb, s2.id);
+      if(s2.mode==='move'||s2.mode==='auto'){
+        const [fr,fc]=CELL[s2.from], [tr,tc]=CELL[s2.to];
+        if(canDrop(bb,fr,fc,tr,tc, s2.mode==='move'?LEARNER:OPPONENT, PARITY))
+          applyMove(bb,fr,fc,tr,tc, s2.mode==='move'?LEARNER:OPPONENT);
+        applyLockOn(bb);
+        stapelPruefen(bb, s2.id+' (nach dem Zug)');
+      }
+    }
+  }
 
   // 3 · Die Regelschicht selbst muss die erwartete Fassung sein.
   if(typeof canStack!=='function' || typeof applyLockOn!=='function')

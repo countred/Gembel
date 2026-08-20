@@ -48,7 +48,7 @@ const liveCode = stripComments(pageCode);
 head('A · Selbsttest und Struktur');
 
 const api = new Function('return (function(){ ' + rulesSrc + '\n' + pageCode +
-  '\nreturn {selfTest, STEPS, CELL, LEARNER, OPPONENT, PARITY, explainLift, explainDrop, doMove, fromSpec, ZIELSPEC, canLift, canDrop, initBoard, cloneBoard, getLegalMoves, applyMoveOn, checkFourInRow, applyLockOn}; })()')();
+  '\nreturn {selfTest, STEPS, CELL, LEARNER, OPPONENT, PARITY, explainLift, explainDrop, doMove, fromSpec, ZIELSPEC, canLift, canDrop, initBoard, cloneBoard, getLegalMoves, applyMove, applyMoveOn, checkFourInRow, applyLockOn, countRedsInStack, parityOk}; })()')();
 
 const errs = api.selfTest();
 t('A1  Selbsttest ist gruen (' + errs.length + ' Meldungen)', errs.length === 0);
@@ -84,7 +84,7 @@ t('A16 keine Reichweitenregel im Anleitungscode',
 t('A17 Cache-Bust-Parameter vorhanden', /gembel_rules\.js\?v=\d+/.test(htmlSrc));
 
 // Die Ziel-Stellung, an der Schritt 1 haengt.
-const z = api.fromSpec(api.ZIELSPEC, api.OPPONENT);
+const z = api.fromSpec(api.ZIELSPEC, api.LEARNER);
 const wins = api.getLegalMoves(z, api.LEARNER, api.PARITY).filter(m => {
   const nb = api.applyMoveOn(z, m.fr, m.fc, m.tr, m.tc, api.LEARNER);
   return api.checkFourInRow(nb, 'black') || api.checkFourInRow(nb, 'red');
@@ -92,6 +92,38 @@ const wins = api.getLegalMoves(z, api.LEARNER, api.PARITY).filter(m => {
 t('A18 Ziel-Stellung: genau ein Siegzug', wins.length === 1);
 t('A19 Ziel-Stellung: kein Vierer steht schon', !(api.checkFourInRow(z,'black') || api.checkFourInRow(z,'red')));
 t('A20 Ziel-Stellung: keine offene Dreierreihe', !api.applyLockOn(api.cloneBoard(z)));
+
+// A21-A22 · STAPEL-INVARIANTE. canStack prueft die Paritaet der Roten im neuen Stapel,
+// also legt der Stapelinhalt fest, WER ihn gebildet haben kann. Von Hand gesetzte
+// Stellungen koennen das verletzen und waeren dann unerreichbar — genau das war der
+// Fall, bevor der Stapel der Ziel-Stellung dem Lernenden zugeordnet wurde.
+function stapelTreu(brett) {
+  for (let r = 0; r < 4; r++) for (let c = 0; c < 4; c++) {
+    const st = brett[r][c].stack; if (!st) continue;
+    const n = api.countRedsInStack ? api.countRedsInStack(st.bottom, st.top)
+            : (st.bottom.color === 'red' ? 1 : 0) + (st.top.color === 'red' ? 1 : 0);
+    if (!api.parityOk(n, st.formedBy, api.PARITY)) return false;
+  }
+  return true;
+}
+t('A21 Ziel-Stellung haelt die Stapel-Invariante', stapelTreu(z));
+{
+  // ueber die ganze Lehrpartie mitfuehren
+  let bb = null, alleTreu = true;
+  for (const st of api.STEPS) {
+    if (st.setup !== 'keep') bb = st.setup().board;
+    if (!bb) continue;
+    if (!stapelTreu(bb)) alleTreu = false;
+    if (st.mode === 'move' || st.mode === 'auto') {
+      const [fr, fc] = api.CELL[st.from], [tr, tc] = api.CELL[st.to];
+      const pl = st.mode === 'move' ? api.LEARNER : api.OPPONENT;
+      if (api.canDrop(bb, fr, fc, tr, tc, pl, api.PARITY)) api.applyMove(bb, fr, fc, tr, tc, pl);
+      api.applyLockOn(bb);
+      if (!stapelTreu(bb)) alleTreu = false;
+    }
+  }
+  t('A22 jede Stellung der Lehrpartie haelt die Stapel-Invariante', alleTreu);
+}
 
 // ── Block B · Durchklick im DOM ────────────────────────────────────
 head('B · Durchklick im DOM');
@@ -243,7 +275,9 @@ function blockC() {
     ['C6  aufgeweichte Dreiererkennung faellt auf',
       rulesSrc.replace("if(!base||base.color!==color||base.stripe!==cell.stripe){ok=false;break;}", "if(!base){ok=false;break;}"), 1],
     ['C7  entfallene Stapelhoheit faellt auf',
-      rulesSrc.replace('if(cell.stack){ return cell.stack.formedBy===player; }', 'if(cell.stack){ return true; }'), 1]
+      rulesSrc.replace('if(cell.stack){ return cell.stack.formedBy===player; }', 'if(cell.stack){ return true; }'), 1],
+    ['C8  entfallene Stapel-Paritaet faellt auf',
+      rulesSrc.replace('return parityOk(countRedsInStack(to.piece,mp), player, p1parity);', 'return true;'), 1]
   ];
   for (const [name, src, wantErr] of mut) {
     const e = run(src);
