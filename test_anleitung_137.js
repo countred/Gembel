@@ -122,6 +122,17 @@ t('A23 Fassungsstempel vorhanden und wird angezeigt',
   !!stempel && /id="fassung"/.test(htmlSrc) && /fs_\.textContent\s*=\s*ANL_FASSUNG/.test(pageCode));
 t('A24 Fassung wird auch in die Konsole geschrieben',
   /console\.log\([^)]*ANL_FASSUNG/.test(pageCode));
+// A25 · Die beiden Aufblinker stehen in CSS UND im Code — sie muessen uebereinstimmen,
+// sonst laeuft der Zugablauf gegen die Animation.
+{
+  const cssAb = parseFloat((htmlSrc.match(/\.cell\.abflug\{animation:blitz ([\d.]+)s/)  || [])[1]) * 1000;
+  const cssAn = parseFloat((htmlSrc.match(/\.cell\.ankunft\{animation:blitz ([\d.]+)s/) || [])[1]) * 1000;
+  const jsAb  = parseFloat((pageCode.match(/ABFLUG_MS\s*=\s*(\d+)/)  || [])[1]);
+  const jsAn  = parseFloat((pageCode.match(/ANKUNFT_MS\s*=\s*(\d+)/) || [])[1]);
+  t('A25 Abflug-Dauer in CSS und Code gleich (' + jsAb + ' ms)', cssAb === jsAb);
+  t('A26 Ankunft-Dauer in CSS und Code gleich (' + jsAn + ' ms)', cssAn === jsAn);
+  t('A27 Ankunft blinkt deutlich laenger als Abflug', jsAn >= 2 * jsAb);
+}
 {
   // Jede Stellung, die die Anleitung ueberhaupt zeigt — Phase fuer Phase.
   let alleTreu = true, geprueft = 0;
@@ -162,7 +173,7 @@ function blockB(done) {
   const bereich = () => { const b = d.getElementById('bereich');
     return b.style.display === 'block' ? (b.getAttribute('data-rect') || '?') : 'aus'; };
   const warte = ms => new Promise(r => setTimeout(r, ms));
-  const ausgefuehrt = () => warte(2000);
+  const ausgefuehrt = () => warte(2750);
 
   // Erwartungen werden AUSGERECHNET, nicht hingeschrieben — sonst prueft der Test
   // meine Annahme statt das Verhalten.
@@ -232,7 +243,17 @@ function blockB(done) {
     t('B12 Quellfeld blau gefuellt', getan() === '1D');
     t('B13 getragene Figur blass auf dem Ziel', geist() === 1);
     t('B14 Bereich wandert zum Zielfeld', bereich() === rechne.bereichSoll('1B'));
-    tap('1B'); await ausgefuehrt();
+    tap('1B');
+    // Der Zug muss in der Reihenfolge ablaufen, in der er wirklich geschieht:
+    // erst blinkt die Quelle, waehrend die Figur noch dort steht.
+    const figurAuf = n => zelle(n) ? zelle(n).querySelectorAll('.figure').length : -1;
+    t('B14a Figur steht beim Abflug noch auf dem Quellfeld',
+      figurAuf('1D') === 1 && figurAuf('1B') === 0 && zelle('1D').className.includes('abflug'));
+    await warte(900);
+    t('B14b danach ist sie auf dem Zielfeld und dieses blinkt',
+      figurAuf('1B') === 1 && figurAuf('1D') === 0 && zelle('1B').className.includes('ankunft'));
+    t('B14c beide Knoepfe waehrend des Zuges gesperrt', nx().disabled && bk().disabled);
+    await warte(1900);
     t('B15 Siegreihe markiert', d.querySelectorAll('#board .cell.sieg').length === 4);
     t('B16 Weiter frei nach der Ausfuehrung', !nx().disabled);
     nx().onclick();

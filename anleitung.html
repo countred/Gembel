@@ -146,8 +146,10 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 @keyframes pulsBlau{0%,100%{box-shadow:0 0 0 2px var(--sel-bd);}50%{box-shadow:0 0 0 6px rgba(24,95,165,.30);}}
 @keyframes pulsGruen{0%,100%{box-shadow:inset 0 0 0 3px var(--gruen),0 0 0 2px var(--gruen);}
                      50%{box-shadow:inset 0 0 0 3px var(--gruen),0 0 0 6px rgba(29,158,117,.30);}}
-.cell.abflug{animation:blitz .45s ease-in-out 1;}
-.cell.ankunft{animation:blitz 1.15s ease-in-out 1;}
+/* ⚠️ Die Dauern muessen mit ABFLUG_MS / ANKUNFT_MS im Code uebereinstimmen —
+   die Suite prueft das, weil der Zugablauf daran haengt. */
+.cell.abflug{animation:blitz 0.5s ease-in-out 1;}
+.cell.ankunft{animation:blitz 1.9s ease-in-out 1;}
 @keyframes blitz{0%,100%{box-shadow:none;}45%{box-shadow:0 0 0 5px var(--sel-bd);background:var(--sel-bg);}}
 
 /* EIN duenner Rahmen um den gesamten Bereich.
@@ -264,7 +266,11 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 8 · 21.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 9 · 21.08.2026';
+
+// Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
+// .cell.abflug bzw. .cell.ankunft im Stylesheet uebereinstimmen.
+const ABFLUG_MS = 500, ANKUNFT_MS = 1900;
 
 const COL = {0:'A',1:'B',2:'C',3:'D'};
 const ROW = {3:'1',2:'2',1:'3',0:'4'};
@@ -736,25 +742,42 @@ function zeigePhase(rueck){
   }
 
   else if(ph.p==='exec'){
-    const vier=checkFourInRow(board,'black')||checkFourInRow(board,'red');
-    if(vier) mark.sieg=vier;
-    setText(s.done);
-    renderBoard(); navStand(); groesse();
-    if(rueck){ gezeigt=true; navStand(); }      // rueckwaerts: Ergebnis sofort zeigen
-    else spieleAus(s);
+    setText(tl.html);
+    if(rueck){                                   // rueckwaerts: Ergebnis sofort zeigen
+      const vier=checkFourInRow(board,'black')||checkFourInRow(board,'red');
+      if(vier) mark.sieg=vier;
+      renderBoard(); groesse(); gezeigt=true; navStand();
+      return;
+    }
+    // Vorwaerts: zuerst die Stellung VOR dem Zug. Sonst steht die Figur schon auf
+    // dem Zielfeld, waehrend das Quellfeld erst noch aufblinkt — der Zug liefe
+    // rueckwaerts ab. (Befund Fassung 8.)
+    board=boardFor(idx-1);
+    renderBoard(); groesse(); navStand();
+    spieleAus(s);
     return;
   }
   renderBoard(); navStand(); groesse();
 }
 
-// Ausfuehren: Quellfeld blinkt kurz blau, danach das Zielfeld deutlich laenger.
+// Ausfuehren in der Reihenfolge, in der ein Zug wirklich geschieht:
+//   1 · die Figur steht noch auf dem Quellfeld, das kurz blau aufblinkt
+//   2 · sie zieht um
+//   3 · das Zielfeld blinkt deutlich laenger blau
 function spieleAus(s){
   laeuft=true; navStand();
   const f=CELL[s.from], t=CELL[s.to];
   const hol=(r,c)=>document.querySelector('#board .cell[data-rc="'+r+','+c+'"]');
-  setTimeout(function(){ const a=hol(f[0],f[1]); if(a) a.classList.add('abflug'); }, 60);
-  setTimeout(function(){ const b=hol(t[0],t[1]); if(b) b.classList.add('ankunft'); }, 560);
-  setTimeout(function(){ laeuft=false; gezeigt=true; navStand(); }, 1800);
+  const ab=hol(f[0],f[1]); if(ab) ab.classList.add('abflug');
+  setTimeout(function(){
+    board=boardFor(idx);                       // jetzt erst zieht die Figur um
+    leerMark();
+    const vier=checkFourInRow(board,'black')||checkFourInRow(board,'red');
+    if(vier) mark.sieg=vier;
+    renderBoard(); groesse();
+    const an=hol(t[0],t[1]); if(an) an.classList.add('ankunft');
+  }, ABFLUG_MS);
+  setTimeout(function(){ laeuft=false; gezeigt=true; navStand(); }, ABFLUG_MS+ANKUNFT_MS+150);
 }
 
 function navStand(){
