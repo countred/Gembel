@@ -10,51 +10,51 @@
 
 <!-- ═══════════════════════════════════════════════════════════════════
      anleitung.html — die interaktive Spielanleitung
-     Stand: Session 26 · gebaut gegen Build v108 / gembel_rules.js v2.1
      ═══════════════════════════════════════════════════════════════════
 
-     WARUM EINE EIGENE DATEI (und nicht ein Overlay in index.html):
-       Solange die Anleitung eine eigene Datei ist, kann sie beliebig oft
-       ueberarbeitet werden, ohne index.html anzufassen — kein Build-Bump,
-       kein Cache-Bust, keine Elf-Suiten-Regression. index.html wird genau
-       EINMAL angefasst: fuer den Einstiegsknopf.
+     KEINE REGELKOPIE. Jede Frage "darf ich das?" geht durch canLift /
+     canDrop / canStack aus gembel_rules.js — dieselbe Datei, die das
+     Spiel laedt. Die Zahlen im Text sind reine ANZEIGE; die Freigabe
+     trifft immer die Regelschicht. selfTest() prueft beim Laden, dass
+     beides uebereinstimmt; tut es das nicht, sperrt sich die Seite.
 
-     ARCHITEKTURPRINZIP (unveraenderlich, wie in gembel_rules.js):
-       Diese Datei enthaelt KEINE Regelkopie. Jede Frage "darf ich das?"
-       geht durch canLift / canDrop / canPlaceOnEmpty / canStack aus
-       gembel_rules.js — dieselbe Datei, die das Spiel laedt.
-       Die Zaehlungen im Erklaerkasten sind reine ANZEIGE; die Freigabe
-       eines Zuges trifft immer die Regelschicht.
-       selfTest() prueft beim Laden, dass Anzeige und Regelschicht
-       uebereinstimmen. Weichen sie ab, meldet die Seite das sichtbar,
-       statt still etwas Falsches zu lehren.
-       (Lehre aus dem Replay: eine eingebettete Kopie driftet.)
+     KEINE KI. Die Zuege des Mitspielers sind fest geskriptet.
+     countred_ai_core.js wird NICHT geladen. Grund fuer das Skript ist
+     nicht die Ersparnis, sondern die Reihenfolge: nur mit festen Zuegen
+     bleibt die Reihenfolge der Erklaerungen erhalten.
 
-     KEINE KI: Die Gegenzuege sind fest geskriptet. countred_ai_core.js
-       wird NICHT geladen. Der eingefrorene Kern bleibt unberuehrt.
-       Grund fuer das Skript statt echter KI ist nicht die Ersparnis,
-       sondern die Reihenfolge: nur mit festen Gegenzuegen laesst sich
-       die Reihenfolge der Erklaerungen halten.
+     MARKIERUNGSSYSTEM (Walters Festlegung) — vier Achsen:
+       duenner gruener Rahmen = der Bereich, in dem gerechnet wird
+       dicker gruener Rahmen  = auf diesem Feld steht (oder landet)
+                                mindestens eine rote Figur, die mitzaehlt
+       blinkender Rahmen      = hier handeln (gruen, wenn dieses Feld selbst
+                                zaehlende rote Figuren traegt, sonst blau)
+       blaue Fuellung         = hier ist gehandelt worden
+     Gruene FLAECHEN gibt es nicht. GEZAEHLT wird im Text, nicht am Rahmen —
+     ein Feld kann zwei rote Figuren tragen (Stapel) und hat trotzdem nur
+     einen Rahmen.
 
-     ⚠️ FUENFTER CACHE-BUST-PFAD.
-       Das Spiel hat vier ?v=-Ladewege (index.html: gembel_rules.js und
-       countred_ai_core.js; Worker: new Worker() und importScripts).
-       Der Deploy-Guard der elf Suiten vergleicht diese VIER mit dem
-       Build-Marker. Diese Datei ist der FUENFTE Weg. Bevor der
-       Einstiegsknopf in index.html deployt wird, ist zu entscheiden:
-       den Guard auf fuenf Pfade erweitern (empfohlen) oder ?v= hier
-       weglassen (= genau die §51-Klasse "aktualisiert nicht mehr").
-       Bis dahin: die Zahl unten MUSS mit dem Build mitwandern.
+     Der Bereich ist immer ein Rechteck (ein Feld samt seinen bis zu acht
+     Nachbarn) und wird als EIN Element ueber das Gitter gelegt.
 
-     ⚠️ CSS-DUPLIKAT. Die Brett-Optik (Zellen, Figuren, Punkte-Punkte,
-       Sperrrahmen, Farbvariablen) ist aus index.html uebernommen, damit
-       das Uebungsbrett wie das echte aussieht. Das ist eine bewusste
-       Kopie und ein Driftpunkt: wer die Brettoptik in index.html
-       aendert, sollte hier gegenlesen. Regeln sind NICHT kopiert.
+     STAPEL-INVARIANTE: canStack prueft die Paritaet der roten Figuren im
+     neuen Stapel — damit legt der Stapelinhalt fest, WER ihn gebildet
+     haben kann (1 rot = ungerade, 0 oder 2 rot = gerade). "Nur wer einen
+     Stapel gebildet hat, darf ihn aufloesen" ist keine zweite Regel,
+     sondern dieselbe. Von Hand gesetzte Stellungen koennen das verletzen
+     und waeren dann unerreichbar — selfTest prueft es.
 
-     KEINE Datenerhebung: kein Firebase, kein Speicher, keine Cookies,
-       keine externen Quellen. Die Datenschutzerklaerung bleibt gueltig,
-       ohne dass sie angefasst werden muss.
+     ⚠️ FUENFTER CACHE-BUST-PFAD. Das Spiel hat vier ?v=-Ladewege; diese
+     Datei ist der fuenfte. Vor dem Deploy des Einstiegsknopfs in
+     index.html den Deploy-Guard der Suiten auf fuenf erweitern.
+     Diese Datei SELBST hat keinen Cache-Bust — beim Einbau als
+     anleitung.html?v=<build> verweisen.
+
+     ⚠️ CSS-DUPLIKAT: die Brett-Optik ist aus index.html uebernommen.
+     Bewusste Kopie und Driftpunkt. Regeln sind NICHT kopiert.
+
+     Keine Datenerhebung: kein Firebase, kein Speicher, keine Cookies,
+     keine externen Quellen.
      ═══════════════════════════════════════════════════════════════════ -->
 
 <style>
@@ -63,124 +63,121 @@
   --bg:#f5f4ef;--bg2:#ebe9e2;--bg3:#fff;
   --text:#2c2c2a;--text2:#5f5e5a;--text3:#888780;
   --border:#d3d1c7;--border2:#b4b2a9;
-  --sel-bg:#e6f1fb;--sel-bd:#185fa5;
+  --sel-bg:#dceafa;--sel-bd:#185fa5;
   --lock-bd:#ba7517;
   --win-cell-bg:#faeeda;--win-cell-bd:#ba7517;
-  --three-bg:#e1f5ee;--three-text:#0f6e56;--three-bd:#1d9e75;
-  --win-bg:#eaf3de;--win-text:#3b6d11;--win-bd:#639922;
-  --online-bg:#e8f0fe;--online-bd:#1a56db;--online-text:#1a56db;
-  --signal-bg:#fcebeb;--signal-bd:#e24b4a;--signal-text:#a32d2d;
+  --gruen:#1d9e75;
   --red-fig-bg:#D94F3D;
-  --nb-bd:#1d9e75;--nb-bg:#e1f5ee;
+  --warn-bg:#fcebeb;--warn-bd:#e24b4a;--warn-tx:#a32d2d;
 }
 @media(prefers-color-scheme:dark){:root{
   --bg:#1a1a18;--bg2:#252522;--bg3:#2c2c2a;
   --text:#c2c0b6;--text2:#888780;--text3:#5f5e5a;
   --border:#3d3d3a;--border2:#555;
-  --sel-bg:#042c53;--sel-bd:#185fa5;
+  --sel-bg:#123a63;--sel-bd:#4d90fe;
   --lock-bd:#854f0b;
   --win-cell-bg:#412402;--win-cell-bd:#ef9f27;
-  --three-bg:#04342c;--three-text:#5dcaa5;--three-bd:#0f6e56;
-  --win-bg:#173404;--win-text:#c0dd97;--win-bd:#3b6d11;
-  --online-bg:#1a2a4a;--online-bd:#4d90fe;--online-text:#7ab3ff;
-  --signal-bg:#3a0f0f;--signal-bd:#791f1f;--signal-text:#f09595;
+  --gruen:#2bbf90;
   --red-fig-bg:#E06050;
-  --nb-bd:#0f6e56;--nb-bg:#04342c;
+  --warn-bg:#3a0f0f;--warn-bd:#791f1f;--warn-tx:#f09595;
 }}
-html,body{background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,'SF Pro Text',sans-serif;}
-body{padding:max(env(safe-area-inset-top),12px) max(env(safe-area-inset-right),12px) max(env(safe-area-inset-bottom),16px) max(env(safe-area-inset-left),12px);}
-#app{max-width:460px;margin:0 auto;display:flex;flex-direction:column;gap:10px;}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+  font-family:system-ui,-apple-system,'SF Pro Text',sans-serif;}
+body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),12px)
+            max(env(safe-area-inset-bottom),12px) max(env(safe-area-inset-left),12px);}
+#app{max-width:460px;height:100%;margin:0 auto;display:flex;flex-direction:column;gap:8px;}
 
-/* ── Kopf ── */
-#head{display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
+#head{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
 #head .t{font-size:13px;font-weight:600;letter-spacing:3px;color:var(--red-fig-bg);text-transform:uppercase;}
 #head .n{font-size:11px;color:var(--text3);}
-#bar{height:4px;border-radius:2px;background:var(--bg2);overflow:hidden;}
+#bar{flex:0 0 auto;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden;}
 #bar > i{display:block;height:100%;background:var(--sel-bd);width:0;transition:width .25s;}
-#fassung{font-size:10.5px;color:var(--text3);letter-spacing:.2px;margin-top:-4px;}
+#fassung{flex:0 0 auto;font-size:10.5px;color:var(--text3);margin-top:-3px;}
 
-/* ── Erklaertext ── */
-#lesson{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:12px 14px;}
+/* DER Kasten: einer, oberhalb des Bretts, FESTE Hoehe — damit das Brett
+   zwischen den Teilschritten nicht springt. Laengeres scrollt im Kasten. */
+#lesson{flex:0 0 auto;height:clamp(148px,30vh,236px);overflow-y:auto;
+  background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:11px 13px;}
+#lesson.wide{flex:1 1 auto;height:auto;}
 #lesson h2{font-size:15px;font-weight:600;margin-bottom:5px;}
-#lesson p{font-size:13.5px;line-height:1.55;color:var(--text2);}
-#lesson p + p{margin-top:7px;}
+#lesson p{font-size:13.5px;line-height:1.5;color:var(--text2);}
+#lesson p + p{margin-top:6px;}
 #lesson b{color:var(--text);font-weight:600;}
-#task{margin-top:9px;font-size:13.5px;font-weight:600;color:var(--online-text);line-height:1.45;}
+#lesson .rechnung{margin-top:7px;font-size:13px;line-height:1.5;color:var(--text2);
+  border-left:3px solid var(--gruen);padding-left:9px;}
+#lesson .rechnung .sum{font-weight:700;color:var(--text);}
+#lesson .aufgabe{margin-top:8px;font-size:13.5px;font-weight:600;color:var(--sel-bd);line-height:1.4;}
 
-/* ── Brett (Optik aus index.html) ── */
-#board-area{display:flex;justify-content:center;}
-#board-container{display:grid;grid-template-columns:22px 1fr;grid-template-rows:auto 22px;width:100%;max-width:340px;}
-#row-labels{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:6px;}
-.row-label{flex:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);font-weight:600;}
-#board-wrap{grid-column:2;grid-row:1;aspect-ratio:1/1;}
-#board{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:6px;height:100%;}
-#col-labels{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:3px;}
-.col-label{text-align:center;font-size:12px;color:var(--text3);font-weight:600;}
-.stripe-dots{display:flex;gap:4px;position:absolute;top:7px;left:0;right:0;justify-content:center;}
-.stripe-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);opacity:.9;}
-.cell{
-  border-radius:14px;border:1px solid var(--border);background:var(--bg2);
-  display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;
+#board-area{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;}
+#board-container{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 20px;}
+#row-labels{grid-column:1;grid-row:1;display:grid;grid-template-rows:repeat(4,1fr);gap:6px;}
+.row-label{display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);font-weight:600;}
+#board-wrap{grid-column:2;grid-row:1;}
+#board{position:relative;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);
+  gap:6px;width:100%;height:100%;}
+#col-labels{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
+.col-label{text-align:center;font-size:11px;color:var(--text3);font-weight:600;}
+
+.cell{border-radius:14px;border:1px solid var(--border);background:var(--bg2);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
   padding-bottom:7px;position:relative;flex-direction:column;gap:2px;
-  transition:background .1s,border-color .1s,transform .08s,box-shadow .1s;
-  user-select:none;-webkit-user-select:none;touch-action:manipulation;
-}
-.cell:active{transform:scale(0.92);}
-.cell.selected{border-color:var(--sel-bd);background:var(--sel-bg);box-shadow:0 0 0 2px var(--sel-bd);}
-.cell.locked-row{box-shadow:inset 0 0 0 2.5px var(--lock-bd);}
-.cell.win-row{background:var(--win-cell-bg)!important;border-color:var(--win-cell-bd)!important;box-shadow:0 0 0 2.5px var(--win-cell-bd),inset 0 0 0 2px var(--win-cell-bd)!important;}
-/* Anleitungseigen: Nachbarschaft der Paritaetszaehlung sichtbar machen */
-.cell.nb{background:var(--nb-bg);border-color:var(--nb-bd);}
-.cell.nb-counted{box-shadow:0 0 0 2.5px var(--nb-bd);}
-.cell.ask{animation:askPulse 1.25s ease-in-out infinite;}
-@keyframes askPulse{0%,100%{box-shadow:0 0 0 2px var(--sel-bd);}50%{box-shadow:0 0 0 5px rgba(24,95,165,.35);}}
-.cell.dim{opacity:.45;}
-.figure{width:26px;height:26px;border-radius:50%;border:1.5px solid transparent;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:12px;font-weight:700;line-height:1;}
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+.stripe-dots{display:flex;gap:4px;position:absolute;top:6px;left:0;right:0;justify-content:center;}
+.stripe-dot{width:4.5px;height:4.5px;border-radius:50%;background:var(--border2);opacity:.9;}
+
+.cell.getan{background:var(--sel-bg);border-color:var(--sel-bd);}
+.cell.gesperrt{box-shadow:inset 0 0 0 2.5px var(--lock-bd);}
+.cell.sieg{background:var(--win-cell-bg)!important;border-color:var(--win-cell-bd)!important;
+  box-shadow:0 0 0 2.5px var(--win-cell-bd),inset 0 0 0 2px var(--win-cell-bd)!important;}
+.cell.zaehlt{box-shadow:inset 0 0 0 3px var(--gruen);}
+.cell.zaehlt.gesperrt{box-shadow:inset 0 0 0 3px var(--gruen),inset 0 0 0 6px var(--lock-bd);}
+.cell.tippen{animation:pulsBlau 1.3s ease-in-out infinite;}
+.cell.tippen.zaehlt{animation:pulsGruen 1.3s ease-in-out infinite;}
+@keyframes pulsBlau{0%,100%{box-shadow:0 0 0 2px var(--sel-bd);}50%{box-shadow:0 0 0 6px rgba(24,95,165,.30);}}
+@keyframes pulsGruen{0%,100%{box-shadow:inset 0 0 0 3px var(--gruen),0 0 0 2px var(--gruen);}
+                     50%{box-shadow:inset 0 0 0 3px var(--gruen),0 0 0 6px rgba(29,158,117,.30);}}
+.cell.abflug{animation:blitz .45s ease-in-out 1;}
+.cell.ankunft{animation:blitz 1.15s ease-in-out 1;}
+@keyframes blitz{0%,100%{box-shadow:none;}45%{box-shadow:0 0 0 5px var(--sel-bd);background:var(--sel-bg);}}
+
+/* EIN duenner Rahmen um den gesamten Bereich, ueber das Gitter gelegt */
+#bereich{pointer-events:none;border:1.5px solid var(--gruen);border-radius:19px;
+  margin:-4px;display:none;z-index:2;}
+
+.figure{width:24px;height:24px;border-radius:50%;border:1.5px solid transparent;display:flex;
+  align-items:center;justify-content:center;flex-shrink:0;font-size:11.5px;font-weight:700;line-height:1;}
 .figure.black-fig{background:#2c2c2a;border-color:rgba(255,255,255,.08);color:#fff;}
 .figure.red-fig{background:var(--red-fig-bg);border-color:rgba(0,0,0,.08);color:#fff;}
 @media(prefers-color-scheme:dark){.figure.black-fig{background:#e0ddd6;border-color:rgba(0,0,0,.08);color:#1a1a18;}}
+/* die getragene Figur, blass auf dem Zielfeld — damit der gruene Rahmen dort
+   sich auf etwas Sichtbares bezieht */
+.figure.getragen{opacity:.45;border-style:dashed;border-color:var(--text2);}
 .stack-wrap{display:flex;flex-direction:column;align-items:center;}
 .stack-wrap .figure:first-child{margin-bottom:-8px;z-index:1;position:relative;}
 .stack-wrap .figure:last-child{display:flex;align-items:flex-end;padding-bottom:2px;}
 
-/* ── Erklaerkasten (die Rechnung) ── */
-#why{min-height:54px;font-size:12.5px;line-height:1.5;padding:9px 12px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);color:var(--text2);}
-#why.ok{border-color:var(--three-bd);background:var(--three-bg);color:var(--three-text);}
-#why.no{border-color:var(--signal-bd);background:var(--signal-bg);color:var(--signal-text);}
-#why.info{border-color:var(--online-bd);background:var(--online-bg);color:var(--online-text);}
-#why .sum{font-weight:700;}
-#why .hd{display:block;font-weight:600;margin-bottom:2px;}
-
-/* ── Knoepfe ── */
-#nav{display:flex;gap:8px;}
-.btn{flex:1;font-size:13px;font-weight:500;padding:12px 8px;border-radius:12px;border:1px solid var(--border);background:var(--bg3);cursor:pointer;color:var(--text2);font-family:inherit;line-height:1;touch-action:manipulation;}
-.btn:active{background:var(--bg2);}
-.btn:disabled{opacity:.35;pointer-events:none;}
+#nav{flex:0 0 auto;display:flex;gap:8px;}
+.btn{flex:1;font-size:13.5px;font-weight:500;padding:12px 8px;border-radius:12px;
+  border:1px solid var(--border);background:var(--bg3);cursor:pointer;color:var(--text2);
+  font-family:inherit;line-height:1;touch-action:manipulation;}
+.btn:disabled{opacity:.32;pointer-events:none;}
 .btn.primary{background:var(--sel-bg);border-color:var(--sel-bd);color:var(--sel-bd);font-weight:600;}
-.btn.small{flex:0 0 auto;padding:12px 14px;}
-
-/* ── Anhang ── */
-.appendix{font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;}
-.appendix b{color:var(--text);}
-#selftest{display:none;font-size:12px;line-height:1.5;padding:9px 12px;border-radius:12px;border:1px solid var(--signal-bd);background:var(--signal-bg);color:var(--signal-text);}
+#meldung{display:none;flex:0 0 auto;font-size:12px;line-height:1.5;padding:9px 12px;border-radius:12px;
+  border:1px solid var(--warn-bd);background:var(--warn-bg);color:var(--warn-tx);overflow-y:auto;}
 </style>
 </head>
 <body>
 
 <div id="app">
-  <div id="head">
-    <span class="t">Count · Red</span>
-    <span class="n" id="stepno"></span>
-  </div>
+  <div id="head"><span class="t">Count · Red</span><span class="n" id="stepno"></span></div>
   <div id="bar"><i id="barfill"></i></div>
   <div id="fassung"></div>
 
-  <div id="selftest"></div>
+  <div id="meldung"></div>
 
   <div id="lesson">
     <h2 id="ltitle"></h2>
     <div id="ltext"></div>
-    <div id="task"></div>
   </div>
 
   <div id="board-area">
@@ -189,7 +186,7 @@ body{padding:max(env(safe-area-inset-top),12px) max(env(safe-area-inset-right),1
         <div class="row-label">1</div><div class="row-label">2</div>
         <div class="row-label">3</div><div class="row-label">4</div>
       </div>
-      <div id="board-wrap"><div id="board"></div></div>
+      <div id="board-wrap"><div id="board"><div id="bereich"></div></div></div>
       <div id="col-labels">
         <div class="col-label">A</div><div class="col-label">B</div>
         <div class="col-label">C</div><div class="col-label">D</div>
@@ -197,657 +194,693 @@ body{padding:max(env(safe-area-inset-top),12px) max(env(safe-area-inset-right),1
     </div>
   </div>
 
-  <div id="why"></div>
-
   <div id="nav">
-    <button class="btn small" id="btn-back">Zurück</button>
-    <button class="btn" id="btn-again">Nochmal</button>
+    <button class="btn" id="btn-back">Zurück</button>
     <button class="btn primary" id="btn-next">Weiter</button>
   </div>
 </div>
 
-<!-- Kanonische Regelschicht — DIESELBE Datei, die das Spiel laedt.
-     ⚠️ ?v= siehe Kopfkommentar: fuenfter Cache-Bust-Pfad, mit dem Build mitfuehren. -->
+<script>
+// Wachhund — MUSS ein eigener Block bleiben. Faellt der Hauptblock schon beim Parsen
+// aus (Syntaxfehler, doppelte const-Deklaration gegen gembel_rules.js), laeuft dort
+// keine Zeile, auch kein try/catch. Dann bliebe die Seite stumm und leer.
+window.__anlGestartet = false;
+window.addEventListener('error', function(e){
+  if(window.__anlGestartet) return;
+  var el=document.getElementById('meldung');
+  if(!el) return;
+  el.style.display='block';
+  el.innerHTML='<b>Die Anleitung konnte nicht starten.</b> ' +
+    String((e && e.message) || 'Unbekannter Fehler').replace(/</g,'&lt;') +
+    '<br>Diese Seite zeigt deshalb nichts an — das ist Absicht, damit sie nichts Falsches lehrt.';
+  ['lesson','board-area','nav','bar'].forEach(function(id){
+    var n=document.getElementById(id); if(n) n.style.display='none';
+  });
+});
+setTimeout(function(){
+  if(window.__anlGestartet) return;
+  var el=document.getElementById('meldung');
+  if(el && el.style.display!=='block'){
+    el.style.display='block';
+    el.innerHTML='<b>Die Anleitung ist nicht gestartet.</b> Der Programmteil der Seite wurde '
+      + 'nicht ausgeführt. Bitte melden — und in der Konsole nachsehen, was dort steht.';
+    ['lesson','board-area','nav','bar'].forEach(function(id){
+      var n=document.getElementById(id); if(n) n.style.display='none';
+    });
+  }
+}, 1500);
+</script>
+
+<!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
 <script src="gembel_rules.js?v=108" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
-//  Zustand
+//  Grundlagen
 // ═══════════════════════════════════════════════════════════════════
-// Der Lernende ist IMMER Spieler 1 mit ungerader Paritaet. Fest, weil der
-// Erklaertext sonst nicht "du brauchst ungerade" sagen koennte. Der letzte
-// Schritt sagt ausdruecklich, dass es im echten Spiel gespiegelt sein kann.
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
-// Fassungsstempel. Steht sichtbar unter der Kopfzeile, damit die Frage "sehe ich die
-// neue Datei?" nachgesehen und nicht geraten werden muss. EINE Quelle: die Konstante
-// hier, die Anzeige liest sie, die Suite prueft sie gegen die Vorschaufassung.
-// REGEL: JEDE Auslieferung zaehlt die Fassung hoch — auch wenn sich nur Innenleben
-// aendert. Sonst steht derselbe Stempel auf zwei verschiedenen Dateien, und genau
-// diese Frage ("sehe ich die neue?") war der Anlass fuer den Stempel.
-const ANL_FASSUNG = 'Anleitung · Fassung 5 · 20.08.2026';
-
-let board = null;        // aktuelles Brett (Regelschicht-Format)
-let selected = null;     // [r,c] oder null
-let stepIx = 0;          // aktueller Schritt
-let stepDone = false;    // Aufgabe des Schritts erfuellt?
-let marks = {lock:[], win:[], ask:[], nb:[], nbCount:[]};
-let busy = false;        // laeuft gerade ein Gegenzug?
+// REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
+const ANL_FASSUNG = 'Anleitung · Fassung 6 · 20.08.2026';
 
 const COL = {0:'A',1:'B',2:'C',3:'D'};
 const ROW = {3:'1',2:'2',1:'3',0:'4'};
-const CELL = {};   // '1A' -> [r,c]
+const CELL = {};
 for(let r=0;r<4;r++) for(let c=0;c<4;c++) CELL[ROW[r]+COL[c]] = [r,c];
 const lab = (r,c) => ROW[r]+COL[c];
+// NICHT ALL8 nennen — der Name ist in gembel_rules.js vergeben, und eine doppelte
+// const-Deklaration laesst den GANZEN Skriptblock nicht mehr laufen.
+const RICHTUNGEN=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+const nachbarn=(r,c)=>RICHTUNGEN.map(a=>[r+a[0],c+a[1]]).filter(p=>p[0]>=0&&p[0]<4&&p[1]>=0&&p[1]<4);
+const roteAuf=(b,r,c)=>{const x=b[r][c];
+  if(x.stack) return (x.stack.bottom.color==='red'?1:0)+(x.stack.top.color==='red'?1:0);
+  return (x.piece && x.piece.color==='red') ? 1 : 0;};
+const parWort = n => (n%2===1) ? 'ungerade' : 'gerade';
 
-// ═══════════════════════════════════════════════════════════════════
-//  Stellungen
-// ═══════════════════════════════════════════════════════════════════
-// Kurzschreibweise je Feld:  '.' leer · 'r'/'b' Basisfigur (Punktzahl = Zeile)
-//   '*' angehaengt = gesperrt · '/r3' angehaengt = Stapel mit dieser Deckfigur
-// Zeilen von oben (Z1) nach unten (Z4).
+// ── Stellungen ─────────────────────────────────────────────────────
+// '.' leer · 'r'/'b' Basisfigur (Punktzahl = Zeile) · '*' gesperrt · '/r3' Stapeldecke
 function fromSpec(spec, formedBy){
   const b=[];
   for(let r=0;r<4;r++){ b[r]=[]; for(let c=0;c<4;c++) b[r][c]={stripe:r,locked:false,piece:null,stack:null}; }
-  spec.forEach((row,i)=>{
-    const r = 3-i;
-    row.forEach((s,c)=>{
-      const cell=b[r][c];
+  spec.forEach(function(row,i){
+    const r=3-i;
+    row.forEach(function(s,c){
       if(s==='.') return;
-      const [basePart, topPart] = s.split('/');
+      const cell=b[r][c];
+      const teile=s.split('/'), basePart=teile[0], topPart=teile[1];
       if(basePart.indexOf('*')>=0) cell.locked=true;
       const baseColor = basePart[0]==='r' ? 'red' : 'black';
       cell.piece={color:baseColor, stripe:r};
       if(topPart){
-        const topColor = topPart[0]==='r' ? 'red' : 'black';
         cell.stack={bottom:{color:baseColor,stripe:r},
-                    top:{color:topColor,stripe:parseInt(topPart[1],10)},
-                    formedBy: formedBy};
+                    top:{color:topPart[0]==='r'?'red':'black', stripe:parseInt(topPart[1],10)},
+                    formedBy:formedBy};
         cell.piece=cell.stack.bottom;
       }
     });
   });
   return b;
 }
-
-// ZIEL-Stellung fuer Schritt 1.
-// KONSTRUIERT, nicht aus einer echten Partie — aber gegen die Regelschicht
-// geprueft: Figureninventar 2x je Farbe und Punktzahl, jede Basisfigur auf
-// ihrer eigenen Punktzahl, kein Vierer, keine offene Dreierreihe, und genau
-// EIN Zug des Lernenden gewinnt (1D->1B). Siehe selfTest().
+// ZIEL-Stellung: konstruiert, aber gegen die Regelschicht geprueft (siehe selfTest).
+// Der Stapel auf 1A traegt EINE rote Figur, ist also ungerade — er kann nur vom
+// ungeraden Spieler gebildet worden sein, deshalb formedBy = LEARNER.
 const ZIELSPEC = [
-  ['b/r3', '.'  , 'r'  , 'b'  ],   // Z1
-  ['b'   , 'b*' , 'r'  , 'r'  ],   // Z2
-  ['r'   , 'b*' , 'b'  , 'r'  ],   // Z3
-  ['r'   , 'b*' , 'r'  , 'b'  ]    // Z4
+  ['b/r3', '.'  , 'r'  , 'b'  ],
+  ['b'   , 'b*' , 'r'  , 'r'  ],
+  ['r'   , 'b*' , 'b'  , 'r'  ],
+  ['r'   , 'b*' , 'r'  , 'b'  ]
 ];
 
 // ═══════════════════════════════════════════════════════════════════
-//  Erklaerungen — ANZEIGE. Die Freigabe trifft immer die Regelschicht.
+//  Markierung — abgeleitet, nie von Hand gesetzt
 // ═══════════════════════════════════════════════════════════════════
-const parWord = n => (n%2===1) ? 'ungerade' : 'gerade';
-const myWord  = 'ungerade';
-
-// Warum darf / darf ich diese Figur nicht heben?
-function explainLift(b, r, c, player){
-  const cell=b[r][c], mv=getMovingPiece(cell);
-  if(!mv) return {ok:false, kind:'empty', text:'Auf ' + lab(r,c) + ' steht keine Figur.'};
+function markAbheben(b, fr, fc, spieler){
+  const cell=b[fr][fc], mp=getMovingPiece(cell);
+  const wer  = spieler===LEARNER ? 'Du brauchst' : 'Er braucht';
+  const soll = spieler===LEARNER ? 'ungerade' : 'gerade';
   if(cell.stack){
-    const mine = cell.stack.formedBy===player;
-    return {ok:mine, kind:'stack', nb:[],
-      text: mine
-        ? 'Auf ' + lab(r,c) + ' steht <b>dein</b> Stapel. Die obere Figur darfst du abheben — <b>ohne</b> Paritätsprüfung.'
-        : 'Auf ' + lab(r,c) + ' steht der Stapel des Gegners. Nur wer einen Stapel gebildet hat, darf ihn wieder auflösen.'};
+    // Keine Nachbarn. Es zaehlt allein der Stapelinhalt — und der legt zugleich
+    // fest, wer den Stapel gebildet haben kann.
+    const n=countRedsInStack(cell.stack.bottom, cell.stack.top);
+    return {bereich:[[fr,fc]], zaehlt:(n>0?[[fr,fc]]:[]), tippen:[fr,fc], summe:n, stapel:true,
+      text:'Beim Abheben von einem Stapel zählen <b>nur die Figuren im Stapel</b> — keine Nachbarn. '
+         + 'Deshalb ist nur ' + lab(fr,fc) + ' umrandet. Rote darin: <span class="sum">' + n + ' = '
+         + parWort(n) + '</span>. ' + wer + ' <b>' + soll + '</b>.'};
   }
-  if(cell.locked) return {ok:false, kind:'locked', nb:[],
-    text: lab(r,c) + ' gehört zu einer gesperrten Dreierreihe. Eine <b>einzelne</b> Figur ist dort unbeweglich.'};
-  const nb=[], counted=[];
-  for(const [dr,dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]){
-    const nr=r+dr, nc=c+dc;
-    if(nr<0||nr>3||nc<0||nc>3) continue;
-    nb.push([nr,nc]);
-    const x=b[nr][nc];
-    if(x.stack){ if(x.stack.bottom.color==='red') counted.push([nr,nc]);
-                 if(x.stack.top.color==='red') counted.push([nr,nc]); }
-    else if(x.piece && x.piece.color==='red') counted.push([nr,nc]);
-  }
-  const n = countRedNeighbors(b,r,c);
-  const self = mv.color==='red' ? 1 : 0;
-  const sum = n + self;
-  return {ok: parityOk(sum, player, PARITY), kind:'lift', nb, counted, n, self, sum,
-    text: 'Rote Nachbarn von ' + lab(r,c) + ': <b>' + n + '</b>'
-        + (self ? ' &middot; die Figur selbst ist rot: <b>+1</b>' : ' &middot; die Figur selbst ist schwarz: <b>+0</b>')
-        + ' &rarr; <span class="sum">' + sum + ' = ' + parWord(sum) + '</span>.'};
+  if(cell.locked)
+    return {bereich:null, zaehlt:[], tippen:null, summe:null,
+      text: lab(fr,fc) + ' gehört zu einer gesperrten Dreierreihe. Eine <b>einzelne</b> Figur ist dort unbeweglich.'};
+  const bereich=[[fr,fc]].concat(nachbarn(fr,fc));
+  const zaehlt=bereich.filter(function(p){ return roteAuf(b,p[0],p[1])>0; });
+  const nb=countRedNeighbors(b,fr,fc), self=(mp.color==='red'?1:0), summe=nb+self;
+  return {bereich:bereich, zaehlt:zaehlt, tippen:[fr,fc], summe:summe,
+    text:'Der grüne Bereich zeigt, worauf es jetzt ankommt: <b>' + lab(fr,fc) + ' und seine Nachbarn</b>; '
+       + 'alles außerhalb spielt gerade keine Rolle. Dick umrandet sind die Felder mit roten Figuren — '
+       + 'dort stehen zusammen <b>' + nb + '</b>'
+       + (self ? ', und die Figur selbst ist rot: <b>+1</b>' : '; die Figur selbst ist schwarz: <b>+0</b>')
+       + ' → <span class="sum">' + summe + ' = ' + parWort(summe) + '</span>. ' + wer + ' <b>' + soll + '</b>.'};
 }
-
-// Warum darf / darf ich hier nicht ablegen?
-function explainDrop(b, fr, fc, tr, tc, player){
+function markAblegen(b, fr, fc, tr, tc, spieler){
   const mp=getMovingPiece(b[fr][fc]), to=b[tr][tc];
-  if(fr===tr && fc===tc) return {ok:false, kind:'same', text:'Das ist das Feld, von dem du kommst.'};
-  if(to.piece && to.stack) return {ok:false, kind:'full', nb:[],
-    text: 'Auf ' + lab(tr,tc) + ' steht schon ein Stapel. Mehr als zwei Figuren gehen nicht.'};
+  const wer  = spieler===LEARNER ? 'Du brauchst' : 'Er braucht';
+  const soll = spieler===LEARNER ? 'ungerade' : 'gerade';
+  if(to.piece && to.stack)
+    return {bereich:null, zaehlt:[], tippen:null, summe:null,
+      text:'Auf ' + lab(tr,tc) + ' steht schon ein Stapel. Mehr als zwei Figuren gehen nicht.'};
   if(to.piece){
-    const n = countRedsInStack(to.piece, mp);
-    return {ok: parityOk(n, player, PARITY), kind:'stack', nb:[[tr,tc]], counted:[], n, sum:n,
-      text: 'Beim Stapeln zählen <b>nur die Figuren im neuen Stapel</b> — keine Nachbarn. '
-          + 'Rote darin: <span class="sum">' + n + ' = ' + parWord(n) + '</span>.'};
+    const n=countRedsInStack(to.piece, mp);
+    return {bereich:[[tr,tc]], zaehlt:(n>0?[[tr,tc]]:[]), tippen:[tr,tc], summe:n, stapel:true,
+      text:'Beim Stapeln zählen <b>nur die beiden Figuren im neuen Stapel</b> — keine Nachbarn. '
+         + 'Deshalb ist nur ' + lab(tr,tc) + ' umrandet; die blasse Figur ist die, die du trägst. '
+         + 'Rote darin: <span class="sum">' + n + ' = ' + parWort(n) + '</span>. ' + wer + ' <b>' + soll + '</b>.'};
   }
-  // leeres Zielfeld
-  if(mp.stripe !== to.stripe) return {ok:false, kind:'stripe', nb:[],
-    text: 'Die Figur trägt die <b>' + mp.stripe + '</b>, das Feld ' + lab(tr,tc) + ' ist <b>' + to.stripe
-        + '</b> Punkte wert. Auf ein leeres Feld darf nur, was zur Punktzahl passt.'};
-  const nb=[], counted=[];
-  for(const [dr,dc] of [[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]){
-    const nr=tr+dr, nc=tc+dc;
-    if(nr<0||nr>3||nc<0||nc>3) continue;
-    if(nr===fr && nc===fc) continue;                 // Quellfeld zaehlt nicht mit
-    nb.push([nr,nc]);
-    const x=b[nr][nc];
-    if(x.stack){ if(x.stack.bottom.color==='red') counted.push([nr,nc]);
-                 if(x.stack.top.color==='red') counted.push([nr,nc]); }
-    else if(x.piece && x.piece.color==='red') counted.push([nr,nc]);
+  if(mp.stripe!==to.stripe)
+    return {bereich:null, zaehlt:[], tippen:null, summe:null,
+      text:'Die Figur trägt die <b>' + mp.stripe + '</b>, das Feld ' + lab(tr,tc) + ' ist <b>' + to.stripe
+         + '</b> Punkte wert. Auf ein leeres Feld darf nur, was zur Punktzahl passt.'};
+  const bereich=[[tr,tc]].concat(nachbarn(tr,tc));
+  const zaehlt=[]; let restRot=false;
+  for(let i=0;i<bereich.length;i++){
+    const r=bereich[i][0], c=bereich[i][1];
+    if(r===tr && c===tc){ if(mp.color==='red') zaehlt.push([r,c]); continue; }  // die getragene Figur
+    if(r===fr && c===fc){                                                      // Quellfeld
+      const st=b[fr][fc].stack;
+      if(st && st.bottom.color==='red'){ zaehlt.push([r,c]); restRot=true; }    // rote Basis bleibt liegen
+      continue;                                                                // sonst: zaehlt nicht mit
+    }
+    if(roteAuf(b,r,c)>0) zaehlt.push([r,c]);
   }
-  let n = countRedNeighbors(b,tr,tc,fr,fc);
-  let rest = 0;
-  const from = b[fr][fc];
-  if(from.stack){
-    const dr=Math.abs(fr-tr), dc=Math.abs(fc-tc);
-    if(dr<=1 && dc<=1 && !(dr===0&&dc===0) && from.stack.bottom.color==='red'){ n++; rest=1; nb.push([fr,fc]); counted.push([fr,fc]); }
-  }
-  const self = mp.color==='red' ? 1 : 0;
-  const sum = n + self;
-  return {ok: parityOk(sum, player, PARITY), kind:'empty', nb, counted, n, self, sum,
-    text: 'Punktzahl passt (<b>' + mp.stripe + '</b> auf ein ' + to.stripe + '-Punkte-Feld). '
-        + 'Rote Nachbarn von ' + lab(tr,tc) + ' <i>nach</i> dem Zug — Quellfeld zählt nicht mit: <b>' + (n-rest) + '</b>'
-        + (rest ? ' &middot; die zurückbleibende Stapelfigur ist rot: <b>+1</b>' : '')
-        + (self ? ' &middot; die Figur selbst ist rot: <b>+1</b>' : ' &middot; die Figur selbst ist schwarz: <b>+0</b>')
-        + ' &rarr; <span class="sum">' + sum + ' = ' + parWord(sum) + '</span>.'};
-}
-
-// ═══════════════════════════════════════════════════════════════════
-//  Spielschleife — dieselbe Reihenfolge wie nextTurn() in index.html:
-//  erst Vierer, dann Sperrung, dann Bonuszug/Gegner.
-// ═══════════════════════════════════════════════════════════════════
-function doMove(b, fr, fc, tr, tc, player){
-  applyMove(b, fr, fc, tr, tc, player);
-  const four = checkFourInRow(b,'black') || checkFourInRow(b,'red');
-  if(four) return {end:'four', winner:player, cells:four};
-  const triple = applyLockOn(b);
-  if(triple) return {end:null, triple, bonus: hasAnyMove(b, player, PARITY)};
-  return {end:null, triple:null};
+  let n=countRedNeighbors(b,tr,tc,fr,fc);
+  if(restRot) n++;
+  const self=(mp.color==='red'?1:0), summe=n+self;
+  return {bereich:bereich, zaehlt:zaehlt, tippen:[tr,tc], summe:summe,
+    text:'Punktzahl passt (<b>' + mp.stripe + '</b> auf ein ' + to.stripe + '-Punkte-Feld). '
+       + 'Der grüne Bereich ist jetzt <b>' + lab(tr,tc) + ' mit seinen Nachbarn</b>; das Feld, von dem die '
+       + 'Figur kommt, zählt nicht mit. Dick umrandet zusammen <b>' + (n-(restRot?1:0)) + '</b> rote'
+       + (restRot ? ', dazu die rote Figur, die auf ' + lab(fr,fc) + ' liegen bleibt: <b>+1</b>' : '')
+       + (self ? ', und die blasse Figur, die dort landen soll, ist rot: <b>+1</b>'
+               : '; die blasse Figur, die dort landen soll, ist schwarz: <b>+0</b>')
+       + ' → <span class="sum">' + summe + ' = ' + parWort(summe) + '</span>. ' + wer + ' <b>' + soll + '</b>.'};
 }
 
 // ═══════════════════════════════════════════════════════════════════
 //  Die Schritte
 // ═══════════════════════════════════════════════════════════════════
-// mode: 'move'  der Lernende muss GENAU diesen Zug spielen
-//       'tap'   der Lernende muss GENAU dieses Feld antippen
-//       'auto'  der Gegner zieht, mit Erklaerung
-//       'read'  nur Text
+// kind 'move'    → drei Teilschritte: abheben · ablegen · ausfuehren
+// kind 'tap'     → ein Feld antippen (Paritaet erklaeren)
+// kind 'inspect' → ein Feld ansehen (noch kein Zugurteil)
+// kind 'read'    → nur Text
 const STEPS = [
 
-{ id:'ziel', mode:'move', title:'Das Ziel',
-  // formedBy=LEARNER, nicht OPPONENT: der Stapel auf 1A enthaelt EINE rote Figur,
-  // also ungerade — und canStack laesst nur den ungeraden Spieler einen solchen
-  // Stapel bilden. Mit OPPONENT waere die Stellung nicht erreichbar. Siehe selfTest.
-  setup: () => ({board: fromSpec(ZIELSPEC, LEARNER)}),
-  text: `<p>Gewonnen hat, wer <b>vier gleichfarbige Figuren in einer Spalte</b> stehen hat — A, B, C oder D.</p>
-         <p>In Spalte B stehen schon drei schwarze. Der orange Rahmen heißt: diese drei sind <b>gesperrt</b>, dazu gleich mehr. Oben auf 1B ist noch Platz.</p>
-         <p>Auf 1D steht eine schwarze Figur. <b>Es gibt keine Zugweite und keine Zugrichtung</b> — jede Figur darf auf jedes Feld, auch über andere hinweg.</p>`,
-  task: 'Tippe 1D an und dann 1B.',
+{ id:'ziel', kind:'move', actor:LEARNER, title:'Das Ziel',
+  setup: function(){ return fromSpec(ZIELSPEC, LEARNER); },
   from:'1D', to:'1B',
-  // §Anleitung: hier noch KEINE Rechnung zeigen — warum gerade diese Figur ziehen darf,
-  // erklaert Schritt 3. (BGA-Leitlinie: nichts erklaeren, bevor es noetig ist.)
-  liftNote: 'Diese Figur darfst du nehmen. <b>Warum</b> ausgerechnet diese — das kommt gleich.',
-  dropNote: 'Und sie darf dorthin. Auch das hat einen Grund; zwei Schritte weiter steht er.',
-  done: `<p>Vier Schwarze in Spalte B — Partie vorbei.</p>
-         <p>Die Farbe war dabei egal: <b>die Figuren gehören keinem Spieler</b>. Wer die vierte setzt, gewinnt — auch wenn ein anderer die drei darunter gebaut hat.</p>
-         <p>Bleibt die Frage, warum ausgerechnet <i>diese</i> Figur ziehen durfte. Das ist die eigentliche Regel des Spiels.</p>` },
+  // still: die Rahmen werden gezeigt, die Rechnung noch nicht ausgeschrieben.
+  still:true,
+  stillLift:'Der grüne Bereich und die dicken Rahmen zeigen schon, worauf es ankommt. '
+          + '<b>Warum</b> ausgerechnet diese Figur ziehen darf, kommt in zwei Schritten.',
+  stillDrop:'Auch hier: grün ist, was zählt. Die Rechnung dazu gleich.',
+  intro:'<p>Gewonnen hat, wer <b>vier gleichfarbige Figuren in einer Spalte</b> stehen hat — A, B, C oder D.</p>'
+       +'<p>In Spalte B stehen schon drei schwarze. Der orange Rahmen heißt: diese drei sind <b>gesperrt</b>, dazu gleich mehr. Oben auf 1B ist noch Platz.</p>'
+       +'<p>Auf 1D steht eine schwarze Figur. <b>Es gibt keine Zugweite und keine Zugrichtung</b> — jede Figur darf auf jedes Feld, auch über andere hinweg.</p>',
+  done:'<p>Vier Schwarze in Spalte B — Partie vorbei.</p>'
+      +'<p>Die Farbe war dabei egal: <b>die Figuren gehören keinem Spieler</b>. Wer die vierte setzt, gewinnt — auch wenn ein anderer die drei darunter gebaut hat.</p>'
+      +'<p>Bleibt die Frage, warum ausgerechnet <i>diese</i> Figur ziehen durfte. Das ist die eigentliche Regel des Spiels.</p>' },
 
-{ id:'brett', mode:'tap', title:'Brett und Figuren',
-  setup: () => ({board: initBoard()}),
-  text: `<p>Das ist die Ausgangsstellung: 16 Felder, 16 Figuren, alles voll.</p>
-         <p>Die Punkte oben in jedem Feld sind sein <b>Wert</b>: Zeile 1 zählt 3, Zeile 2 zählt 2, Zeile 3 zählt 1, Zeile 4 zählt 0.</p>
-         <p>Jede Figur trägt eine Zahl — den Wert des Feldes, auf dem sie zu Beginn steht. Die Zahl bleibt ihr, auch wenn sie sich bewegt.</p>`,
-  task: 'Tippe 2C an, um die Figur anzusehen.',
-  tap:'2C', inspect:true,
-  done: `<p>Rot mit der 2, auf einem Feld, das 2 Punkte wert ist.</p>
-         <p>Auf die roten Figuren kommt es an — nach ihnen ist das Spiel benannt.</p>` },
+{ id:'brett', kind:'inspect', title:'Brett und Figuren',
+  setup: function(){ return initBoard(); }, tap:'2C',
+  intro:'<p>Das ist die Ausgangsstellung: 16 Felder, 16 Figuren, alles voll.</p>'
+       +'<p>Die Punkte oben in jedem Feld sind sein <b>Wert</b>: Zeile 1 zählt 3, Zeile 2 zählt 2, Zeile 3 zählt 1, Zeile 4 zählt 0.</p>'
+       +'<p>Jede Figur trägt eine Zahl — den Wert des Feldes, auf dem sie zu Beginn steht. Die Zahl bleibt ihr, auch wenn sie sich bewegt.</p>',
+  aufgabe:'Tippe 2C an, um die Figur anzusehen.',
+  done:'<p>Rot mit der 2, auf einem Feld, das 2 Punkte wert ist.</p>'
+      +'<p>Auf die roten Figuren kommt es an — nach ihnen ist das Spiel benannt.</p>' },
 
-{ id:'parity-no', mode:'tap', title:'Wer darf ziehen — die Parität',
-  setup: 'keep',
-  text: `<p>Das ist die Regel, an der alles hängt. Sie entscheidet nicht, <i>wohin</i> eine Figur darf, sondern <b>ob du sie überhaupt anfassen darfst</b>.</p>
-         <p>Zähle alle <b>roten</b> Figuren auf den bis zu acht Nachbarfeldern. Ist die Figur selbst rot, zähle sie mit. Einer der beiden Spieler zieht bei <b>gerader</b> Summe, der andere bei <b>ungerader</b>.</p>
-         <p>Du bist in dieser Anleitung der <b>ungerade</b> Spieler.</p>`,
-  task: 'Tippe 2B an. Das geht schief — sieh dir an, warum.',
-  tap:'2B',
-  expectFail: true,
-  done: `<p>Vier — gerade. Die gehört dem anderen Spieler, nicht dir.</p>
-         <p>Genau das ist der Punkt, an dem Neulinge hängenbleiben: die Figur bewegt sich einfach nicht, und ohne die Rechnung sieht das nach einem Fehler aus.</p>` },
+{ id:'parity-no', kind:'tap', title:'Wer darf ziehen — die Parität',
+  tap:'2B', expectFail:true,
+  intro:'<p>Das ist die Regel, an der alles hängt. Sie entscheidet nicht, <i>wohin</i> eine Figur darf, sondern <b>ob du sie überhaupt anfassen darfst</b>.</p>'
+       +'<p>Zähle die <b>roten</b> Figuren auf den Nachbarfeldern; ist die Figur selbst rot, zähle sie mit. Einer der beiden Spieler zieht bei <b>gerader</b> Summe, der andere bei <b>ungerader</b>. Du bist der <b>ungerade</b>.</p>',
+  aufgabe:'Tippe 2B an. Das geht schief — sieh dir an, warum.',
+  done:'<p>Vier — gerade. Die gehört dem anderen, nicht dir.</p>'
+      +'<p>Genau hier bleiben Neulinge hängen: die Figur bewegt sich einfach nicht, und ohne die Rechnung sieht das nach einem Fehler aus.</p>' },
 
-{ id:'parity-yes', mode:'tap', title:'Eine, die dir gehört',
-  setup: 'keep',
-  text: `<p>Dieselbe Rechnung, ein anderes Feld. Achte auf die grün umrandeten Nachbarn: das sind die, die zählen.</p>`,
-  task: 'Tippe 1B an.',
+{ id:'parity-yes', kind:'tap', title:'Eine, die dir gehört',
   tap:'1B',
-  done: `<p>Drei — ungerade. Diese Figur darfst du nehmen.</p>
-         <p>Die Parität wechselt mit jedem Zug am ganzen Brett. Wer eben noch gesperrt war, ist zwei Züge später frei.</p>` },
+  intro:'<p>Dieselbe Rechnung, ein anderes Feld.</p>'
+       +'<p>Der dünne grüne Rahmen zeigt den Bereich, der zählt. Die dick umrandeten Felder darin sind die, auf die es ankommt — dort stehen rote Figuren.</p>',
+  aufgabe:'Tippe 1B an.',
+  done:'<p>Drei — ungerade. Diese Figur darfst du nehmen.</p>'
+      +'<p>Die Parität wechselt mit jedem Zug am ganzen Brett. Wer eben noch fest saß, ist zwei Züge später frei.</p>' },
 
-{ id:'stapeln', mode:'move', title:'Stapeln',
-  setup: 'keep',
-  text: `<p>Zu Beginn ist jedes Feld besetzt — es gibt gar kein leeres Ziel. Bleibt nur eines: eine Figur <b>auf eine andere stellen</b>.</p>
-         <p>Beim Stapeln gilt eine andere Zählung: <b>nur die Figuren im neuen Stapel</b> zählen, keine Nachbarn. Ein Stapel fasst höchstens zwei Figuren.</p>`,
-  task: 'Nimm 1B und stelle sie auf 2B.',
+{ id:'stapeln', kind:'move', actor:LEARNER, title:'Stapeln',
   from:'1B', to:'2B',
-  done: `<p>Rot auf Schwarz: eine rote im Stapel, ungerade — dein Zug.</p>
-         <p>Der Platz, den du verlassen hast, ist jetzt frei. Von hier an gibt es leere Felder, und damit eine zweite Art zu ziehen.</p>` },
+  intro:'<p>Zu Beginn ist jedes Feld besetzt — es gibt gar kein leeres Ziel. Bleibt nur eines: eine Figur <b>auf eine andere stellen</b>.</p>'
+       +'<p>Beim Stapeln gilt eine andere Zählung. Ein Stapel fasst höchstens zwei Figuren.</p>',
+  done:'<p>Rot auf Schwarz: eine rote im Stapel, ungerade — dein Zug.</p>'
+      +'<p>Der Platz, den du verlassen hast, ist jetzt frei. Von hier an gibt es leere Felder, und damit eine zweite Art zu ziehen.</p>' },
 
-{ id:'gegner1', mode:'auto', title:'Der Gegenzug',
-  setup: 'keep',
-  text: `<p>Jetzt ist der Gegner dran — der <b>gerade</b> Spieler. Sieh dir an, was er tut: er nutzt das Feld, das du freigemacht hast.</p>`,
-  task: 'Der Gegner zieht.',
+{ id:'mit1', kind:'move', actor:OPPONENT, title:'Der Mitspieler zieht',
   from:'1D', to:'1B',
-  done: `<p>Zwei Rechnungen, beide gerade — für ihn also erlaubt.</p>
-         <p>Und eine neue Regel ist dabei sichtbar geworden: auf ein <b>leeres</b> Feld darf nur eine Figur, deren <b>Zahl zur Punktzahl des Feldes passt</b>. Eine 3 auf ein 3-Punkte-Feld.</p>` },
+  intro:'<p>Jetzt ist dein Mitspieler dran — der <b>gerade</b> Spieler. Er rechnet genauso, nur andersherum.</p>'
+       +'<p>Geh seinen Zug mit <b>Weiter</b> Schritt für Schritt durch.</p>',
+  done:'<p>Zwei Rechnungen, beide gerade — für ihn also erlaubt.</p>'
+      +'<p>Und eine neue Regel ist dabei sichtbar geworden: auf ein <b>leeres</b> Feld darf nur eine Figur, deren <b>Zahl zur Punktzahl des Feldes passt</b>.</p>' },
 
-{ id:'leerfeld', mode:'move', title:'Auf ein leeres Feld',
-  setup: 'keep',
-  text: `<p>Der Gegner hat 1D geräumt — ein leeres 3-Punkte-Feld. Auf 1C steht eine schwarze 3.</p>
-         <p>Beim Ablegen auf ein leeres Feld zählst du die roten Nachbarn <b>des Zielfeldes</b>, und zwar so, wie es <i>nach</i> dem Zug aussieht: das Feld, von dem du kommst, zählt nicht mit.</p>`,
-  task: 'Nimm 1C und stelle sie auf 1D.',
+{ id:'leerfeld', kind:'move', actor:LEARNER, title:'Auf ein leeres Feld',
   from:'1C', to:'1D',
-  done: `<p>Beide Rechnungen ungerade — dein Zug.</p>
-         <p>Du kennst jetzt alles, was ein Zug braucht: <b>abheben</b> (Nachbarn zählen) und <b>ablegen</b> (Punktzahl plus Nachbarn beim leeren Feld, oder Stapelinhalt beim Stapeln).</p>` },
+  intro:'<p>Dein Mitspieler hat 1D geräumt — ein leeres 3-Punkte-Feld. Auf 1C steht eine schwarze 3.</p>'
+       +'<p>Beim Ablegen zählst du die roten Nachbarn <b>des Zielfeldes</b>, und zwar so, wie es <i>nach</i> dem Zug aussieht.</p>',
+  done:'<p>Beide Rechnungen ungerade — dein Zug.</p>'
+      +'<p>Du kennst jetzt alles, was ein Zug braucht: <b>abheben</b> und <b>ablegen</b>, jeweils mit der passenden Zählung.</p>' },
 
-{ id:'gegner2', mode:'auto', title:'Noch ein Gegenzug',
-  setup: 'keep',
-  text: `<p>Der Gegner stapelt — diesmal Rot auf Rot.</p>`,
-  task: 'Der Gegner zieht.',
+{ id:'mit2', kind:'move', actor:OPPONENT, title:'Noch ein Zug des Mitspielers',
   from:'3B', to:'3D',
-  done: `<p>Zwei rote im Stapel: gerade, seine Parität.</p>
-         <p>Er hat 3B geräumt. Sieh dir Spalte B an: unten stehen zwei schwarze, darüber ist jetzt eine Lücke.</p>` },
+  intro:'<p>Er stapelt — diesmal Rot auf Rot.</p>',
+  done:'<p>Zwei rote im Stapel: gerade, seine Parität.</p>'
+      +'<p>Er hat 3B geräumt. Sieh dir Spalte B an: unten stehen zwei schwarze, darüber ist jetzt eine Lücke.</p>' },
 
-{ id:'dreier', mode:'move', title:'Die Dreierreihe',
-  setup: 'keep',
-  text: `<p>Drei gleichfarbige Figuren <b>direkt übereinander</b> in einer Spalte sind eine <b>Dreierreihe</b>. Die drei Felder werden gesperrt, und wer sie gebildet hat, bekommt einen <b>Bonuszug</b>.</p>
-         <p>In Spalte B stehen 4B und 2B schwarz. Auf 3C wartet eine schwarze 1 — und 3B ist ein leeres 1-Punkte-Feld.</p>`,
-  task: 'Nimm 3C und stelle sie auf 3B.',
+{ id:'dreier', kind:'move', actor:LEARNER, title:'Die Dreierreihe',
   from:'3C', to:'3B',
-  done: `<p>4B, 3B, 2B — drei schwarze übereinander, gesperrt (oranger Rahmen).</p>
-         <p>Dass die Figuren schwarz sind, heißt nicht, dass sie jemandem gehören. Gebaut hast du sie, also bekommst <b>du</b> den Bonuszug.</p>` },
+  intro:'<p>Drei gleichfarbige Figuren <b>direkt übereinander</b> in einer Spalte sind eine <b>Dreierreihe</b>. Die drei Felder werden gesperrt, und wer sie gebildet hat, bekommt einen <b>Bonuszug</b>.</p>'
+       +'<p>In Spalte B stehen 4B und 2B schwarz — bei einem Stapel zählt dafür die <b>untere</b> Figur. Auf 3C wartet eine schwarze 1, und 3B ist ein leeres 1-Punkte-Feld.</p>',
+  done:'<p>4B, 3B, 2B — drei schwarze übereinander, gesperrt (oranger Rahmen).</p>'
+      +'<p>Dass die Figuren schwarz sind, heißt nicht, dass sie jemandem gehören. Gebaut hast du sie, also bekommst <b>du</b> den Bonuszug.</p>' },
 
-{ id:'bonus', mode:'move', title:'Der Bonuszug',
-  setup: 'keep',
-  text: `<p>Gesperrt heißt <b>nicht</b> unbeweglich. Eine einzelne Figur auf einem gesperrten Feld sitzt fest — 4B und 3B kannst du nicht mehr anrühren.</p>
-         <p>Auf 2B steht aber <b>dein Stapel</b>. Die obere Figur darfst du abheben, gesperrt hin oder her — und beim Abheben von einem Stapel gibt es <b>keine</b> Paritätsprüfung.</p>
-         <p>Die rote 3 obendrauf sucht ein leeres 3-Punkte-Feld. 1C ist frei.</p>`,
-  task: 'Nimm 2B und stelle die obere Figur auf 1C.',
+{ id:'bonus', kind:'move', actor:LEARNER, title:'Der Bonuszug',
   from:'2B', to:'1C',
-  done: `<p>Das war dein Bonuszug. Jetzt ist der Gegner wieder dran.</p>
-         <p>Die Basisfigur ist unter dem Stapel liegen geblieben — die Dreierreihe steht weiter.</p>` },
+  intro:'<p>Gesperrt heißt <b>nicht</b> unbeweglich. Eine einzelne Figur auf einem gesperrten Feld sitzt fest — 4B und 3B kannst du nicht mehr anrühren.</p>'
+       +'<p>Auf 2B steht aber <b>dein Stapel</b>. Dieselbe Zählung wie beim Stapeln, nur ohne Nachbarn — und weil sie beim Bauen schon gestimmt hat, stimmt sie auch beim Auseinandernehmen.</p>',
+  done:'<p>Das war dein Bonuszug. Jetzt ist dein Mitspieler wieder dran.</p>'
+      +'<p>Die untere Figur ist liegen geblieben — die Dreierreihe steht weiter.</p>' },
 
-{ id:'rest', mode:'read', title:'Gut zu wissen',
-  setup: 'keep',
-  text: `<div class="appendix">
-      <div><b>Passen gibt es nicht.</b> Wer keinen erlaubten Zug hat, setzt aus — der andere zieht nochmals.</div>
-      <div><b>Wer beginnt, entscheidet der Zufall</b>, ebenso, wer gerade und wer ungerade spielt. Beide Paritäten sind gleichwertig. In dieser Anleitung warst du ungerade; im Spiel kann es dich genauso gut gerade treffen — dann ist jede Rechnung oben schlicht andersherum.</div>
-      <div><b>Remis</b> könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis <i>einfordern</i> — das darf niemand ablehnen. Beim fünften Mal endet die Partie von selbst, ebenso nach 50 Halbzügen ohne neue Dreierreihe.</div>
-      <div><b>Im Spiel hilft dir dieselbe Rechnung.</b> Tippe eine Figur an, die sich nicht bewegen lässt: unten steht, wie viele rote gezählt wurden und welche Parität dafür nötig wäre.</div>
-    </div>`,
-  task: 'Das war alles. Viel Vergnügen.',
-  done: '' }
+{ id:'rest', kind:'read', title:'Gut zu wissen',
+  intro:'<p><b>Passen gibt es nicht.</b> Wer keinen erlaubten Zug hat, setzt aus — der andere zieht nochmals.</p>'
+       +'<p><b>Wer beginnt, entscheidet der Zufall</b>, ebenso, wer gerade und wer ungerade spielt. Beide Paritäten sind gleichwertig. Hier warst du ungerade; im Spiel kann es dich genauso gut gerade treffen — dann ist jede Rechnung schlicht andersherum.</p>'
+       +'<p><b>Remis</b> könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis <i>einfordern</i> — das darf niemand ablehnen. Beim fünften Mal endet die Partie von selbst, ebenso nach 50 Halbzügen ohne neue Dreierreihe.</p>'
+       +'<p><b>Im Spiel hilft dir dieselbe Rechnung.</b> Tippe eine Figur an, die sich nicht bewegen lässt: unten steht, wie viele rote gezählt wurden und welche Parität nötig wäre.</p>',
+  done:'' }
 ];
 
+// ── Teilschritte flach auflisten ───────────────────────────────────
+// Jede Phase ist durch (Schritt, Art) vollstaendig bestimmt, und das Brett wird
+// zu jeder Phase NEU aufgebaut. Dadurch ist "Zurück" ein simples Minus-Eins und
+// kann nichts halb rueckgaengig machen.
+const PHASES=[];
+STEPS.forEach(function(s,si){
+  if(s.kind==='move'){ PHASES.push({si:si,p:'lift'},{si:si,p:'drop'},{si:si,p:'exec'}); }
+  else PHASES.push({si:si,p:s.kind});
+});
+const ersteImSchritt = i => i===0 || PHASES[i-1].si !== PHASES[i].si;
+
+function boardFor(idx){
+  let b=null;
+  for(let j=0;j<=idx;j++){
+    const ph=PHASES[j], s=STEPS[ph.si];
+    if(ersteImSchritt(j) && s.setup) b=s.setup();
+    if(ph.p==='exec'){
+      const f=CELL[s.from], t=CELL[s.to];
+      applyMove(b,f[0],f[1],t[0],t[1],s.actor);
+      if(!(checkFourInRow(b,'black')||checkFourInRow(b,'red'))) applyLockOn(b);
+    }
+  }
+  return b;
+}
+// Wer ist in Phase i am Zug? Bonuszug: derselbe Spieler nochmals.
+function amZug(i){
+  let cur=LEARNER;
+  for(let j=0;j<i;j++){
+    const ph=PHASES[j], s=STEPS[ph.si];
+    if(ersteImSchritt(j) && s.setup) cur=LEARNER;
+    if(ph.p==='exec'){
+      const b=boardFor(j);
+      const trip=(function(){ const c=cloneBoard(boardFor(j-1));
+        const f=CELL[s.from], t=CELL[s.to];
+        applyMove(c,f[0],f[1],t[0],t[1],s.actor);
+        if(checkFourInRow(c,'black')||checkFourInRow(c,'red')) return null;
+        return applyLockOn(c); })();
+      cur = trip ? s.actor : (s.actor===LEARNER?OPPONENT:LEARNER);
+    }
+  }
+  return cur;
+}
+
 // ═══════════════════════════════════════════════════════════════════
-//  Darstellung
+//  Zustand und Anzeige
 // ═══════════════════════════════════════════════════════════════════
+let idx=0, board=null, gezeigt=false, laeuft=false;
+let mark={bereich:null, zaehlt:[], tippen:null, getan:null, geist:null, sieg:[]};
+function leerMark(){ mark={bereich:null, zaehlt:[], tippen:null, getan:null, geist:null, sieg:[]}; }
+
+function fig(p, getragen){
+  const f=document.createElement('div');
+  f.className='figure '+p.color+'-fig'+(getragen?' getragen':'');
+  f.textContent=String(p.stripe);
+  return f;
+}
 function renderBoard(){
-  const el=document.getElementById('board'); el.innerHTML='';
-  const key=(a)=>a.map(x=>x[0]+','+x[1]);
-  const lockSet=new Set(key(marks.lock)), winSet=new Set(key(marks.win));
-  const askSet=new Set(key(marks.ask)), nbSet=new Set(key(marks.nb)), cntSet=new Set(key(marks.nbCount));
+  const el=document.getElementById('board');
+  const alte=el.querySelectorAll('.cell');
+  for(let i=0;i<alte.length;i++) alte[i].remove();
+  const key=a=>a.map(x=>x[0]+','+x[1]);
+  const zaehltS={}, siegS={};
+  key(mark.zaehlt).forEach(k=>zaehltS[k]=1);
+  key(mark.sieg).forEach(k=>siegS[k]=1);
+  const tip   = mark.tippen ? mark.tippen[0]+','+mark.tippen[1] : null;
+  const getan = mark.getan  ? mark.getan[0]+','+mark.getan[1]   : null;
   for(let r=3;r>=0;r--) for(let c=0;c<4;c++){
     const cell=board[r][c], k=r+','+c;
-    const d=document.createElement('div'); d.className='cell'; d.title=lab(r,c);
-    if(winSet.has(k)) d.classList.add('win-row');
+    const d=document.createElement('div');
+    d.className='cell'; d.title=lab(r,c); d.setAttribute('data-rc',k);
+    if(siegS[k]) d.classList.add('sieg');
     else {
-      if(cell.locked) d.classList.add('locked-row');
-      if(selected && selected[0]===r && selected[1]===c) d.classList.add('selected');
-      if(nbSet.has(k)) d.classList.add('nb');
-      if(cntSet.has(k)) d.classList.add('nb-counted');
-      if(askSet.has(k)) d.classList.add('ask');
+      if(cell.locked)  d.classList.add('gesperrt');
+      if(zaehltS[k])   d.classList.add('zaehlt');
+      if(getan===k)    d.classList.add('getan');
+      if(tip===k)      d.classList.add('tippen');
     }
     if(cell.stripe>0){
       const sd=document.createElement('div'); sd.className='stripe-dots';
       for(let i=0;i<cell.stripe;i++){ const p=document.createElement('div'); p.className='stripe-dot'; sd.appendChild(p); }
       d.appendChild(sd);
     }
+    const geist = (mark.geist && mark.geist.rc[0]===r && mark.geist.rc[1]===c) ? mark.geist.piece : null;
     if(cell.stack){
       const sw=document.createElement('div'); sw.className='stack-wrap';
-      const t=document.createElement('div'); t.className='figure '+cell.stack.top.color+'-fig'; t.textContent=String(cell.stack.top.stripe);
-      const b2=document.createElement('div'); b2.className='figure '+cell.stack.bottom.color+'-fig'; b2.textContent=String(cell.stack.bottom.stripe);
-      sw.appendChild(t); sw.appendChild(b2); d.appendChild(sw);
-    } else if(cell.piece){
-      const f=document.createElement('div'); f.className='figure '+cell.piece.color+'-fig'; f.textContent=String(cell.piece.stripe);
-      d.appendChild(f);
-    }
-    d.onclick=()=>onCell(r,c);
+      sw.appendChild(fig(cell.stack.top)); sw.appendChild(fig(cell.stack.bottom));
+      d.appendChild(sw);
+    } else if(cell.piece && geist){
+      const sw=document.createElement('div'); sw.className='stack-wrap';
+      sw.appendChild(fig(geist,true)); sw.appendChild(fig(cell.piece));
+      d.appendChild(sw);
+    } else if(cell.piece){ d.appendChild(fig(cell.piece)); }
+    else if(geist){ d.appendChild(fig(geist,true)); }
+    d.onclick=(function(rr,cc){ return function(){ onCell(rr,cc); }; })(r,c);
     el.appendChild(d);
   }
+  zeichneBereich();
 }
-function say(html, cls){
-  const w=document.getElementById('why');
-  w.className=cls||''; w.innerHTML=html||'';
+// Der Bereich ist immer ein Rechteck (ein Feld samt Nachbarn) und wird als EIN
+// Element ueber das Gitter gelegt — nicht als Rahmen je Feld.
+function zeichneBereich(){
+  const el=document.getElementById('bereich');
+  if(!mark.bereich || !mark.bereich.length){ el.style.display='none'; return; }
+  let r0=9,r1=-1,c0=9,c1=-1;
+  for(let i=0;i<mark.bereich.length;i++){
+    const r=mark.bereich[i][0], c=mark.bereich[i][1];
+    if(r<r0)r0=r; if(r>r1)r1=r; if(c<c0)c0=c; if(c>c1)c1=c;
+  }
+  el.style.display='block';
+  el.style.gridColumn=(c0+1)+' / '+(c1+2);
+  el.style.gridRow=(3-r1+1)+' / '+(3-r0+2);   // Zeile 0 ist unten, dargestellt wird von oben
 }
-function clearMarks(){ marks={lock:[],win:[],ask:[],nb:[],nbCount:[]}; }
+function setText(html, rechnung, aufgabe){
+  document.getElementById('ltext').innerHTML =
+      (html||'') + (rechnung ? '<div class="rechnung">'+rechnung+'</div>' : '')
+                 + (aufgabe  ? '<div class="aufgabe">'+aufgabe+'</div>'   : '');
+  document.getElementById('lesson').scrollTop=0;
+}
 
-function showStep(){
-  const s=STEPS[stepIx];
-  clearMarks(); selected=null; stepDone=false; busy=false;
-  if(s.setup!=='keep'){ const r=s.setup(); board=r.board; }
-  document.getElementById('stepno').textContent='Schritt '+(stepIx+1)+' von '+STEPS.length;
-  document.getElementById('barfill').style.width=Math.round((stepIx)/(STEPS.length-1)*100)+'%';
+// ═══════════════════════════════════════════════════════════════════
+//  Eine Phase aufbauen
+// ═══════════════════════════════════════════════════════════════════
+// rueck=true: die Phase wird RUECKWAERTS betreten. Dann darf die Ausfuehrung nicht
+// noch einmal ablaufen — sonst sperrt jede Zurueck-Taste 1,8 Sekunden lang beide
+// Knoepfe, und man kommt an einem ausgefuehrten Zug nicht vorbei.
+function zeigePhase(rueck){
+  const ph=PHASES[idx], s=STEPS[ph.si];
+  board=boardFor(idx);
+  leerMark(); gezeigt=false; laeuft=false;
+
+  document.getElementById('stepno').textContent='Schritt '+(ph.si+1)+' von '+STEPS.length;
+  document.getElementById('barfill').style.width=Math.round(idx/(PHASES.length-1)*100)+'%';
   document.getElementById('ltitle').textContent=s.title;
-  document.getElementById('ltext').innerHTML=s.text;
-  document.getElementById('task').innerHTML=s.task||'';
-  // Sperrmarken aus dem Brett uebernehmen
-  for(let r=0;r<4;r++) for(let c=0;c<4;c++) if(board[r][c].locked) marks.lock.push([r,c]);
-  if(s.mode==='tap' && s.tap) marks.ask=[CELL[s.tap]];
-  if(s.mode==='move' && s.from) marks.ask=[CELL[s.from]];
-  if(s.mode==='read') stepDone=true;
-  say(s.mode==='auto' ? 'Tippe auf <b>Weiter</b> — dann zieht der Gegner.'
-    : s.mode==='read' ? '' : 'Tippe das genannte Feld an.', 'info');
-  renderBoard(); updateNav();
-  if(s.mode==='auto'){ document.getElementById('btn-next').textContent='Gegner ziehen lassen'; }
+  document.getElementById('lesson').classList.toggle('wide', ph.p==='read');
+  document.getElementById('board-area').style.display = (ph.p==='read') ? 'none' : 'flex';
+  const erste=ersteImSchritt(idx);
+
+  if(ph.p==='read'){ setText(s.intro); gezeigt=true; }
+
+  else if(ph.p==='inspect'){ setText(s.intro, null, s.aufgabe); }
+
+  else if(ph.p==='tap'){
+    const p=CELL[s.tap], m=markAbheben(board, p[0], p[1], LEARNER);
+    mark.bereich=m.bereich; mark.zaehlt=m.zaehlt; mark.tippen=[p[0],p[1]];
+    setText(s.intro, null, s.aufgabe);
+  }
+
+  else if(ph.p==='lift'){
+    const f=CELL[s.from], m=markAbheben(board, f[0], f[1], s.actor);
+    mark.bereich=m.bereich; mark.zaehlt=m.zaehlt; mark.tippen=[f[0],f[1]];
+    setText(erste?s.intro:'', s.still ? s.stillLift : m.text,
+      s.actor===LEARNER ? 'Tippe <b>'+s.from+'</b> an.'
+                        : 'Mit <b>Weiter</b> hebt er '+s.from+' ab.');
+  }
+
+  else if(ph.p==='drop'){
+    const f=CELL[s.from], t=CELL[s.to];
+    const m=markAblegen(board, f[0], f[1], t[0], t[1], s.actor);
+    mark.bereich=m.bereich; mark.zaehlt=m.zaehlt; mark.tippen=[t[0],t[1]]; mark.getan=[f[0],f[1]];
+    mark.geist={rc:[t[0],t[1]], piece:getMovingPiece(board[f[0]][f[1]])};
+    setText('', s.still ? s.stillDrop : m.text,
+      s.actor===LEARNER ? 'Jetzt <b>'+s.to+'</b> antippen.'
+                        : 'Mit <b>Weiter</b> stellt er sie auf '+s.to+'.');
+  }
+
+  else if(ph.p==='exec'){
+    const vier=checkFourInRow(board,'black')||checkFourInRow(board,'red');
+    if(vier) mark.sieg=vier;
+    setText(s.done);
+    renderBoard(); navStand(); groesse();
+    if(rueck){ gezeigt=true; navStand(); }      // rueckwaerts: Ergebnis sofort zeigen
+    else spieleAus(s);
+    return;
+  }
+  renderBoard(); navStand(); groesse();
 }
-function updateNav(){
-  document.getElementById('btn-back').disabled = stepIx===0;
+
+// Ausfuehren: Quellfeld blinkt kurz blau, danach das Zielfeld deutlich laenger.
+function spieleAus(s){
+  laeuft=true; navStand();
+  const f=CELL[s.from], t=CELL[s.to];
+  const hol=(r,c)=>document.querySelector('#board .cell[data-rc="'+r+','+c+'"]');
+  setTimeout(function(){ const a=hol(f[0],f[1]); if(a) a.classList.add('abflug'); }, 60);
+  setTimeout(function(){ const b=hol(t[0],t[1]); if(b) b.classList.add('ankunft'); }, 560);
+  setTimeout(function(){ laeuft=false; gezeigt=true; navStand(); }, 1800);
+}
+
+function navStand(){
+  const ph=PHASES[idx], s=STEPS[ph.si];
+  document.getElementById('btn-back').disabled = (idx===0 || laeuft);
   const nx=document.getElementById('btn-next');
-  const s=STEPS[stepIx];
-  if(s.mode==='auto' && !stepDone){ nx.disabled=false; nx.textContent='Gegner ziehen lassen'; }
-  else { nx.disabled = !stepDone; nx.textContent = (stepIx===STEPS.length-1) ? 'Zum Spiel' : 'Weiter'; }
-  document.getElementById('btn-again').disabled = busy;
-}
-// keepNb: die hervorgehobene Nachbarschaft ist der BELEG fuer die Rechnung im
-// Erklaerkasten — nach einem Antipp-Schritt muss sie stehen bleiben, sonst
-// verschwindet genau das Bild, das die Paritaet sichtbar macht. Nach einem ZUG
-// wird sie geloescht: sie zeigt die Nachbarn VOR dem Zug und waere danach falsch.
-function finishStep(keepNb){
-  const s=STEPS[stepIx];
-  stepDone=true; selected=null; marks.ask=[];
-  if(!keepNb){ marks.nb=[]; marks.nbCount=[]; }
-  if(s.done) document.getElementById('ltext').innerHTML=s.done;
-  document.getElementById('task').innerHTML='';
-  renderBoard(); updateNav();
+  let frei;
+  if(laeuft) frei=false;
+  else if(ph.p==='read') frei=true;
+  else if(ph.p==='exec'||ph.p==='tap'||ph.p==='inspect') frei=gezeigt;
+  else frei=(s.actor===OPPONENT);   // beim Lernenden zaehlt sein Antippen, nicht der Knopf
+  nx.disabled=!frei;
+  nx.textContent=(idx===PHASES.length-1) ? 'Zum Spiel' : 'Weiter';
 }
 
 // ═══════════════════════════════════════════════════════════════════
 //  Eingabe
 // ═══════════════════════════════════════════════════════════════════
 function onCell(r,c){
-  const s=STEPS[stepIx];
-  if(busy || stepDone || s.mode==='read' || s.mode==='auto') return;
+  const ph=PHASES[idx], s=STEPS[ph.si];
+  if(laeuft) return;
 
-  // ── Antipp-Schritt ────────────────────────────────────────────────
-  if(s.mode==='tap'){
-    const [tr,tc]=CELL[s.tap];
-    if(r!==tr||c!==tc){ say('In diesem Schritt geht es um <b>'+s.tap+'</b>.','info'); return; }
-    if(s.inspect){                       // nur ansehen — noch kein Zugurteil
-      const cell=board[r][c], p=getMovingPiece(cell);
-      say('<span class="hd">'+lab(r,c)+'</span>Figur: <b>'+(p.color==='red'?'rot':'schwarz')+'</b> mit der <b>'
-          + p.stripe + '</b>. Das Feld ist <b>' + cell.stripe + '</b> Punkte wert — so viele Punkte stehen oben im Feld.', 'ok');
-      finishStep(); return;
+  if(ph.p==='inspect'){
+    if(s.tap!==lab(r,c)) return;
+    const cell=board[r][c], p=getMovingPiece(cell);
+    mark.getan=[r,c]; mark.tippen=null; gezeigt=true;
+    setText(s.done, lab(r,c) + ': Figur <b>' + (p.color==='red'?'rot':'schwarz') + '</b> mit der <b>'
+      + p.stripe + '</b>, auf einem Feld, das <b>' + cell.stripe + '</b> Punkte wert ist.');
+    renderBoard(); navStand(); return;
+  }
+
+  if(ph.p==='tap'){
+    if(s.tap!==lab(r,c)) return;
+    const m=markAbheben(board,r,c,LEARNER);
+    const echt=canLift(board,r,c,LEARNER,PARITY);
+    const behauptet=(m.summe!==null) ? parityOk(m.summe, LEARNER, PARITY) : false;
+    if(behauptet!==echt) return abweichung('canLift '+lab(r,c));
+    mark.bereich=m.bereich; mark.zaehlt=m.zaehlt; mark.tippen=null;
+    if(echt) mark.getan=[r,c];
+    gezeigt=true;
+    setText(s.done, m.text);
+    renderBoard(); navStand(); return;
+  }
+
+  if(ph.p==='lift'){
+    if(s.actor!==LEARNER || s.from!==lab(r,c)) return;
+    if(!canLift(board,r,c,LEARNER,PARITY)) return abweichung('canLift '+lab(r,c)+' im Schritt '+s.id);
+    idx++; zeigePhase(); return;
+  }
+
+  if(ph.p==='drop'){
+    if(s.actor!==LEARNER) return;
+    const f=CELL[s.from];
+    if(s.to!==lab(r,c)){
+      if(f[0]===r && f[1]===c){ idx--; zeigePhase(true); }   // Figur wieder absetzen
+      return;
     }
-    const e=explainLift(board,r,c,LEARNER);
-    const real=canLift(board,r,c,LEARNER,PARITY);
-    if(e.ok!==real){ return mismatch('canLift '+lab(r,c)); }
-    marks.nb=e.nb||[]; marks.nbCount=e.counted||[]; marks.ask=[];
-    selected = e.ok ? [r,c] : null;
-    say('<span class="hd">'+(e.ok?'Das darfst du heben.':'Das darfst du nicht heben.')+'</span>'
-        + e.text + (e.kind==='lift' ? ' Du brauchst <b>'+myWord+'</b>.' : ''), e.ok?'ok':'no');
-    if(!!s.expectFail === !e.ok) finishStep(true); else renderBoard();
-    return;
+    if(!canDrop(board,f[0],f[1],r,c,LEARNER,PARITY)) return abweichung('canDrop '+s.from+'->'+s.to);
+    idx++; zeigePhase(); return;
   }
-
-  // ── Zug-Schritt ───────────────────────────────────────────────────
-  const [fr,fc]=CELL[s.from], [tr,tc]=CELL[s.to];
-  if(!selected){
-    if(r!==fr||c!==fc){
-      const e=explainLift(board,r,c,LEARNER);
-      const real=canLift(board,r,c,LEARNER,PARITY);
-      if(e.ok!==real) return mismatch('canLift '+lab(r,c));
-      marks.nb=e.nb||[]; marks.nbCount=e.counted||[];
-      say('<span class="hd">'+(e.ok?lab(r,c)+' wäre hebbar':lab(r,c)+' ist nicht hebbar')+'</span>'+e.text
-          +'<br>In diesem Schritt geht es aber um <b>'+s.from+'</b>.', e.ok?'':'no');
-      renderBoard(); return;
-    }
-    const e=explainLift(board,r,c,LEARNER);
-    const real=canLift(board,r,c,LEARNER,PARITY);
-    if(e.ok!==real) return mismatch('canLift '+lab(r,c));
-    if(!real){ say('<span class="hd">Unerwartet</span>'+e.text,'no'); return; }
-    selected=[r,c];
-    marks.ask=[CELL[s.to]];
-    if(s.liftNote){ marks.nb=[]; marks.nbCount=[];
-      say('<span class="hd">Abheben erlaubt</span>'+s.liftNote+'<br>Jetzt das Zielfeld <b>'+s.to+'</b>.','ok'); }
-    else { marks.nb=e.nb||[]; marks.nbCount=e.counted||[];
-      say('<span class="hd">Abheben erlaubt</span>'+e.text
-          + (e.kind==='lift' ? ' Du brauchst <b>'+myWord+'</b>. ' : ' ')
-          + 'Jetzt das Zielfeld <b>'+s.to+'</b>.', 'ok'); }
-    renderBoard(); return;
-  }
-  // Ziel gewaehlt
-  if(r===selected[0] && c===selected[1]){ selected=null; marks.nb=[]; marks.nbCount=[]; marks.ask=[CELL[s.from]];
-    say('Figur wieder abgesetzt.','info'); renderBoard(); return; }
-  const e=explainDrop(board,selected[0],selected[1],r,c,LEARNER);
-  const real=canDrop(board,selected[0],selected[1],r,c,LEARNER,PARITY);
-  if(e.ok!==real) return mismatch('canDrop '+lab(selected[0],selected[1])+'->'+lab(r,c));
-  if(r!==tr||c!==tc){
-    marks.nb=e.nb||[]; marks.nbCount=e.counted||[];
-    say('<span class="hd">'+(real?lab(r,c)+' wäre erlaubt':lab(r,c)+' geht nicht')+'</span>'+e.text
-        +'<br>In diesem Schritt geht es aber um <b>'+s.to+'</b>.', real?'':'no');
-    renderBoard(); return;
-  }
-  if(!real){ say('<span class="hd">Unerwartet</span>'+e.text,'no'); return; }
-  // Zug ausfuehren
-  const dropText = s.dropNote || e.text;
-  if(s.dropNote){ marks.nb=[]; marks.nbCount=[]; }
-  else { marks.nb=e.nb||[]; marks.nbCount=e.counted||[]; }
-  const res=doMove(board, selected[0], selected[1], r, c, LEARNER);
-  selected=null; clearMarks();
-  for(let rr=0;rr<4;rr++) for(let cc=0;cc<4;cc++) if(board[rr][cc].locked) marks.lock.push([rr,cc]);
-  if(res.end==='four'){ marks.win=res.cells; say('<span class="hd">Vier in einer Spalte — gewonnen.</span>'+dropText,'ok'); }
-  else if(res.triple){ say('<span class="hd">Drei in einer Reihe!</span>'+dropText
-        +'<br>Die drei Felder sind gesperrt'+(res.bonus?' — und du hast einen <b>Bonuszug</b>.':'.'),'ok'); }
-  else say('<span class="hd">Gezogen.</span>'+dropText,'ok');
-  finishStep();
 }
-
-// Gegenzug — geskriptet, mit Erklaerung. Keine KI.
-function runOpponent(){
-  const s=STEPS[stepIx];
-  if(busy||stepDone) return;
-  busy=true; updateNav();
-  const [fr,fc]=CELL[s.from], [tr,tc]=CELL[s.to];
-  const eL=explainLift(board,fr,fc,OPPONENT), eD=explainDrop(board,fr,fc,tr,tc,OPPONENT);
-  if(eL.ok!==canLift(board,fr,fc,OPPONENT,PARITY)) return mismatch('canLift(Gegner) '+lab(fr,fc));
-  if(eD.ok!==canDrop(board,fr,fc,tr,tc,OPPONENT,PARITY)) return mismatch('canDrop(Gegner) '+s.from+'->'+s.to);
-  selected=[fr,fc]; marks.nb=eL.nb||[]; marks.nbCount=eL.counted||[];
-  say('<span class="hd">Er hebt '+s.from+'</span>'+eL.text+' Er braucht <b>gerade</b>.','info');
-  renderBoard();
-  setTimeout(()=>{
-    marks.nb=eD.nb||[]; marks.nbCount=eD.counted||[];
-    say('<span class="hd">Er stellt auf '+s.to+'</span>'+eD.text+' Er braucht <b>gerade</b>.','info');
-    renderBoard();
-    setTimeout(()=>{
-      const res=doMove(board,fr,fc,tr,tc,OPPONENT);
-      selected=null; clearMarks();
-      for(let rr=0;rr<4;rr++) for(let cc=0;cc<4;cc++) if(board[rr][cc].locked) marks.lock.push([rr,cc]);
-      busy=false; finishStep();
-    }, 1400);
-  }, 1600);
+function weiter(){
+  if(laeuft) return;
+  if(idx===PHASES.length-1){ location.href='index.html'; return; }
+  idx++; zeigePhase();
 }
+function zurueck(){ if(laeuft||idx===0) return; idx--; zeigePhase(true); }
 
-// Anzeige und Regelschicht sind auseinandergelaufen — nicht weiterlehren.
-function mismatch(where){
-  busy=true;
-  const el=document.getElementById('selftest');
-  el.style.display='block';
-  el.innerHTML='<b>Die Anleitung stoppt hier.</b> Erklärung und Regelschicht stimmen nicht überein ('
-    +where+'). Das ist ein Fehler in der Anleitung, nicht im Spiel — bitte melden. '
-    +'Bis dahin gelten die Regeln aus dem Spiel, nicht diese Seite.';
-  say('','');
-  document.getElementById('btn-next').disabled=true;
-  console.error('anleitung.html: Abweichung Anzeige/Regelschicht bei', where);
+// ═══════════════════════════════════════════════════════════════════
+//  Groesse — alles muss ohne Scrollen auf den Schirm
+// ═══════════════════════════════════════════════════════════════════
+function groesse(){
+  const area=document.getElementById('board-area');
+  if(!area || area.style.display==='none') return;
+  const h=area.clientHeight, w=area.clientWidth;
+  if(!h || !w) return;
+  const seite=Math.max(120, Math.min(w-20, h-20));   // 20 px Beschriftung links und unten
+  const cont=document.getElementById('board-container');
+  cont.style.width=(seite+20)+'px';
+  cont.style.height=(seite+20)+'px';
+  document.getElementById('board-wrap').style.height=seite+'px';
 }
 
 // ═══════════════════════════════════════════════════════════════════
-//  Selbsttest — laeuft beim Laden. Prueft die Behauptungen dieser Datei
-//  gegen die kanonische Regelschicht. Faellt er durch, wird nicht
-//  gelehrt, sondern gemeldet.
+//  Ausfallmeldungen — eine leere Seite ist die schlechteste Fehlermeldung
+// ═══════════════════════════════════════════════════════════════════
+function bail(titel, text){
+  const el=document.getElementById('meldung');
+  if(el){ el.style.display='block'; el.innerHTML='<b>'+titel+'</b> '+text; }
+  ['lesson','board-area','nav','bar'].forEach(function(id){
+    const n=document.getElementById(id); if(n) n.style.display='none';
+  });   // #fassung bleibt sichtbar — sonst ist im Fehlerfall unklar, welche Datei laeuft
+  console.error('anleitung.html: '+titel+' '+String(text).replace(/<[^>]+>/g,''));
+}
+function abweichung(wo){
+  laeuft=true;
+  bail('Die Anleitung stoppt hier.',
+    'Erklärung und Regelschicht stimmen nicht überein (' + wo + '). Das ist ein Fehler in der '
+    + 'Anleitung, nicht im Spiel — bitte melden. Bis dahin gelten die Regeln aus dem Spiel, nicht diese Seite.');
+}
+
+// ═══════════════════════════════════════════════════════════════════
+//  Selbsttest — laeuft beim Laden
 // ═══════════════════════════════════════════════════════════════════
 function selfTest(){
   const err=[];
-  // 1 · ZIEL-Stellung: Inventar, Basis-Punktzahlen, kein Vierer, keine offene Dreierreihe,
-  //     genau ein Siegzug — und der ist der im Schritt genannte.
-  const z=fromSpec(ZIELSPEC, OPPONENT);
+
+  // 1 · ZIEL-Stellung: Inventar, Punktzahlen, kein Vierer, keine offene Dreierreihe,
+  //     genau ein Siegzug — und zwar der im Schritt genannte.
+  const z=fromSpec(ZIELSPEC, LEARNER);
   const inv={};
   for(let r=0;r<4;r++) for(let c=0;c<4;c++){
     const x=z[r][c];
-    if(x.stack){ for(const q of [x.stack.bottom,x.stack.top]) inv[q.color+q.stripe]=(inv[q.color+q.stripe]||0)+1; }
+    if(x.stack){ [x.stack.bottom,x.stack.top].forEach(q=>{ inv[q.color+q.stripe]=(inv[q.color+q.stripe]||0)+1; }); }
     else if(x.piece) inv[x.piece.color+x.piece.stripe]=(inv[x.piece.color+x.piece.stripe]||0)+1;
     const base=getBasePiece(x);
     if(base && base.stripe!==r) err.push('Ziel: Basisfigur '+lab(r,c)+' hat falsche Punktzahl');
   }
-  for(const col of ['red','black']) for(let s=0;s<4;s++)
-    if((inv[col+s]||0)!==2) err.push('Ziel: '+col+' '+s+' kommt '+(inv[col+s]||0)+'x vor, erwartet 2');
+  ['red','black'].forEach(function(col){ for(let s=0;s<4;s++)
+    if((inv[col+s]||0)!==2) err.push('Ziel: '+col+' '+s+' kommt '+(inv[col+s]||0)+'x vor, erwartet 2'); });
   if(checkFourInRow(z,'black')||checkFourInRow(z,'red')) err.push('Ziel: es steht schon ein Vierer');
-  if(applyLockOn(cloneBoard(z))) err.push('Ziel: es steht eine offene (ungesperrte) Dreierreihe');
-  const wins=getLegalMoves(z,LEARNER,PARITY).filter(m=>{
-    const nb=applyMoveOn(z,m.fr,m.fc,m.tr,m.tc,LEARNER);
-    return checkFourInRow(nb,'black')||checkFourInRow(nb,'red');
-  });
+  if(applyLockOn(cloneBoard(z))) err.push('Ziel: es steht eine offene Dreierreihe');
+  const wins=getLegalMoves(z,LEARNER,PARITY).filter(function(m){
+    const b2=applyMoveOn(z,m.fr,m.fc,m.tr,m.tc,LEARNER);
+    return checkFourInRow(b2,'black')||checkFourInRow(b2,'red'); });
   if(wins.length!==1) err.push('Ziel: '+wins.length+' Siegzuege statt genau einem');
   else if(lab(wins[0].fr,wins[0].fc)!=='1D' || lab(wins[0].tr,wins[0].tc)!=='1B')
-    err.push('Ziel: Siegzug ist '+lab(wins[0].fr,wins[0].fc)+'->'+lab(wins[0].tr,wins[0].tc)+', erwartet 1D->1B');
+    err.push('Ziel: falscher Siegzug');
 
-  // 2 · Jeden Schritt der Lehrpartie gegen die Regelschicht nachspielen.
-  let b=null, cur=LEARNER, snapStapel=null, snapDreier=null;
-  for(const s of STEPS){
-    if(s.setup!=='keep'){ b=s.setup().board; cur=LEARNER; }   // neue Stellung: der Lernende beginnt
-    if(s.mode==='tap'){
-      const [r,c]=CELL[s.tap];
-      const e=explainLift(b,r,c,LEARNER), real=canLift(b,r,c,LEARNER,PARITY);
-      if(e.ok!==real) err.push(s.id+': Erklaerung und canLift widersprechen sich auf '+s.tap);
-      if(!!s.expectFail !== !real) err.push(s.id+': '+s.tap+' ist '+(real?'hebbar':'nicht hebbar')+', der Schritt erwartet das Gegenteil');
+  // 2 · Stapel-Invariante: der Stapelinhalt legt fest, wer ihn gebildet haben kann.
+  const stapelTreu=function(b,wo){
+    for(let r=0;r<4;r++) for(let c=0;c<4;c++){
+      const st=b[r][c].stack; if(!st) continue;
+      const n=countRedsInStack(st.bottom, st.top);
+      if(!parityOk(n, st.formedBy, PARITY))
+        err.push(wo+': Stapel auf '+lab(r,c)+' hat '+n+' rote ('+parWort(n)+'), gehoert aber Spieler '
+          +st.formedBy+' — so eine Stellung ist nicht erreichbar');
+    }
+  };
+
+  // 3 · Jede Phase gegen die Regelschicht: Markierung, Rechnung, Zugfolge.
+  for(let i=0;i<PHASES.length;i++){
+    const ph=PHASES[i], s=STEPS[ph.si], b=boardFor(i);
+    stapelTreu(b, s.id+'/'+ph.p);
+
+    if(ph.p==='tap'){
+      const p=CELL[s.tap];
+      const m=markAbheben(b,p[0],p[1],LEARNER);
+      const echt=canLift(b,p[0],p[1],LEARNER,PARITY);
+      const behauptet=(m.summe!==null)?parityOk(m.summe,LEARNER,PARITY):false;
+      if(behauptet!==echt) err.push(s.id+': Erklaerung und canLift widersprechen sich auf '+s.tap);
+      if(!!s.expectFail !== !echt)
+        err.push(s.id+': '+s.tap+' ist '+(echt?'hebbar':'nicht hebbar')+', der Schritt erwartet das Gegenteil');
       continue;
     }
-    if(s.mode!=='move' && s.mode!=='auto') continue;
-    const pl = s.mode==='move' ? LEARNER : OPPONENT;
-    const [fr,fc]=CELL[s.from], [tr,tc]=CELL[s.to];
-    if(cur!==pl) err.push(s.id+': am Zug ist Spieler '+cur+', der Schritt verlangt '+pl);
-    if(!canLift(b,fr,fc,pl,PARITY)) err.push(s.id+': '+s.from+' ist fuer Spieler '+pl+' nicht hebbar');
-    if(!canDrop(b,fr,fc,tr,tc,pl,PARITY)) err.push(s.id+': '+s.from+'->'+s.to+' ist fuer Spieler '+pl+' kein erlaubter Zug');
-    const eL=explainLift(b,fr,fc,pl), eD=explainDrop(b,fr,fc,tr,tc,pl);
-    if(eL.ok!==canLift(b,fr,fc,pl,PARITY)) err.push(s.id+': Erklaerung/canLift widersprechen sich');
-    if(eD.ok!==canDrop(b,fr,fc,tr,tc,pl,PARITY)) err.push(s.id+': Erklaerung/canDrop widersprechen sich');
-    const res=doMove(b,fr,fc,tr,tc,pl);
-    if(s.id==='ziel'){
-      if(res.end!=='four') err.push('ziel: der Zug gewinnt nicht');
-      cur=null; continue;
+    if(ph.p!=='lift') continue;                 // je Zug einmal pruefen genuegt
+
+    const f=CELL[s.from], t=CELL[s.to];
+    if(amZug(i)!==s.actor) err.push(s.id+': am Zug ist Spieler '+amZug(i)+', der Schritt verlangt '+s.actor);
+    if(!canLift(b,f[0],f[1],s.actor,PARITY)) err.push(s.id+': '+s.from+' ist nicht hebbar');
+    if(!canDrop(b,f[0],f[1],t[0],t[1],s.actor,PARITY)) err.push(s.id+': '+s.from+'->'+s.to+' ist kein erlaubter Zug');
+
+    // Die ANGEZEIGTE Summe muss dieselbe Entscheidung ergeben wie die Regelschicht —
+    // und beim freien Einzelstein zusaetzlich zahlenmaessig stimmen.
+    const mL=markAbheben(b,f[0],f[1],s.actor), mD=markAblegen(b,f[0],f[1],t[0],t[1],s.actor);
+    if(mL.summe===null || parityOk(mL.summe,s.actor,PARITY)!==canLift(b,f[0],f[1],s.actor,PARITY))
+      err.push(s.id+': Abhebe-Erklaerung und Regelschicht widersprechen sich');
+    if(mD.summe===null || parityOk(mD.summe,s.actor,PARITY)!==canDrop(b,f[0],f[1],t[0],t[1],s.actor,PARITY))
+      err.push(s.id+': Ablege-Erklaerung und Regelschicht widersprechen sich');
+    if(!b[f[0]][f[1]].stack){
+      const soll=countRedNeighbors(b,f[0],f[1])+(getMovingPiece(b[f[0]][f[1]]).color==='red'?1:0);
+      if(mL.summe!==soll) err.push(s.id+': angezeigte Abhebe-Summe '+mL.summe+', gerechnet '+soll);
     }
-    if(res.end==='four') err.push(s.id+': unerwarteter Partieschluss');
-    if(s.id==='dreier'){
-      if(!res.triple) err.push('dreier: es entsteht keine Dreierreihe');
-      else if(!res.bonus) err.push('dreier: kein Bonuszug moeglich');
-      snapDreier=cloneBoard(b);
-      cur=LEARNER; continue;               // Bonuszug: derselbe Spieler nochmal
-    }
-    if(res.triple) err.push(s.id+': unerwartete Dreierreihe');
-    if(s.id==='stapeln') snapStapel=cloneBoard(b);
-    cur = (pl===LEARNER)?OPPONENT:LEARNER;
-    if(s.id==='bonus') cur=OPPONENT;
+    // Ablege-Summe gegen die Regelschicht nachrechnen
+    (function(){
+      const mp=getMovingPiece(b[f[0]][f[1]]), to=b[t[0]][t[1]];
+      let soll;
+      if(to.piece) soll=countRedsInStack(to.piece,mp);
+      else {
+        soll=countRedNeighbors(b,t[0],t[1],f[0],f[1]);
+        const st=b[f[0]][f[1]].stack;
+        if(st){ const dr=Math.abs(f[0]-t[0]), dc=Math.abs(f[1]-t[1]);
+          if(dr<=1&&dc<=1&&!(dr===0&&dc===0)&&st.bottom.color==='red') soll++; }
+        if(mp.color==='red') soll++;
+      }
+      if(mD.summe!==soll) err.push(s.id+': angezeigte Ablege-Summe '+mD.summe+', gerechnet '+soll);
+    })();
+
+    // Fortgang: Vierer nur im Zielschritt, Dreierreihe nur im Dreierschritt.
+    const c2=cloneBoard(b);
+    applyMove(c2,f[0],f[1],t[0],t[1],s.actor);
+    const vier=checkFourInRow(c2,'black')||checkFourInRow(c2,'red');
+    const trip=vier?null:applyLockOn(c2);
+    if(s.id==='ziel'   && !vier) err.push('ziel: der Zug gewinnt nicht');
+    if(s.id!=='ziel'   &&  vier) err.push(s.id+': unerwarteter Partieschluss');
+    if(s.id==='dreier' && !trip) err.push('dreier: es entsteht keine Dreierreihe');
+    if(s.id!=='dreier' &&  trip) err.push(s.id+': unerwartete Dreierreihe');
+    if(s.id==='dreier' &&  trip && !hasAnyMove(c2,s.actor,PARITY)) err.push('dreier: kein Bonuszug moeglich');
   }
 
-  // 2b · WAS DIE ANLEITUNG VERBIETET, muss die Regelschicht auch verbieten.
-  //   Die Pruefungen oben zeigen nur, dass die gezeigten Zuege ERLAUBT sind — eine
-  //   GELOCKERTE Regel faellt dabei nicht auf (Befund der Negativkontrolle).
-  //   Trick: Paritaet trifft Spieler 1 und 2 genau komplementaer. Wird etwas fuer
-  //   BEIDE abgelehnt, kann der Grund nicht die Paritaet sein — dann greift die
-  //   Regel, um die es hier geht.
-  const bothReject = (fn) => !fn(1) && !fn(2);
-  // Umkehrung desselben Tricks: einen bestimmten Stapel darf GENAU EINER der beiden
-  // bilden — das ist dieselbe Aussage wie die Stapelhoheit. Duerfen es beide, ist die
-  // Stapel-Paritaet ausgehebelt (Befund der Negativkontrolle C8).
-  const genauEiner = (fn) => fn(1) !== fn(2);
+  // 4 · Was die Anleitung VERBIETET, muss die Regelschicht auch verbieten.
+  //   Die Paritaet trifft Spieler 1 und 2 komplementaer: wird etwas fuer BEIDE
+  //   abgelehnt, kann der Grund nicht die Paritaet sein — dann greift die Regel,
+  //   um die es hier geht. (Ohne diese Pruefungen faellt eine GELOCKERTE Regel nicht auf.)
+  const beideNein=fn=>!fn(1)&&!fn(2);
+  const genauEiner=fn=>fn(1)!==fn(2);
+  const phaseVon=id=>{ for(let i=0;i<PHASES.length;i++) if(STEPS[PHASES[i].si].id===id) return i; return -1; };
   {
-    const T=initBoard();                                   // 1B (rot-3) auf 2B (schwarz-2) = 1 rot
+    const T=initBoard();                        // 1B (rot-3) auf 2B (schwarz-2) = 1 rot
     if(!genauEiner(pl=>canDrop(T,3,1,2,1,pl,PARITY)))
       err.push('Regelschicht: den Stapel 1B->2B duerfen beide oder keiner bilden — die Stapel-Paritaet wirkt nicht');
   }
-  if(snapStapel){
-    const A=snapStapel;                                  // 1B leer (3 Punkte), 2B Stapel von Spieler 1
-    // "Auf ein leeres Feld darf nur, was zur Punktzahl passt."
-    if(!bothReject(pl=>canDrop(A,1,0,3,1,pl,PARITY)))
-      err.push('Regelschicht: 3A (Punktzahl 1) darf auf das leere 3-Punkte-Feld 1B — Stripe-Match wirkt nicht');
-    // "Ein Stapel fasst hoechstens zwei Figuren."
-    if(!bothReject(pl=>canDrop(A,1,0,2,1,pl,PARITY)))
-      err.push('Regelschicht: es darf auf den vorhandenen Stapel 2B gestapelt werden — Stapelhoehe wirkt nicht');
-    // "Nur wer den Stapel gebildet hat, darf ihn aufloesen."
-    if(!canLift(A,2,1,1,PARITY) || canLift(A,2,1,2,PARITY))
-      err.push('Regelschicht: die Stapelhoheit auf 2B stimmt nicht (formedBy)');
-  } else err.push('Selbsttest: Stellung nach dem Stapeln nicht erfasst');
-  if(snapDreier){
-    const B=snapDreier;                                  // 4B/3B/2B gesperrt, 2B ist ein Stapel
-    // "Eine einzelne Figur auf einem gesperrten Feld sitzt fest."
-    if(!bothReject(pl=>canLift(B,1,1,pl,PARITY)))
-      err.push('Regelschicht: die gesperrte Einzelfigur 3B ist hebbar — Sperrung wirkt nicht');
-    if(!bothReject(pl=>canLift(B,0,1,pl,PARITY)))
-      err.push('Regelschicht: die gesperrte Einzelfigur 4B ist hebbar — Sperrung wirkt nicht');
-    // "Gesperrt heisst nicht unbeweglich": der eigene Stapel bleibt es.
-    if(!canLift(B,2,1,1,PARITY))
-      err.push('Regelschicht: der eigene Stapel auf dem gesperrten Feld 2B ist nicht hebbar');
-  } else err.push('Selbsttest: Stellung nach der Dreierreihe nicht erfasst');
-
-  // 2c · STAPEL-INVARIANTE.
-  //   canStack prueft die Paritaet der roten Figuren im neuen Stapel — damit ist
-  //   formedBy durch den Inhalt des Stapels bereits festgelegt: 1 rot = ungerade,
-  //   0 oder 2 rot = gerade. Eine Stellung, in der ein Stapel dazu nicht passt, kann
-  //   in keiner echten Partie entstehen. Das betrifft JEDE von Hand gesetzte Stellung.
-  const stapelPruefen = (brett, wo) => {
-    for(let r=0;r<4;r++) for(let c=0;c<4;c++){
-      const st=brett[r][c].stack; if(!st) continue;
-      const n=countRedsInStack(st.bottom, st.top);
-      if(!parityOk(n, st.formedBy, PARITY))
-        err.push(wo+': der Stapel auf '+lab(r,c)+' hat '+n+' rote Figuren ('
-          +(n%2?'ungerade':'gerade')+'), ist aber Spieler '+st.formedBy
-          +' zugeordnet — so eine Stellung ist nicht erreichbar');
-    }
-  };
-  stapelPruefen(fromSpec(ZIELSPEC, LEARNER), 'Ziel-Stellung');
   {
-    let bb=null;
-    for(const s2 of STEPS){
-      if(s2.setup!=='keep') bb=s2.setup().board;
-      if(!bb) continue;
-      stapelPruefen(bb, s2.id);
-      if(s2.mode==='move'||s2.mode==='auto'){
-        const [fr,fc]=CELL[s2.from], [tr,tc]=CELL[s2.to];
-        if(canDrop(bb,fr,fc,tr,tc, s2.mode==='move'?LEARNER:OPPONENT, PARITY))
-          applyMove(bb,fr,fc,tr,tc, s2.mode==='move'?LEARNER:OPPONENT);
-        applyLockOn(bb);
-        stapelPruefen(bb, s2.id+' (nach dem Zug)');
-      }
-    }
+    const A=boardFor(phaseVon('mit1'));         // 1B leer (3 Punkte), 2B Stapel des Lernenden
+    if(!beideNein(pl=>canDrop(A,1,0,3,1,pl,PARITY)))
+      err.push('Regelschicht: 3A (Punktzahl 1) darf auf das leere 3-Punkte-Feld 1B — Stripe-Match wirkt nicht');
+    if(!beideNein(pl=>canDrop(A,1,0,2,1,pl,PARITY)))
+      err.push('Regelschicht: es darf auf den vorhandenen Stapel 2B gestapelt werden — Stapelhoehe wirkt nicht');
+    if(!canLift(A,2,1,1,PARITY) || canLift(A,2,1,2,PARITY))
+      err.push('Regelschicht: die Stapelhoheit auf 2B stimmt nicht');
+  }
+  {
+    const B=boardFor(phaseVon('bonus'));        // 4B/3B/2B gesperrt, 2B ist ein Stapel
+    if(!beideNein(pl=>canLift(B,1,1,pl,PARITY))) err.push('Regelschicht: gesperrte Einzelfigur 3B ist hebbar');
+    if(!beideNein(pl=>canLift(B,0,1,pl,PARITY))) err.push('Regelschicht: gesperrte Einzelfigur 4B ist hebbar');
+    if(!canLift(B,2,1,1,PARITY)) err.push('Regelschicht: der eigene Stapel auf dem gesperrten 2B ist nicht hebbar');
   }
 
-  // 3 · Die Regelschicht selbst muss die erwartete Fassung sein.
+  // 5 · Die Regelschicht muss die erwartete Fassung sein.
   if(typeof canStack!=='function' || typeof applyLockOn!=='function')
     err.push('gembel_rules.js: erwartete Funktionen fehlen');
   else {
-    // canStack v2.1: Stapeln auf eine GESPERRTE Einzelfigur ist erlaubt.
     const t=initBoard(); t[2][1].locked=true;
-    const mp=getMovingPiece(t[3][1]);
-    if(!canStack(t,mp,2,1,1,'odd')) err.push('gembel_rules.js: Stapeln auf gesperrte Einzelfigur wird abgelehnt (v2.0-Bug?)');
+    if(!canStack(t,getMovingPiece(t[3][1]),2,1,1,'odd'))
+      err.push('gembel_rules.js: Stapeln auf gesperrte Einzelfigur wird abgelehnt (v2.0-Bug?)');
   }
   return err;
 }
@@ -855,94 +888,42 @@ function selfTest(){
 // ═══════════════════════════════════════════════════════════════════
 //  Start
 // ═══════════════════════════════════════════════════════════════════
-// Eine leere Seite ist die schlechteste Fehlermeldung. Wenn gembel_rules.js nicht
-// geladen wurde — auf dem Telefon der Normalfall, wenn anleitung.html allein geoeffnet
-// wird — oder wenn beim Start sonst etwas schiefgeht, muss DASTEHEN, was fehlt.
-function bail(titel, text){
-  const el=document.getElementById('selftest');
-  if(el){ el.style.display='block'; el.innerHTML='<b>'+titel+'</b> '+text; }
-  ['lesson','board-area','nav','why','bar'].forEach(id=>{
-    const n=document.getElementById(id); if(n) n.style.display='none';
-  });   // #fassung bleibt sichtbar — sonst ist im Fehlerfall nicht erkennbar, welche Datei laeuft
-  console.error('anleitung.html: '+titel+' '+text.replace(/<[^>]+>/g,''));
-}
 function init(){
-  // 0 · Der Stempel zuerst — er muss auch dann dastehen, wenn danach etwas schiefgeht.
+  window.__anlGestartet = true;                 // Wachhund abbestellen
   const fs_=document.getElementById('fassung'); if(fs_) fs_.textContent=ANL_FASSUNG;
-  // Wie im Spiel: eine Zeile in der Konsole. Beim Deploy die schnellste Probe, welche
-  // Datei der Browser wirklich geladen hat.
   console.log('Count Red · ' + ANL_FASSUNG + ' · Regelschicht: gembel_rules.js');
-  // 1 · Ist die kanonische Regelschicht ueberhaupt da?
+
   const noetig=['initBoard','canLift','canDrop','canStack','canPlaceOnEmpty','parityOk',
                 'countRedNeighbors','countRedsInStack','getMovingPiece','getBasePiece',
                 'getLegalMoves','applyMove','applyMoveOn','applyLockOn','checkFourInRow',
                 'cloneBoard','hasAnyMove','coordToLabel'];
   const fehlt=noetig.filter(n=>typeof window[n]!=='function');
   if(fehlt.length) return bail('Die Regelschicht fehlt.',
-    'Diese Anleitung braucht die Datei <b>gembel_rules.js</b> — dieselbe, die das Spiel lädt. '
-    + 'Sie muss im <b>selben Ordner</b> liegen wie diese Seite. '
-    + 'Nicht gefunden: ' + fehlt.slice(0,3).join(', ') + (fehlt.length>3?' …':'') + '. '
-    + '<br><br>Auf dem Telefon lässt sich eine einzelne heruntergeladene HTML-Datei ihre '
+    'Diese Anleitung braucht <b>gembel_rules.js</b> — dieselbe Datei, die das Spiel lädt — im '
+    + '<b>selben Ordner</b> wie diese Seite. Nicht gefunden: ' + fehlt.slice(0,3).join(', ')
+    + (fehlt.length>3?' …':'') + '.<br><br>Eine einzeln heruntergeladene HTML-Datei kann ihre '
     + 'Nachbardatei meist nicht holen — dafür gibt es die Vorschaufassung.');
-  // 2 · Selbsttest, und zwar so, dass auch eine Ausnahme sichtbar wird.
+
   let err;
   try { err=selfTest(); }
   catch(e){ return bail('Start fehlgeschlagen.',
-    'Beim Prüfen der Anleitung ist ein Fehler aufgetreten: ' + String(e && e.message || e).replace(/</g,'&lt;')); }
+    'Beim Prüfen der Anleitung ist ein Fehler aufgetreten: ' + String((e&&e.message)||e).replace(/</g,'&lt;')); }
   if(err.length){
-    const el=document.getElementById('selftest');
-    el.style.display='block';
-    el.innerHTML='<b>Selbsttest fehlgeschlagen.</b> Diese Anleitung stimmt nicht mit der Regelschicht überein und wird deshalb nicht angezeigt:<br>&middot; '
-      + err.map(e=>e.replace(/</g,'&lt;')).join('<br>&middot; ');
     console.error('anleitung.html selfTest:', err);
-    ['lesson','board-area','nav','why','bar'].forEach(id=>{
-      document.getElementById(id).style.display='none'; });
-    return;
+    return bail('Selbsttest fehlgeschlagen.',
+      'Diese Anleitung stimmt nicht mit der Regelschicht überein und wird deshalb nicht angezeigt:<br>· '
+      + err.map(e=>String(e).replace(/</g,'&lt;')).join('<br>· '));
   }
-  document.getElementById('btn-next').onclick=()=>{
-    const s=STEPS[stepIx];
-    if(s.mode==='auto' && !stepDone){ runOpponent(); return; }
-    if(stepIx===STEPS.length-1){ location.href='index.html'; return; }
-    stepIx++; showStep();
-  };
-  document.getElementById('btn-back').onclick=()=>{ if(stepIx>0){ stepIx--; rebuildTo(stepIx); } };
-  document.getElementById('btn-again').onclick=()=>rebuildTo(stepIx);
-  showStep();
-}
-// Ein Schritt haengt am Brettzustand der vorigen — beim Zurueckspringen wird
-// die Lehrpartie von der letzten eigenen Stellung an neu aufgebaut.
-function rebuildTo(target){
-  let start=target;
-  while(start>0 && STEPS[start].setup==='keep') start--;
-  board=STEPS[start].setup().board;
-  for(let i=start;i<target;i++){
-    const s=STEPS[i];
-    if(s.mode==='move'||s.mode==='auto'){
-      const [fr,fc]=CELL[s.from], [tr,tc]=CELL[s.to];
-      doMove(board,fr,fc,tr,tc, s.mode==='move'?LEARNER:OPPONENT);
-    }
-  }
-  stepIx=target;
-  const s=STEPS[stepIx], keep=(s.setup==='keep');
-  clearMarks(); selected=null; stepDone=false; busy=false;
-  if(!keep) board=s.setup().board;
-  document.getElementById('stepno').textContent='Schritt '+(stepIx+1)+' von '+STEPS.length;
-  document.getElementById('barfill').style.width=Math.round((stepIx)/(STEPS.length-1)*100)+'%';
-  document.getElementById('ltitle').textContent=s.title;
-  document.getElementById('ltext').innerHTML=s.text;
-  document.getElementById('task').innerHTML=s.task||'';
-  for(let r=0;r<4;r++) for(let c=0;c<4;c++) if(board[r][c].locked) marks.lock.push([r,c]);
-  if(s.mode==='tap'&&s.tap) marks.ask=[CELL[s.tap]];
-  if(s.mode==='move'&&s.from) marks.ask=[CELL[s.from]];
-  if(s.mode==='read') stepDone=true;
-  say(s.mode==='auto'?'Tippe auf <b>Weiter</b> — dann zieht der Gegner.':s.mode==='read'?'':'Tippe das genannte Feld an.','info');
-  renderBoard(); updateNav();
-}
 
+  document.getElementById('btn-next').onclick=weiter;
+  document.getElementById('btn-back').onclick=zurueck;
+  window.addEventListener('resize', groesse);
+  zeigePhase();
+  setTimeout(groesse, 30);
+}
 if(typeof document!=='undefined' && typeof window!=='undefined'){
   try { init(); }
-  catch(e){ bail('Start fehlgeschlagen.',
-    'Unerwarteter Fehler: ' + String(e && e.message || e).replace(/</g,'&lt;')); }
+  catch(e){ bail('Start fehlgeschlagen.','Unerwarteter Fehler: '+String((e&&e.message)||e).replace(/</g,'&lt;')); }
 }
 </script>
 </body>

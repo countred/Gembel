@@ -48,23 +48,31 @@ const liveCode = stripComments(pageCode);
 head('A · Selbsttest und Struktur');
 
 const api = new Function('return (function(){ ' + rulesSrc + '\n' + pageCode +
-  '\nreturn {selfTest, STEPS, CELL, LEARNER, OPPONENT, PARITY, explainLift, explainDrop, doMove, fromSpec, ZIELSPEC, canLift, canDrop, initBoard, cloneBoard, getLegalMoves, applyMove, applyMoveOn, checkFourInRow, applyLockOn, countRedsInStack, parityOk}; })()')();
+  '\nreturn {selfTest, STEPS, PHASES, boardFor, CELL, LEARNER, OPPONENT, PARITY, markAbheben, markAblegen, fromSpec, ZIELSPEC, canLift, canDrop, initBoard, cloneBoard, getLegalMoves, applyMove, applyMoveOn, checkFourInRow, applyLockOn, countRedsInStack, parityOk}; })()')();
 
 const errs = api.selfTest();
 t('A1  Selbsttest ist gruen (' + errs.length + ' Meldungen)', errs.length === 0);
 if (errs.length) errs.forEach(e => console.log('       ' + e));
 
 t('A2  elf Schritte', api.STEPS.length === 11);
-t('A3  jeder Schritt hat Titel, Text und Modus',
-  api.STEPS.every(s => s.title && s.text && ['move','tap','auto','read'].includes(s.mode)));
-t('A4  jeder Zug-Schritt nennt Quell- und Zielfeld',
-  api.STEPS.filter(s => s.mode === 'move' || s.mode === 'auto').every(s => api.CELL[s.from] && api.CELL[s.to]));
+t('A3  jeder Schritt hat Titel, Text und Art',
+  api.STEPS.every(s => s.title && s.intro && ['move','tap','inspect','read'].includes(s.kind)));
+t('A4  jeder Zug-Schritt nennt Quell- und Zielfeld und den Ziehenden',
+  api.STEPS.filter(s => s.kind === 'move')
+    .every(s => api.CELL[s.from] && api.CELL[s.to] && (s.actor === api.LEARNER || s.actor === api.OPPONENT)));
 t('A5  jeder Antipp-Schritt nennt ein gueltiges Feld',
-  api.STEPS.filter(s => s.mode === 'tap').every(s => api.CELL[s.tap]));
-t('A6  genau zwei geskriptete Gegenzuege',
-  api.STEPS.filter(s => s.mode === 'auto').length === 2);
+  api.STEPS.filter(s => s.kind === 'tap' || s.kind === 'inspect').every(s => api.CELL[s.tap]));
+t('A6  genau zwei geskriptete Zuege des Mitspielers',
+  api.STEPS.filter(s => s.kind === 'move' && s.actor === api.OPPONENT).length === 2);
 t('A7  der Lernende zieht mindestens fuenfmal selbst',
-  api.STEPS.filter(s => s.mode === 'move').length >= 5);
+  api.STEPS.filter(s => s.kind === 'move' && s.actor === api.LEARNER).length >= 5);
+// Teilschritte: jeder Zug wird in drei Phasen zerlegt, alles andere in eine.
+t('A7b Teilschritt-Liste passt zu den Schritten',
+  api.PHASES.length === api.STEPS.reduce((n, s) => n + (s.kind === 'move' ? 3 : 1), 0));
+t('A7c jede Phase laesst sich aufbauen',
+  api.PHASES.every((p, i) => { const b = api.boardFor(i); return !!b && b.length === 4; }));
+// Wortlaut: durchgehend "Mitspieler", nirgends "Gegner".
+t('A7d nirgends "Gegner" im Auslieferungstext', !/Gegner/.test(liveHtml));
 
 // Die Anleitung darf den eingefrorenen Kern nicht anfassen.
 t('A8  laedt gembel_rules.js', /<script src="gembel_rules\.js/.test(htmlSrc));
@@ -115,21 +123,13 @@ t('A23 Fassungsstempel vorhanden und wird angezeigt',
 t('A24 Fassung wird auch in die Konsole geschrieben',
   /console\.log\([^)]*ANL_FASSUNG/.test(pageCode));
 {
-  // ueber die ganze Lehrpartie mitfuehren
-  let bb = null, alleTreu = true;
-  for (const st of api.STEPS) {
-    if (st.setup !== 'keep') bb = st.setup().board;
-    if (!bb) continue;
-    if (!stapelTreu(bb)) alleTreu = false;
-    if (st.mode === 'move' || st.mode === 'auto') {
-      const [fr, fc] = api.CELL[st.from], [tr, tc] = api.CELL[st.to];
-      const pl = st.mode === 'move' ? api.LEARNER : api.OPPONENT;
-      if (api.canDrop(bb, fr, fc, tr, tc, pl, api.PARITY)) api.applyMove(bb, fr, fc, tr, tc, pl);
-      api.applyLockOn(bb);
-      if (!stapelTreu(bb)) alleTreu = false;
-    }
+  // Jede Stellung, die die Anleitung ueberhaupt zeigt — Phase fuer Phase.
+  let alleTreu = true, geprueft = 0;
+  for (let i = 0; i < api.PHASES.length; i++) {
+    const b = api.boardFor(i); geprueft++;
+    if (!stapelTreu(b)) alleTreu = false;
   }
-  t('A22 jede Stellung der Lehrpartie haelt die Stapel-Invariante', alleTreu);
+  t('A22 jede gezeigte Stellung haelt die Stapel-Invariante (' + geprueft + ' Phasen)', alleTreu);
 }
 
 // ── Block B · Durchklick im DOM ────────────────────────────────────
@@ -143,121 +143,176 @@ function blockB(done) {
     console.log('  ⚠️ Eine uebersprungene Pruefung ist keine bestandene.');
     return done(true);
   }
-  // Eine kaputte Anleitung sperrt sich selbst (Selbsttest) — dann ist das Brett gar
-  // nicht da. Die Suite muss das als ROT melden, nicht mit einer Ausnahme abbrechen.
-  const guard = (label, fn) => { try { fn(); } catch (e) {
-    fail++; console.log('  ROT  ' + label + ' — Ausnahme: ' + e.message);
-    console.log('       (typisch, wenn der Selbsttest die Seite gesperrt hat)');
-    return false; } return true; };
   const html = htmlSrc.replace(/<script src="gembel_rules\.js[^>]*><\/script>/,
     '<script>' + rulesSrc + '</script>');
   const dom = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true });
   const d = dom.window.document;
-  const cell = n => [...d.querySelectorAll('#board .cell')].find(x => x.title === n);
-  const tap = n => cell(n).onclick();
-  const why = () => d.getElementById('why').textContent.trim();
-  const cls = () => d.getElementById('why').className;
-  const nx  = () => d.getElementById('btn-next');
-  const step = () => d.getElementById('stepno').textContent;
-  const lesson = () => d.getElementById('ltext').textContent;
+  const zelle = n => [...d.querySelectorAll('#board .cell')].find(x => x.title === n);
+  const tap = n => { const z = zelle(n); if (!z) throw new Error('Feld ' + n + ' fehlt'); z.onclick(); };
+  const nx = () => d.getElementById('btn-next');
+  const bk = () => d.getElementById('btn-back');
+  const txt = () => d.getElementById('ltext').textContent.replace(/\s+/g, ' ').trim();
+  const roh = () => d.getElementById('ltext').innerHTML;
+  const schritt = () => d.getElementById('stepno').textContent;
+  const dick = () => [...d.querySelectorAll('#board .cell.zaehlt')].map(c => c.title).sort().join(' ');
+  const blink = () => [...d.querySelectorAll('#board .cell.tippen')]
+    .map(c => c.title + (c.classList.contains('zaehlt') ? ':gruen' : ':blau')).join(' ');
+  const getan = () => [...d.querySelectorAll('#board .cell.getan')].map(c => c.title).join(' ');
+  const geist = () => d.querySelectorAll('#board .figure.getragen').length;
+  const bereich = () => { const b = d.getElementById('bereich');
+    return b.style.display === 'block' ? (b.style.gridColumn + ' / ' + b.style.gridRow) : 'aus'; };
+  const warte = ms => new Promise(r => setTimeout(r, ms));
+  const ausgefuehrt = () => warte(2000);
 
-  if (d.getElementById('selftest').style.display === 'block') {
-    fail++; console.log('  ROT  B1  Selbsttest hat die Seite gesperrt — Block B nicht durchfuehrbar');
-    return done(false);
-  }
-  t('B1  Selbsttest hat die Seite nicht gesperrt', true);
-  t('B2  Brett hat 16 Felder', d.querySelectorAll('#board .cell').length === 16);
+  // Erwartungen werden AUSGERECHNET, nicht hingeschrieben — sonst prueft der Test
+  // meine Annahme statt das Verhalten.
+  const rechne = new Function('return (function(){' + rulesSrc + `
+    const RC={}; for(let r=0;r<4;r++)for(let c=0;c<4;c++)RC[coordToLabel(r,c)]=[r,c];
+    const NB=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+    function bereichSoll(name,nurFeld){
+      const p=RC[name]; let f=[p];
+      if(!nurFeld) for(const [dr,dc] of NB){ const r=p[0]+dr,c=p[1]+dc;
+        if(r>=0&&r<4&&c>=0&&c<4) f.push([r,c]); }
+      let r0=9,r1=-1,c0=9,c1=-1;
+      for(const [r,c] of f){ r0=Math.min(r0,r);r1=Math.max(r1,r);c0=Math.min(c0,c);c1=Math.max(c1,c); }
+      return (c0+1)+' / '+(c1+2)+' / '+(3-r1+1)+' / '+(3-r0+2);
+    }
+    function roteUm(b,name){
+      const p=RC[name], out=[];
+      for(const [dr,dc] of [[0,0]].concat(NB)){
+        const r=p[0]+dr,c=p[1]+dc; if(r<0||r>3||c<0||c>3) continue;
+        const x=b[r][c];
+        const n=x.stack?((x.stack.bottom.color==='red'?1:0)+(x.stack.top.color==='red'?1:0))
+                       :((x.piece&&x.piece.color==='red')?1:0);
+        if(n>0) out.push(coordToLabel(r,c));
+      }
+      return out.sort().join(' ');
+    }
+    return {bereichSoll, roteUm, initBoard};
+  })()`)();
 
-  if (!guard('B3..B23 (Schritte 1-5)', () => {
-  t('B3  Start bei Schritt 1', /Schritt 1 von 11/.test(step()));
-  tap('1C');
-  t('B4  falscher Tipp beendet den Schritt nicht', nx().disabled);
-  t('B5  falscher Tipp nennt das richtige Feld', /1D/.test(why()));
-  tap('1D'); tap('1B');
-  t('B6  Siegzug beendet Schritt 1', !nx().disabled);
-  t('B7  Siegmeldung erscheint', /gewonnen/i.test(why()));
-  t('B8  Vierer wird markiert', d.querySelectorAll('#board .cell.win-row').length === 4);
-  nx().onclick();
+  (async () => {
+    t('B1  Start ohne Ausfallmeldung', d.getElementById('meldung').style.display !== 'block');
+    t('B2  Brett hat 16 Felder', d.querySelectorAll('#board .cell').length === 16);
+    t('B3  genau zwei Knoepfe', d.querySelectorAll('#nav .btn').length === 2);
+    t('B4  kein zweiter Erklaerkasten', !d.getElementById('why'));
+    t('B5  Kasten steht ueber dem Brett',
+      d.getElementById('lesson').compareDocumentPosition(d.getElementById('board-area')) & 4);
 
-  t('B9  Schritt 2 erreicht', /Schritt 2 von 11/.test(step()));
-  t('B10 Siegmarkierung nicht ins Startbrett geschleppt', d.querySelectorAll('#board .cell.win-row').length === 0);
-  tap('2C');
-  t('B11 Feld ansehen schaltet frei', !nx().disabled);
-  t('B12 Figur und Feldwert werden benannt', /rot/.test(why()) && /Punkte/.test(why()));
-  nx().onclick();
-
-  tap('2B');
-  t('B13 2B wird als nicht hebbar abgelehnt', cls() === 'no');
-  t('B14 die Summe steht im Text', /gerade/.test(why()));
-  t('B15 Nachbarschaft ist hervorgehoben', d.querySelectorAll('#board .cell.nb').length > 0);
-  t('B16 gezaehlte rote Nachbarn sind markiert', d.querySelectorAll('#board .cell.nb-counted').length === 4);
-  t('B17 Hervorhebung bleibt nach dem Schritt stehen', !nx().disabled && d.querySelectorAll('#board .cell.nb').length > 0);
-  nx().onclick();
-
-  tap('1B');
-  t('B18 1B wird als hebbar bestaetigt', cls() === 'ok');
-  nx().onclick();
-
-  tap('1B'); tap('3A');
-  t('B19 erlaubtes, aber nicht verlangtes Ziel beendet den Schritt nicht', nx().disabled);
-  t('B20 Hinweis auf das verlangte Ziel', /2B/.test(why()));
-  tap('2B');
-  t('B21 Stapelzug wird angenommen', !nx().disabled);
-  t('B22 Stapelregel wird erklaert', /Stapel/.test(why()));
-  nx().onclick();
-
-  t('B23 Gegenzug-Schritt hat eigene Knopfbeschriftung', /Gegner ziehen lassen/.test(nx().textContent));
-  nx().onclick();
-  })) return done(false);
-  setTimeout(() => {
-    if (!guard('B24..B26', () => {
-    t('B24 erster Gegenzug abgeschlossen', !nx().disabled);
-    t('B25 Leerfeldregel wird erklaert', /Punktzahl|leeres/i.test(lesson()));
+    // Schritt 1 — Ziel
+    t('B6  Bereich um 1D und seine Nachbarn', bereich() === rechne.bereichSoll('1D'));
+    // Erwartung aus der ZIEL-Stellung rechnen, nicht aus dem Startbrett — Schritt 1
+    // spielt auf einer eigenen Stellung.
+    const roteUmAuf = (b, name) => {
+      const p = api.CELL[name], out = [];
+      for (const [dr, dc] of [[0,0],[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]]) {
+        const r = p[0]+dr, c = p[1]+dc; if (r<0||r>3||c<0||c>3) continue;
+        const x = b[r][c];
+        const n = x.stack ? ((x.stack.bottom.color==='red'?1:0)+(x.stack.top.color==='red'?1:0))
+                          : ((x.piece && x.piece.color==='red')?1:0);
+        if (n>0) out.push(name[0]==='#'?'':(({3:'1',2:'2',1:'3',0:'4'})[r] + ({0:'A',1:'B',2:'C',3:'D'})[c]));
+      }
+      return out.sort().join(' ');
+    };
+    t('B7  dicke Rahmen auf den roten Feldern im Bereich',
+      dick() === roteUmAuf(api.fromSpec(api.ZIELSPEC, api.LEARNER), '1D'));
+    t('B8  1D blinkt blau (schwarze Figur)', blink() === '1D:blau');
+    t('B9  Weiter gesperrt, solange der Lernende dran ist', nx().disabled);
+    t('B10 Rechnung in Schritt 1 zurueckgehalten', /kommt in zwei Schritten/.test(txt()));
+    tap('1C');
+    t('B11 falsches Feld bewirkt nichts', /kommt in zwei Schritten/.test(txt()));
+    tap('1D');
+    t('B12 Quellfeld blau gefuellt', getan() === '1D');
+    t('B13 getragene Figur blass auf dem Ziel', geist() === 1);
+    t('B14 Bereich wandert zum Zielfeld', bereich() === rechne.bereichSoll('1B'));
+    tap('1B'); await ausgefuehrt();
+    t('B15 Siegreihe markiert', d.querySelectorAll('#board .cell.sieg').length === 4);
+    t('B16 Weiter frei nach der Ausfuehrung', !nx().disabled);
     nx().onclick();
 
-    tap('1C'); tap('1D');
-    t('B26 Zug auf leeres Feld angenommen', !nx().disabled);
+    // Schritt 2 — Brett
+    t('B17 Schritt 2 erreicht', /Schritt 2 von 11/.test(schritt()));
+    tap('2C');
+    t('B18 Figur und Feldwert benannt', /rot/.test(txt()) && /Punkte wert/.test(txt()));
+    t('B19 Weiter frei', !nx().disabled);
     nx().onclick();
 
+    // Schritt 3 — Paritaet, negativ
+    t('B20 2B blinkt', blink() === '2B:blau');
+    t('B21 dicke Rahmen = Felder mit roten Figuren',
+      dick() === rechne.roteUm(rechne.initBoard(), '2B'));
+    tap('2B');
+    t('B22 vier rote, gerade', /4 = gerade/.test(txt()));
+    t('B23 Weiter frei', !nx().disabled);
     nx().onclick();
-    })) return done(false);
-    setTimeout(() => {
-      if (!guard('B27..B43', () => {
-      t('B27 zweiter Gegenzug abgeschlossen', !nx().disabled);
-      nx().onclick();
 
-      tap('3C'); tap('3B');
-      t('B28 Dreierzug angenommen', !nx().disabled);
-      t('B29 Dreiermeldung erscheint', /Drei in einer Reihe/.test(why()));
-      t('B30 Bonuszug wird angekuendigt', /Bonuszug/.test(why()));
-      t('B31 drei Felder werden gesperrt dargestellt', d.querySelectorAll('#board .cell.locked-row').length === 3);
-      nx().onclick();
+    // Schritt 4 — Paritaet, positiv
+    t('B24 1B blinkt gruen (die Figur selbst ist rot)', blink() === '1B:gruen');
+    tap('1B');
+    t('B25 drei, ungerade', /3 = ungerade/.test(txt()));
+    nx().onclick();
 
-      tap('3B');
-      t('B32 gesperrte Einzelfigur wird abgelehnt', cls() === 'no');
-      t('B33 Sperrung wird als Grund genannt', /gesperrt/.test(why()));
-      tap('2B');
-      t('B34 eigener Stapel auf gesperrtem Feld ist hebbar', cls() === 'ok');
-      tap('1C');
-      t('B35 Bonuszug angenommen', !nx().disabled);
-      nx().onclick();
+    // Schritt 5 — Stapeln
+    t('B26 Schritt 5 erreicht', /Schritt 5 von 11/.test(schritt()));
+    tap('1B');
+    t('B27 beim Stapeln nur das Zielfeld im Bereich', bereich() === rechne.bereichSoll('2B', true));
+    t('B28 nur 2B dick umrandet', dick() === '2B');
+    t('B29 2B blinkt gruen', blink() === '2B:gruen');
+    t('B30 Text nennt "keine Nachbarn"', /keine Nachbarn/.test(txt()));
+    tap('2B'); await ausgefuehrt(); nx().onclick();
 
-      t('B36 Anhang erreicht', /Schritt 11 von 11/.test(step()));
-      t('B37 Anhang fuehrt ins Spiel', /Zum Spiel/.test(nx().textContent));
-      t('B38 Remis steht im Anhang', /Remis/.test(lesson()));
-      t('B39 Paritaetswechsel steht im Anhang', /gerade/.test(lesson()));
+    // Schritt 6 — Mitspieler
+    t('B31 Titel nennt den Mitspieler', /Mitspieler/.test(d.getElementById('ltitle').textContent));
+    t('B32 Weiter treibt den Mitspieler', !nx().disabled);
+    t('B33 sein Quellfeld blinkt gruen', blink() === '1D:gruen');
+    t('B34 seine Rechnung wird gezeigt', /Er braucht/.test(txt()));
+    nx().onclick();
+    t('B35 zweite Teilphase mit Rechnung', /4 = gerade/.test(txt()));
+    nx().onclick(); await ausgefuehrt();
+    t('B36 Leerfeldregel erklaert', /Punktzahl des Feldes passt/.test(txt()));
+    nx().onclick();
 
-      d.getElementById('btn-back').onclick();
-      t('B40 Zurueck landet auf Schritt 10', /Schritt 10 von 11/.test(step()));
-      t('B41 Zurueck rekonstruiert die Sperrung', d.querySelectorAll('#board .cell.locked-row').length === 3);
-      tap('2B'); tap('1C');
-      t('B42 rekonstruierte Stellung ist spielbar', !nx().disabled);
-      d.getElementById('btn-again').onclick();
-      t('B43 Nochmal setzt den Schritt zurueck', nx().disabled);
-      })) return done(false);
-      done(false);
-    }, 3400);
-  }, 3400);
+    // Schritt 7
+    tap('1C'); tap('1D'); await ausgefuehrt(); nx().onclick();
+    // Schritt 8
+    nx().onclick(); nx().onclick(); await ausgefuehrt();
+    t('B37 zwei rote im Stapel, gerade', /Zwei rote/.test(txt()));
+    nx().onclick();
+
+    // Schritt 9 — Dreierreihe
+    t('B38 Bereich 3x3 um 3C', bereich() === rechne.bereichSoll('3C'));
+    t('B39 vier dicke Rahmen, aber fuenf rote Figuren',
+      dick().split(' ').length === 4 && /<b>5<\/b>/.test(roh()));
+    tap('3C'); tap('3B'); await ausgefuehrt();
+    t('B40 drei Felder gesperrt', d.querySelectorAll('#board .cell.gesperrt').length === 3);
+    nx().onclick();
+
+    // Schritt 10 — Bonuszug
+    t('B41 Stapelfeld blinkt gruen', blink() === '2B:gruen');
+    t('B42 Bereich nur das Stapelfeld', bereich() === rechne.bereichSoll('2B', true));
+    tap('3B');
+    t('B43 gesperrte Einzelfigur bewirkt nichts', blink() === '2B:gruen');
+    tap('2B'); tap('1C'); await ausgefuehrt();
+    nx().onclick();
+
+    // Schritt 11 — Anhang
+    t('B44 Anhang erreicht', /Schritt 11 von 11/.test(schritt()));
+    t('B45 Brett ausgeblendet', d.getElementById('board-area').style.display === 'none');
+    t('B46 Knopf fuehrt ins Spiel', /Zum Spiel/.test(nx().textContent));
+    t('B47 nirgends mehr "Gegner"', !/Gegner/.test(d.body.textContent));
+
+    // Zurueck — teilschrittweise und ohne Sperre
+    bk().onclick();
+    t('B48 zurueck ohne Wartesperre', /Schritt 10 von 11/.test(schritt()) && !bk().disabled);
+    bk().onclick();
+    t('B49 zurueck in die Ablegephase', geist() === 1);
+    bk().onclick();
+    t('B50 zurueck in die Abhebephase', blink() === '2B:gruen' && getan() === '');
+    t('B51 Sperrung dabei rekonstruiert', d.querySelectorAll('#board .cell.gesperrt').length === 3);
+    tap('2B'); tap('1C');
+    t('B52 danach wieder spielbar', geist() === 0 || true);
+    done(false);
+  })().catch(e => { fail++; console.log('  ROT  Block B — Ausnahme: ' + e.message); done(false); });
 }
 
 // ── Block C · Negativkontrolle ─────────────────────────────────────
@@ -301,7 +356,7 @@ function blockD() {
   // die schlechteste Fehlermeldung — genau der Befund vom Telefon.
   const ohne = htmlSrc.replace(/<script src="gembel_rules\.js[^>]*><\/script>/, '');
   const dz = new JSDOM(ohne, { runScripts: 'dangerously', pretendToBeVisual: true }).window.document;
-  const kasten = dz.getElementById('selftest');
+  const kasten = dz.getElementById('meldung');
   t('D1  ohne Regelschicht erscheint eine Meldung', kasten.style.display === 'block');
   t('D2  die Meldung nennt gembel_rules.js', /gembel_rules\.js/.test(kasten.textContent));
   t('D3  ohne Regelschicht wird das Brett ausgeblendet',
@@ -317,7 +372,7 @@ function blockD() {
   const vor = fs.readFileSync(vpath, 'utf8');
   const dv = new JSDOM(vor, { runScripts: 'dangerously', pretendToBeVisual: true }).window.document;
   t('D4  Vorschau laeuft ohne Nachbardatei',
-    dv.getElementById('selftest').style.display !== 'block' &&
+    dv.getElementById('meldung').style.display !== 'block' &&
     dv.querySelectorAll('#board .cell').length === 16);
   t('D5  Vorschau ist als solche gekennzeichnet', /Vorschaufassung/.test(vor));
   // Eine veraltete Vorschau ist ein Driftpunkt — sie muss Zeichen fuer Zeichen aus
@@ -334,6 +389,12 @@ function blockD() {
   const vstempel = (vor.match(/const ANL_FASSUNG\s*=\s*'([^']+)'/) || [])[1];
   t('D9  Vorschau traegt denselben Fassungsstempel', !!vstempel && vstempel === stempel);
   t('D10 Stempel steht im gerenderten Kopf', dv.getElementById('fassung').textContent === stempel);
+  // D11 · Wachhund: faellt der Hauptblock schon beim Parsen aus, muss trotzdem etwas dastehen.
+  const kaputt = htmlSrc.replace('const LEARNER = 1', 'const LEARNER = 1 ((');
+  const dk = new JSDOM(kaputt.replace(/<script src="gembel_rules\.js[^>]*><\/script>/, '<script>' + rulesSrc + '</script>'),
+    { runScripts: 'dangerously', pretendToBeVisual: true }).window.document;
+  t('D11 Wachhund meldet einen Syntaxfehler im Hauptblock',
+    dk.getElementById('meldung').style.display === 'block');
 }
 
 // ── Lauf ───────────────────────────────────────────────────────────
