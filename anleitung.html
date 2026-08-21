@@ -140,9 +140,12 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 .cell.ankunft{animation:blitz 1.15s ease-in-out 1;}
 @keyframes blitz{0%,100%{box-shadow:none;}45%{box-shadow:0 0 0 5px var(--sel-bd);background:var(--sel-bg);}}
 
-/* EIN duenner Rahmen um den gesamten Bereich, ueber das Gitter gelegt */
-#bereich{pointer-events:none;border:1.5px solid var(--gruen);border-radius:19px;
-  margin:-4px;display:none;z-index:2;}
+/* EIN duenner Rahmen um den gesamten Bereich.
+   ⚠️ MUSS position:absolute sein. Als normales Kind von #board zaehlt er als
+   Gitterelement mit, verdraengt vier Felder und zerlegt das ganze Brett —
+   genau das war der Fehler in Fassung 6. */
+#bereich{position:absolute;pointer-events:none;border:1.5px solid var(--gruen);
+  border-radius:19px;display:none;z-index:2;}
 
 .figure{width:24px;height:24px;border-radius:50%;border:1.5px solid transparent;display:flex;
   align-items:center;justify-content:center;flex-shrink:0;font-size:11.5px;font-weight:700;line-height:1;}
@@ -173,6 +176,15 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
   <div id="bar"><i id="barfill"></i></div>
   <div id="fassung"></div>
 
+  <noscript>
+    <div style="padding:10px 12px;border-radius:12px;border:1px solid #ba7517;
+                background:#faeeda;color:#7a4c0a;font:500 13px/1.55 system-ui;">
+      <b>Diese Anleitung braucht JavaScript.</b> Sie rechnet jeden Zug mit derselben
+      Regelschicht wie das Spiel — ohne Skripte bleibt sie ein leeres Gerüst.
+      Manche Dateivorschauen auf dem Telefon führen keine Skripte aus; dann die Datei
+      im Browser öffnen oder gleich <b>countred.com/anleitung.html</b> aufrufen.
+    </div>
+  </noscript>
   <div id="meldung"></div>
 
   <div id="lesson">
@@ -241,7 +253,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 6 · 20.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 7 · 21.08.2026';
 
 const COL = {0:'A',1:'B',2:'C',3:'D'};
 const ROW = {3:'1',2:'2',1:'3',0:'4'};
@@ -563,15 +575,25 @@ function renderBoard(){
 // Element ueber das Gitter gelegt — nicht als Rahmen je Feld.
 function zeichneBereich(){
   const el=document.getElementById('bereich');
-  if(!mark.bereich || !mark.bereich.length){ el.style.display='none'; return; }
+  if(!mark.bereich || !mark.bereich.length){
+    el.style.display='none'; el.removeAttribute('data-rect'); return; }
   let r0=9,r1=-1,c0=9,c1=-1;
   for(let i=0;i<mark.bereich.length;i++){
     const r=mark.bereich[i][0], c=mark.bereich[i][1];
     if(r<r0)r0=r; if(r>r1)r1=r; if(c<c0)c0=c; if(c>c1)c1=c;
   }
+  // Das Rechteck bleibt als Merkmal am Element stehen — so laesst sich pruefen,
+  // WAS umrandet werden soll, unabhaengig von den Pixeln.
+  el.setAttribute('data-rect', c0+','+c1+','+r0+','+r1);
+  const hol=(r,c)=>document.querySelector('#board .cell[data-rc="'+r+','+c+'"]');
+  const obenLinks=hol(r1,c0), untenRechts=hol(r0,c1);   // r=3 wird oben dargestellt
+  if(!obenLinks || !untenRechts){ el.style.display='none'; return; }
+  const l=obenLinks.offsetLeft, t=obenLinks.offsetTop;
+  const w=untenRechts.offsetLeft+untenRechts.offsetWidth-l;
+  const h=untenRechts.offsetTop+untenRechts.offsetHeight-t;
   el.style.display='block';
-  el.style.gridColumn=(c0+1)+' / '+(c1+2);
-  el.style.gridRow=(3-r1+1)+' / '+(3-r0+2);   // Zeile 0 ist unten, dargestellt wird von oben
+  el.style.left=(l-4)+'px'; el.style.top=(t-4)+'px';
+  el.style.width=(w+8)+'px'; el.style.height=(h+8)+'px';
 }
 function setText(html, rechnung, aufgabe){
   document.getElementById('ltext').innerHTML =

@@ -160,7 +160,7 @@ function blockB(done) {
   const getan = () => [...d.querySelectorAll('#board .cell.getan')].map(c => c.title).join(' ');
   const geist = () => d.querySelectorAll('#board .figure.getragen').length;
   const bereich = () => { const b = d.getElementById('bereich');
-    return b.style.display === 'block' ? (b.style.gridColumn + ' / ' + b.style.gridRow) : 'aus'; };
+    return b.style.display === 'block' ? (b.getAttribute('data-rect') || '?') : 'aus'; };
   const warte = ms => new Promise(r => setTimeout(r, ms));
   const ausgefuehrt = () => warte(2000);
 
@@ -175,7 +175,7 @@ function blockB(done) {
         if(r>=0&&r<4&&c>=0&&c<4) f.push([r,c]); }
       let r0=9,r1=-1,c0=9,c1=-1;
       for(const [r,c] of f){ r0=Math.min(r0,r);r1=Math.max(r1,r);c0=Math.min(c0,c);c1=Math.max(c1,c); }
-      return (c0+1)+' / '+(c1+2)+' / '+(3-r1+1)+' / '+(3-r0+2);
+      return c0+','+c1+','+r0+','+r1;
     }
     function roteUm(b,name){
       const p=RC[name], out=[];
@@ -196,6 +196,13 @@ function blockB(done) {
     t('B2  Brett hat 16 Felder', d.querySelectorAll('#board .cell').length === 16);
     t('B3  genau zwei Knoepfe', d.querySelectorAll('#nav .btn').length === 2);
     t('B4  kein zweiter Erklaerkasten', !d.getElementById('why'));
+    // Der Bereichsrahmen war in Fassung 6 ein Gitterelement und hat vier Felder
+    // verdraengt — das Brett war dadurch zerlegt. Er muss ausserhalb des Flusses liegen.
+    t('B4a Bereichsrahmen belegt keinen Gitterplatz',
+      !d.getElementById('bereich').style.gridColumn && !d.getElementById('bereich').style.gridRow);
+    t('B4b Brett hat genau 16 Felder plus den Rahmen',
+      d.getElementById('board').children.length === 17);
+    t('B4c Hinweis fuer abgeschaltete Skripte vorhanden', !!d.querySelector('noscript'));
     t('B5  Kasten steht ueber dem Brett',
       d.getElementById('lesson').compareDocumentPosition(d.getElementById('board-area')) & 4);
 
@@ -386,6 +393,9 @@ function blockD() {
   // wird deshalb das Geruest OHNE Skriptinhalte — es darf gar keine externe Quelle geben.
   const geruest = vor.replace(/<script(?![^>]*\bsrc=)[^>]*>[\s\S]*?<\/script>/g, '<script></script>');
   t('D8  Vorschau laedt gar keine externe Datei', !/<script[^>]*\bsrc=/.test(geruest));
+  // Der Vorschau-Hinweis muss INS #app, sonst schiebt er die Seite aus dem Bild.
+  t('D8a Vorschau-Hinweis liegt im Layout, nicht davor',
+    /<div id="app">\s*\n?\s*<div style="flex:0 0 auto/.test(vor));
   const vstempel = (vor.match(/const ANL_FASSUNG\s*=\s*'([^']+)'/) || [])[1];
   t('D9  Vorschau traegt denselben Fassungsstempel', !!vstempel && vstempel === stempel);
   t('D10 Stempel steht im gerenderten Kopf', dv.getElementById('fassung').textContent === stempel);
