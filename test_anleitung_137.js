@@ -132,6 +132,11 @@ t('A24 Fassung wird auch in die Konsole geschrieben',
   t('A25 Abflug-Dauer in CSS und Code gleich (' + jsAb + ' ms)', cssAb === jsAb);
   t('A26 Ankunft-Dauer in CSS und Code gleich (' + jsAn + ' ms)', cssAn === jsAn);
   t('A27 Ankunft blinkt deutlich laenger als Abflug', jsAn >= 2 * jsAb);
+  // Die Freigabe der Knoepfe haengt am Abflug, NICHT an der Ankunft.
+  t('A28 Knoepfe werden nach dem Abflug frei, nicht nach der Ankunft',
+    /laeuft=false; gezeigt=true; navStand\(\);\s*\n\s*\}, ABFLUG_MS\)/.test(pageCode));
+  t('A29 Knoepfe haben eine sichtbare Druckrueckmeldung',
+    /\.btn:active[^{]*\{[^}]*(background|transform)/.test(htmlSrc));
 }
 {
   // Jede Stellung, die die Anleitung ueberhaupt zeigt — Phase fuer Phase.
@@ -173,7 +178,7 @@ function blockB(done) {
   const bereich = () => { const b = d.getElementById('bereich');
     return b.style.display === 'block' ? (b.getAttribute('data-rect') || '?') : 'aus'; };
   const warte = ms => new Promise(r => setTimeout(r, ms));
-  const ausgefuehrt = () => warte(2750);
+  const ausgefuehrt = () => warte(750);
 
   // Erwartungen werden AUSGERECHNET, nicht hingeschrieben — sonst prueft der Test
   // meine Annahme statt das Verhalten.
@@ -249,11 +254,14 @@ function blockB(done) {
     const figurAuf = n => zelle(n) ? zelle(n).querySelectorAll('.figure').length : -1;
     t('B14a Figur steht beim Abflug noch auf dem Quellfeld',
       figurAuf('1D') === 1 && figurAuf('1B') === 0 && zelle('1D').className.includes('abflug'));
-    await warte(900);
-    t('B14b danach ist sie auf dem Zielfeld und dieses blinkt',
+    t('B14b Knoepfe waehrend des Abflugs gesperrt', nx().disabled && bk().disabled);
+    await warte(750);
+    t('B14c danach ist sie auf dem Zielfeld und dieses blinkt',
       figurAuf('1B') === 1 && figurAuf('1D') === 0 && zelle('1B').className.includes('ankunft'));
-    t('B14c beide Knoepfe waehrend des Zuges gesperrt', nx().disabled && bk().disabled);
-    await warte(1900);
+    // Der Knopf darf NICHT auf das Ende des langen Zielblinkens warten — vorher
+    // fuehlte sich "Weiter" an, als haenge es (2,55 s statt 0,5 s).
+    t('B14d Weiter ist frei, waehrend das Zielfeld noch blinkt',
+      !nx().disabled && zelle('1B').className.includes('ankunft'));
     t('B15 Siegreihe markiert', d.querySelectorAll('#board .cell.sieg').length === 4);
     t('B16 Weiter frei nach der Ausfuehrung', !nx().disabled);
     nx().onclick();

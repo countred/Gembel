@@ -131,7 +131,9 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 .cell{border-radius:14px;border:1px solid var(--border);background:var(--bg2);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   padding-bottom:7px;position:relative;flex-direction:column;gap:2px;
-  user-select:none;-webkit-user-select:none;touch-action:manipulation;}
+  user-select:none;-webkit-user-select:none;touch-action:manipulation;
+  transition:transform .06s;}
+.cell:active{transform:scale(.94);}
 .stripe-dots{display:flex;gap:4px;position:absolute;top:6px;left:0;right:0;justify-content:center;}
 .stripe-dot{width:4.5px;height:4.5px;border-radius:50%;background:var(--border2);opacity:.9;}
 
@@ -174,7 +176,10 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 #nav{flex:0 0 auto;display:flex;gap:8px;}
 .btn{flex:1;font-size:13.5px;font-weight:500;padding:12px 8px;border-radius:12px;
   border:1px solid var(--border);background:var(--bg3);cursor:pointer;color:var(--text2);
-  font-family:inherit;line-height:1;touch-action:manipulation;}
+  font-family:inherit;line-height:1;touch-action:manipulation;
+  transition:background .1s,border-color .1s,opacity .1s,transform .06s;}
+.btn:hover:not(:disabled){border-color:var(--border2);}
+.btn:active:not(:disabled){background:var(--bg2);transform:scale(.97);}
 .btn:disabled{opacity:.32;pointer-events:none;}
 .btn.primary{background:var(--sel-bg);border-color:var(--sel-bd);color:var(--sel-bd);font-weight:600;}
 #meldung{display:none;flex:0 0 auto;font-size:12px;line-height:1.5;padding:9px 12px;border-radius:12px;
@@ -266,7 +271,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 9 · 21.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 10 · 21.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug bzw. .cell.ankunft im Stylesheet uebereinstimmen.
@@ -776,8 +781,11 @@ function spieleAus(s){
     if(vier) mark.sieg=vier;
     renderBoard(); groesse();
     const an=hol(t[0],t[1]); if(an) an.classList.add('ankunft');
+    // Ab hier ist der Zug geschehen und die Stellung endgueltig. Die Knoepfe werden
+    // JETZT frei — das lange Blinken am Zielfeld laeuft nebenher aus. Vorher waren sie
+    // bis zum Ende der Animation gesperrt; das fuehlte sich an, als haenge "Weiter".
+    laeuft=false; gezeigt=true; navStand();
   }, ABFLUG_MS);
-  setTimeout(function(){ laeuft=false; gezeigt=true; navStand(); }, ABFLUG_MS+ANKUNFT_MS+150);
 }
 
 function navStand(){
