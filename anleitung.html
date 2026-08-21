@@ -96,9 +96,19 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 
 /* DER Kasten: einer, oberhalb des Bretts, FESTE Hoehe — damit das Brett
    zwischen den Teilschritten nicht springt. Laengeres scrollt im Kasten. */
-#lesson{flex:0 0 auto;height:clamp(148px,30vh,236px);overflow-y:auto;
-  background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:11px 13px;}
+#lesson,#lessonProbe{background:var(--bg3);border:1px solid var(--border);
+  border-radius:14px;padding:11px 13px;}
+#lesson{flex:0 0 auto;height:clamp(148px,30vh,236px);overflow-y:auto;}
 #lesson.wide{flex:1 1 auto;height:auto;}
+/* Messkasten: unsichtbar, gleiche Breite und Schrift wie der echte — daraus wird die
+   feste Hoehe bestimmt, damit KEIN Text scrollen muss und das Brett trotzdem
+   zwischen den Teilschritten nicht springt. */
+#lessonProbe{position:absolute;visibility:hidden;left:-9999px;top:0;height:auto;overflow:visible;}
+#lessonProbe h2{font-size:15px;font-weight:600;margin-bottom:5px;}
+#lessonProbe p{font-size:13.5px;line-height:1.5;}
+#lessonProbe p + p{margin-top:6px;}
+#lessonProbe .rechnung{margin-top:7px;font-size:13px;line-height:1.5;padding-left:9px;border-left:3px solid var(--gruen);}
+#lessonProbe .aufgabe{margin-top:8px;font-size:13.5px;font-weight:600;line-height:1.4;}
 #lesson h2{font-size:15px;font-weight:600;margin-bottom:5px;}
 #lesson p{font-size:13.5px;line-height:1.5;color:var(--text2);}
 #lesson p + p{margin-top:6px;}
@@ -191,6 +201,7 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
     <h2 id="ltitle"></h2>
     <div id="ltext"></div>
   </div>
+  <div id="lessonProbe" aria-hidden="true"></div>
 
   <div id="board-area">
     <div id="board-container">
@@ -253,7 +264,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 7 · 21.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 8 · 21.08.2026';
 
 const COL = {0:'A',1:'B',2:'C',3:'D'};
 const ROW = {3:'1',2:'2',1:'3',0:'4'};
@@ -573,6 +584,11 @@ function renderBoard(){
 }
 // Der Bereich ist immer ein Rechteck (ein Feld samt Nachbarn) und wird als EIN
 // Element ueber das Gitter gelegt — nicht als Rahmen je Feld.
+// Die Luecke zwischen den Feldern. MUSS mit `gap` in #board uebereinstimmen —
+// die Suite prueft das, weil der Bereichsrahmen daraus gerechnet wird.
+const GITTER_LUECKE = 6;
+const RAHMEN_LUFT   = 4;    // wie weit der Rahmen ueber die Felder hinausragt
+
 function zeichneBereich(){
   const el=document.getElementById('bereich');
   if(!mark.bereich || !mark.bereich.length){
@@ -582,18 +598,22 @@ function zeichneBereich(){
     const r=mark.bereich[i][0], c=mark.bereich[i][1];
     if(r<r0)r0=r; if(r>r1)r1=r; if(c<c0)c0=c; if(c>c1)c1=c;
   }
-  // Das Rechteck bleibt als Merkmal am Element stehen — so laesst sich pruefen,
-  // WAS umrandet werden soll, unabhaengig von den Pixeln.
   el.setAttribute('data-rect', c0+','+c1+','+r0+','+r1);
-  const hol=(r,c)=>document.querySelector('#board .cell[data-rc="'+r+','+c+'"]');
-  const obenLinks=hol(r1,c0), untenRechts=hol(r0,c1);   // r=3 wird oben dargestellt
-  if(!obenLinks || !untenRechts){ el.style.display='none'; return; }
-  const l=obenLinks.offsetLeft, t=obenLinks.offsetTop;
-  const w=untenRechts.offsetLeft+untenRechts.offsetWidth-l;
-  const h=untenRechts.offsetTop+untenRechts.offsetHeight-t;
+  // KEINE Pixelmessung. Gemessene Werte haengen davon ab, WANN gemessen wird — und
+  // beim ersten Aufbau steht die Brettgroesse noch nicht fest (Fehler in Fassung 7).
+  // Das Gitter ist gleichmaessig, also laesst sich der Rahmen in Prozent der
+  // Brettbreite ausdruecken; der Browser rechnet ihn bei jeder Groesse selbst nach.
+  const g=GITTER_LUECKE, luft=RAHMEN_LUFT, gesamt=3*g;
+  const spanne=(start, anzahl, gesamtmass) =>
+    'calc((' + gesamtmass + ' - ' + gesamt + 'px) / 4 * ' + start + ' + ' + (g*start - luft) + 'px)';
+  const laenge=(anzahl, gesamtmass) =>
+    'calc((' + gesamtmass + ' - ' + gesamt + 'px) / 4 * ' + anzahl + ' + ' + (g*(anzahl-1) + 2*luft) + 'px)';
+  const zeileOben=3-r1;                      // r=3 wird oben dargestellt
   el.style.display='block';
-  el.style.left=(l-4)+'px'; el.style.top=(t-4)+'px';
-  el.style.width=(w+8)+'px'; el.style.height=(h+8)+'px';
+  el.style.left  = spanne(c0, c1-c0+1, '100%');
+  el.style.width = laenge(c1-c0+1, '100%');
+  el.style.top    = spanne(zeileOben, r1-r0+1, '100%').replace('100%','100%');
+  el.style.height = laenge(r1-r0+1, '100%');
 }
 function setText(html, rechnung, aufgabe){
   document.getElementById('ltext').innerHTML =
@@ -608,6 +628,75 @@ function setText(html, rechnung, aufgabe){
 // rueck=true: die Phase wird RUECKWAERTS betreten. Dann darf die Ausfuehrung nicht
 // noch einmal ablaufen — sonst sperrt jede Zurueck-Taste 1,8 Sekunden lang beide
 // Knoepfe, und man kommt an einem ausgefuehrten Zug nicht vorbei.
+// Der Text einer Phase — EINE Quelle fuer die Anzeige und fuer die Hoehenmessung.
+// variante 'nach' ist der Stand, nachdem der Lernende ein Feld angetippt hat.
+function textTeile(i, variante){
+  const ph=PHASES[i], s=STEPS[ph.si], b=boardFor(i), erste=ersteImSchritt(i);
+  if(ph.p==='read')    return {html:s.intro};
+  if(ph.p==='inspect'){
+    if(variante!=='nach') return {html:s.intro, aufgabe:s.aufgabe};
+    const p=CELL[s.tap], cell=b[p[0]][p[1]], f=getMovingPiece(cell);
+    return {html:s.done, rechnung: lab(p[0],p[1]) + ': Figur <b>' + (f.color==='red'?'rot':'schwarz')
+      + '</b> mit der <b>' + f.stripe + '</b>, auf einem Feld, das <b>' + cell.stripe + '</b> Punkte wert ist.'};
+  }
+  if(ph.p==='tap'){
+    const p=CELL[s.tap];
+    if(variante!=='nach') return {html:s.intro, aufgabe:s.aufgabe};
+    return {html:s.done, rechnung: markAbheben(b,p[0],p[1],LEARNER).text};
+  }
+  if(ph.p==='lift'){
+    const f=CELL[s.from], m=markAbheben(b,f[0],f[1],s.actor);
+    return {html: erste?s.intro:'', rechnung: s.still?s.stillLift:m.text,
+      aufgabe: s.actor===LEARNER ? 'Tippe <b>'+s.from+'</b> an.'
+                                 : 'Mit <b>Weiter</b> hebt er '+s.from+' ab.'};
+  }
+  if(ph.p==='drop'){
+    const f=CELL[s.from], t=CELL[s.to], m=markAblegen(b,f[0],f[1],t[0],t[1],s.actor);
+    return {html:'', rechnung: s.still?s.stillDrop:m.text,
+      aufgabe: s.actor===LEARNER ? 'Jetzt <b>'+s.to+'</b> antippen.'
+                                 : 'Mit <b>Weiter</b> stellt er sie auf '+s.to+'.'};
+  }
+  return {html:s.done};
+}
+// Die feste Kastenhoehe wird GEMESSEN, nicht geraten: der laengste Text aller
+// Teilschritte bestimmt sie. So muss nichts scrollen, und das Brett springt trotzdem
+// nicht. Der Anhang (kind 'read') bleibt aussen vor — er darf die Seite fuellen.
+function messeKastenhoehe(){
+  const kasten=document.getElementById('lesson'), probe=document.getElementById('lessonProbe');
+  if(!kasten||!probe) return;
+  const breite=kasten.getBoundingClientRect().width;
+  if(!breite) return;
+  probe.style.width=breite+'px';
+  let max=0;
+  for(let i=0;i<PHASES.length;i++){
+    if(PHASES[i].p==='read') continue;
+    for(const v of ['vor','nach']){
+      const tl=textTeile(i,v);
+      probe.innerHTML='<h2>'+STEPS[PHASES[i].si].title+'</h2>'
+        + (tl.html||'')
+        + (tl.rechnung?'<div class="rechnung">'+tl.rechnung+'</div>':'')
+        + (tl.aufgabe ?'<div class="aufgabe">' +tl.aufgabe +'</div>':'');
+      if(probe.scrollHeight>max) max=probe.scrollHeight;
+    }
+  }
+  probe.innerHTML='';
+  if(max<40) return;                     // keine belastbare Messung — CSS-Wert lassen
+  kasten.style.height=Math.min(max+2, Math.round(window.innerHeight*0.60))+'px';
+  kasten.dataset.gemessen=max;
+  // Zweiter Durchgang: das BRETT hat Vorrang. Es ist eine Anleitung zu einem Brettspiel —
+  // lieber ein Text, der scrollt, als Felder, die kleiner sind als die Figuren darauf.
+  const area=document.getElementById('board-area');
+  if(area && area.style.display!=='none'){
+    const minBrett=Math.min(260, Math.round(window.innerHeight*0.34));
+    const fehlt=minBrett-area.clientHeight;
+    if(fehlt>0){
+      const neu=Math.max(120, parseFloat(kasten.style.height)-fehlt);
+      kasten.style.height=neu+'px';
+    }
+  }
+  kasten.dataset.hoehe=parseFloat(kasten.style.height);
+}
+
 function zeigePhase(rueck){
   const ph=PHASES[idx], s=STEPS[ph.si];
   board=boardFor(idx);
@@ -620,22 +709,22 @@ function zeigePhase(rueck){
   document.getElementById('board-area').style.display = (ph.p==='read') ? 'none' : 'flex';
   const erste=ersteImSchritt(idx);
 
-  if(ph.p==='read'){ setText(s.intro); gezeigt=true; }
+  const tl=textTeile(idx,'vor');
 
-  else if(ph.p==='inspect'){ setText(s.intro, null, s.aufgabe); }
+  if(ph.p==='read'){ setText(tl.html); gezeigt=true; }
+
+  else if(ph.p==='inspect'){ setText(tl.html, tl.rechnung, tl.aufgabe); }
 
   else if(ph.p==='tap'){
     const p=CELL[s.tap], m=markAbheben(board, p[0], p[1], LEARNER);
     mark.bereich=m.bereich; mark.zaehlt=m.zaehlt; mark.tippen=[p[0],p[1]];
-    setText(s.intro, null, s.aufgabe);
+    setText(tl.html, tl.rechnung, tl.aufgabe);
   }
 
   else if(ph.p==='lift'){
     const f=CELL[s.from], m=markAbheben(board, f[0], f[1], s.actor);
     mark.bereich=m.bereich; mark.zaehlt=m.zaehlt; mark.tippen=[f[0],f[1]];
-    setText(erste?s.intro:'', s.still ? s.stillLift : m.text,
-      s.actor===LEARNER ? 'Tippe <b>'+s.from+'</b> an.'
-                        : 'Mit <b>Weiter</b> hebt er '+s.from+' ab.');
+    setText(tl.html, tl.rechnung, tl.aufgabe);
   }
 
   else if(ph.p==='drop'){
@@ -643,9 +732,7 @@ function zeigePhase(rueck){
     const m=markAblegen(board, f[0], f[1], t[0], t[1], s.actor);
     mark.bereich=m.bereich; mark.zaehlt=m.zaehlt; mark.tippen=[t[0],t[1]]; mark.getan=[f[0],f[1]];
     mark.geist={rc:[t[0],t[1]], piece:getMovingPiece(board[f[0]][f[1]])};
-    setText('', s.still ? s.stillDrop : m.text,
-      s.actor===LEARNER ? 'Jetzt <b>'+s.to+'</b> antippen.'
-                        : 'Mit <b>Weiter</b> stellt er sie auf '+s.to+'.');
+    setText(tl.html, tl.rechnung, tl.aufgabe);
   }
 
   else if(ph.p==='exec'){
@@ -692,11 +779,10 @@ function onCell(r,c){
 
   if(ph.p==='inspect'){
     if(s.tap!==lab(r,c)) return;
-    const cell=board[r][c], p=getMovingPiece(cell);
     mark.getan=[r,c]; mark.tippen=null; gezeigt=true;
-    setText(s.done, lab(r,c) + ': Figur <b>' + (p.color==='red'?'rot':'schwarz') + '</b> mit der <b>'
-      + p.stripe + '</b>, auf einem Feld, das <b>' + cell.stripe + '</b> Punkte wert ist.');
-    renderBoard(); navStand(); return;
+    const tn=textTeile(idx,'nach');
+    setText(tn.html, tn.rechnung);
+    renderBoard(); groesse(); navStand(); return;
   }
 
   if(ph.p==='tap'){
@@ -708,8 +794,9 @@ function onCell(r,c){
     mark.bereich=m.bereich; mark.zaehlt=m.zaehlt; mark.tippen=null;
     if(echt) mark.getan=[r,c];
     gezeigt=true;
-    setText(s.done, m.text);
-    renderBoard(); navStand(); return;
+    const tn=textTeile(idx,'nach');
+    setText(tn.html, tn.rechnung);
+    renderBoard(); groesse(); navStand(); return;
   }
 
   if(ph.p==='lift'){
@@ -749,6 +836,10 @@ function groesse(){
   cont.style.width=(seite+20)+'px';
   cont.style.height=(seite+20)+'px';
   document.getElementById('board-wrap').style.height=seite+'px';
+  // ⚠️ ZULETZT. Der Bereichsrahmen wird aus den PIXELN der Felder berechnet — wird er
+  // vor der Groessenanpassung gezeichnet, stammen die Pixel vom Zwischenstand und der
+  // Rahmen sitzt irgendwo. Genau das war der Fehler in Fassung 7.
+  zeichneBereich();
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -939,9 +1030,9 @@ function init(){
 
   document.getElementById('btn-next').onclick=weiter;
   document.getElementById('btn-back').onclick=zurueck;
-  window.addEventListener('resize', groesse);
+  window.addEventListener('resize', function(){ messeKastenhoehe(); groesse(); });
   zeigePhase();
-  setTimeout(groesse, 30);
+  setTimeout(function(){ messeKastenhoehe(); groesse(); }, 30);
 }
 if(typeof document!=='undefined' && typeof window!=='undefined'){
   try { init(); }

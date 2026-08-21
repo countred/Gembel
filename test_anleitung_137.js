@@ -407,10 +407,64 @@ function blockD() {
     dk.getElementById('meldung').style.display === 'block');
 }
 
+// ── Block E · Der Bereichsrahmen in Zahlen ─────────────────────────
+// jsdom rechnet kein Layout — Pixel sind dort alle 0. Deshalb wird der Rahmen
+// nicht gemessen, sondern als CSS-Ausdruck gesetzt; hier wird dieser Ausdruck
+// fuer mehrere Brettgroessen ausgewertet und gegen das Gittermodell gehalten.
+function blockE() {
+  head('E · Bereichsrahmen in Zahlen');
+  if (!JSDOM) { console.log('  UEBERSPRUNGEN — jsdom fehlt.'); return; }
+
+  const gapCss = (htmlSrc.match(/#board\{[^}]*gap:(\d+)px/) || [])[1];
+  const gapJs  = (htmlSrc.match(/const GITTER_LUECKE\s*=\s*(\d+)/) || [])[1];
+  t('E1  Gitterluecke in CSS und Code identisch', !!gapCss && gapCss === gapJs);
+  const g = parseInt(gapJs, 10);
+
+  // calc(Apx + F * (100% - Bpx))  ->  Zahl fuer eine gegebene Brettbreite
+  const werte = (ausdruck, W) => {
+    const m = ausdruck.match(/calc\((-?[\d.]+)px \+ (-?[\d.]+) \* \(100% - ([\d.]+)px\)\)/);
+    if (!m) return null;
+    return parseFloat(m[1]) + parseFloat(m[2]) * (W - parseFloat(m[3]));
+  };
+  const html = htmlSrc.replace(/<script src="gembel_rules\.js[^>]*><\/script>/,
+    '<script>' + rulesSrc + '</script>');
+  const d = new JSDOM(html, { runScripts: 'dangerously', pretendToBeVisual: true }).window.document;
+  const el = d.getElementById('bereich');
+  const rect = (el.getAttribute('data-rect') || '').split(',').map(Number);
+  t('E2  Rahmen kennt sein Rechteck', rect.length === 4);
+
+  let alleTreffer = true, luft = null;
+  for (const W of [200, 308, 440, 700]) {
+    const zelle = (W - 3 * g) / 4;                   // Kantenlaenge eines Feldes
+    const [c0, c1, r0, r1] = rect;
+    const sollLinks  = c0 * (zelle + g);
+    const sollBreite = (c1 - c0 + 1) * zelle + (c1 - c0) * g;
+    const sollOben   = (3 - r1) * (zelle + g);
+    const sollHoehe  = (r1 - r0 + 1) * zelle + (r1 - r0) * g;
+    const istLinks  = werte(el.style.left,   W);
+    const istBreite = werte(el.style.width,  W);
+    const istOben   = werte(el.style.top,    W);
+    const istHoehe  = werte(el.style.height, W);
+    if (istLinks === null) { alleTreffer = false; break; }
+    // Der Rahmen darf rundum gleich viel Luft haben — mehr nicht.
+    const l1 = sollLinks - istLinks, l2 = (istBreite - sollBreite) / 2;
+    const l3 = sollOben - istOben,   l4 = (istHoehe - sollHoehe) / 2;
+    if (luft === null) luft = l1;
+    if (Math.abs(l1 - luft) > 0.01 || Math.abs(l2 - luft) > 0.01 ||
+        Math.abs(l3 - luft) > 0.01 || Math.abs(l4 - luft) > 0.01) alleTreffer = false;
+  }
+  t('E3  Rahmen sitzt bei jeder Brettgroesse passgenau (Luft ' + luft + ' px)', alleTreffer);
+  t('E4  Luft ist ein sinnvoller kleiner Wert', luft !== null && luft > 0 && luft <= 8);
+  t('E5  keine gemessenen Pixel im Rahmen-Code',
+    !/offsetLeft|offsetTop|getBoundingClientRect/.test(
+      (pageCode.match(/function zeichneBereich\(\)[\s\S]*?\n\}/) || [''])[0]));
+}
+
 // ── Lauf ───────────────────────────────────────────────────────────
 blockB(skipped => {
   blockC();
   blockD();
+  blockE();
   console.log('\n' + '═'.repeat(58));
   console.log('  test_anleitung_137:  ' + pass + ' gruen, ' + fail + ' rot' + (skipped ? '  (Block B uebersprungen)' : ''));
   console.log('═'.repeat(58));
