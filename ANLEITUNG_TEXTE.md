@@ -1,6 +1,6 @@
 # Count Red — Interaktive Spielanleitung: alle Texte
 
-**Quelle: `anleitung.html` · Anleitung · Fassung 12 · 24.08.2026**
+**Quelle: `anleitung.html` · Anleitung · Fassung 13 · 24.08.2026**
 
 > Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`
 > im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt
@@ -178,6 +178,8 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  ausgeführt**
 
+*Rechnung:*  Du darfst stapeln. Summe der roten Figuren im Stapel: 1 = ungerade
+
 **·  anheben**
 
 *Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren: 3 = ungerade
@@ -195,6 +197,8 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 *Brett:*  dick: 3D · blinkt: 3D (grün) · blau: 3A
 
 **·  ausgeführt**
+
+*Rechnung:*  Du darfst stapeln. Summe der roten Figuren im Stapel: 1 = ungerade
 
 **·  anheben**
 
@@ -248,37 +252,35 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 **·  erklärt**
 
 > Die Zugerlaubnis musst du genauso auch beim Anheben der Figur von einem Stapel beachten: Du darfst die Top-Figur anheben, wenn die Summe der **roten** Figuren im Stapel **ungerade** ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.
->
-> **Leichter zu merken:** Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.
+
+*Brett:*  dick: 4D · blau: 4D
+
+**·  zeigen**
+
+> Leichter zu merken: Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.
 
 *Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
 
 *Brett:*  dick: 4D · blau: 4D
 
-**·  antippen**
+**·  zeigen**
 
-*Aufgabe:*  `Tippe 3D an.`
-
-*Brett:*  dick: 3D · blinkt: 3D (grün)
-
-**·  erklärt**
-
-> **Wichtig:** nur die Top-Figur darf bewegt werden, nicht der Stapel als ganzes.
+> Wichtig: nur die Top-Figur darf bewegt werden, nicht der Stapel als ganzes.
+>
+> Strategie: mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. Da, wo die Figur weggezogen wird, und auch dort, wo sie abgesetzt wird. Nur im Stapel ist eine Figur also vor dem Zugriff deines Mitspielers sicher.
 
 *Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
 
-*Brett:*  dick: 3D · blau: 3D
+*Brett:*  dick: 4D · blau: 4D
 
 **·  lesen**
 
-> **Strategie:** mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. Da, wo die Figur weggezogen wird, und auch dort, wo sie abgesetzt wird. Nur im Stapel ist eine Figur also vor dem Zugriff deines Mitspielers sicher.
-
-**·  lesen**
-
-> Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Du bist von 1B auf 4D gezogen. Mit Weiter zieht er von 1D auf 2C:
+> Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht der Mitspieler von 1D auf 2C:
 
 **·  ausgeführt**
 
+> Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht der Mitspieler von 1D auf 2C:
+>
 > Er hat einen Stapel auf 2C gebildet — und 1D ist jetzt frei.
 
 
@@ -372,7 +374,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 >
 > Den Dreier kann aber auch dein Mitspieler zum Vierer vervollständigen und gewinnen.
 >
-> Lote mit zwei verschiedenen Bonuszügen diese strategischen Möglichkeiten aus.
+> Lote mit zwei Varianten deines Bonuszuges diese strategischen Möglichkeiten aus.
 
 *Brett:*  gesperrt: 2B, 3B, 4B
 
@@ -396,6 +398,8 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  ausgeführt**
 
+*Rechnung:*  Du darfst stapeln. Summe der roten Figuren im Stapel: 1 = ungerade
+
 *Brett:*  gesperrt: 2B, 3B, 4B
 
 **·  zeigen**
@@ -414,7 +418,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  anheben**
 
-> Ein **nicht so schlauer** Bonuszug — der Spielstand ist wieder wie vor dem Bonuszug:
+> Ein **nicht so schlauer** Bonuszug — der Spielstand ist wieder wie vor der ersten Variante:
 
 *Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
 
@@ -438,7 +442,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  zeigen**
 
-> **Erstens:** Die Lücke in Reihe 3 zwischen den drei gleichfarbigen Figuren in Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.
+> **Erstens:** Die Lücke in Zeile 3 zwischen den drei gleichfarbigen Figuren in Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.
 
 *Brett:*  gesperrt: 2B, 3B, 4B
 
@@ -458,6 +462,10 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  ausgeführt**
 
+> **Drittens:** Dein Mitspieler kann die Sieg-Figur direkt auf 3C absetzen: Summe der roten Nachbarfiguren und der Zugfigur: **4 = gerade**.
+>
+> Mit Weiter zieht dein Mitspieler und gewinnt.
+>
 > Vier rote Figuren in Spalte C — dein Mitspieler hat gewonnen.
 
 *Brett:*  gesperrt: 2B, 3B, 4B · Sieg: 1C, 2C, 3C, 4C
@@ -467,7 +475,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  lesen**
 
-> **Passen gibt es nicht.**
+> Passen gibt es nicht.
 
 **·  lesen**
 
@@ -475,15 +483,15 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  lesen**
 
-> **Wer beginnt, entscheidet beim ersten Spiel der Zufall**, ebenso, wer gerade und wer ungerade spielt. Beim Rematch beginnt der Verlierer, nach einem Remis wechselt der Anziehende — und die Parität wechselt nach jedem Spiel.
+> Wer beginnt, entscheidet beim ersten Spiel der Zufall, ebenso, wer gerade und wer ungerade spielt. Beim Rematch beginnt der Verlierer, nach einem Remis wechselt der Anziehende — und die Parität wechselt nach jedem Spiel.
 
 **·  lesen**
 
-> **Remis** könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die Partie automatisch mit Remis, ebenso nach 50 Halbzügen ohne neuen Dreier.
+> Remis könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die Partie automatisch mit Remis, ebenso nach 50 Halbzügen ohne neuen Dreier.
 
 **·  lesen**
 
-> **Im Spiel kannst du nicht falsch ziehen.** Tippst du eine Figur an, die du gerade nicht anheben oder nirgends absetzen kannst, dann siehst du unten, warum der Zug nicht erlaubt ist.
+> Im Spiel kannst du nicht falsch ziehen. Tippst du eine Figur an, die du gerade nicht anheben oder nirgends absetzen kannst, dann siehst du unten, warum der Zug nicht erlaubt ist.
 
 ---
 
@@ -493,7 +501,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 |---|---|
 | Kopfzeile links | `COUNT · RED` |
 | Kopfzeile rechts | `Schritt N von 9` |
-| unter dem Fortschrittsbalken | `Anleitung · Fassung 12 · 24.08.2026` |
+| unter dem Fortschrittsbalken | `Anleitung · Fassung 13 · 24.08.2026` |
 | Knopf links | `Zurück` — einen Teilschritt zurück |
 | Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |
 

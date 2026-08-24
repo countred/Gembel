@@ -56,7 +56,7 @@ pruef('A4 kein Browser-Speicher', !/localStorage|sessionStorage|document\.cookie
 pruef('A5 keine KI', !/countred_ai/.test(ohneKommentar));
 pruef('A6 keine externe Quelle', !/https?:\/\/(?!www\.w3\.org)/.test(HTML.replace(/<!--[\s\S]*?-->/g,'')));
 pruef('A7 Fassungsstempel vorhanden', /Anleitung · Fassung \d+ · \d\d\.\d\d\.\d{4}/.test(M.ANL_FASSUNG), M.ANL_FASSUNG);
-pruef('A8 Fassung ist hochgezaehlt (>=12)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=12);
+pruef('A8 Fassung ist hochgezaehlt (>=13)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=13);
 pruef('A9 Wachhund steht in einem EIGENEN Skriptblock',
   /__anlGestartet\s*=\s*false[\s\S]*?<\/script>\s*(<!--[\s\S]*?-->\s*)?<script src="gembel_rules/.test(HTML));
 pruef('A10 ALL8 wird nicht neu deklariert', !/const ALL8/.test(HTML));
@@ -91,7 +91,10 @@ pruef('A23 kein "Gegner" mehr im sichtbaren Text', !/Gegner/.test(sichtbar));
 
 // Die Zuege des Mitspielers: genau zwei, und beide dort, wo Walter sie wollte.
 const mitZuege=[];
-M.STEPS.forEach(s=>s.aktionen.forEach(a=>{ if(a.actor===2) mitZuege.push(s.id+':'+a.von+'->'+a.nach); }));
+M.STEPS.forEach(s=>s.aktionen.forEach(function(a){
+  if(a.actor===2) mitZuege.push(s.id+':'+a.von+'->'+a.nach);
+  if(a.zugDanach && a.zugDanach.actor===2) mitZuege.push(s.id+':'+a.zugDanach.von+'->'+a.zugDanach.nach);
+}));
 pruef('A24 genau zwei Mitspielerzuege', mitZuege.length===2, mitZuege.join(', '));
 pruef('A25 Mitspielerzuege an der richtigen Stelle',
   mitZuege.join(',')==='aufloesen:1D->2C,bonus:3D->3C', mitZuege.join(','));
@@ -101,7 +104,10 @@ pruef('A25 Mitspielerzuege an der richtigen Stelle',
 // (Lehre aus Fassung 8: sonst prueft der Test nur, was ohnehin dasteht.)
 const rohSoll=['ziel:1D->1B','beginn:1B->4D','aufloesen:1D->2C','bonus:3D->3C'];
 const rohIst=[];
-M.STEPS.forEach(s=>s.aktionen.forEach(a=>{ if(a.roh) rohIst.push(s.id+':'+a.von+'->'+a.nach); }));
+M.STEPS.forEach(s=>s.aktionen.forEach(function(a){
+  if(a.roh) rohIst.push(s.id+':'+a.von+'->'+a.nach);
+  if(a.zugDanach && a.zugDanach.roh) rohIst.push(s.id+':'+a.zugDanach.von+'->'+a.zugDanach.nach);
+}));
 pruef('A26 genau die vereinbarten Aktionen sind roh',
   rohIst.join(',')===rohSoll.join(','), rohIst.join(',')||'keine');
 
@@ -121,8 +127,27 @@ pruef('A30 "nicht" ist in den Rechnungen fett', (function(){
 // Der Kasten ist ueberall gleich hoch — also darf keine Seite ausgenommen sein.
 pruef('A31 Kastenhoehe misst alle Seiten', !/if\(STEPS\[PHASES\[i\]\.si\]\.nurText\) continue;/.test(HTML));
 // Genau zwei Mitspielerzuege, beide in EINEM Schritt.
-pruef('A32 Mitspielerzuege laufen auf einen Weiter-Druck',
-  M.STEPS.every(s=>s.aktionen.every(a=>a.actor!==2 || a.einSchritt===true)));
+pruef('A32 Mitspielerzuege haengen an einer Seite, statt eine eigene zu bekommen',
+  M.STEPS.every(s=>s.aktionen.every(a=>a.actor!==2)));
+// Walters Regel: keine Seite, auf der nur animiert wird.
+const stummeSeiten=[];
+M.STEPS.forEach(s=>s.aktionen.forEach(function(a){
+  if((a.art==='zug'||a.art==='fehlzug') && !a.nachher && a.art==='zug'){ /* laeuft auf der Absetzseite */ }
+}));
+pruef('A33 keine Ausfuehrungsseite ohne eigenen Text',
+  M.PHASES.every(function(p){
+    if(p.p!=='exec') return true;
+    return !!M.STEPS[p.si].aktionen[p.ai].nachher;
+  }));
+// Erspielbarkeit: Aufbauten, die aus Zuegen bestehen, muessen als ZUGFOLGE
+// hinterlegt sein — nur die kann der Selbsttest nachrechnen.
+pruef('A36 kein Aufbau baut die Stellung von Hand aus applyMove',
+  !/setup:function\(\)\{[\s\S]{0,400}?applyMove/.test(HTML));
+pruef('A34 kein "Reihe" mehr im sichtbaren Text', !/\bReihe\b/.test(sichtbar));
+pruef('A35 "Gut zu wissen" ohne Fettung', (function(){
+  const s=M.STEPS[M.STEPS.length-1];
+  return s.aktionen.every(a=>!/<b>/.test(a.text||''));
+})());
 
 // ═══════════════════════════════════════════════════════════════════
 block('B · Durchklick durch alle Teilschritte');
@@ -144,7 +169,7 @@ async function durchklick(){
   await warte(60);
   pruef('B1 Seite ist gestartet (kein Wachhund-Alarm)',
     d.getElementById('meldung').style.display!=='block', d.getElementById('meldung').textContent.slice(0,90));
-  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 12/.test(d.getElementById('fassung').textContent));
+  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 13/.test(d.getElementById('fassung').textContent));
 
   const langsam=Math.max(M.ANKUNFT_MIT_MS, M.ANKUNFT_MS)+200;
   let gesehen=0, sieger=0;
@@ -187,8 +212,10 @@ async function durchklick(){
       const b=M.boardFor(i), p=M.CELL[a.feld];
       const erlaubt=M.canLift(b,p[0],p[1],1,'odd');
       zelle(a.feld).onclick();
-      pruef('B· Rechnung erscheint nach dem Tippen ('+wo+')', !!d.querySelector('#ltext .rechnung'));
-      pruef('B· Urteil im Text stimmt ('+wo+')',
+      // stumm: die Rechnung kommt bewusst erst eine Seite spaeter.
+      pruef('B· Rechnung erscheint nach dem Tippen ('+wo+')',
+        !!d.querySelector('#ltext .rechnung')===!a.stumm);
+      if(!a.stumm) pruef('B· Urteil im Text stimmt ('+wo+')',
         /Du darfst nicht anheben/.test(txt())!==erlaubt, txt().slice(0,80));
       pruef('B· blaue Markierung nur bei erlaubtem Anheben ('+wo+')', hat(a.feld,'getan')===erlaubt);
       pruef('B· Weiter frei nach dem Tippen ('+wo+')', next().disabled===false);
@@ -198,7 +225,12 @@ async function durchklick(){
       if(a.actor===1){ zelle(a.von).onclick(); } else { next().onclick(); }
     }
     else if(ph.p==='drop'){
-      if(a.actor===1){ zelle(a.nach).onclick(); } else { next().onclick(); }
+      if(a.actor===1) zelle(a.nach).onclick(); else next().onclick();
+      if(!a.nachher){                       // Zug laeuft auf DIESER Seite zu Ende
+        await warte(langsam);
+        pruef('B· Zug ist auf der Absetzseite gelaufen ('+wo+')', next().disabled===false);
+        if(i<M.PHASES.length-1) next().onclick();
+      }
     }
     else if(ph.p==='fail'){
       pruef('B· Fehlzug: Quellfeld ist blau markiert ('+wo+')', hat(a.von,'getan'));
@@ -217,15 +249,35 @@ async function durchklick(){
       pruef('B· Weiter frei nach dem Zug ('+wo+')', next().disabled===false);
       if(i<M.PHASES.length-1) next().onclick();
     }
-    else if(ph.p==='zeigen'){
-      pruef('B· Zeigeseite hat Text ('+wo+')', txt().length>20);
-      pruef('B· Zeigeseite hat einen Bereichsrahmen ('+wo+')',
-        d.getElementById('bereich').style.display==='block');
-      pruef('B· Zeigeseite verlangt kein Tippen ('+wo+')', next().disabled===false);
-      if(i<M.PHASES.length-1) next().onclick();
-    }
-    else if(ph.p==='lesen'){
-      pruef('B· Textseite ist lesbar ('+wo+')', txt().length>20);
+    else if(ph.p==='zeigen' || ph.p==='lesen'){
+      pruef('B· Seite ist lesbar ('+wo+')', txt().length>20);
+      if(ph.p==='zeigen')
+        pruef('B· Zeigeseite hat einen Bereichsrahmen ('+wo+')',
+          d.getElementById('bereich').style.display==='block');
+      if(a.blass) pruef('B· blasse Figuren stehen auf dem Brett ('+wo+')',
+        d.querySelectorAll('#board .figure.getragen').length>=a.blass.length);
+      pruef('B· Seite verlangt kein Tippen ('+wo+')', next().disabled===false);
+      if(a.zugDanach){
+        next().onclick();                    // erster Druck: der Zug laeuft hier ab
+        if(a.zugDanach.erwartet==='sieg'){
+          // Der Siegrahmen darf erst NACH dem blauen Blinken kommen — sonst ist der
+          // zweite Teil des Zuges nicht zu sehen (Walters Befund, Fassung 13).
+          await warte(M.ABFLUG_MIT_MS+150);
+          pruef('B· Ankunft blinkt, bevor der Vierer erscheint ('+wo+')',
+            d.querySelectorAll('#board .cell.sieg').length===0 &&
+            d.getElementById('board').getAttribute('data-sieg')==='wartet');
+        }
+        await warte(langsam+M.ANKUNFT_MIT_MS+300);
+        pruef('B· Zug lief auf derselben Seite ('+wo+')',
+          d.getElementById('stepno').textContent==='Schritt '+(ph.si+1)+' von 9');
+        if(a.zugDanach.erwartet==='sieg'){
+          sieger++;
+          pruef('B· Vierer erst nach dem Blinken markiert ('+wo+')',
+            d.querySelectorAll('#board .cell.sieg').length===4,
+            'markiert: '+d.querySelectorAll('#board .cell.sieg').length);
+        }
+        pruef('B· Schlusstext steht da ('+wo+')', txt().length>20);
+      }
       if(i<M.PHASES.length-1) next().onclick();
     }
     await warte(5);

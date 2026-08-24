@@ -291,7 +291,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 12 · 24.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 13 · 24.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -521,44 +521,35 @@ const STEPS = [
 // Lernenden (je eine rote Figur = ungerade) — die Stapel-Invariante haelt, und
 // genau darum geht es hier. Der Zug des Mitspielers am Ende schafft das leere
 // Feld, das Schritt 6 braucht, und laeuft auf EINEN Weiter-Druck ab.
-// startet:OPPONENT — die beiden Stapel stehen schon im Aufbau (beides Zuege des
-// Lernenden), also ist der Mitspieler dran. Die Stellung ist KONSTRUIERT, nicht
-// erspielt; sie ist regeltreu (jeder Stapel passt zu seinem Besitzer), aber sie
-// entsteht nicht aus drei aufeinanderfolgenden Halbzuegen.
+// Der Aufbau ist ERSPIELBAR: genau ein Zug des Lernenden (1B→4D) aus der
+// Ausgangsstellung, danach ist der Mitspieler dran. Eine Stellung, die im
+// echten Spiel nicht vorkommen kann, darf die Anleitung nicht zeigen.
 { id:'aufloesen', title:'Stapel auflösen', startet:OPPONENT,
-  setup:function(){ const b=initBoard();
-                    [['1B','4D'],['3A','3D']].forEach(function(z){
-                      const f=CELL[z[0]], t=CELL[z[1]];
-                      applyMove(b,f[0],f[1],t[0],t[1],LEARNER); });
-                    return b; },
+  aufbau:[['1B','4D',LEARNER]],
   intro:'<p>Die Zugerlaubnis musst du genauso auch beim Anheben der Figur von einem Stapel beachten: '
        +'Du darfst die Top-Figur anheben, wenn die Summe der <b>roten</b> Figuren im Stapel '
        +'<b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist '
        +'gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
   aktionen:[
-    { art:'tippen', feld:'4D',
-      nachher:'<p><b>Leichter zu merken:</b> Nur wer den Stapel gebildet hat, kann ihn wieder '
-             +'auflösen.</p>' },
-    { art:'tippen', feld:'3D',
-      nachher:'<p><b>Wichtig:</b> nur die Top-Figur darf bewegt werden, nicht der Stapel als '
-             +'ganzes.</p>' },
-    { art:'lesen',
-      text:'<p><b>Strategie:</b> mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. '
+    // Seite 1: nur antippen. Die Rechnung kommt erst auf Seite 2 — dort steht das
+    // Klickergebnis noch einmal, damit Bild und Erklaerung zusammen zu sehen sind.
+    { art:'tippen', feld:'4D', stumm:true },
+    { art:'zeigen', feld:'4D', getan:'4D', rechnung:'anheben',
+      text:'<p>Leichter zu merken: Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.</p>' },
+    { art:'zeigen', feld:'4D', getan:'4D', rechnung:'anheben',
+      text:'<p>Wichtig: nur die Top-Figur darf bewegt werden, nicht der Stapel als ganzes.</p>'
+          +'<p>Strategie: mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. '
           +'Da, wo die Figur weggezogen wird, und auch dort, wo sie abgesetzt wird. Nur im Stapel ist '
           +'eine Figur also vor dem Zugriff deines Mitspielers sicher.</p>' },
     { art:'lesen',
-      text:'<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Du bist von 1B '
-          +'auf 4D gezogen. Mit Weiter zieht er von 1D auf 2C:</p>' },
-    { art:'zug', von:'1D', nach:'2C', actor:OPPONENT, roh:true, einSchritt:true,
-      nachher:'<p>Er hat einen Stapel auf 2C gebildet — und 1D ist jetzt frei.</p>' }
+      text:'<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht '
+          +'der Mitspieler von 1D auf 2C:</p>',
+      zugDanach:{ von:'1D', nach:'2C', actor:OPPONENT, roh:true,
+        nachher:'<p>Er hat einen Stapel auf 2C gebildet — und 1D ist jetzt frei.</p>' } }
   ]},
 
 { id:'leerfeld', title:'Figur auf ein leeres Feld',
-  setup:function(){ const b=initBoard();
-                    [['1B','4D',LEARNER],['3A','3D',LEARNER],['1D','2C',OPPONENT]].forEach(function(z){
-                      const f=CELL[z[0]], t=CELL[z[1]];
-                      applyMove(b,f[0],f[1],t[0],t[1],z[2]); });
-                    return b; },
+  aufbau:[['1B','4D',LEARNER],['1D','2C',OPPONENT]],
   intro:'<p>Du darfst eine Figur auf ein leeres Feld <b>absetzen</b>, wenn die Summe aller <b>roten</b> '
        +'Nachbarfiguren <b>nach</b> dem Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, '
        +'musst du sie mitzählen. Nicht vergessen: Punktezahl auf dem Feld und Zahl auf der Figur müssen '
@@ -592,15 +583,17 @@ const STEPS = [
   aktionen:[
     { art:'lesen',
       text:'<p>Den Dreier kann aber auch dein Mitspieler zum Vierer vervollständigen und gewinnen.</p>'
-          +'<p>Lote mit zwei verschiedenen Bonuszügen diese strategischen Möglichkeiten aus.</p>' },
+          +'<p>Lote mit zwei Varianten deines Bonuszuges diese strategischen Möglichkeiten aus.</p>' },
 
     { art:'zug', von:'2A', nach:'1A', actor:LEARNER, neu:true,
       vorher:'<p>Ein <b>guter</b> Bonuszug:</p>' },
-    { art:'zeigen', von:'2D', nach:'2A', pruefungen:[{art:'absetzen', von:'2D', nach:'2A', summe:3}],
+    { art:'zeigen', von:'2D', nach:'2A', blass:['2D'], geist:{von:'2D', auf:'2A'},
+      pruefungen:[{art:'absetzen', von:'2D', nach:'2A', summe:3}],
       text:'<p>Zwischen den zwei schwarzen Figuren in Spalte A wird das Feld 2A frei. Für die passende '
           +'dritte schwarze Figur und damit den nächsten möglichen Dreier ist die Parität: Summe der '
           +'roten Nachbarfiguren: <b>3 = ungerade</b>.</p>' },
-    { art:'zeigen', feld:'2D', pruefungen:[{art:'anheben', feld:'2D', summe:3}],
+    { art:'zeigen', feld:'2D', blass:['2D'], geist:{von:'2D', auf:'2A'},
+      pruefungen:[{art:'anheben', feld:'2D', summe:3}],
       text:'<p>Die passende Figur mit Zahl auf der Figur und Punkte auf dem Feld (2) steht auf 2D und '
           +'hat gerade ebenfalls deine Parität: Summe der roten Nachbarfiguren: <b>3 = ungerade</b>. '
           +'Die andere passende Figur ist bereits im Dreier gesperrt.</p>'
@@ -608,40 +601,42 @@ const STEPS = [
           +'geschaffen und setzt deinen Mitspieler unter Druck.</p>' },
 
     { art:'zug', von:'2B', nach:'1C', actor:LEARNER, neu:true,
-      vorher:'<p>Ein <b>nicht so schlauer</b> Bonuszug — der Spielstand ist wieder wie vor dem '
-            +'Bonuszug:</p>',
+      vorher:'<p>Ein <b>nicht so schlauer</b> Bonuszug — der Spielstand ist wieder wie vor der '
+            +'ersten Variante:</p>',
       nachher:'<p>Dein Bonuszug ist korrekt, aber du schenkst dem Mitspieler damit direkt den Sieg. '
              +'Drei Dinge musst du beachten:</p>' },
     { art:'zeigen', bereich:['1C','2C','3C','4C'],
-      text:'<p><b>Erstens:</b> Die Lücke in Reihe 3 zwischen den drei gleichfarbigen Figuren in '
+      text:'<p><b>Erstens:</b> Die Lücke in Zeile 3 zwischen den drei gleichfarbigen Figuren in '
           +'Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.</p>' },
-    { art:'zeigen', feld:'3D', pruefungen:[{art:'anheben', feld:'3D', summe:2}],
+    { art:'zeigen', feld:'3D', blass:['3D'], geist:{von:'3D', auf:'3C'},
+      pruefungen:[{art:'anheben', feld:'3D', summe:2}],
       text:'<p><b>Zweitens:</b> Die für das Sieg-Feld 3C passenden roten Figuren werden beide von '
           +'deinem Mitspieler in dem von ihm gebildeten Stapel auf 3D kontrolliert: Summe der roten '
           +'Figuren im Stapel: <b>2 = gerade</b>. Zahl auf der Figur und Punkte auf dem Feld (1) '
           +'stimmen überein für das Sieg-Feld 3C.</p>' },
-    { art:'zeigen', von:'3D', nach:'3C', pruefungen:[{art:'absetzen', von:'3D', nach:'3C', summe:4}],
+    { art:'zeigen', von:'3D', nach:'3C', blass:['3D'], geist:{von:'3D', auf:'3C'},
+      pruefungen:[{art:'absetzen', von:'3D', nach:'3C', summe:4}],
       text:'<p><b>Drittens:</b> Dein Mitspieler kann die Sieg-Figur direkt auf 3C absetzen: Summe der '
           +'roten Nachbarfiguren und der Zugfigur: <b>4 = gerade</b>.</p>'
-          +'<p>Mit Weiter zieht dein Mitspieler und gewinnt.</p>' },
-    { art:'zug', von:'3D', nach:'3C', actor:OPPONENT, roh:true, einSchritt:true, summeAuf:4, erwartet:'sieg',
-      nachher:'<p>Vier rote Figuren in Spalte C — dein Mitspieler hat gewonnen.</p>' }
+          +'<p>Mit Weiter zieht dein Mitspieler und gewinnt.</p>',
+      zugDanach:{ von:'3D', nach:'3C', actor:OPPONENT, roh:true, summeAuf:4, erwartet:'sieg',
+        nachher:'<p>Vier rote Figuren in Spalte C — dein Mitspieler hat gewonnen.</p>' } }
   ]},
 
 { id:'rest', title:'Gut zu wissen', nurText:true,
   aktionen:[
-    { art:'lesen', text:'<p><b>Passen gibt es nicht.</b></p>' },
+    { art:'lesen', text:'<p>Passen gibt es nicht.</p>' },
     { art:'lesen', text:'<p>Wer keinen erlaubten Zug hat, setzt aus — der andere zieht nochmals.</p>' },
     { art:'lesen',
-      text:'<p><b>Wer beginnt, entscheidet beim ersten Spiel der Zufall</b>, ebenso, wer gerade und wer '
+      text:'<p>Wer beginnt, entscheidet beim ersten Spiel der Zufall, ebenso, wer gerade und wer '
           +'ungerade spielt. Beim Rematch beginnt der Verlierer, nach einem Remis wechselt der '
           +'Anziehende — und die Parität wechselt nach jedem Spiel.</p>' },
     { art:'lesen',
-      text:'<p><b>Remis</b> könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf '
+      text:'<p>Remis könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf '
           +'dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die '
           +'Partie automatisch mit Remis, ebenso nach 50 Halbzügen ohne neuen Dreier.</p>' },
     { art:'lesen',
-      text:'<p><b>Im Spiel kannst du nicht falsch ziehen.</b> Tippst du eine Figur an, die du gerade '
+      text:'<p>Im Spiel kannst du nicht falsch ziehen. Tippst du eine Figur an, die du gerade '
           +'nicht anheben oder nirgends absetzen kannst, dann siehst du unten, warum der Zug nicht '
           +'erlaubt ist.</p>' }
   ]}
@@ -651,15 +646,18 @@ const STEPS = [
 // Jede Phase ist durch (Schritt, Aktion, Art) vollstaendig bestimmt, und das Brett
 // wird zu JEDER Phase neu aufgebaut. Dadurch ist "Zurück" ein simples Minus-Eins
 // und kann nichts halb rueckgaengig machen.
-// einSchritt: der ganze Zug laeuft auf EINEN Weiter-Druck ab. Nur fuer die Zuege
-// des Mitspielers gedacht — der Lernende soll nichts antippen muessen, was gar
-// nicht seine Entscheidung ist.
+// Eine Seite, auf der NUR animiert wird und sonst nichts Neues steht, ist eine
+// verlorene Seite (Walter, Fassung 13). Deshalb:
+//   · ein Zug bekommt nur dann eine eigene Ausfuehrungsseite, wenn danach ein
+//     Text steht — sonst laeuft die Animation auf der Absetz-Seite zu Ende
+//   · Zuege des Mitspielers haengen als `zugDanach` an einer Lese- oder
+//     Zeigeseite und laufen dort ab, ohne die Seite zu wechseln
 function phasenVon(a){
   if(a.art==='lesen')   return ['lesen'];
-  if(a.art==='tippen')  return ['tap'];
   if(a.art==='zeigen')  return ['zeigen'];
+  if(a.art==='tippen')  return ['tap'];
   if(a.art==='fehlzug') return ['lift','fail'];
-  return a.einSchritt ? ['exec'] : ['lift','drop','exec'];
+  return a.nachher ? ['lift','drop','exec'] : ['lift','drop'];
 }
 const PHASES=[];
 STEPS.forEach(function(s,si){
@@ -675,19 +673,40 @@ function neuAufbau(j){
   const s=STEPS[PHASES[j].si];
   return ersteImSchritt(j) || (ersteDerAktion(j) && aktionVon(j).neu);
 }
+// Ein Aufbau, der aus ZUEGEN besteht, wird auch als Zugfolge hinterlegt — nicht als
+// fertige Stellung. Nur so kann der Selbsttest nachrechnen, dass die Stellung im
+// echten Spiel ueberhaupt entstehen kann (abwechselnd, jeder Zug erlaubt).
+function brettAusAufbau(liste){
+  const b=initBoard();
+  liste.forEach(function(z){ const f=CELL[z[0]], t=CELL[z[1]];
+    applyMove(b,f[0],f[1],t[0],t[1],z[2]);
+    if(!(checkFourInRow(b,'black')||checkFourInRow(b,'red'))) applyLockOn(b); });
+  return b;
+}
+function aufbauVon(s){ return s.aufbau ? brettAusAufbau(s.aufbau) : (s.setup ? s.setup() : initBoard()); }
+
 function boardFor(i){
   let b=null;
   for(let j=0;j<=i;j++){
     const ph=PHASES[j], s=STEPS[ph.si], a=s.aktionen[ph.ai];
-    if(neuAufbau(j)) b = s.setup ? s.setup() : initBoard();
-    if(ph.p==='exec'){
-      const f=CELL[a.von], t=CELL[a.nach];
-      applyMove(b,f[0],f[1],t[0],t[1],a.actor);
-      if(!(checkFourInRow(b,'black')||checkFourInRow(b,'red'))) applyLockOn(b);
-    }
+    if(neuAufbau(j)) b = aufbauVon(s);
+    if(ph.p==='exec') fuehreAus(b, a);
+    // Zug ohne eigene Ausfuehrungsseite: er ist geschehen, sobald die Absetz-Seite
+    // hinter uns liegt. Dasselbe gilt fuer den Zug an einer Lese-/Zeigeseite.
+    if(j<i && ph.p==='drop' && !a.nachher) fuehreAus(b, a);
+    if(j<i && a.zugDanach && (ph.p==='lesen'||ph.p==='zeigen')) fuehreAus(b, a.zugDanach);
   }
   return b;
 }
+function fuehreAus(b, z){
+  const f=CELL[z.von], t=CELL[z.nach];
+  applyMove(b,f[0],f[1],t[0],t[1],z.actor);
+  if(!(checkFourInRow(b,'black')||checkFourInRow(b,'red'))) applyLockOn(b);
+  return b;
+}
+// Die Stellung NACH dem Zug einer Seite — fuer die Animation, die auf der Seite
+// selbst zu Ende laeuft.
+function brettNachZug(i, z){ return fuehreAus(cloneBoard(boardFor(i)), z); }
 // Wer ist in Phase i am Zug? Ein Dreier bringt einen Bonuszug — dann bleibt derselbe
 // Spieler dran. Ein abgelehnter Zugversuch (fehlzug) verbraucht den Zug NICHT.
 function amZug(i){
@@ -695,13 +714,18 @@ function amZug(i){
   for(let j=0;j<=i;j++){
     const ph=PHASES[j], s=STEPS[ph.si], a=s.aktionen[ph.ai];
     if(neuAufbau(j)) cur = s.startet || LEARNER;
-    if(ph.p==='exec' && j<i){
-      const c=cloneBoard(boardFor(j-1));
-      const f=CELL[a.von], t=CELL[a.nach];
-      applyMove(c,f[0],f[1],t[0],t[1],a.actor);
+    const z = (ph.p==='exec') ? a
+            : (ph.p==='drop' && !a.nachher) ? a
+            : ((ph.p==='lesen'||ph.p==='zeigen') && a.zugDanach) ? a.zugDanach : null;
+    if(z && j<i){
+      // Die Stellung VOR dem Zug: auf der Ausfuehrungsseite hat boardFor ihn schon
+      // angewandt, auf allen anderen Traegerseiten noch nicht.
+      const c=cloneBoard(ph.p==='exec' ? boardFor(j-1) : boardFor(j));
+      const f=CELL[z.von], t=CELL[z.nach];
+      applyMove(c,f[0],f[1],t[0],t[1],z.actor);
       const vier=checkFourInRow(c,'black')||checkFourInRow(c,'red');
       const trip=vier?null:applyLockOn(c);
-      cur = trip ? a.actor : (a.actor===LEARNER?OPPONENT:LEARNER);
+      cur = trip ? z.actor : (z.actor===LEARNER?OPPONENT:LEARNER);
     }
   }
   return cur;
@@ -710,9 +734,9 @@ function amZug(i){
 // ═══════════════════════════════════════════════════════════════════
 //  Zustand und Anzeige
 // ═══════════════════════════════════════════════════════════════════
-let idx=0, board=null, gezeigt=false, laeuft=false;
-let mark={bereich:null, zaehlt:[], tippen:null, getan:null, geist:null, sieg:[]};
-function leerMark(){ mark={bereich:null, zaehlt:[], tippen:null, getan:null, geist:null, sieg:[]}; }
+let idx=0, board=null, gezeigt=false, laeuft=false, gezogen=false;
+let mark={bereich:null, zaehlt:[], tippen:null, getan:null, geist:null, sieg:[], blass:[]};
+function leerMark(){ mark={bereich:null, zaehlt:[], tippen:null, getan:null, geist:null, sieg:[], blass:[]}; }
 // roh: nur die Markierungen, die auch das Spiel zeigt — keine gruene Erklaerung.
 function setzeMark(m, roh){
   mark.bereich = roh ? null : m.bereich;
@@ -723,7 +747,7 @@ function setzeMark(m, roh){
 // aus derselben Quelle wie sonst — oder, im Sonderfall der Vierer-Option, aus einer
 // ausdruecklich benannten Feldliste.
 function markZeigen(b, a){
-  if(a.bereich) return {bereich:a.bereich.map(n=>CELL[n]), zaehlt:[], tippen:null, summe:null};
+  if(a.bereich) return {bereich:a.bereich.map(n=>CELL[n]), zaehlt:[], tippen:null, summe:null, text:''};
   if(a.feld){ const p=CELL[a.feld]; return markAnheben(b,p[0],p[1],LEARNER); }
   const f=CELL[a.von], t=CELL[a.nach];
   return markAbsetzen(b,f[0],f[1],t[0],t[1],LEARNER);
@@ -743,6 +767,8 @@ function renderBoard(){
   const zaehltS={}, siegS={};
   key(mark.zaehlt).forEach(k=>zaehltS[k]=1);
   key(mark.sieg).forEach(k=>siegS[k]=1);
+  const blassS={};
+  key(mark.blass||[]).forEach(k=>blassS[k]=1);
   const tip   = mark.tippen ? mark.tippen[0]+','+mark.tippen[1] : null;
   const getan = mark.getan  ? mark.getan[0]+','+mark.getan[1]   : null;
   for(let r=3;r>=0;r--) for(let c=0;c<4;c++){
@@ -764,13 +790,15 @@ function renderBoard(){
     const geist = (mark.geist && mark.geist.rc[0]===r && mark.geist.rc[1]===c) ? mark.geist.piece : null;
     if(cell.stack){
       const sw=document.createElement('div'); sw.className='stack-wrap';
-      sw.appendChild(fig(cell.stack.top)); sw.appendChild(fig(cell.stack.bottom));
+      // blass heisst hier: DIESE Figur koennte gleich wegziehen — beim Stapel also
+      // nur die obere, denn nur sie ist beweglich.
+      sw.appendChild(fig(cell.stack.top, !!blassS[k])); sw.appendChild(fig(cell.stack.bottom));
       d.appendChild(sw);
     } else if(cell.piece && geist){
       const sw=document.createElement('div'); sw.className='stack-wrap';
       sw.appendChild(fig(geist,true)); sw.appendChild(fig(cell.piece));
       d.appendChild(sw);
-    } else if(cell.piece){ d.appendChild(fig(cell.piece)); }
+    } else if(cell.piece){ d.appendChild(fig(cell.piece, !!blassS[k])); }
     else if(geist){ d.appendChild(fig(geist,true)); }
     d.onclick=(function(rr,cc){ return function(){ onCell(rr,cc); }; })(r,c);
     el.appendChild(d);
@@ -825,13 +853,20 @@ function textTeile(i, variante){
   const ph=PHASES[i], s=STEPS[ph.si], a=s.aktionen[ph.ai], b=boardFor(i);
   const kopf = (ersteImSchritt(i) ? (s.intro||'') : '')
              + (ersteDerAktion(i) ? (a.vorher||'') : '');
-  if(ph.p==='lesen')  return {html: kopf + (a.text||'')};
-  if(ph.p==='zeigen') return {html: kopf + (a.text||'')};
+  if(ph.p==='lesen') return {html: kopf + (a.text||'')
+    + (variante==='nach' && a.zugDanach ? (a.zugDanach.nachher||'') : '')};
+  if(ph.p==='zeigen'){
+    const m=markZeigen(b,a);
+    return {html: kopf + (a.text||'') + (variante==='nach' && a.zugDanach ? (a.zugDanach.nachher||'') : ''),
+            rechnung: a.rechnung ? m.text : ''};
+  }
 
   if(ph.p==='tap'){
     const p=CELL[a.feld];
     if(variante!=='nach') return {html:kopf, aufgabe:'Tippe '+a.feld+' an.'};
-    return {html: kopf + (a.nachher||''), rechnung: markAnheben(b,p[0],p[1],LEARNER).text};
+    // stumm: das Feld wird nur angetippt, die Rechnung kommt eine Seite spaeter.
+    return {html: kopf + (a.nachher||''),
+            rechnung: a.stumm ? '' : markAnheben(b,p[0],p[1],LEARNER).text};
   }
   if(ph.p==='lift'){
     const f=CELL[a.von], m=markAnheben(b,f[0],f[1],a.actor);
@@ -841,6 +876,7 @@ function textTeile(i, variante){
   }
   if(ph.p==='drop'){
     const f=CELL[a.von], t=CELL[a.nach], m=markAbsetzen(b,f[0],f[1],t[0],t[1],a.actor);
+    if(variante==='nach' && !a.nachher) return {html:'', rechnung: a.roh ? '' : m.text};
     return {html:'', rechnung: a.roh ? '' : m.text,
       aufgabe: a.actor===LEARNER ? 'Jetzt '+a.nach+' antippen.'
                                  : 'Mit Weiter setzt er sie auf '+a.nach+' ab.'};
@@ -850,9 +886,7 @@ function textTeile(i, variante){
     if(variante!=='nach') return {html:'', aufgabe:'Jetzt '+a.nach+' antippen.'};
     return {html:(a.nachher||''), rechnung:m.text};
   }
-  // exec. Bei einSchritt gibt es keine Anhebe-Seite, auf der `vorher` stehen
-  // koennte — der Text bleibt deshalb waehrend des Zuges stehen.
-  return {html: (a.einSchritt ? (kopf||'') : '') + (a.nachher||'')};
+  return {html: a.nachher||''};      // exec
 }
 // Die feste Kastenhoehe wird GEMESSEN, nicht geraten: der laengste Text aller
 // Teilschritte bestimmt sie. So muss nichts scrollen, und das Brett springt trotzdem
@@ -903,7 +937,7 @@ function messeKastenhoehe(){
 function zeigePhase(rueck){
   const ph=PHASES[idx], s=STEPS[ph.si], a=s.aktionen[ph.ai];
   board=boardFor(idx);
-  leerMark(); gezeigt=false; laeuft=false;
+  leerMark(); gezeigt=false; laeuft=false; gezogen=false;
 
   document.getElementById('stepno').textContent='Schritt '+(ph.si+1)+' von '+STEPS.length;
   document.getElementById('barfill').style.width=Math.round(idx/(PHASES.length-1)*100)+'%';
@@ -919,11 +953,11 @@ function zeigePhase(rueck){
   else if(ph.p==='zeigen'){
     const m=markZeigen(board, a);
     setzeMark(m, a.roh); mark.tippen=null;
-    if(a.von && a.nach && !a.roh){
-      const f=CELL[a.von];
-      mark.geist={rc:CELL[a.nach], piece:getMovingPiece(board[f[0]][f[1]])};
-    }
-    setText(tl.html); gezeigt=true;
+    if(a.getan) mark.getan=CELL[a.getan];
+    if(a.blass) mark.blass=a.blass.map(n=>CELL[n]);
+    if(a.geist){ const q=CELL[a.geist.von];
+      mark.geist={rc:CELL[a.geist.auf], piece:getMovingPiece(board[q[0]][q[1]])}; }
+    setText(tl.html, tl.rechnung); gezeigt=true;
   }
   else if(ph.p==='tap'){
     const p=CELL[a.feld], m=markAnheben(board, p[0], p[1], LEARNER);
@@ -955,7 +989,7 @@ function zeigePhase(rueck){
     // rueckwaerts ab. (Befund Fassung 8.)
     board=boardFor(idx-1);
     renderBoard(); groesse(); navStand();
-    spieleAus(a);
+    spieleAus(a, function(){ return boardFor(idx); });
     return;
   }
   renderBoard(); navStand(); groesse();
@@ -967,25 +1001,30 @@ function zeigePhase(rueck){
 //   3 · das Zielfeld blinkt deutlich laenger
 // Beim MITSPIELER laeuft beides langsamer (Walters Auflage): der Lernende muss
 // erst finden, WO etwas geschieht — bei seinem eigenen Zug weiss er es schon.
-function spieleAus(a){
+function spieleAus(z, brettDanach, fertig){
   laeuft=true; navStand();
-  const mit = (a.actor===OPPONENT);
+  const mit = (z.actor===OPPONENT);
   const abKlasse = mit ? 'abflug-mit'  : 'abflug';
   const anKlasse = mit ? 'ankunft-mit' : 'ankunft';
   const abDauer  = mit ? ABFLUG_MIT_MS : ABFLUG_MS;
-  const f=CELL[a.von], t=CELL[a.nach];
+  const anDauer  = mit ? ANKUNFT_MIT_MS : ANKUNFT_MS;
+  const f=CELL[z.von], t=CELL[z.nach];
   const hol=(r,c)=>document.querySelector('#board .cell[data-rc="'+r+','+c+'"]');
   const ab=hol(f[0],f[1]); if(ab) ab.classList.add(abKlasse);
   setTimeout(function(){
-    board=boardFor(idx);                       // jetzt erst zieht die Figur um
+    board=brettDanach();                       // jetzt erst zieht die Figur um
     leerMark();
-    const vier=checkFourInRow(board,'black')||checkFourInRow(board,'red');
-    if(vier) mark.sieg=vier;
     renderBoard(); groesse();
     const an=hol(t[0],t[1]); if(an) an.classList.add(anKlasse);
-    // Ab hier ist der Zug geschehen und die Stellung endgueltig. Die Knoepfe werden
-    // JETZT frei — das lange Blinken am Zielfeld laeuft nebenher aus.
-    laeuft=false; gezeigt=true; navStand();
+    // Der Vierer wird ERST NACH dem blauen Blinken markiert. Sonst ueberdeckt der
+    // Siegrahmen die Ankunft, und der zweite Teil des Zuges ist nicht zu sehen.
+    const vier=checkFourInRow(board,'black')||checkFourInRow(board,'red');
+    if(vier){ document.getElementById('board').setAttribute('data-sieg','wartet');
+      setTimeout(function(){ mark.sieg=vier; renderBoard(); groesse();
+        document.getElementById('board').setAttribute('data-sieg','gezeigt'); }, anDauer); }
+    laeuft=false; gezeigt=true; gezogen=true;
+    if(fertig) fertig();
+    navStand();
   }, abDauer);
 }
 
@@ -995,9 +1034,9 @@ function navStand(){
   const nx=document.getElementById('btn-next');
   let frei;
   if(laeuft) frei=false;
-  else if(ph.p==='lesen') frei=true;
-  else if(ph.p==='zeigen') frei=true;
+  else if(ph.p==='lesen'||ph.p==='zeigen') frei=true;
   else if(ph.p==='exec'||ph.p==='tap'||ph.p==='fail') frei=gezeigt;
+  else if(ph.p==='drop' && !a.nachher) frei=gezogen;
   else frei=(a.actor===OPPONENT);   // beim Lernenden zaehlt sein Antippen, nicht der Knopf
   nx.disabled=!frei;
   nx.textContent=(idx===PHASES.length-1) ? 'Zum Spiel' : 'Weiter';
@@ -1040,6 +1079,13 @@ function onCell(r,c){
       return;
     }
     if(!canDrop(board,f[0],f[1],r,c,LEARNER,PARITY)) return abweichung('canDrop '+a.von+'->'+a.nach);
+    if(!a.nachher){                       // keine eigene Seite: hier zu Ende ziehen
+      if(gezogen) return;
+      spieleAus(a, function(){ return brettNachZug(idx, a); }, function(){
+        const tn=textTeile(idx,'nach'); setText(tn.html, tn.rechnung);
+      });
+      return;
+    }
     idx++; zeigePhase(); return;
   }
 
@@ -1059,6 +1105,16 @@ function onCell(r,c){
 }
 function weiter(){
   if(laeuft) return;
+  const a0=aktionVon(idx), p0=PHASES[idx].p;
+  // Zug, der auf DIESER Seite zu Ende laeuft: erster Weiter-Druck zieht, der
+  // zweite blaettert um.
+  if(a0.zugDanach && (p0==='lesen'||p0==='zeigen') && !gezogen){
+    const z=a0.zugDanach;
+    spieleAus(z, function(){ return brettNachZug(idx, z); }, function(){
+      const tn=textTeile(idx,'nach'); setText(tn.html, tn.rechnung);
+    });
+    return;
+  }
   if(idx===PHASES.length-1){ location.href='index.html'; return; }
   idx++; zeigePhase();
 }
@@ -1175,9 +1231,26 @@ function selfTest(){
     return countRedNeighbors(b,f[0],f[1]) + (getMovingPiece(cell).color==='red'?1:0);
   };
 
+  // Ein Zug, der an einer Lese- oder Zeigeseite haengt, wird genauso geprueft wie
+  // jeder andere — sonst waere ausgerechnet der Siegzug des Mitspielers ungeprueft.
+  function pruefZug(s, z, b, i){
+    if(!z) return;
+    const f=CELL[z.von], t=CELL[z.nach];
+    if(amZug(i)!==z.actor) err.push(s.id+'/'+z.von+': am Zug ist Spieler '+amZug(i)+', der Zug verlangt '+z.actor);
+    if(!canLift(b,f[0],f[1],z.actor,PARITY)) err.push(s.id+': '+z.von+' ist nicht anhebbar');
+    if(!canDrop(b,f[0],f[1],t[0],t[1],z.actor,PARITY)) err.push(s.id+': '+z.von+'->'+z.nach+' ist kein erlaubter Zug');
+    const mD=markAbsetzen(b,f[0],f[1],t[0],t[1],z.actor);
+    if(typeof z.summeAuf==='number' && mD.summe!==z.summeAuf)
+      err.push(s.id+': der Text nennt '+z.summeAuf+', gerechnet sind es '+mD.summe);
+    const c=cloneBoard(b); applyMove(c,f[0],f[1],t[0],t[1],z.actor);
+    const vier=checkFourInRow(c,'black')||checkFourInRow(c,'red');
+    if((z.erwartet==='sieg')!==!!vier) err.push(s.id+': '+z.von+'->'+z.nach+' und die Sieg-Erwartung passen nicht');
+  }
+
   for(let i=0;i<PHASES.length;i++){
     const ph=PHASES[i], s=STEPS[ph.si], a=s.aktionen[ph.ai], b=boardFor(i);
     stapelTreu(b, s.id+'/'+ph.p);
+    if(ph.p==='lesen') pruefZug(s, a.zugDanach, b, i);
 
     // Zahlen, die auf einer 'zeigen'-Seite im Fliesstext stehen.
     if(ph.p==='zeigen'){
@@ -1192,6 +1265,10 @@ function selfTest(){
       });
       // Die Feldliste eines frei gesetzten Bereichs muss es auch geben.
       (a.bereich||[]).forEach(function(n){ if(!CELL[n]) err.push(s.id+': unbekanntes Feld '+n+' im Bereich'); });
+      (a.blass||[]).forEach(function(n){
+        if(!CELL[n]) err.push(s.id+': unbekanntes Feld '+n+' unter blass');
+        else if(!b[CELL[n][0]][CELL[n][1]].piece) err.push(s.id+': '+n+' ist leer und kann nicht blass sein'); });
+      pruefZug(s, a.zugDanach, b, i);
       continue;
     }
 
@@ -1257,6 +1334,29 @@ function selfTest(){
       }
     });
   }
+
+  // 4b · Erspielbarkeit: ein Aufbau aus Zuegen muss aus der Ausgangsstellung
+  //      wirklich entstehen koennen — abwechselnd, jeder Zug erlaubt, und danach
+  //      ist der dran, den der Schritt als `startet` nennt. Eine Stellung, die im
+  //      echten Spiel nicht vorkommt, darf die Anleitung nicht zeigen.
+  STEPS.forEach(function(s){
+    if(!s.aufbau) return;
+    const b=initBoard();
+    let dran=LEARNER;
+    s.aufbau.forEach(function(z, k){
+      const f=CELL[z[0]], t=CELL[z[1]];
+      if(z[2]!==dran) err.push(s.id+': Aufbauzug '+(k+1)+' ('+z[0]+'→'+z[1]+') ist nicht am Zug — '
+        +'so eine Stellung entsteht im Spiel nicht');
+      if(!canLift(b,f[0],f[1],z[2],PARITY)) err.push(s.id+': Aufbauzug '+(k+1)+': '+z[0]+' ist nicht anhebbar');
+      else if(!canDrop(b,f[0],f[1],t[0],t[1],z[2],PARITY)) err.push(s.id+': Aufbauzug '+(k+1)+': '+z[0]+'→'+z[1]+' ist nicht erlaubt');
+      applyMove(b,f[0],f[1],t[0],t[1],z[2]);
+      const vier=checkFourInRow(b,'black')||checkFourInRow(b,'red');
+      const trip=vier?null:applyLockOn(b);
+      dran = trip ? z[2] : (z[2]===LEARNER?OPPONENT:LEARNER);
+    });
+    if((s.startet||LEARNER)!==dran)
+      err.push(s.id+': nach dem Aufbau ist Spieler '+dran+' am Zug, der Schritt sagt '+(s.startet||LEARNER));
+  });
 
   // 5 · Was die Anleitung VERBIETET, muss die Regelschicht auch verbieten.
   //   Die Paritaet trifft Spieler 1 und 2 komplementaer: wird etwas fuer BEIDE

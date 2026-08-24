@@ -79,12 +79,18 @@ const MARKE={lesen:'lesen', zeigen:'zeigen', tap:'antippen', lift:'anheben', dro
       if(a.actor===1) zelle(a.von).onclick(); else nx().onclick();
     } else if(ph.p==='drop'){
       if(a.actor===1) zelle(a.nach).onclick(); else nx().onclick();
+      // Zug ohne eigene Ausfuehrungsseite: er laeuft HIER zu Ende.
+      if(!a.nachher){ await warte(langsam); schnappschuss('ausgeführt'); nx().onclick(); }
     } else if(ph.p==='fail'){
       zelle(a.nach).onclick(); schnappschuss('erklärt'); nx().onclick();
     } else if(ph.p==='exec'){
       await warte(langsam); schnappschuss('ausgeführt');
       if(i<M.PHASES.length-1) nx().onclick();
     } else if(ph.p==='lesen' || ph.p==='zeigen'){
+      if(a.zugDanach){                      // erster Weiter-Druck zieht, hier bleiben
+        nx().onclick(); await warte(langsam+3000);
+        schnappschuss('ausgeführt');
+      }
       if(i<M.PHASES.length-1) nx().onclick();
     }
     await warte(5);
