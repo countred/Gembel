@@ -56,7 +56,7 @@ pruef('A4 kein Browser-Speicher', !/localStorage|sessionStorage|document\.cookie
 pruef('A5 keine KI', !/countred_ai/.test(ohneKommentar));
 pruef('A6 keine externe Quelle', !/https?:\/\/(?!www\.w3\.org)/.test(HTML.replace(/<!--[\s\S]*?-->/g,'')));
 pruef('A7 Fassungsstempel vorhanden', /Anleitung · Fassung \d+ · \d\d\.\d\d\.\d{4}/.test(M.ANL_FASSUNG), M.ANL_FASSUNG);
-pruef('A8 Fassung ist hochgezaehlt (>=11)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=11);
+pruef('A8 Fassung ist hochgezaehlt (>=12)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=12);
 pruef('A9 Wachhund steht in einem EIGENEN Skriptblock',
   /__anlGestartet\s*=\s*false[\s\S]*?<\/script>\s*(<!--[\s\S]*?-->\s*)?<script src="gembel_rules/.test(HTML));
 pruef('A10 ALL8 wird nicht neu deklariert', !/const ALL8/.test(HTML));
@@ -94,16 +94,35 @@ const mitZuege=[];
 M.STEPS.forEach(s=>s.aktionen.forEach(a=>{ if(a.actor===2) mitZuege.push(s.id+':'+a.von+'->'+a.nach); }));
 pruef('A24 genau zwei Mitspielerzuege', mitZuege.length===2, mitZuege.join(', '));
 pruef('A25 Mitspielerzuege an der richtigen Stelle',
-  mitZuege.join(',')==='leerfeld:1D->2C,bonus:3D->3C', mitZuege.join(','));
+  mitZuege.join(',')==='aufloesen:1D->2C,bonus:3D->3C', mitZuege.join(','));
 
 // Welche Aktionen OHNE gruene Erklaerungsmarkierungen laufen, ist eine Absprache,
 // keine Ableitung — also wird sie hier festgehalten und nicht aus dem Modell gelesen.
 // (Lehre aus Fassung 8: sonst prueft der Test nur, was ohnehin dasteht.)
-const rohSoll=['ziel:1D->1B','beginn:1B->4D','leerfeld:1D->2C','bonus:3D->3C'];
+const rohSoll=['ziel:1D->1B','beginn:1B->4D','aufloesen:1D->2C','bonus:3D->3C'];
 const rohIst=[];
 M.STEPS.forEach(s=>s.aktionen.forEach(a=>{ if(a.roh) rohIst.push(s.id+':'+a.von+'->'+a.nach); }));
 pruef('A26 genau die vereinbarten Aktionen sind roh',
   rohIst.join(',')===rohSoll.join(','), rohIst.join(',')||'keine');
+
+// Walters Fassung-12-Auflagen, die man sonst still verlieren kann.
+pruef('A27 kein gruener Balken mehr an der Rechnung', !/border-left:3px solid var\(--gruen\)/.test(HTML));
+pruef('A28 kein wide-Modus mehr', !/classList\.toggle\('wide'/.test(HTML));
+const aufgaben=[];
+for(let i=0;i<M.PHASES.length;i++) for(const v of ['vor','nach']){
+  const a=M.textTeile(i,v); if(a.aufgabe) aufgaben.push(a.aufgabe);
+}
+pruef('A29 blaue Anweisungen tragen keine Fettung', !aufgaben.some(x=>/<b>/.test(x)),
+  (aufgaben.find(x=>/<b>/.test(x))||'').slice(0,60));
+pruef('A30 "nicht" ist in den Rechnungen fett', (function(){
+  const B=M.initBoard();
+  return /<b>nicht<\/b> anheben/.test(M.markAnheben(B,1,2,1).text);      // 3C: gerade
+})());
+// Der Kasten ist ueberall gleich hoch — also darf keine Seite ausgenommen sein.
+pruef('A31 Kastenhoehe misst alle Seiten', !/if\(STEPS\[PHASES\[i\]\.si\]\.nurText\) continue;/.test(HTML));
+// Genau zwei Mitspielerzuege, beide in EINEM Schritt.
+pruef('A32 Mitspielerzuege laufen auf einen Weiter-Druck',
+  M.STEPS.every(s=>s.aktionen.every(a=>a.actor!==2 || a.einSchritt===true)));
 
 // ═══════════════════════════════════════════════════════════════════
 block('B · Durchklick durch alle Teilschritte');
@@ -125,7 +144,7 @@ async function durchklick(){
   await warte(60);
   pruef('B1 Seite ist gestartet (kein Wachhund-Alarm)',
     d.getElementById('meldung').style.display!=='block', d.getElementById('meldung').textContent.slice(0,90));
-  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 11/.test(d.getElementById('fassung').textContent));
+  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 12/.test(d.getElementById('fassung').textContent));
 
   const langsam=Math.max(M.ANKUNFT_MIT_MS, M.ANKUNFT_MS)+200;
   let gesehen=0, sieger=0;
@@ -139,7 +158,7 @@ async function durchklick(){
       d.getElementById('stepno').textContent==='Schritt '+(ph.si+1)+' von 9');
 
     // Roh-Aktionen zeigen KEINE gruenen Erklaerungsmarkierungen.
-    if(a.roh && (ph.p==='lift'||ph.p==='drop')){
+    if(a.roh && (ph.p==='lift'||ph.p==='drop'||(ph.p==='exec'&&a.einSchritt))){
       pruef('B· roh: keine gruenen Felder ('+wo+')', d.querySelectorAll('#board .cell.zaehlt').length===0);
       pruef('B· roh: kein Bereichsrahmen ('+wo+')', d.getElementById('bereich').style.display==='none');
       pruef('B· roh: keine Rechnung im Text ('+wo+')', !d.querySelector('#ltext .rechnung'));
@@ -196,6 +215,13 @@ async function durchklick(){
       else pruef('B· kein Siegrahmen ohne Sieg ('+wo+')', vier===0);
       if(a.nachher) pruef('B· Schlusstext erscheint ('+wo+')', txt().length>10);
       pruef('B· Weiter frei nach dem Zug ('+wo+')', next().disabled===false);
+      if(i<M.PHASES.length-1) next().onclick();
+    }
+    else if(ph.p==='zeigen'){
+      pruef('B· Zeigeseite hat Text ('+wo+')', txt().length>20);
+      pruef('B· Zeigeseite hat einen Bereichsrahmen ('+wo+')',
+        d.getElementById('bereich').style.display==='block');
+      pruef('B· Zeigeseite verlangt kein Tippen ('+wo+')', next().disabled===false);
       if(i<M.PHASES.length-1) next().onclick();
     }
     else if(ph.p==='lesen'){

@@ -47,16 +47,19 @@ function schnappschuss(marke){
   for(let i=1;i<teile.length;i+=2){
     if(teile[i]==='RECHNUNG') rech=teile[i+1].trim(); else auf=teile[i+1].trim();
   }
-  const dick=[...d.querySelectorAll('#board .cell.zaehlt')].map(c=>c.title).sort();
-  const blink=[...d.querySelectorAll('#board .cell.tippen')]
+  // Auf reinen Textseiten ist das Brett ausgeblendet — die Zellen stehen zwar noch
+  // im DOM, gehoeren aber nicht ins Protokoll.
+  const ohneBrett=d.getElementById('board-area').style.display==='none';
+  const dick=ohneBrett?[]:[...d.querySelectorAll('#board .cell.zaehlt')].map(c=>c.title).sort();
+  const blink=ohneBrett?[]:[...d.querySelectorAll('#board .cell.tippen')]
     .map(c=>c.title+(c.classList.contains('zaehlt')?' (grün)':' (blau)'));
-  const getan=[...d.querySelectorAll('#board .cell.getan')].map(c=>c.title);
-  const sieg =[...d.querySelectorAll('#board .cell.sieg')].map(c=>c.title);
-  const sperr=[...d.querySelectorAll('#board .cell.gesperrt')].map(c=>c.title).sort();
+  const getan=ohneBrett?[]:[...d.querySelectorAll('#board .cell.getan')].map(c=>c.title);
+  const sieg =ohneBrett?[]:[...d.querySelectorAll('#board .cell.sieg')].map(c=>c.title);
+  const sperr=ohneBrett?[]:[...d.querySelectorAll('#board .cell.gesperrt')].map(c=>c.title).sort();
   out.push({nr,titel,marke,erz,rech,auf,dick,blink,getan,sieg,sperr});
 }
 
-const MARKE={lesen:'lesen', tap:'antippen', lift:'anheben', drop:'absetzen',
+const MARKE={lesen:'lesen', zeigen:'zeigen', tap:'antippen', lift:'anheben', drop:'absetzen',
              fail:'abgelehnt', exec:'ausgeführt'};
 
 (async()=>{
@@ -81,7 +84,7 @@ const MARKE={lesen:'lesen', tap:'antippen', lift:'anheben', drop:'absetzen',
     } else if(ph.p==='exec'){
       await warte(langsam); schnappschuss('ausgeführt');
       if(i<M.PHASES.length-1) nx().onclick();
-    } else if(ph.p==='lesen'){
+    } else if(ph.p==='lesen' || ph.p==='zeigen'){
       if(i<M.PHASES.length-1) nx().onclick();
     }
     await warte(5);
@@ -99,12 +102,12 @@ function schreibe(){
   L.push('> der Markierungen, die dabei auf dem Brett stehen.','>');
   L.push('> **Änderungen gehören in `anleitung.html`, nicht hierher.** Danach `node texte.js` laufen lassen.','');
   L.push('---','','## Aufbau','');
-  L.push('Neun Schritte. Ein Zug ist in **drei Teilschritte** zerlegt — anheben, absetzen,');
+  L.push('Neun Schritte. Ein eigener Zug ist in **drei Teilschritte** zerlegt — anheben, absetzen,');
   L.push('ausführen. Der Lernende ist durchgehend **Spieler 1 mit ungerader Parität**;');
   L.push('Schritt 9 sagt ausdrücklich, dass es im Spiel gespiegelt sein kann.','');
-  L.push('Der Mitspieler zieht nur zweimal: in Schritt 6, damit ein leeres Feld entsteht,');
+  L.push('Der Mitspieler zieht nur zweimal: am Ende von Schritt 5, damit ein leeres Feld entsteht,');
   L.push('und am Ende von Schritt 8, wo er den unklugen Bonuszug bestraft. Beide Male läuft');
-  L.push('sein Zug **langsamer** ab als ein eigener.','');
+  L.push('sein Zug **langsamer** ab — und auf **einen** Weiter-Druck, nicht in Teilschritten.','');
   L.push('Im Kasten über dem Brett stehen bis zu drei Textsorten:','');
   L.push('| Sorte | wozu |','|---|---|');
   L.push('| **Erklärung** | führt den Schritt oder die Aktion ein |');

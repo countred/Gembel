@@ -12,8 +12,7 @@ const api=new Function('window','document','console',
 
 let maxZeichen=0, wo='';
 for(let i=0;i<api.PHASES.length;i++){
-  // Reine Textschritte bleiben aussen vor — sie duerfen die Seite fuellen.
-  if(api.STEPS[api.PHASES[i].si].nurText) continue;
+  // Fassung 12: ALLE Seiten zaehlen mit — der Kasten soll ueberall gleich hoch sein.
   for(const v of ['vor','nach']){
     const t=api.textTeile(i,v);
     const n=((t.html||'')+(t.rechnung||'')+(t.aufgabe||'')).replace(/<[^>]+>/g,'').length;
