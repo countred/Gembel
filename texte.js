@@ -1,18 +1,28 @@
 // Sammelt ALLE Texte, die ein Lernender in anleitung.html zu sehen bekommt —
 // durch Bedienen der Seite, nicht durch Abschreiben. Damit kann die Textfassung
 // nicht von der Auslieferung abweichen.
+//
+// Fassung 11: die Teilschritte werden nicht mehr von Hand aufgezaehlt, sondern
+// aus PHASES gelesen und generisch bedient. Ein neuer Schritt in anleitung.html
+// landet dadurch automatisch in ANLEITUNG_TEXTE.md — vorher musste man diese
+// Datei mitpflegen und konnte es vergessen.
 const fs=require('fs'); const {JSDOM}=require('jsdom');
 const D=__dirname;
 const rules=fs.readFileSync(D+'/gembel_rules.js','utf8');
 const htmlSrc=fs.readFileSync(D+'/anleitung.html','utf8');
 const html=htmlSrc.replace(/<script src="gembel_rules\.js[^>]*><\/script>/,'<script>'+rules+'</script>');
+
+// Modell ohne DOM laden — daraus kommt die Phasenliste.
+const code=[...htmlSrc.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]).pop();
+const M=new Function('window','document','console',
+  'return (function(){'+rules+'\n'+code+'\nreturn {PHASES,STEPS};})()')(
+  {addEventListener(){}},{getElementById:()=>null,addEventListener(){}},{log(){},error(){}});
+
 const dom=new JSDOM(html,{runScripts:'dangerously',pretendToBeVisual:true});
 const d=dom.window.document;
 const zelle=n=>[...d.querySelectorAll('#board .cell')].find(x=>x.title===n);
-const tap=n=>zelle(n).onclick();
 const nx=()=>d.getElementById('btn-next');
 const warte=ms=>new Promise(r=>setTimeout(r,ms));
-const nachZug=()=>warte(2000);
 
 function plain(h){
   return String(h)
@@ -41,40 +51,41 @@ function schnappschuss(marke){
   const blink=[...d.querySelectorAll('#board .cell.tippen')]
     .map(c=>c.title+(c.classList.contains('zaehlt')?' (grün)':' (blau)'));
   const getan=[...d.querySelectorAll('#board .cell.getan')].map(c=>c.title);
-  out.push({nr,titel,marke,erz,rech,auf,dick,blink,getan});
+  const sieg =[...d.querySelectorAll('#board .cell.sieg')].map(c=>c.title);
+  const sperr=[...d.querySelectorAll('#board .cell.gesperrt')].map(c=>c.title).sort();
+  out.push({nr,titel,marke,erz,rech,auf,dick,blink,getan,sieg,sperr});
 }
 
+const MARKE={lesen:'lesen', tap:'antippen', lift:'anheben', drop:'absetzen',
+             fail:'abgelehnt', exec:'ausgeführt'};
+
 (async()=>{
-  // Schritt 1
-  schnappschuss('abheben'); tap('1D');
-  schnappschuss('ablegen'); tap('1B'); await nachZug();
-  schnappschuss('ausgeführt'); nx().onclick();
-  // Schritt 2
-  schnappschuss('Aufgabe'); tap('2C'); schnappschuss('angesehen'); nx().onclick();
-  // Schritt 3
-  schnappschuss('Aufgabe'); tap('2B'); schnappschuss('angetippt'); nx().onclick();
-  // Schritt 4
-  schnappschuss('Aufgabe'); tap('1B'); schnappschuss('angetippt'); nx().onclick();
-  // Schritt 5
-  schnappschuss('abheben'); tap('1B'); schnappschuss('ablegen'); tap('2B'); await nachZug();
-  schnappschuss('ausgeführt'); nx().onclick();
-  // Schritt 6 (Mitspieler)
-  schnappschuss('abheben'); nx().onclick(); schnappschuss('ablegen'); nx().onclick(); await nachZug();
-  schnappschuss('ausgeführt'); nx().onclick();
-  // Schritt 7
-  schnappschuss('abheben'); tap('1C'); schnappschuss('ablegen'); tap('1D'); await nachZug();
-  schnappschuss('ausgeführt'); nx().onclick();
-  // Schritt 8 (Mitspieler)
-  schnappschuss('abheben'); nx().onclick(); schnappschuss('ablegen'); nx().onclick(); await nachZug();
-  schnappschuss('ausgeführt'); nx().onclick();
-  // Schritt 9
-  schnappschuss('abheben'); tap('3C'); schnappschuss('ablegen'); tap('3B'); await nachZug();
-  schnappschuss('ausgeführt'); nx().onclick();
-  // Schritt 10
-  schnappschuss('abheben'); tap('2B'); schnappschuss('ablegen'); tap('1C'); await nachZug();
-  schnappschuss('ausgeführt'); nx().onclick();
-  // Schritt 11
-  schnappschuss('Anhang');
+  await warte(60);
+  if(d.getElementById('meldung').style.display==='block'){
+    console.error('AUSFALL: '+d.getElementById('meldung').textContent.slice(0,200)); process.exit(1);
+  }
+  const langsam=3000;
+  for(let i=0;i<M.PHASES.length;i++){
+    const ph=M.PHASES[i], s=M.STEPS[ph.si], a=s.aktionen[ph.ai];
+    // Bei 'exec' erst NACH der Animation schauen — davor stuende die Stellung
+    // vor dem Zug im Protokoll, und der Teilschritt kaeme doppelt vor.
+    if(ph.p!=='exec') schnappschuss(MARKE[ph.p]);
+    if(ph.p==='tap'){
+      zelle(a.feld).onclick(); schnappschuss('erklärt'); nx().onclick();
+    } else if(ph.p==='lift'){
+      if(a.actor===1) zelle(a.von).onclick(); else nx().onclick();
+    } else if(ph.p==='drop'){
+      if(a.actor===1) zelle(a.nach).onclick(); else nx().onclick();
+    } else if(ph.p==='fail'){
+      zelle(a.nach).onclick(); schnappschuss('erklärt'); nx().onclick();
+    } else if(ph.p==='exec'){
+      await warte(langsam); schnappschuss('ausgeführt');
+      if(i<M.PHASES.length-1) nx().onclick();
+    } else if(ph.p==='lesen'){
+      if(i<M.PHASES.length-1) nx().onclick();
+    }
+    await warte(5);
+  }
   schreibe();
 })().catch(e=>{ console.error('AUSNAHME:',e.message); process.exit(1); });
 
@@ -88,13 +99,15 @@ function schreibe(){
   L.push('> der Markierungen, die dabei auf dem Brett stehen.','>');
   L.push('> **Änderungen gehören in `anleitung.html`, nicht hierher.** Danach `node texte.js` laufen lassen.','');
   L.push('---','','## Aufbau','');
-  L.push('Elf Schritte. Jeder Zug ist in **drei Teilschritte** zerlegt — abheben, ablegen, ausführen —');
-  L.push('und wird einzeln dargestellt, auch beim Mitspieler. Der Lernende ist durchgehend');
-  L.push('**Spieler 1 mit ungerader Parität**; Schritt 11 sagt ausdrücklich, dass es im Spiel');
-  L.push('gespiegelt sein kann.','');
+  L.push('Neun Schritte. Ein Zug ist in **drei Teilschritte** zerlegt — anheben, absetzen,');
+  L.push('ausführen. Der Lernende ist durchgehend **Spieler 1 mit ungerader Parität**;');
+  L.push('Schritt 9 sagt ausdrücklich, dass es im Spiel gespiegelt sein kann.','');
+  L.push('Der Mitspieler zieht nur zweimal: in Schritt 6, damit ein leeres Feld entsteht,');
+  L.push('und am Ende von Schritt 8, wo er den unklugen Bonuszug bestraft. Beide Male läuft');
+  L.push('sein Zug **langsamer** ab als ein eigener.','');
   L.push('Im Kasten über dem Brett stehen bis zu drei Textsorten:','');
   L.push('| Sorte | wozu |','|---|---|');
-  L.push('| **Erklärung** | führt den Schritt ein |');
+  L.push('| **Erklärung** | führt den Schritt oder die Aktion ein |');
   L.push('| **Rechnung** | grün abgesetzt: was gezählt wird und was herauskommt |');
   L.push('| **Aufgabe** | blau: was jetzt zu tun ist |','');
   L.push('Die Markierungen auf dem Brett sind mit aufgeführt:','');
@@ -102,7 +115,11 @@ function schreibe(){
   L.push('| dünner grüner Rahmen | der Bereich, in dem gerechnet wird |');
   L.push('| **dick** | auf diesem Feld stehen (oder landen) zählende rote Figuren |');
   L.push('| **blinkt** | hier handeln — grün, wenn das Feld selbst zählende rote trägt, sonst blau |');
-  L.push('| **blau** | hier ist gehandelt worden |','');
+  L.push('| **blau** | hier ist gehandelt worden |');
+  L.push('| **gesperrt** | Feld eines Dreiers (oranger Rahmen) |');
+  L.push('| **Sieg** | die vier Felder der Siegspalte |','');
+  L.push('In den Schritten 1 und 2 sowie bei den Zügen des Mitspielers fehlen die grünen');
+  L.push('Markierungen bewusst: dort wird noch nichts gerechnet.','');
   L.push('---','','## Die Teilschritte','');
   let letzte='';
   for(const s of out){
@@ -115,12 +132,14 @@ function schreibe(){
     if(s.dick.length)  m.push('dick: '+s.dick.join(', '));
     if(s.blink.length) m.push('blinkt: '+s.blink.join(', '));
     if(s.getan.length) m.push('blau: '+s.getan.join(', '));
+    if(s.sperr.length) m.push('gesperrt: '+s.sperr.join(', '));
+    if(s.sieg.length)  m.push('Sieg: '+s.sieg.join(', '));
     if(m.length) L.push('*Brett:*  '+m.join(' · '),'');
   }
   L.push('---','','## Bedienelemente','');
   L.push('| Element | Text |','|---|---|');
   L.push('| Kopfzeile links | `COUNT · RED` |');
-  L.push('| Kopfzeile rechts | `Schritt N von 11` |');
+  L.push('| Kopfzeile rechts | `Schritt N von 9` |');
   L.push('| unter dem Fortschrittsbalken | `'+fassung+'` |');
   L.push('| Knopf links | `Zurück` — einen Teilschritt zurück |');
   L.push('| Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |','');

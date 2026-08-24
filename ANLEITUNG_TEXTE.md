@@ -1,6 +1,6 @@
 # Count Red — Interaktive Spielanleitung: alle Texte
 
-**Quelle: `anleitung.html` · Anleitung · Fassung 10 · 21.08.2026**
+**Quelle: `anleitung.html` · Anleitung · Fassung 11 · 24.08.2026**
 
 > Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`
 > im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt
@@ -12,16 +12,19 @@
 
 ## Aufbau
 
-Elf Schritte. Jeder Zug ist in **drei Teilschritte** zerlegt — abheben, ablegen, ausführen —
-und wird einzeln dargestellt, auch beim Mitspieler. Der Lernende ist durchgehend
-**Spieler 1 mit ungerader Parität**; Schritt 11 sagt ausdrücklich, dass es im Spiel
-gespiegelt sein kann.
+Neun Schritte. Ein Zug ist in **drei Teilschritte** zerlegt — anheben, absetzen,
+ausführen. Der Lernende ist durchgehend **Spieler 1 mit ungerader Parität**;
+Schritt 9 sagt ausdrücklich, dass es im Spiel gespiegelt sein kann.
+
+Der Mitspieler zieht nur zweimal: in Schritt 6, damit ein leeres Feld entsteht,
+und am Ende von Schritt 8, wo er den unklugen Bonuszug bestraft. Beide Male läuft
+sein Zug **langsamer** ab als ein eigener.
 
 Im Kasten über dem Brett stehen bis zu drei Textsorten:
 
 | Sorte | wozu |
 |---|---|
-| **Erklärung** | führt den Schritt ein |
+| **Erklärung** | führt den Schritt oder die Aktion ein |
 | **Rechnung** | grün abgesetzt: was gezählt wird und was herauskommt |
 | **Aufgabe** | blau: was jetzt zu tun ist |
 
@@ -33,245 +36,300 @@ Die Markierungen auf dem Brett sind mit aufgeführt:
 | **dick** | auf diesem Feld stehen (oder landen) zählende rote Figuren |
 | **blinkt** | hier handeln — grün, wenn das Feld selbst zählende rote trägt, sonst blau |
 | **blau** | hier ist gehandelt worden |
+| **gesperrt** | Feld eines Dreiers (oranger Rahmen) |
+| **Sieg** | die vier Felder der Siegspalte |
+
+In den Schritten 1 und 2 sowie bei den Zügen des Mitspielers fehlen die grünen
+Markierungen bewusst: dort wird noch nichts gerechnet.
 
 ---
 
 ## Die Teilschritte
 
 
-### Schritt 1 von 11 — Das Ziel
+### Schritt 1 von 9 — Spielziel
 
-**·  abheben**
+**·  anheben**
 
-> Gewonnen hat, wer **vier gleichfarbige Figuren in einer Spalte** stehen hat — A, B, C oder D.
->
-> In Spalte B stehen schon drei schwarze. Der orange Rahmen heißt: diese drei sind **gesperrt**, dazu gleich mehr. Oben auf 1B ist noch Platz.
->
-> Auf 1D steht eine schwarze Figur. **Es gibt keine Zugweite und keine Zugrichtung** — jede Figur darf auf jedes Feld, auch über andere hinweg.
-
-*Rechnung:*  Der grüne Bereich und die dicken Rahmen zeigen schon, worauf es ankommt. **Warum** ausgerechnet diese Figur ziehen darf, kommt in zwei Schritten.
+> Gewonnen hat, wer die **vierte gleichfarbige Figur in eine Spalte** ziehen kann — A, B, C oder D.
 
 *Aufgabe:*  `Tippe **1D** an.`
 
-*Brett:*  dick: 1C, 2C, 2D · blinkt: 1D (blau)
+*Brett:*  blinkt: 1D (blau) · gesperrt: 2B, 3B, 4B
 
-**·  ablegen**
-
-*Rechnung:*  Auch hier: grün ist, was zählt. Die Rechnung dazu gleich.
+**·  absetzen**
 
 *Aufgabe:*  `Jetzt **1B** antippen.`
 
-*Brett:*  dick: 1A, 1C, 2C · blinkt: 1B (blau) · blau: 1D
+*Brett:*  blinkt: 1B (blau) · blau: 1D · gesperrt: 2B, 3B, 4B
 
 **·  ausgeführt**
 
-> Vier Schwarze in Spalte B — Partie vorbei.
+> Vier schwarze Figuren in Spalte B. Du hast gewonnen.
+
+*Brett:*  Sieg: 1B, 2B, 3B, 4B
+
+
+### Schritt 2 von 9 — Spielbeginn
+
+**·  anheben**
+
+> Die Punktezahl oben auf einem Feld (3, 2, 1 oder 0 Punkte) und die Zahl auf der Figur (3, 2, 1 oder 0) auf diesem Feld müssen übereinstimmen. Beispiel: Die vier Figuren mit einer **2** können nur auf den leeren Feldern 2A, 2B, 2C oder 2D abgesetzt werden.
 >
-> Die Farbe war dabei egal: **die Figuren gehören keinem Spieler**. Wer die vierte setzt, gewinnt — auch wenn ein anderer die drei darunter gebaut hat.
+> Grundsätzliches, bevor du die Zugerlaubnis kennenlernst: Du darfst jede Figur bewegen, rote **und** schwarze. Du darfst überall hinziehen. Es gibt keine vorgeschriebene Richtung. Es gibt keine Beschränkung der Zugweite. Du kannst Stapel bilden und wieder auflösen. Nur Zweierstapel, ein Top auf einer Basis. Beim Top spielen auch die Punkte und die Zahl auf der Figur keine Rolle.
+
+*Aufgabe:*  `Tippe **1B** an.`
+
+*Brett:*  blinkt: 1B (blau)
+
+**·  absetzen**
+
+*Aufgabe:*  `Jetzt **4D** antippen.`
+
+*Brett:*  blinkt: 4D (blau) · blau: 1B
+
+**·  ausgeführt**
+
+> Du hast einen Stapel auf 4D gebildet.
+
+
+### Schritt 3 von 9 — Zugerlaubnis
+
+**·  antippen**
+
+> Wer welche Figur ziehen darf, du oder dein Mitspieler, entscheidet allein die Parität: Du darfst eine Figur **anheben**, wenn die Summe aller **roten** Nachbarfiguren **ungerade** ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.
 >
-> Bleibt die Frage, warum ausgerechnet _diese_ Figur ziehen durfte. Das ist die eigentliche Regel des Spiels.
-
-
-### Schritt 2 von 11 — Brett und Figuren
-
-**·  Aufgabe**
-
-> Das ist die Ausgangsstellung: 16 Felder, 16 Figuren, alles voll.
->
-> Die Punkte oben in jedem Feld sind sein **Wert**: Zeile 1 zählt 3, Zeile 2 zählt 2, Zeile 3 zählt 1, Zeile 4 zählt 0.
->
-> Jede Figur trägt eine Zahl — den Wert des Feldes, auf dem sie zu Beginn steht. Die Zahl bleibt ihr, auch wenn sie sich bewegt.
-
-*Aufgabe:*  `Tippe 2C an, um die Figur anzusehen.`
-
-**·  angesehen**
-
-> Rot mit der 2, auf einem Feld, das 2 Punkte wert ist.
->
-> Auf die roten Figuren kommt es an — nach ihnen ist das Spiel benannt.
-
-*Rechnung:*  2C: Figur **rot** mit der **2**, auf einem Feld, das **2** Punkte wert ist.
-
-*Brett:*  blau: 2C
-
-
-### Schritt 3 von 11 — Wer darf ziehen — die Parität
-
-**·  Aufgabe**
-
-> Das ist die Regel, an der alles hängt. Sie entscheidet nicht, _wohin_ eine Figur darf, sondern **ob du sie überhaupt anfassen darfst**.
->
-> Zähle die **roten** Figuren auf den Nachbarfeldern; ist die Figur selbst rot, zähle sie mit. Einer der beiden Spieler zieht bei **gerader** Summe, der andere bei **ungerader**. Du bist der **ungerade**.
-
-*Aufgabe:*  `Tippe 2B an. Das geht schief — sieh dir an, warum.`
-
-*Brett:*  dick: 1B, 2A, 2C, 3B · blinkt: 2B (blau)
-
-**·  angetippt**
-
-> Vier — gerade. Die gehört dem anderen, nicht dir.
->
-> Genau hier bleiben Neulinge hängen: die Figur bewegt sich einfach nicht, und ohne die Rechnung sieht das nach einem Fehler aus.
-
-*Rechnung:*  Der grüne Bereich zeigt, worauf es jetzt ankommt: **2B und seine Nachbarn**; alles außerhalb spielt gerade keine Rolle. Dick umrandet sind die Felder mit roten Figuren — dort stehen zusammen **4**; die Figur selbst ist schwarz: **+0** → 4 = gerade. Du brauchst **ungerade**.
-
-*Brett:*  dick: 1B, 2A, 2C, 3B
-
-
-### Schritt 4 von 11 — Eine, die dir gehört
-
-**·  Aufgabe**
-
-> Dieselbe Rechnung, ein anderes Feld.
->
-> Der dünne grüne Rahmen zeigt den Bereich, der zählt. Die dick umrandeten Felder darin sind die, auf die es ankommt — dort stehen rote Figuren.
-
-*Aufgabe:*  `Tippe 1B an.`
-
-*Brett:*  dick: 1B, 2A, 2C · blinkt: 1B (grün)
-
-**·  angetippt**
-
-> Drei — ungerade. Diese Figur darfst du nehmen.
->
-> Die Parität wechselt mit jedem Zug am ganzen Brett. Wer eben noch fest saß, ist zwei Züge später frei.
-
-*Rechnung:*  Der grüne Bereich zeigt, worauf es jetzt ankommt: **1B und seine Nachbarn**; alles außerhalb spielt gerade keine Rolle. Dick umrandet sind die Felder mit roten Figuren — dort stehen zusammen **2**, und die Figur selbst ist rot: **+1** → 3 = ungerade. Du brauchst **ungerade**.
-
-*Brett:*  dick: 1B, 2A, 2C · blau: 1B
-
-
-### Schritt 5 von 11 — Stapeln
-
-**·  abheben**
-
-> Zu Beginn ist jedes Feld besetzt — es gibt gar kein leeres Ziel. Bleibt nur eines: eine Figur **auf eine andere stellen**.
->
-> Beim Stapeln gilt eine andere Zählung. Ein Stapel fasst höchstens zwei Figuren.
-
-*Rechnung:*  Der grüne Bereich zeigt, worauf es jetzt ankommt: **1B und seine Nachbarn**; alles außerhalb spielt gerade keine Rolle. Dick umrandet sind die Felder mit roten Figuren — dort stehen zusammen **2**, und die Figur selbst ist rot: **+1** → 3 = ungerade. Du brauchst **ungerade**.
+> Vier Beispiele, jedes wieder von der Ausgangsstellung. Der dünne grüne Rahmen zeigt den Bereich, in dem gezählt wird; die dick umrandeten Felder darin tragen rote Figuren.
 
 *Aufgabe:*  `Tippe **1B** an.`
 
 *Brett:*  dick: 1B, 2A, 2C · blinkt: 1B (grün)
 
-**·  ablegen**
+**·  erklärt**
 
-*Rechnung:*  Beim Stapeln zählen **nur die beiden Figuren im neuen Stapel** — keine Nachbarn. Deshalb ist nur 2B umrandet; die blasse Figur ist die, die du trägst. Rote darin: 1 = ungerade. Du brauchst **ungerade**.
-
-*Aufgabe:*  `Jetzt **2B** antippen.`
-
-*Brett:*  dick: 2B · blinkt: 2B (grün) · blau: 1B
-
-**·  ausgeführt**
-
-> Rot auf Schwarz: eine rote im Stapel, ungerade — dein Zug.
+> Wer welche Figur ziehen darf, du oder dein Mitspieler, entscheidet allein die Parität: Du darfst eine Figur **anheben**, wenn die Summe aller **roten** Nachbarfiguren **ungerade** ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.
 >
-> Der Platz, den du verlassen hast, ist jetzt frei. Von hier an gibt es leere Felder, und damit eine zweite Art zu ziehen.
+> Vier Beispiele, jedes wieder von der Ausgangsstellung. Der dünne grüne Rahmen zeigt den Bereich, in dem gezählt wird; die dick umrandeten Felder darin tragen rote Figuren.
 
+*Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren und der Zugfigur: 3 = ungerade
 
-### Schritt 6 von 11 — Der Mitspieler zieht
+*Brett:*  dick: 1B, 2A, 2C · blau: 1B
 
-**·  abheben**
+**·  antippen**
 
-> Jetzt ist dein Mitspieler dran — der **gerade** Spieler. Er rechnet genauso, nur andersherum.
->
-> Geh seinen Zug mit **Weiter** Schritt für Schritt durch.
+*Aufgabe:*  `Tippe **3A** an.`
 
-*Rechnung:*  Der grüne Bereich zeigt, worauf es jetzt ankommt: **1D und seine Nachbarn**; alles außerhalb spielt gerade keine Rolle. Dick umrandet sind die Felder mit roten Figuren — dort stehen zusammen **1**, und die Figur selbst ist rot: **+1** → 2 = gerade. Er braucht **gerade**.
+*Brett:*  dick: 2A, 3B, 4A · blinkt: 3A (blau)
 
-*Aufgabe:*  `Mit **Weiter** hebt er 1D ab.`
+**·  erklärt**
+
+*Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren: 3 = ungerade
+
+*Brett:*  dick: 2A, 3B, 4A · blau: 3A
+
+**·  antippen**
+
+*Aufgabe:*  `Tippe **3C** an.`
+
+*Brett:*  dick: 2C, 3B, 3D, 4C · blinkt: 3C (blau)
+
+**·  erklärt**
+
+*Rechnung:*  Du darfst nicht anheben. Summe der roten Nachbarfiguren: 4 = gerade
+
+*Brett:*  dick: 2C, 3B, 3D, 4C
+
+**·  antippen**
+
+*Aufgabe:*  `Tippe **1D** an.`
 
 *Brett:*  dick: 1D, 2C · blinkt: 1D (grün)
 
-**·  ablegen**
+**·  erklärt**
 
-*Rechnung:*  Punktzahl passt (**3** auf ein 3-Punkte-Feld). Der grüne Bereich ist jetzt **1B mit seinen Nachbarn**; das Feld, von dem die Figur kommt, zählt nicht mit. Dick umrandet zusammen **3** rote, und die blasse Figur, die dort landen soll, ist rot: **+1** → 4 = gerade. Er braucht **gerade**.
+*Rechnung:*  Du darfst nicht anheben. Summe der roten Nachbarfiguren und der Zugfigur: 2 = gerade
 
-*Aufgabe:*  `Mit **Weiter** stellt er sie auf 1B.`
+*Brett:*  dick: 1D, 2C
 
-*Brett:*  dick: 1B, 2A, 2B, 2C · blinkt: 1B (grün) · blau: 1D
+**·  lesen**
+
+> Die Zugerlaubnis musst du genauso auch beim Absetzen der Figur beachten: Du darfst die Figur **absetzen**, wenn die Summe aller **roten** Nachbarfiguren **nach** dem Absetzen **ungerade** ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.
+>
+> Noch sind aber alle Felder belegt, also lernst du zuvor die Zugerlaubnis beim Stapel kennen …
+
+
+### Schritt 4 von 9 — Stapel bilden
+
+**·  anheben**
+
+> Beim Stapeln zählst du keine Nachbarfiguren, sondern nur die roten Figuren im Stapel. Du darfst eine Figur auf eine andere setzen, wenn danach die Summe der **roten** Figuren im Stapel **ungerade** ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.
+>
+> Vier Beispiele, jedes wieder von der Ausgangsstellung.
+
+*Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren und der Zugfigur: 3 = ungerade
+
+*Aufgabe:*  `Tippe **1B** an.`
+
+*Brett:*  dick: 1B, 2A, 2C · blinkt: 1B (grün)
+
+**·  absetzen**
+
+*Rechnung:*  Du darfst stapeln. Summe der roten Figuren im Stapel: 1 = ungerade
+
+*Aufgabe:*  `Jetzt **4D** antippen.`
+
+*Brett:*  dick: 4D · blinkt: 4D (grün) · blau: 1B
 
 **·  ausgeführt**
 
-> Zwei Rechnungen, beide gerade — für ihn also erlaubt.
+**·  anheben**
+
+*Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren: 3 = ungerade
+
+*Aufgabe:*  `Tippe **3A** an.`
+
+*Brett:*  dick: 2A, 3B, 4A · blinkt: 3A (blau)
+
+**·  absetzen**
+
+*Rechnung:*  Du darfst stapeln. Summe der roten Figuren im Stapel: 1 = ungerade
+
+*Aufgabe:*  `Jetzt **3D** antippen.`
+
+*Brett:*  dick: 3D · blinkt: 3D (grün) · blau: 3A
+
+**·  ausgeführt**
+
+**·  anheben**
+
+*Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren und der Zugfigur: 3 = ungerade
+
+*Aufgabe:*  `Tippe **1B** an.`
+
+*Brett:*  dick: 1B, 2A, 2C · blinkt: 1B (grün)
+
+**·  abgelehnt**
+
+*Aufgabe:*  `Jetzt **4C** antippen.`
+
+*Brett:*  dick: 4C · blinkt: 4C (grün) · blau: 1B
+
+**·  erklärt**
+
+*Rechnung:*  Du darfst nicht stapeln. Summe der roten Figuren im Stapel: 2 = gerade
+
+*Brett:*  dick: 4C
+
+**·  anheben**
+
+*Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren: 3 = ungerade
+
+*Aufgabe:*  `Tippe **3A** an.`
+
+*Brett:*  dick: 2A, 3B, 4A · blinkt: 3A (blau)
+
+**·  abgelehnt**
+
+*Aufgabe:*  `Jetzt **3C** antippen.`
+
+*Brett:*  blinkt: 3C (blau) · blau: 3A
+
+**·  erklärt**
+
+*Rechnung:*  Du darfst nicht stapeln. Summe der roten Figuren im Stapel: 0 = gerade
+
+
+### Schritt 5 von 9 — Stapel auflösen
+
+**·  lesen**
+
+> Die Zugerlaubnis musst du genauso auch beim Anheben der Figur von einem Stapel beachten: Du darfst die Top-Figur anheben, wenn die Summe der **roten** Figuren im Stapel **ungerade** ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.
 >
-> Und eine neue Regel ist dabei sichtbar geworden: auf ein **leeres** Feld darf nur eine Figur, deren **Zahl zur Punktzahl des Feldes passt**.
-
-
-### Schritt 7 von 11 — Auf ein leeres Feld
-
-**·  abheben**
-
-> Dein Mitspieler hat 1D geräumt — ein leeres 3-Punkte-Feld. Auf 1C steht eine schwarze 3.
+> **Leichter zu merken:** Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.
 >
-> Beim Ablegen zählst du die roten Nachbarn **des Zielfeldes**, und zwar so, wie es _nach_ dem Zug aussieht.
+> **Wichtig:** nur die Top-Figur darf bewegt werden, nicht der Stapel als ganzes.
+>
+> **Strategie:** mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. Da, wo die Figur weggezogen wird, und auch dort, wo sie abgesetzt wird. Nur im Stapel ist eine Figur also vor dem Zugriff deines Mitspielers sicher.
 
-*Rechnung:*  Der grüne Bereich zeigt, worauf es jetzt ankommt: **1C und seine Nachbarn**; alles außerhalb spielt gerade keine Rolle. Dick umrandet sind die Felder mit roten Figuren — dort stehen zusammen **3**; die Figur selbst ist schwarz: **+0** → 3 = ungerade. Du brauchst **ungerade**.
 
-*Aufgabe:*  `Tippe **1C** an.`
+### Schritt 6 von 9 — Figur auf ein leeres Feld
 
-*Brett:*  dick: 1B, 2B, 2C · blinkt: 1C (blau)
+**·  anheben**
 
-**·  ablegen**
+> Du darfst eine Figur auf ein leeres Feld **absetzen**, wenn die Summe aller **roten** Nachbarfiguren **nach** dem Absetzen **ungerade** ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen. Nicht vergessen: Punktezahl auf dem Feld und Zahl auf der Figur müssen übereinstimmen.
+>
+> In diesem Beispiel hat dein Mitspieler auch seinen ersten Zug gemacht. Du bist von 1B auf 4D gezogen, er zieht jetzt von 1D auf 2C.
 
-*Rechnung:*  Punktzahl passt (**3** auf ein 3-Punkte-Feld). Der grüne Bereich ist jetzt **1D mit seinen Nachbarn**; das Feld, von dem die Figur kommt, zählt nicht mit. Dick umrandet zusammen **1** rote; die blasse Figur, die dort landen soll, ist schwarz: **+0** → 1 = ungerade. Du brauchst **ungerade**.
+*Aufgabe:*  `Mit **Weiter** hebt dein Mitspieler 1D an.`
+
+*Brett:*  blinkt: 1D (blau)
+
+**·  absetzen**
+
+*Aufgabe:*  `Mit **Weiter** setzt er sie auf 2C ab.`
+
+*Brett:*  blinkt: 2C (blau) · blau: 1D
+
+**·  ausgeführt**
+
+**·  anheben**
+
+*Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
+
+*Aufgabe:*  `Tippe **4D** an.`
+
+*Brett:*  dick: 4D · blinkt: 4D (grün)
+
+**·  abgelehnt**
+
+*Aufgabe:*  `Jetzt **1B** antippen.`
+
+*Brett:*  dick: 1B, 2A, 2C · blinkt: 1B (grün) · blau: 4D
+
+**·  erklärt**
+
+*Rechnung:*  Du darfst nicht absetzen. Zahl auf der Figur und Punkte auf dem Feld (**3**) stimmen überein, aber: Summe der roten Nachbarfiguren und der Zugfigur: 4 = gerade
+
+*Brett:*  dick: 1B, 2A, 2C
+
+**·  anheben**
+
+> Noch einmal: hebe 4D an — diesmal auf ein Feld, das passt.
+
+*Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
+
+*Aufgabe:*  `Tippe **4D** an.`
+
+*Brett:*  dick: 4D · blinkt: 4D (grün)
+
+**·  absetzen**
+
+*Rechnung:*  Du darfst absetzen. Zahl auf der Figur und Punkte auf dem Feld (**3**) stimmen überein. Summe der roten Nachbarfiguren und der Zugfigur: 3 = ungerade
 
 *Aufgabe:*  `Jetzt **1D** antippen.`
 
-*Brett:*  dick: 2C · blinkt: 1D (blau) · blau: 1C
+*Brett:*  dick: 1D, 2C · blinkt: 1D (grün) · blau: 4D
 
 **·  ausgeführt**
 
-> Beide Rechnungen ungerade — dein Zug.
->
-> Du kennst jetzt alles, was ein Zug braucht: **abheben** und **ablegen**, jeweils mit der passenden Zählung.
+> Jetzt kennst du alle Zugvarianten: Figur vom Feld anheben, auf einem Feld absetzen, auf eine Figur absetzen, von einer Figur anheben.
 
 
-### Schritt 8 von 11 — Noch ein Zug des Mitspielers
+### Schritt 7 von 9 — Drei in einer Spalte
 
-**·  abheben**
+**·  anheben**
 
-> Er stapelt — diesmal Rot auf Rot.
+> Erinnerst du dich an das Ziel: die vierte gleichfarbige Figur in einer Spalte? Es gibt noch ein Zwischenziel davor: die **dritte** gleichfarbige Figur in eine Spalte ziehen. Für den Dreier betrachtet werden nur die Figuren auf dem Feld, nicht eine möglicherweise darauf gestapelte Figur.
 
-*Rechnung:*  Der grüne Bereich zeigt, worauf es jetzt ankommt: **3B und seine Nachbarn**; alles außerhalb spielt gerade keine Rolle. Dick umrandet sind die Felder mit roten Figuren — dort stehen zusammen **5**, und die Figur selbst ist rot: **+1** → 6 = gerade. Er braucht **gerade**.
-
-*Aufgabe:*  `Mit **Weiter** hebt er 3B ab.`
-
-*Brett:*  dick: 2A, 2B, 2C, 3B, 4A, 4C · blinkt: 3B (grün)
-
-**·  ablegen**
-
-*Rechnung:*  Beim Stapeln zählen **nur die beiden Figuren im neuen Stapel** — keine Nachbarn. Deshalb ist nur 3D umrandet; die blasse Figur ist die, die du trägst. Rote darin: 2 = gerade. Er braucht **gerade**.
-
-*Aufgabe:*  `Mit **Weiter** stellt er sie auf 3D.`
-
-*Brett:*  dick: 3D · blinkt: 3D (grün) · blau: 3B
-
-**·  ausgeführt**
-
-> Zwei rote im Stapel: gerade, seine Parität.
->
-> Er hat 3B geräumt. Sieh dir Spalte B an: unten stehen zwei schwarze, darüber ist jetzt eine Lücke.
-
-
-### Schritt 9 von 11 — Die Dreierreihe
-
-**·  abheben**
-
-> Drei gleichfarbige Figuren **direkt übereinander** in einer Spalte sind eine **Dreierreihe**. Die drei Felder werden gesperrt, und wer sie gebildet hat, bekommt einen **Bonuszug**.
->
-> In Spalte B stehen 4B und 2B schwarz — bei einem Stapel zählt dafür die **untere** Figur. Auf 3C wartet eine schwarze 1, und 3B ist ein leeres 1-Punkte-Feld.
-
-*Rechnung:*  Der grüne Bereich zeigt, worauf es jetzt ankommt: **3C und seine Nachbarn**; alles außerhalb spielt gerade keine Rolle. Dick umrandet sind die Felder mit roten Figuren — dort stehen zusammen **5**; die Figur selbst ist schwarz: **+0** → 5 = ungerade. Du brauchst **ungerade**.
+*Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren: 5 = ungerade
 
 *Aufgabe:*  `Tippe **3C** an.`
 
 *Brett:*  dick: 2B, 2C, 3D, 4C · blinkt: 3C (blau)
 
-**·  ablegen**
+**·  absetzen**
 
-*Rechnung:*  Punktzahl passt (**1** auf ein 1-Punkte-Feld). Der grüne Bereich ist jetzt **3B mit seinen Nachbarn**; das Feld, von dem die Figur kommt, zählt nicht mit. Dick umrandet zusammen **5** rote; die blasse Figur, die dort landen soll, ist schwarz: **+0** → 5 = ungerade. Du brauchst **ungerade**.
+*Rechnung:*  Du darfst absetzen. Zahl auf der Figur und Punkte auf dem Feld (**1**) stimmen überein. Summe der roten Nachbarfiguren: 5 = ungerade
 
 *Aufgabe:*  `Jetzt **3B** antippen.`
 
@@ -279,51 +337,123 @@ Die Markierungen auf dem Brett sind mit aufgeführt:
 
 **·  ausgeführt**
 
-> 4B, 3B, 2B — drei schwarze übereinander, gesperrt (oranger Rahmen).
+> Du hast einen **Dreier** gebaut: 4B, 3B, 2B — drei schwarze übereinander.
 >
-> Dass die Figuren schwarz sind, heißt nicht, dass sie jemandem gehören. Gebaut hast du sie, also bekommst **du** den Bonuszug.
-
-
-### Schritt 10 von 11 — Der Bonuszug
-
-**·  abheben**
-
-> Gesperrt heißt **nicht** unbeweglich. Eine einzelne Figur auf einem gesperrten Feld sitzt fest — 4B und 3B kannst du nicht mehr anrühren.
+> Jetzt gelten mehrere Besonderheiten. Die wichtigste: **Du bekommst einen Bonuszug.**
 >
-> Auf 2B steht aber **dein Stapel**. Dieselbe Zählung wie beim Stapeln, nur ohne Nachbarn — und weil sie beim Bauen schon gestimmt hat, stimmt sie auch beim Auseinandernehmen.
+> Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Die Spieler können aber weiterhin eine Figur darauf absetzen und sie auch wieder wegziehen. Und die Figuren müssen weiterhin für die Parität mitgezählt werden.
 
-*Rechnung:*  Beim Abheben von einem Stapel zählen **nur die Figuren im Stapel** — keine Nachbarn. Deshalb ist nur 2B umrandet. Rote darin: 1 = ungerade. Du brauchst **ungerade**.
+*Brett:*  gesperrt: 2B, 3B, 4B
 
-*Aufgabe:*  `Tippe **2B** an.`
 
-*Brett:*  dick: 2B · blinkt: 2B (grün)
+### Schritt 8 von 9 — Bonuszug und Taktik
 
-**·  ablegen**
+**·  lesen**
 
-*Rechnung:*  Punktzahl passt (**3** auf ein 3-Punkte-Feld). Der grüne Bereich ist jetzt **1C mit seinen Nachbarn**; das Feld, von dem die Figur kommt, zählt nicht mit. Dick umrandet zusammen **2** rote, und die blasse Figur, die dort landen soll, ist rot: **+1** → 3 = ungerade. Du brauchst **ungerade**.
+> Ein Dreier ist meistens gut, vor allem wegen dem Bonuszug.
+>
+> Den Dreier kann aber auch dein Mitspieler zum Vierer vervollständigen und gewinnen.
+>
+> Vielleicht kontrolliert dein Mitspieler schon eine passende Sieg-Figur in seinem Stapel oder sie befindet sich zumindest auf einem Feld in seiner Parität? Dann Vorsicht. Entspricht die Parität des Sieg-Feldes (inklusive der Sieg-Figur — wenn sie rot ist) deiner ungeraden oder seiner geraden?
+>
+> Ein Vierer kann auch entstehen, ohne dass davor ein Dreier in der Spalte bestand.
+>
+> Lote mit zwei verschiedenen Bonuszügen diese strategischen Möglichkeiten aus.
 
-*Aufgabe:*  `Jetzt **1C** antippen.`
+*Brett:*  gesperrt: 2B, 3B, 4B
 
-*Brett:*  dick: 1B, 1C, 2C · blinkt: 1C (grün) · blau: 2B
+**·  anheben**
+
+> Ein **guter** Bonuszug:
+
+*Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren und der Zugfigur: 3 = ungerade
+
+*Aufgabe:*  `Tippe **2A** an.`
+
+*Brett:*  dick: 1B, 2A, 2B · blinkt: 2A (grün) · gesperrt: 2B, 3B, 4B
+
+**·  absetzen**
+
+*Rechnung:*  Du darfst stapeln. Summe der roten Figuren im Stapel: 1 = ungerade
+
+*Aufgabe:*  `Jetzt **1A** antippen.`
+
+*Brett:*  dick: 1A · blinkt: 1A (grün) · blau: 2A · gesperrt: 2B, 3B, 4B
 
 **·  ausgeführt**
 
-> Das war dein Bonuszug. Jetzt ist dein Mitspieler wieder dran.
+> Mit diesem Zug wird zwischen den zwei schwarzen Figuren in Spalte A das Feld 2A frei. Für die passende dritte schwarze Figur und damit den nächsten möglichen Dreier ist die Parität: Summe der roten Nachbarfiguren: **3 = ungerade**.
 >
-> Die untere Figur ist liegen geblieben — die Dreierreihe steht weiter.
+> Die passende Figur mit Zahl auf der Figur und Punkte auf dem Feld (2) steht auf 2D und hat gerade ebenfalls deine Parität: Summe der roten Nachbarfiguren: **3 = ungerade**. Die andere passende Figur ist bereits im Dreier gesperrt.
+>
+> Mit diesem Bonuszug hast du dir die perfekte Ausgangslage für deinen nächsten Dreier geschaffen und setzt deinen Mitspieler unter Druck.
+
+*Brett:*  gesperrt: 2B, 3B, 4B
+
+**·  anheben**
+
+> Ein **nicht so schlauer** Bonuszug — der Spielstand ist wieder wie vor dem Bonuszug:
+
+*Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
+
+*Aufgabe:*  `Tippe **2B** an.`
+
+*Brett:*  dick: 2B · blinkt: 2B (grün) · gesperrt: 2B, 3B, 4B
+
+**·  absetzen**
+
+*Rechnung:*  Du darfst absetzen. Zahl auf der Figur und Punkte auf dem Feld (**3**) stimmen überein. Summe der roten Nachbarfiguren und der Zugfigur: 3 = ungerade
+
+*Aufgabe:*  `Jetzt **1C** antippen.`
+
+*Brett:*  dick: 1B, 1C, 2C · blinkt: 1C (grün) · blau: 2B · gesperrt: 2B, 3B, 4B
+
+**·  ausgeführt**
+
+> Dein Bonuszug ist korrekt, aber du schenkst dem Mitspieler damit direkt den Sieg. Drei Dinge musst du beachten:
+>
+> **Erstens:** Die Lücke in Reihe 3 zwischen den drei gleichfarbigen Figuren in Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.
+>
+> **Zweitens:** Die für das Sieg-Feld 3C passenden roten Figuren werden beide von deinem Mitspieler in dem von ihm gebildeten Stapel auf 3D kontrolliert: Summe der roten Figuren im Stapel: **2 = gerade**. Zahl auf der Figur und Punkte auf dem Feld (1) stimmen überein für das Sieg-Feld 3C.
+
+*Brett:*  gesperrt: 2B, 3B, 4B
+
+**·  anheben**
+
+> **Drittens:** Dein Mitspieler kann die Sieg-Figur direkt auf 3C absetzen: Summe der roten Nachbarfiguren und der Zugfigur: **4 = gerade**.
+
+*Aufgabe:*  `Mit **Weiter** hebt dein Mitspieler 3D an.`
+
+*Brett:*  blinkt: 3D (blau) · gesperrt: 2B, 3B, 4B
+
+**·  absetzen**
+
+*Aufgabe:*  `Mit **Weiter** setzt er sie auf 3C ab.`
+
+*Brett:*  blinkt: 3C (blau) · blau: 3D · gesperrt: 2B, 3B, 4B
+
+**·  ausgeführt**
+
+> Vier rote Figuren in Spalte C — dein Mitspieler hat gewonnen.
+
+*Brett:*  gesperrt: 2B, 3B, 4B · Sieg: 1C, 2C, 3C, 4C
 
 
-### Schritt 11 von 11 — Gut zu wissen
+### Schritt 9 von 9 — Gut zu wissen
 
-**·  Anhang**
+**·  lesen**
 
+> Nur noch ein paar letzte Ergänzungen, bevor du loslegen kannst:
+>
 > **Passen gibt es nicht.** Wer keinen erlaubten Zug hat, setzt aus — der andere zieht nochmals.
 >
-> **Wer beginnt, entscheidet der Zufall**, ebenso, wer gerade und wer ungerade spielt. Beide Paritäten sind gleichwertig. Hier warst du ungerade; im Spiel kann es dich genauso gut gerade treffen — dann ist jede Rechnung schlicht andersherum.
+> **Wer beginnt, entscheidet beim ersten Spiel der Zufall**, ebenso, wer gerade und wer ungerade spielt. Beim Rematch beginnt der Verlierer, nach einem Remis wechselt der Anziehende — und die Parität wechselt nach jedem Spiel.
 >
-> **Remis** könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis _einfordern_ — das darf niemand ablehnen. Beim fünften Mal endet die Partie von selbst, ebenso nach 50 Halbzügen ohne neue Dreierreihe.
+> **Remis** könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die Partie automatisch mit Remis, ebenso nach 50 Halbzügen ohne neuen Dreier.
 >
-> **Im Spiel hilft dir dieselbe Rechnung.** Tippe eine Figur an, die sich nicht bewegen lässt: unten steht, wie viele rote gezählt wurden und welche Parität nötig wäre.
+> **Im Spiel kannst du nicht falsch ziehen.** Tippst du eine Figur an, die du gerade nicht anheben oder nirgends absetzen kannst, dann siehst du unten, warum der Zug nicht erlaubt ist.
+
+*Brett:*  gesperrt: 2B, 3B, 4B · Sieg: 1C, 2C, 3C, 4C
 
 ---
 
@@ -332,8 +462,8 @@ Die Markierungen auf dem Brett sind mit aufgeführt:
 | Element | Text |
 |---|---|
 | Kopfzeile links | `COUNT · RED` |
-| Kopfzeile rechts | `Schritt N von 11` |
-| unter dem Fortschrittsbalken | `Anleitung · Fassung 10 · 21.08.2026` |
+| Kopfzeile rechts | `Schritt N von 9` |
+| unter dem Fortschrittsbalken | `Anleitung · Fassung 11 · 24.08.2026` |
 | Knopf links | `Zurück` — einen Teilschritt zurück |
 | Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |
 

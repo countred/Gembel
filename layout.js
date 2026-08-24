@@ -12,7 +12,8 @@ const api=new Function('window','document','console',
 
 let maxZeichen=0, wo='';
 for(let i=0;i<api.PHASES.length;i++){
-  if(api.PHASES[i].p==='read') continue;
+  // Reine Textschritte bleiben aussen vor — sie duerfen die Seite fuellen.
+  if(api.STEPS[api.PHASES[i].si].nurText) continue;
   for(const v of ['vor','nach']){
     const t=api.textTeile(i,v);
     const n=((t.html||'')+(t.rechnung||'')+(t.aufgabe||'')).replace(/<[^>]+>/g,'').length;
