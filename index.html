@@ -89,6 +89,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .legal-sep{font-size:12px;color:var(--text3);}
 @media (max-width:520px){ #legal-footer{margin-top:18px;} .legal-link{font-size:13px;} }
 
+/* §139: Verweis auf die interaktive Anleitung. BEWUSST KEIN dritter big-btn — §134 hat das
+   Startmenue auf zwei Knoepfe gebracht, und ein dritter gleichrangiger Knopf naehme den
+   beiden Spielknoepfen genau die Betonung, die §134 ihnen ueber die REIHENFOLGE gegeben hat.
+   Diese Zeile ist leichter als ein Knopf und schwerer als die Rechtszeile — sie steht
+   zwischen beiden, direkt unter den Knoepfen, wo ein Neuling vor der ersten Partie liest. */
+#anleitung-zeile{margin-top:12px;text-align:center;width:100%;}
+.anleitung-link{background:none;border:none;padding:4px 6px;cursor:pointer;
+  font:inherit;font-size:13.5px;color:var(--sel-bd);text-decoration:underline;
+  text-underline-offset:3px;}
+.anleitung-link:hover{opacity:.75;}
+.anleitung-link .vor{color:var(--text2);text-decoration:none;}
+
 /* ── Testversion label ── */
 #testlabel{font-size:9px;letter-spacing:2px;color:var(--text3);text-align:center;text-transform:uppercase;margin-top:-4px;}
 /* ── §125 MOBIL: Titel auffaelliger, alles darunter tiefer ──────────────────────────
@@ -187,7 +199,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .stack-wrap .figure:first-child{margin-bottom:-8px;z-index:1;position:relative;}
 .stack-wrap .figure:last-child{display:flex;align-items:flex-end;padding-bottom:2px;}
 #log-area{min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 4px;}
-/* §56/§F9: laufender Zähler Halbzüge-ohne-Dreierreihe — Schach-Konvention (durchgehend
+/* §56/§F9: laufender Zähler Züge-ohne-Dreier — Schach-Konvention (durchgehend
    sichtbar statt einmaliger Vorwarnung), dezent, in BEIDEN Modi; blendet sich außerhalb
    einer laufenden Partie aus. */
 #draw-counter{font-size:11px;color:var(--text3);text-align:center;padding:0 4px;}
@@ -383,6 +395,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <div class="card-col">
       <button class="big-btn" onclick="showLobby()">👥 Mit Code zu zweit</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
+    </div>
+    <!-- §139: Einstieg in die interaktive Anleitung. Die fuenf Neuling-Partien vom 2.8. gingen
+         0:5 und waren nach rund sieben eigenen Zuegen vorbei, weil niemand die Paritaetsregel
+         verstanden hatte — die Anleitung muss VOR der ersten Partie auffindbar sein, nicht
+         danach. `?v=` ist der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller elf Suiten
+         prueft ihn seit §139 mit. Kein <a href>, sondern ein Knopf wie in der Rechtszeile,
+         damit Aussehen und Verhalten zum Rest des Menues passen. -->
+    <div id="anleitung-zeile">
+      <button type="button" class="anleitung-link"
+        onclick="location.href='anleitung.html?v=109'"><span class="vor">Neu hier?</span> Spielanleitung</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -633,33 +655,36 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:-8px;">First published in 1998 as Gembel</p>
 
     <div style="font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
-      <div><strong style="color:var(--text);">Ziel</strong><br>4 gleichfarbige Figuren in einer Spalte (A, B, C oder D).</div>
+      <div><strong style="color:var(--text);">Ziel</strong><br>4 gleichfarbige Figuren in einer Spalte (A, B, C oder D). Bei einem Stapel zählt die Basis, nicht die Figur darauf.</div>
 
-      <div><strong style="color:var(--text);">Brett</strong><br>4×4 Felder. Zeilen 1–4, Spalten A–D. Jedes Feld hat Punkte (oben im Feld): Zeile 1 = 3, Zeile 2 = 2, Zeile 3 = 1, Zeile 4 = 0.</div>
+      <div><strong style="color:var(--text);">Brett</strong><br>4×4 Felder, Zeilen 1–4, Spalten A–D. Jedes Feld hat Punkte (oben im Feld): Zeile 1 = 3, Zeile 2 = 2, Zeile 3 = 1, Zeile 4 = 0.</div>
 
-      <div><strong style="color:var(--text);">Figuren</strong><br>Zwei Farben: schwarz und rot, mit Zahlen 0–3. Die Zahl entspricht dem Punktwert des Feldes, auf dem die Figur zu Beginn steht. Die Figuren sind keinem Spieler zugeordnet.</div>
+      <div><strong style="color:var(--text);">Figuren</strong><br>Zwei Farben, schwarz und rot, mit Zahlen 0–3. Die Zahl entspricht dem Punktwert des Feldes, auf dem die Figur zu Beginn steht. Die Figuren gehören keinem Spieler.</div>
 
-      <div><strong style="color:var(--text);">Spieler & Parität</strong><br>Die Spieler ziehen abwechselnd. Die Parität bestimmt, ob ein Zug erlaubt ist: ein Spieler zieht bei gerader Anzahl beteiligter roter Figuren, der andere bei ungerader.</div>
+      <div><strong style="color:var(--text);">Spieler und Parität</strong><br>Die Spieler ziehen abwechselnd. Die Parität entscheidet, ob ein Zug erlaubt ist: einer zieht bei gerader Anzahl beteiligter roter Figuren, der andere bei ungerader.</div>
 
-      <div><strong style="color:var(--text);">Zugrichtung &amp; Zugweite</strong><br>Es gibt keine. Eine Figur darf auf <em>jedes</em> Feld des Bretts gezogen werden — vorwärts, rückwärts, seitwärts, diagonal, über beliebige Entfernung und über andere Figuren hinweg. Ob ein Zug erlaubt ist, entscheidet allein die Parität (und beim leeren Zielfeld zusätzlich die Punktzahl).</div>
+      <div><strong style="color:var(--text);">Zugrichtung und Zugweite</strong><br>Keine Beschränkung. Eine Figur darf auf <em>jedes</em> Feld des Bretts gezogen werden — vorwärts, rückwärts, seitwärts, diagonal, über beliebige Entfernung und über andere Figuren hinweg. Ob ein Zug erlaubt ist, entscheidet allein die Parität, beim leeren Zielfeld zusätzlich die Punktzahl.</div>
 
-      <div><strong style="color:var(--text);">Spielbeginn</strong><br>Wer beginnt und wer die gerade bzw. ungerade Parität erhält, wird zu Spielbeginn zufällig bestimmt. Beide Paritäten sind gleichwertig.</div>
+      <div><strong style="color:var(--text);">Spielbeginn</strong><br>Wer beginnt und wer die gerade bzw. ungerade Parität erhält, wird zu Spielbeginn ausgelost.</div>
 
-      <div><strong style="color:var(--text);">Revanche</strong><br>Bei einer Revanche beginnt der Verlierer der vorangegangenen Partie; nach einem Remis wechselt der Anziehende. Die Parität wechselt nach jeder Partie, sodass beide Spieler abwechselnd mit gerader und ungerader Parität spielen.</div>
+      <div><strong style="color:var(--text);">Nochmal</strong><br>Beim Nochmal beginnt der Verlierer der vorangegangenen Partie; nach einem Remis wechselt der Anziehende. Die Parität wechselt nach jeder Partie, sodass beide Spieler abwechselnd gerade und ungerade spielen.</div>
 
-      <div><strong style="color:var(--text);">Wegziehen</strong><br>Zähle alle roten Figuren auf den bis zu 8 Nachbarfeldern (im Stapel jede rote einzeln). Zähle die Zugfigur selbst mit, wenn sie rot ist. Gerade Summe → gerader Spieler darf ziehen, ungerade → ungerader Spieler.</div>
+      <div><strong style="color:var(--text);">Anheben</strong><br>Zähle alle roten Figuren auf den bis zu 8 Nachbarfeldern (in einem Stapel jede rote einzeln). Zähle die Zugfigur selbst mit, wenn sie rot ist. Ungerade Summe → der ungerade Spieler darf anheben, gerade Summe → der gerade.</div>
 
-      <div><strong style="color:var(--text);">Abstellen auf leeres Feld</strong><br>Zahl auf der Figur muss mit den Punkten des Zielfelds übereinstimmen. Zähle rote Nachbarn des Zielfelds nach dem Zug (Quellfeld ausblenden; verbleibende Stapelunterfigur separat zählen, wenn rot und angrenzend). Zugfigur selbst zählen, wenn rot. Gleiche Paritätsbedingung wie beim Wegziehen.</div>
+      <div><strong style="color:var(--text);">Absetzen auf ein leeres Feld</strong><br>Die Zahl auf der Figur muss zu den Punkten des Feldes passen. Zähle die roten Nachbarn des Zielfeldes nach dem geplanten Zug. Zugfigur mitzählen, wenn sie rot ist. Ungerade Summe → der ungerade Spieler darf absetzen, gerade Summe → der gerade.</div>
 
-      <div><strong style="color:var(--text);">Stapeln</strong><br>Figur auf eine Einzelfigur stellen. Nur die roten Figuren im entstehenden Stapel zählen — keine Nachbarn. Max. 2 Figuren pro Stapel.</div>
+      <div><strong style="color:var(--text);">Stapeln</strong><br>Eine Figur auf eine Einzelfigur setzen. Es zählen nur die roten Figuren im neuen Stapel — keine Nachbarn. Die Punkte spielen dabei keine Rolle. Ein Stapel fasst 2 Figuren; auf einen Stapel darf nicht gestapelt werden.</div>
 
-      <div><strong style="color:var(--text);">Entstapeln</strong><br>Nur der Spieler, der den Stapel gebildet hat, darf ihn auflösen. Beim Wegziehen zählt nur der Stapelinhalt (keine Nachbarn). Abstellen auf leeres Feld oder neu stapeln: wie oben.</div>
+      <div><strong style="color:var(--text);">Stapel auflösen</strong><br>Nur wer einen Stapel gebildet hat, darf ihn wieder auflösen. Bewegt wird immer nur die Top-Figur, nie der Stapel als Ganzes. Fürs Absetzen gelten die Regeln oben.</div>
 
-      <div><strong style="color:var(--text);">Dreierreihe → Bonuszug</strong><br>Drei gleichfarbige Figuren in einer Spalte direkt aneinander (bei Stapeln zählt nur die untere Figur als Basisfigur) → diese Felder werden gesperrt, Stapeln und Entstapeln bleibt erlaubt. Der Bildner erhält einen Bonuszug. Ist kein Bonuszug möglich, zieht der Mitspieler. Der Sieg durch die vierte passende Figur ist unabhängig davon, wer die Dreierreihe gebildet hat.</div>
+      <div><strong style="color:var(--text);">Drei in einer Spalte → Bonuszug</strong><br>Drei gleichfarbige Figuren direkt übereinander in einer Spalte, bei einem Stapel zählt die Basis. Die drei Felder werden gesperrt, und wer den Dreier gebildet hat, bekommt einen Bonuszug. Ist kein Bonuszug möglich, zieht der Mitspieler.<br><br>Gesperrt heißt: Eine Einzelfigur auf einem gesperrten Feld ist unbeweglich. Stapeln darauf bleibt erlaubt, und ein so gebildeter Stapel darf auch wieder aufgelöst werden. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.<br><br>Wer die vierte passende Figur in eine Spalte zieht, gewinnt — unabhängig davon, wer die drei darunter gebaut hat.</div>
 
-      <div><strong style="color:var(--text);">Zugverzicht</strong><br>Passen ist nicht erlaubt. Hat ein Spieler keine Zugmöglichkeit, zieht der Mitspieler nochmals.</div>
+      <div><strong style="color:var(--text);">Zugverzicht</strong><br>Passen ist nicht erlaubt.</div>
 
-      <div><strong style="color:var(--text);">Remis</strong><br>Eine Einigung auf Remis ist jederzeit möglich; ein solches Angebot darf abgelehnt werden.<br><br>Tritt dieselbe Stellung — mit demselben Spieler am Zug — zum <strong style="color:var(--text);">dritten</strong> Mal auf, kann der Spieler am Zug Remis <strong style="color:var(--text);">einfordern</strong>. Das ist ein Recht, kein Angebot: der Mitspieler kann es nicht ablehnen.<br><br>Beim <strong style="color:var(--text);">fünften</strong> Auftreten derselben Stellung endet die Partie automatisch unentschieden, ebenso wenn 50 Halbzüge lang keine neue Dreierreihe gebildet wurde.</div>
+      <div><strong style="color:var(--text);">Keine Zugmöglichkeit</strong><br>Hat ein Spieler keinen erlaubten Zug, zieht der Mitspieler nochmals.</div>
+
+      <div><strong style="color:var(--text);">Remis</strong><br>Eine Einigung auf Remis ist jederzeit möglich; ein solches Angebot darf abgelehnt werden.<br><br>Tritt dieselbe Stellung — mit demselben Spieler am Zug — zum <strong style="color:var(--text);">dritten</strong> Mal auf, kann der Spieler am Zug Remis <strong style="color:var(--text);">einfordern</strong>. Der Mitspieler kann es nicht ablehnen.<br><br>Beim <strong style="color:var(--text);">fünften</strong> Auftreten derselben Stellung endet die Partie automatisch unentschieden, ebenso wenn 50 Züge lang kein neuer Dreier gebildet wurde.</div>
+
     </div>
 
     <button class="big-btn primary" style="width:100%;margin-top:4px;" onclick="document.getElementById('regeln-overlay').classList.add('hidden')">Schließen</button>
@@ -674,10 +699,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      einem Deploy countred.html (neu) mit gembel_rules.js/countred_ai_core.js (alt aus Cache)
      MISCHEN — genau die §51-Klasse „aktualisiert nicht mehr". Bei JEDEM Release hochzählen,
      an ALLEN vier Ladewegen synchron (hier, countred_ai_core.js unten, Worker-new-Worker und
-     dessen importScripts). AKTUELL: v82. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
+     dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v109. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=108" charset="utf-8"></script>
+<script src="gembel_rules.js?v=109" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -689,7 +714,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=108" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=109" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1111,7 +1136,7 @@ if(PLAYER_KEY){
   if(_tk && _tv){ _tv.textContent=PLAYER_KEY; _tk.classList.remove('hidden'); }
 }
 
-const BUILD_MARKER='· Build v108';
+const BUILD_MARKER='· Build v109';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1160,7 +1185,7 @@ function canClaimDraw(mover){
 // Eigene Variablen (NICHT die MvKI-seenPositions/halfmovesSinceTriple wiederverwenden):
 // klare Modus-Trennung, kein Kreuz-Schleppen zwischen den Modi (Architekturprinzip).
 let mvmSeenPositions=[];      // boardHash-Historie (beide Seiten, aus state.board)
-let mvmHalfmovesSinceTriple=0; // Halbzüge ohne neue Dreierreihe (beide Seiten)
+let mvmHalfmovesSinceTriple=0; // Züge ohne neuen Dreier (beide Seiten); der Bezeichner bleibt englisch/halfmove — die Suiten pinnen ihn
 // §72e/§38d: MvM-Parität von Spieler 1. §38d (HANDOVER Z.2392-2395) verlangt: Parität wechselt
 // nach JEDEM Spiel, UNABHÄNGIG davon wer anfängt. §61c-1 hatte das versehentlich rückgängig
 // gemacht (PARITY_P1 fix 'odd' auch beim Rematch) — das ist die im HANDOVER explizit gewarnte
@@ -1288,7 +1313,7 @@ function skillLabel(s){ return SKILL_LABEL[s] || (s ? s.charAt(0).toUpperCase()+
 const AI_DRAW_OFFER_DELAY_MIN=2000;
 const AI_DRAW_OFFER_DELAY_MAX=3000;
 const AI_DRAW_OFFER_BAND=20;            // eigenes Angebot: |Suchwert| ≤ 20 übers ganze Fenster („hält es für remis")
-const AI_OFFER_NOPROGRESS_FRACTION=0.6; // ab 60% des Halbzug-Limits gilt "kein Fortschritt"
+const AI_OFFER_NOPROGRESS_FRACTION=0.6; // ab 60% des Zug-Limits gilt "kein Fortschritt"
 // §103 (Walter-Livebefund 52JVRVFU): Der §53f-Riegel wird NUR durch einen Dreier gelöst. „Kein
 // Fortschritt" heißt aber genau: kein Dreier — der Riegel ist also dauerhaft zu, ausgerechnet in
 // der Lage, in der ein Angebot am berechtigtsten wäre. Live: Angebot bei Halbzug 12, abgelehnt,
@@ -1428,7 +1453,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=108'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=109'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2521,7 +2546,7 @@ function applyRemoteState(state){
      seq!==null && seq>mvmLastCountedSeq){
     mvmLastCountedSeq = seq;
     const locksAfter = countLocks(board);
-    const formedTriple = locksAfter > locksBefore; // neue Dreierreihe = Fortschritt
+    const formedTriple = locksAfter > locksBefore; // neuer Dreier = Fortschritt
     mvmHalfmovesSinceTriple = formedTriple ? 0 : mvmHalfmovesSinceTriple+1;
     mvmSeenPositions.push(boardHash(board, currentPlayer));
     // repCount auf BEIDEN Clients (seit §F1 identische Historie): 4 = Vorwarnung (lokal).
@@ -2532,7 +2557,7 @@ function applyRemoteState(state){
     if(myRole==='host'){
       if(repCount>=5 || mvmHalfmovesSinceTriple>=HALFMOVE_DRAW_LIMIT){
         const reasonText = repCount>=5 ? 'Stellung 5× wiederholt'
-          : `${HALFMOVE_DRAW_LIMIT} Halbzüge ohne neue Dreierreihe`;
+          : `${HALFMOVE_DRAW_LIMIT} Züge ohne neuen Dreier`;
         phase='finished';
         // §73 (Walter-Befund): den AUSLÖSENDEN Zug erhalten (from/to/movePlayer), damit BEIDE
         // Seiten „letzter Zug + Remis" sehen (nicht nur der Host). player bleibt null (das ist ein
@@ -3064,7 +3089,7 @@ function applyMvkiAutoDrawIfNeeded(nextMover, formedTriple){
   const count=seenPositions.reduce((n,x)=>x===h?n+1:n,0);
   if(count>=5 || halfmovesSinceTriple>=HALFMOVE_DRAW_LIMIT){
     const isRep=(count>=5);
-    const reasonText=isRep?'Stellung 5× wiederholt':`${HALFMOVE_DRAW_LIMIT} Halbzüge ohne neue Dreierreihe`;
+    const reasonText=isRep?'Stellung 5× wiederholt':`${HALFMOVE_DRAW_LIMIT} Züge ohne neuen Dreier`;
     phase='finished';
     setLog(`<span class="msg signal">${reasonText}</span>`);  // §95: Banner darunter zeigt „🤝 Unentschieden" — hier nur der Grund
     showWinBanner(null);
@@ -3439,11 +3464,11 @@ function debugLog(r,c,extra){
   if(cell.stack){
     const formedByMe=(cell.stack.formedBy===myPlayer);
     if(!formedByMe){
-      setLog(`<span class="msg info">${coordToLabel(r,c)}: Stapel von ${(gameMode==='mvki')?'Max Michu':'Mitspieler'} — nur dieser darf ihn auflösen</span>`);return;
+      setLog(`<span class="msg info">${coordToLabel(r,c)}: Stapel von ${(gameMode==='mvki')?'Max Michu':'Mitspieler'} — nur er darf ihn auflösen</span>`);return;
     }
     setLog(`<span class="msg info">${coordToLabel(r,c)}: Dein Stapel — kein erlaubtes Zielfeld</span>`);return;
   }
-  if(cell.locked){setLog(`<span class="msg info">${coordToLabel(r,c)}: Dreierreihe — gesperrt</span>`);return;}
+  if(cell.locked){setLog(`<span class="msg info">${coordToLabel(r,c)}: Basis-Figur im Dreier ist gesperrt</span>`);return;}
   let w=countRedNeighbors(board,r,c); if(moving.color==='red') w++;
   const parityWord=w%2===0?'gerade':'ungerade';
   const isMe=(currentPlayer===myPlayer);
@@ -3464,8 +3489,16 @@ function dropFailLog(fr,fc,tr,tc){
   const needWord=parityWordForPlayer(currentPlayer); // §38d: nicht mehr myPlayer===1-hardcodiert
   const who=isMe?'Du brauchst':`${(gameMode==='mvki')?'Max Michu':'Mitspieler'} braucht`;
   if(fr===tr&&fc===tc){setLog(`<span class="msg info">Quell- und Zielfeld sind gleich</span>`);return;}
-  // Check locked BEFORE stripe — locked cells can't be targeted at all
-  if(targetCell.locked){setLog(`<span class="msg info">${coordToLabel(tr,tc)}: Dreierreihe — gesperrt</span>`);return;}
+  // §140: HIER STAND EIN LOCKED-ZWEIG — ersatzlos entfernt.
+  //   Er meldete „gesperrt", sobald das ZIELFELD zu einem Dreier gehoerte, und stammte aus
+  //   der Zeit vor dem canStack-Bugfix v2.1 (der Kommentar sagte „locked cells can't be
+  //   targeted at all" — genau die Regel, die der Bugfix widerlegt hat).
+  //   Auf eine gesperrte EINZELFIGUR darf gestapelt werden. Nachgerechnet: 1B→2B bei
+  //   gesperrtem 2B ist fuer den ungeraden Spieler erlaubt, fuer den geraden verboten —
+  //   der echte Grund ist die Paritaet, nicht die Sperrung. Traegt das gesperrte Feld einen
+  //   Stapel, meldet der naechste Zweig korrekt „Stapel ist voll".
+  //   Ein gesperrtes Feld ist nie leer (applyLockOn sperrt nur Felder mit Basisfigur),
+  //   der Stripe-Zweig darunter kann also nicht faelschlich greifen.
   if(targetCell.stack){setLog(`<span class="msg info">${coordToLabel(tr,tc)}: Stapel ist voll — max. 2 Figuren</span>`);return;}
   if(targetCell.piece){
     const w=mp?countRedsInStack(targetCell.piece,mp):0;
@@ -3541,7 +3574,7 @@ async function finalizeGame(winner){
 window.markMvkiPosition=async function(){
   if(gameMode!=='mvki'||!mvkiGameCode) return;
   mvkiMarkCount++;
-  const hm=Math.max(0, seenPositions.length-1); // ausgeführte Halbzüge (seenPositions enthält die Startstellung)
+  const hm=Math.max(0, seenPositions.length-1); // ausgeführte Züge (seenPositions enthält die Startstellung)
   try{
     if(mvkiMarkCount===1){
       await update(ref(db,`games_countred_marks/${mvkiGameCode}`),{
@@ -3552,7 +3585,7 @@ window.markMvkiPosition=async function(){
     }
     await update(ref(db,`games_countred_marks/${mvkiGameCode}/marks/m${String(mvkiMarkCount).padStart(2,'0')}`),
       { hm, moveNo:mvkiMoveIndex, phase, ts:Date.now() });
-    setLog(`<span class="msg info">📌 markiert — Partie ${mvkiGameCode}, Halbzug ${hm}</span>`);
+    setLog(`<span class="msg info">📌 markiert — Partie ${mvkiGameCode}, Zug ${hm}</span>`);
   }catch(e){
     console.error('§88 markMvkiPosition: Schreiben nach games_countred_marks/ fehlgeschlagen:', e);
     // §89c: Ursache ANZEIGEN statt raten. PERMISSION_DENIED = die Firebase-Rules zählen Pfade
@@ -3901,7 +3934,7 @@ function render(){
   rightBadge.className='player-badge'+(oppIsActive?' active':'');
   rightBadge.innerHTML=`<span class="who">${oppName}</span><span class="par">${oppWord}</span>`;
   updateStatusUI();
-  updateDrawCounterUI(); // §56: laufender Halbzüge-Zähler
+  updateDrawCounterUI(); // §56: laufender Züge-Zähler
   requestAnimationFrame(resizeBoard);
 }
 
@@ -3917,7 +3950,7 @@ function updateDrawCounterUI(){
   el.classList.toggle('hidden', !active);
   if(active){
     const n=(gameMode==='mvki') ? halfmovesSinceTriple : mvmHalfmovesSinceTriple;
-    el.textContent=`${n}/${HALFMOVE_DRAW_LIMIT} Halbzüge ohne neue Dreierreihe`;
+    el.textContent=`${n}/${HALFMOVE_DRAW_LIMIT} Züge ohne neuen Dreier`;
   }
 }
 

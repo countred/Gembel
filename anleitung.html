@@ -105,6 +105,13 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 #head{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
 #head .t{font-size:13px;font-weight:600;letter-spacing:3px;color:var(--red-fig-bg);text-transform:uppercase;}
 #head .n{font-size:11px;color:var(--text3);}
+#head .rechts{display:flex;align-items:baseline;gap:11px;}
+/* §139: der Weg zurueck ins Spiel muss JEDERZEIT offen sein, nicht erst am Ende.
+   Wer die Anleitung nur kurz nachschlaegt, soll nicht durch neun Schritte klicken
+   muessen. Bewusst klein: ein Ausgang, kein Angebot. */
+#btn-exit{background:none;border:none;padding:2px 0;cursor:pointer;font:inherit;
+  font-size:11px;color:var(--sel-bd);text-decoration:underline;text-underline-offset:3px;}
+#btn-exit:hover{opacity:.7;}
 #bar{flex:0 0 auto;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden;}
 #bar > i{display:block;height:100%;background:var(--sel-bd);width:0;transition:width .25s;}
 #fassung{flex:0 0 auto;font-size:10.5px;color:var(--text3);margin-top:-3px;}
@@ -209,7 +216,9 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 <body>
 
 <div id="app">
-  <div id="head"><span class="t">Count · Red</span><span class="n" id="stepno"></span></div>
+  <div id="head"><span class="t">Count · Red</span>
+    <span class="rechts"><span class="n" id="stepno"></span><button type="button" id="btn-exit">Zum Spiel</button></span>
+  </div>
   <div id="bar"><i id="barfill"></i></div>
   <div id="fassung"></div>
 
@@ -282,7 +291,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=108" charset="utf-8"></script>
+<script src="gembel_rules.js?v=109" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -291,7 +300,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 13 · 24.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 16 · 25.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -531,9 +540,9 @@ const STEPS = [
        +'<b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist '
        +'gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
   aktionen:[
-    // Seite 1: nur antippen. Die Rechnung kommt erst auf Seite 2 — dort steht das
-    // Klickergebnis noch einmal, damit Bild und Erklaerung zusammen zu sehen sind.
-    { art:'tippen', feld:'4D', stumm:true },
+    // Seite 1: antippen, Rechnung sofort. Die beiden Folgeseiten zeigen dasselbe
+    // Bild noch einmal, damit Merksatz und Klickergebnis zusammen zu sehen sind.
+    { art:'tippen', feld:'4D' },
     { art:'zeigen', feld:'4D', getan:'4D', rechnung:'anheben',
       text:'<p>Leichter zu merken: Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.</p>' },
     { art:'zeigen', feld:'4D', getan:'4D', rechnung:'anheben',
@@ -544,8 +553,7 @@ const STEPS = [
     { art:'lesen',
       text:'<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht '
           +'der Mitspieler von 1D auf 2C:</p>',
-      zugDanach:{ von:'1D', nach:'2C', actor:OPPONENT, roh:true,
-        nachher:'<p>Er hat einen Stapel auf 2C gebildet — und 1D ist jetzt frei.</p>' } }
+      zugDanach:{ von:'1D', nach:'2C', actor:OPPONENT, roh:true } }
   ]},
 
 { id:'leerfeld', title:'Figur auf ein leeres Feld',
@@ -565,17 +573,17 @@ const STEPS = [
 { id:'dreier', title:'Drei in einer Spalte', setup:()=>fromSpec(DREIERSPEC, LEARNER),
   intro:'<p>Erinnerst du dich an das Ziel: die vierte gleichfarbige Figur in einer Spalte? Es gibt noch '
        +'ein Zwischenziel davor: die <b>dritte</b> gleichfarbige Figur in eine Spalte ziehen. Für den '
-       +'Dreier betrachtet werden nur die Figuren auf dem Feld, nicht eine möglicherweise darauf '
-       +'gestapelte Figur.</p>',
+       +'Dreier — und ebenso für den Vierer — zählt bei einem Stapel nur die untere Figur, nicht die '
+       +'darauf gestapelte.</p>',
   aktionen:[
     { art:'zug', von:'3C', nach:'3B', actor:LEARNER, erwartet:'dreier',
       nachher:'<p>Du hast einen <b>Dreier</b> gebaut: 4B, 3B, 2B — drei schwarze übereinander.</p>' },
     { art:'lesen',
       text:'<p>Jetzt gelten mehrere Besonderheiten. Die wichtigste: <b>Du bekommst einen '
-          +'Bonuszug.</b></p>'
-          +'<p>Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Die Spieler können '
-          +'aber weiterhin eine Figur darauf absetzen und sie auch wieder wegziehen. Und die Figuren '
-          +'müssen weiterhin für die Parität mitgezählt werden.</p>' }
+          +'Bonuszug.</b> Ist kein Bonuszug möglich, zieht der Mitspieler.</p>'
+          +'<p>Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf '
+          +'bleibt erlaubt, und einen so gebildeten Stapel darfst du auch wieder auflösen. Für die '
+          +'Parität zählen auch die gesperrten Figuren weiterhin mit.</p>' }
   ]},
 
 { id:'bonus', title:'Bonuszug und Taktik', setup:()=>fromSpec(BONUSSPEC, LEARNER),
@@ -629,12 +637,12 @@ const STEPS = [
     { art:'lesen', text:'<p>Wer keinen erlaubten Zug hat, setzt aus — der andere zieht nochmals.</p>' },
     { art:'lesen',
       text:'<p>Wer beginnt, entscheidet beim ersten Spiel der Zufall, ebenso, wer gerade und wer '
-          +'ungerade spielt. Beim Rematch beginnt der Verlierer, nach einem Remis wechselt der '
+          +'ungerade spielt. Beim Nochmal beginnt der Verlierer, nach einem Remis wechselt der '
           +'Anziehende — und die Parität wechselt nach jedem Spiel.</p>' },
     { art:'lesen',
       text:'<p>Remis könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf '
           +'dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die '
-          +'Partie automatisch mit Remis, ebenso nach 50 Halbzügen ohne neuen Dreier.</p>' },
+          +'Partie automatisch mit Remis, ebenso nach 50 Zügen ohne neuen Dreier.</p>' },
     { art:'lesen',
       text:'<p>Im Spiel kannst du nicht falsch ziehen. Tippst du eine Figur an, die du gerade '
           +'nicht anheben oder nirgends absetzen kannst, dann siehst du unten, warum der Zug nicht '
@@ -864,9 +872,9 @@ function textTeile(i, variante){
   if(ph.p==='tap'){
     const p=CELL[a.feld];
     if(variante!=='nach') return {html:kopf, aufgabe:'Tippe '+a.feld+' an.'};
-    // stumm: das Feld wird nur angetippt, die Rechnung kommt eine Seite spaeter.
-    return {html: kopf + (a.nachher||''),
-            rechnung: a.stumm ? '' : markAnheben(b,p[0],p[1],LEARNER).text};
+    // Die Rechnung steht IMMER sofort auf der Antipp-Seite (Walter, Fassung 14) —
+    // es gibt keinen Weg, sie auf eine spaetere Seite zu verschieben.
+    return {html: kopf + (a.nachher||''), rechnung: markAnheben(b,p[0],p[1],LEARNER).text};
   }
   if(ph.p==='lift'){
     const f=CELL[a.von], m=markAnheben(b,f[0],f[1],a.actor);
@@ -1403,6 +1411,10 @@ function selfTest(){
 // ═══════════════════════════════════════════════════════════════════
 function init(){
   window.__anlGestartet = true;                 // Wachhund abbestellen
+  // ZUERST der Ausgang. Er muss auch dann funktionieren, wenn gleich darunter die
+  // Regelschicht fehlt und die Seite sich sperrt — sonst sitzt der Lernende fest.
+  const ex=document.getElementById('btn-exit');
+  if(ex) ex.onclick=function(){ location.href='index.html'; };
   const fs_=document.getElementById('fassung'); if(fs_) fs_.textContent=ANL_FASSUNG;
   console.log('Count Red · ' + ANL_FASSUNG + ' · Regelschicht: gembel_rules.js');
 

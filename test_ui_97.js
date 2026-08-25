@@ -267,6 +267,37 @@ console.log('\u00a7134 \u2014 sichtbare Test-Kennung:');
      'das Element steht im Dokument, bevor das Skript es sucht');
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// §140 — WORTLAUT-WAECHTER: ein Wort je Sache, in Regeltext, Meldungen und Anleitung
+// gleich. Die drei Texte sind dreimal dasselbe Regelwerk; laufen die Woerter
+// auseinander, lernt ein Neuling die Anleitung und findet sie im Spiel nicht wieder.
+// Geprueft wird der SICHTBARE Text (Kommentare und Bezeichner ausgeblendet) — die
+// internen Namen halfmoves/HALFMOVE_DRAW_LIMIT bleiben ausdruecklich, die Suiten pinnen sie.
+// ═══════════════════════════════════════════════════════════════════
+console.log('\u00a7140 \u2014 Wortlaut:');
+{
+  const sicht = html.replace(/<!--[\s\S]*?-->/g,'')
+                    .replace(/^\s*\/\/[^\n]*/gm,'')
+                    .replace(/\/\*[\s\S]*?\*\//g,'');
+  ok(!/Dreierreihe/.test(sicht), 'kein "Dreierreihe" \u2014 es hei\u00dft "Drei in einer Spalte", kurz "Dreier"');
+  ok(!/Halbzug|Halbz\u00fcge/.test(sicht), 'kein "Halbzug" \u2014 es hei\u00dft "Zug"');
+  ok(!/Revanche/.test(sicht), 'kein "Revanche" \u2014 es hei\u00dft "Nochmal" (so steht es auf dem Knopf)');
+  ok(!/Wegziehen|Abstellen auf/.test(sicht), 'kein "Wegziehen"/"Abstellen" \u2014 es hei\u00dft "Anheben"/"Absetzen"');
+  ok(!/Entstapeln/.test(sicht), 'kein "Entstapeln" \u2014 es hei\u00dft "Stapel aufl\u00f6sen"');
+  // Vollstaendigkeit: die vier Regeln, die beim Abgleich gefehlt haben.
+  ok(/Eine Einzelfigur auf einem gesperrten Feld ist unbeweglich/.test(html),
+     'Regeltext nennt die unbewegliche Einzelfigur auf gesperrtem Feld (canLift: locked \u2192 false)');
+  ok(/nur die Top-Figur, nie der Stapel als Ganzes/.test(html),
+     'Regeltext nennt: bewegt wird nur die Top-Figur');
+  ok(/Ist kein Bonuszug m\u00f6glich, zieht der Mitspieler/.test(html),
+     'Regeltext nennt den Fall "kein Bonuszug m\u00f6glich"');
+  ok(/Bei einem Stapel z\u00e4hlt die Basis, nicht die Figur darauf/.test(html),
+     'Regeltext nennt beim ZIEL, dass die Basis z\u00e4hlt (checkFourInRow liest getBasePiece)');
+  // §140-Fund 3: der regelwidrige locked-Zweig darf nicht zurueckkehren.
+  ok(!/targetCell\.locked\)\{setLog/.test(html),
+     'dropFailLog hat KEINEN locked-Zweig mehr \u2014 auf gesperrte Einzelfiguren darf gestapelt werden (canStack v2.1)');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
@@ -275,6 +306,19 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   const vMarker = (html.match(/Build v(\d+)/)||[])[1];
   ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker,
      'html-seitig alle Versionsangaben identisch (v'+vRules+')');
+  // §139 — FUENFTER LADEWEG: anleitung.html laedt die Regelschicht selbst und wird aus
+  // index.html mit ?v= verlinkt. Diese Suite prueft nur die html-Seite (kein Worker),
+  // also auch hier nur die html-seitigen Angaben.
+  const anlPath = __dirname + '/anleitung.html';
+  ok(fs.existsSync(anlPath), 'anleitung.html liegt im Ordner (seit \u00a7139 Teil der Auslieferung)');
+  if(fs.existsSync(anlPath)){
+    const anl      = fs.readFileSync(anlPath, 'utf8');
+    const vAnl     = (anl.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
+    const vAnlLink = (html.match(/anleitung\.html\?v=(\d+)/)||[])[1];
+    ok(vAnl === vRules && vAnlLink === vRules,
+       'anleitung.html: Regelschicht (v'+vAnl+') und Verweis aus index.html (v'+vAnlLink+
+       ') auf demselben Stand wie das Spiel (v'+vRules+')');
+  }
 }
 
 console.log('');

@@ -56,7 +56,7 @@ pruef('A4 kein Browser-Speicher', !/localStorage|sessionStorage|document\.cookie
 pruef('A5 keine KI', !/countred_ai/.test(ohneKommentar));
 pruef('A6 keine externe Quelle', !/https?:\/\/(?!www\.w3\.org)/.test(HTML.replace(/<!--[\s\S]*?-->/g,'')));
 pruef('A7 Fassungsstempel vorhanden', /Anleitung · Fassung \d+ · \d\d\.\d\d\.\d{4}/.test(M.ANL_FASSUNG), M.ANL_FASSUNG);
-pruef('A8 Fassung ist hochgezaehlt (>=13)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=13);
+pruef('A8 Fassung ist hochgezaehlt (>=16)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=16);
 pruef('A9 Wachhund steht in einem EIGENEN Skriptblock',
   /__anlGestartet\s*=\s*false[\s\S]*?<\/script>\s*(<!--[\s\S]*?-->\s*)?<script src="gembel_rules/.test(HTML));
 pruef('A10 ALL8 wird nicht neu deklariert', !/const ALL8/.test(HTML));
@@ -88,6 +88,9 @@ pruef('A20 kein "abheben" mehr im sichtbaren Text', !/abheben|abzuheben/i.test(s
 pruef('A21 kein "ablegen" mehr im sichtbaren Text', !/ablegen|abzulegen/i.test(sichtbar));
 pruef('A22 kein "Dreierreihe" mehr im sichtbaren Text', !/Dreierreihe/.test(sichtbar));
 pruef('A23 kein "Gegner" mehr im sichtbaren Text', !/Gegner/.test(sichtbar));
+// §140-Wortlaut: EIN Wort je Sache, in Anleitung, Regeltext und Meldungen gleich.
+pruef('A23b kein "Halbzug" mehr im sichtbaren Text', !/Halbzug|Halbzüge/.test(sichtbar));
+pruef('A23c kein "Rematch"/"Revanche" mehr im sichtbaren Text', !/Rematch|Revanche/.test(sichtbar));
 
 // Die Zuege des Mitspielers: genau zwei, und beide dort, wo Walter sie wollte.
 const mitZuege=[];
@@ -130,10 +133,35 @@ pruef('A31 Kastenhoehe misst alle Seiten', !/if\(STEPS\[PHASES\[i\]\.si\]\.nurTe
 pruef('A32 Mitspielerzuege haengen an einer Seite, statt eine eigene zu bekommen',
   M.STEPS.every(s=>s.aktionen.every(a=>a.actor!==2)));
 // Walters Regel: keine Seite, auf der nur animiert wird.
-const stummeSeiten=[];
-M.STEPS.forEach(s=>s.aktionen.forEach(function(a){
-  if((a.art==='zug'||a.art==='fehlzug') && !a.nachher && a.art==='zug'){ /* laeuft auf der Absetzseite */ }
-}));
+// §139: der Ausgang ins Spiel.
+pruef('A38 es gibt einen Ausgang ins Spiel', /id="btn-exit"/.test(HTML));
+pruef('A39 der Ausgang wird VOR der Regelschicht-Pruefung verdrahtet', (function(){
+  const i=HTML.indexOf("getElementById('btn-exit')");
+  const j=HTML.indexOf('Die Regelschicht fehlt.');
+  return i>0 && j>0 && i<j;
+})());
+// Der fuenfte Ladeweg: die Anleitung laedt die Regelschicht selbst, und index.html
+// verlinkt sie mit ?v=. Beide muessen auf demselben Stand stehen wie das Spiel — sonst
+// mischt der Browser eine alte Regelschicht in die Anleitung (§51-Klasse).
+{
+  const vAnl=(HTML.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
+  pruef('A40 die Anleitung traegt einen Cache-Bust', !!vAnl, String(vAnl));
+  const ipath=path.join(D,'index.html');
+  if(fs.existsSync(ipath)){
+    const ih=fs.readFileSync(ipath,'utf8');
+    const vSpiel=(ih.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
+    const vLink =(ih.match(/anleitung\.html\?v=(\d+)/)||[])[1];
+    pruef('A41 derselbe Stand wie das Spiel', vAnl===vSpiel, vAnl+' gegen '+vSpiel);
+    pruef('A42 index.html verlinkt die Anleitung mit demselben ?v=', vLink===vAnl, vLink+' gegen '+vAnl);
+  } else pruef('A41 index.html liegt nicht daneben (uebersprungen)', true);
+}
+pruef('A37 jede Antipp-Seite zeigt ihre Rechnung sofort', (function(){
+  for(let i=0;i<M.PHASES.length;i++){
+    if(M.PHASES[i].p!=='tap') continue;
+    if(!M.textTeile(i,'nach').rechnung) return false;
+  }
+  return true;
+})());
 pruef('A33 keine Ausfuehrungsseite ohne eigenen Text',
   M.PHASES.every(function(p){
     if(p.p!=='exec') return true;
@@ -169,7 +197,7 @@ async function durchklick(){
   await warte(60);
   pruef('B1 Seite ist gestartet (kein Wachhund-Alarm)',
     d.getElementById('meldung').style.display!=='block', d.getElementById('meldung').textContent.slice(0,90));
-  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 13/.test(d.getElementById('fassung').textContent));
+  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 16/.test(d.getElementById('fassung').textContent));
 
   const langsam=Math.max(M.ANKUNFT_MIT_MS, M.ANKUNFT_MS)+200;
   let gesehen=0, sieger=0;
@@ -179,6 +207,8 @@ async function durchklick(){
     const wo=s.id+'/'+ph.p+'#'+i;
     gesehen++;
 
+    pruef('B· Ausgang ins Spiel ist da ('+wo+')',
+      !!d.getElementById('btn-exit') && d.getElementById('btn-exit').offsetParent!==undefined);
     pruef('B· Schrittnummer stimmt ('+wo+')',
       d.getElementById('stepno').textContent==='Schritt '+(ph.si+1)+' von 9');
 
@@ -212,10 +242,9 @@ async function durchklick(){
       const b=M.boardFor(i), p=M.CELL[a.feld];
       const erlaubt=M.canLift(b,p[0],p[1],1,'odd');
       zelle(a.feld).onclick();
-      // stumm: die Rechnung kommt bewusst erst eine Seite spaeter.
-      pruef('B· Rechnung erscheint nach dem Tippen ('+wo+')',
-        !!d.querySelector('#ltext .rechnung')===!a.stumm);
-      if(!a.stumm) pruef('B· Urteil im Text stimmt ('+wo+')',
+      pruef('B· Rechnung erscheint sofort nach dem Tippen ('+wo+')',
+        !!d.querySelector('#ltext .rechnung'));
+      pruef('B· Urteil im Text stimmt ('+wo+')',
         /Du darfst nicht anheben/.test(txt())!==erlaubt, txt().slice(0,80));
       pruef('B· blaue Markierung nur bei erlaubtem Anheben ('+wo+')', hat(a.feld,'getan')===erlaubt);
       pruef('B· Weiter frei nach dem Tippen ('+wo+')', next().disabled===false);
@@ -340,6 +369,8 @@ if(JSDOM){
   pruef('D2 die Meldung nennt die Datei', dm && /gembel_rules\.js/.test(dm.textContent));
   pruef('D3 Brett und Knoepfe sind dann ausgeblendet',
     ohne.window.document.getElementById('board-area').style.display==='none');
+  pruef('D4b der Ausgang ins Spiel bleibt auch im Fehlerfall bedienbar',
+    typeof ohne.window.document.getElementById('btn-exit').onclick === 'function');
   pruef('D4 der Fassungsstempel bleibt sichtbar',
     ohne.window.document.getElementById('fassung').style.display!=='none');
   ohne.window.close();

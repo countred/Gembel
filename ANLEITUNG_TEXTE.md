@@ -1,6 +1,6 @@
 # Count Red — Interaktive Spielanleitung: alle Texte
 
-**Quelle: `anleitung.html` · Anleitung · Fassung 13 · 24.08.2026**
+**Quelle: `anleitung.html` · Anleitung · Fassung 16 · 25.08.2026**
 
 > Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`
 > im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt
@@ -253,6 +253,8 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 > Die Zugerlaubnis musst du genauso auch beim Anheben der Figur von einem Stapel beachten: Du darfst die Top-Figur anheben, wenn die Summe der **roten** Figuren im Stapel **ungerade** ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.
 
+*Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
+
 *Brett:*  dick: 4D · blau: 4D
 
 **·  zeigen**
@@ -280,8 +282,6 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 **·  ausgeführt**
 
 > Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht der Mitspieler von 1D auf 2C:
->
-> Er hat einen Stapel auf 2C gebildet — und 1D ist jetzt frei.
 
 
 ### Schritt 6 von 9 — Figur auf ein leeres Feld
@@ -335,7 +335,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  anheben**
 
-> Erinnerst du dich an das Ziel: die vierte gleichfarbige Figur in einer Spalte? Es gibt noch ein Zwischenziel davor: die **dritte** gleichfarbige Figur in eine Spalte ziehen. Für den Dreier betrachtet werden nur die Figuren auf dem Feld, nicht eine möglicherweise darauf gestapelte Figur.
+> Erinnerst du dich an das Ziel: die vierte gleichfarbige Figur in einer Spalte? Es gibt noch ein Zwischenziel davor: die **dritte** gleichfarbige Figur in eine Spalte ziehen. Für den Dreier — und ebenso für den Vierer — zählt bei einem Stapel nur die untere Figur, nicht die darauf gestapelte.
 
 *Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren: 5 = ungerade
 
@@ -359,9 +359,9 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  lesen**
 
-> Jetzt gelten mehrere Besonderheiten. Die wichtigste: **Du bekommst einen Bonuszug.**
+> Jetzt gelten mehrere Besonderheiten. Die wichtigste: **Du bekommst einen Bonuszug.** Ist kein Bonuszug möglich, zieht der Mitspieler.
 >
-> Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Die Spieler können aber weiterhin eine Figur darauf absetzen und sie auch wieder wegziehen. Und die Figuren müssen weiterhin für die Parität mitgezählt werden.
+> Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf bleibt erlaubt, und einen so gebildeten Stapel darfst du auch wieder auflösen. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.
 
 *Brett:*  gesperrt: 2B, 3B, 4B
 
@@ -483,11 +483,11 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  lesen**
 
-> Wer beginnt, entscheidet beim ersten Spiel der Zufall, ebenso, wer gerade und wer ungerade spielt. Beim Rematch beginnt der Verlierer, nach einem Remis wechselt der Anziehende — und die Parität wechselt nach jedem Spiel.
+> Wer beginnt, entscheidet beim ersten Spiel der Zufall, ebenso, wer gerade und wer ungerade spielt. Beim Nochmal beginnt der Verlierer, nach einem Remis wechselt der Anziehende — und die Parität wechselt nach jedem Spiel.
 
 **·  lesen**
 
-> Remis könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die Partie automatisch mit Remis, ebenso nach 50 Halbzügen ohne neuen Dreier.
+> Remis könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die Partie automatisch mit Remis, ebenso nach 50 Zügen ohne neuen Dreier.
 
 **·  lesen**
 
@@ -501,7 +501,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 |---|---|
 | Kopfzeile links | `COUNT · RED` |
 | Kopfzeile rechts | `Schritt N von 9` |
-| unter dem Fortschrittsbalken | `Anleitung · Fassung 13 · 24.08.2026` |
+| unter dem Fortschrittsbalken | `Anleitung · Fassung 16 · 25.08.2026` |
 | Knopf links | `Zurück` — einen Teilschritt zurück |
 | Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |
 

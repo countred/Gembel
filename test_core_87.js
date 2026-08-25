@@ -128,6 +128,25 @@ const vImport = worker.match(/importScripts\('gembel_rules\.js\?v=(\d+)', 'count
 ok(!!vRules && vRules===vCore && vCore===vWorker && vWorker===vMarker &&
    !!vImport && vImport[1]===vRules && vImport[2]===vRules,
    'alle 4 Ladepfade + Build-Marker identisch (v'+vRules+')');
+// §139 — FUENFTER LADEWEG: anleitung.html ist eine eigene Seite mit eigenem
+// <script src="gembel_rules.js?v=NN"> und wird aus index.html mit ?v= verlinkt.
+// Der Guard hat bis v108 nur vier Wege verglichen; die Anleitung waere still auf
+// einer alten Regelschicht gelaufen und haette dann etwas anderes gelehrt, als das
+// Spiel tut — genau der Fall, gegen den ihr Selbsttest gebaut ist.
+{
+  const anlPath = __dirname + '/anleitung.html';
+  ok(fs.existsSync(anlPath),
+     'anleitung.html liegt im Ordner (seit \u00a7139 Teil der Auslieferung)');
+  if(fs.existsSync(anlPath)){
+    const anl      = fs.readFileSync(anlPath, 'utf8');
+    const vAnl     = (anl.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
+    const vAnlLink = (html.match(/anleitung\.html\?v=(\d+)/)||[])[1];
+    ok(vAnl === vRules && vAnlLink === vRules,
+       'anleitung.html: Regelschicht (v'+vAnl+') und Verweis aus index.html (v'+vAnlLink+
+       ') auf demselben Stand wie das Spiel (v'+vRules+')');
+  }
+}
+
 
 console.log('');
 console.log(pass + '/' + (pass+fail) + ' Tests bestanden' + (fail ? ' \u2014 ' + fail + ' FEHLGESCHLAGEN' : ''));
