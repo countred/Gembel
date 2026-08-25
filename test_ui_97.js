@@ -298,6 +298,23 @@ console.log('\u00a7142 \u2014 Kartenbreiten:');
   // Die Dialogkarten tragen KEINE eigene Breite — sie erben die schmale Grundbreite aus
   // `.card`. Genau das ist die Trennlinie: wer Fliesstext zeigt, setzt sich breiter; wer
   // zwei Knoepfe zeigt, laesst es. Geprueft wird deshalb beides.
+  // Schriftgroesse: Breite allein macht nichts lesbarer. Die drei Karten mit echtem
+  // Fliesstext tragen dieselbe Groesse, und sie ist nicht mehr die alte 13px.
+  const schriftVon = id => {
+    const i = html.indexOf('id="'+id+'"');
+    if(i < 0) return null;
+    const m = html.slice(i, i+1400).match(/line-height:1\.6[^"]*"|font-size:([0-9.]+)px;line-height:1\.6/);
+    const m2 = html.slice(i, i+1400).match(/font-size:([0-9.]+)px;line-height:1\.6/);
+    return m2 ? Number(m2[1]) : null;
+  };
+  const textKarten = ['impressum-overlay','datenschutz-overlay','regeln-overlay'];
+  const groessen = textKarten.map(schriftVon);
+  ok(groessen.every(g => g !== null && g >= 14),
+     'der Fliesstext ist mindestens 14px gross: ' +
+     textKarten.map((n,i)=>n+'='+groessen[i]).join(', '));
+  ok(new Set(groessen).size === 1,
+     'alle drei Fliesstext-Karten tragen dieselbe Schriftgroesse');
+
   const grund = (html.match(/\.card\{[^}]*width:min\((\d+)px/)||[])[1];
   ok(Number(grund) <= 360, 'die Grundbreite der Karten bleibt schmal (' + grund + 'px)');
   ok(kurz.every(id => breiteVon(id) === null),

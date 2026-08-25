@@ -404,7 +404,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          damit Aussehen und Verhalten zum Rest des Menues passen. -->
     <div id="anleitung-zeile">
       <button type="button" class="anleitung-link"
-        onclick="location.href='anleitung.html?v=111'"><span class="vor">Neu hier?</span> Spielanleitung</button>
+        onclick="location.href='anleitung.html?v=112'"><span class="vor">Neu hier?</span> Spielanleitung</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -434,11 +434,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      Volle Breite waeren auf einem 1440er Schirm rund 200 Zeichen und deutlich SCHLECHTER
      lesbar. Auf dem Telefon aendert sich nichts, dort greift 94vw.
      Die DIALOGKARTEN (300/320px) bleiben schmal — "Nochmal spielen?" mit zwei Knoepfen
-     auf 560px saehe verloren aus. test_ui_97 haelt beide Gruppen auseinander. -->
+     auf 560px saehe verloren aus. test_ui_97 haelt beide Gruppen auseinander.
+     NACHZUG: die Schrift im Fliesstext ist von 13px auf 15px gewachsen. Breite allein
+     macht einen Text nicht lesbarer — sie macht die Zeilen nur laenger. Bei 15px und
+     560px sind es rund 68 Zeichen je Zeile, also weiter im guten Bereich.
+     `marks-overlay` bleibt bei seiner Groesse: dort steht kein Fliesstext, sondern eine
+     Liste, die das Skript erzeugt. -->
 <div class="overlay hidden" id="impressum-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <h2 style="text-align:center;font-size:18px;">Impressum</h2>
-    <div style="font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:15px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Angaben gemäß § 5 DDG</strong><br>
         Walter Rehm<br>Guldeinstr. 32 A<br>80339 München<br>Deutschland</div>
       <div><strong style="color:var(--text);">Kontakt</strong><br>
@@ -460,7 +465,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="datenschutz-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <h2 style="text-align:center;font-size:18px;">Datenschutz</h2>
-    <div style="font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:15px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Kurz gesagt</strong><br>
         Diese Seite setzt keine Cookies, bindet keine Werbung ein und verwendet kein
         Analyse-Werkzeug. Name, E-Mail-Adresse und Gerätedaten werden nicht erhoben —
@@ -662,7 +667,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <h2 style="text-align:center;font-size:18px;">Regeln</h2>
     <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:-8px;">First published in 1998 as Gembel</p>
 
-    <div style="font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:15px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Ziel</strong><br>4 gleichfarbige Figuren in einer Spalte (A, B, C oder D). Bei einem Stapel zählt die Basis, nicht die Figur darauf.</div>
 
       <div><strong style="color:var(--text);">Brett</strong><br>4×4 Felder, Zeilen 1–4, Spalten A–D. Jedes Feld hat Punkte (oben im Feld): Zeile 1 = 3, Zeile 2 = 2, Zeile 3 = 1, Zeile 4 = 0.</div>
@@ -707,10 +712,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      einem Deploy countred.html (neu) mit gembel_rules.js/countred_ai_core.js (alt aus Cache)
      MISCHEN — genau die §51-Klasse „aktualisiert nicht mehr". Bei JEDEM Release hochzählen,
      an ALLEN vier Ladewegen synchron (hier, countred_ai_core.js unten, Worker-new-Worker und
-     dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v111. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
+     dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=111" charset="utf-8"></script>
+<script src="gembel_rules.js?v=112" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -722,7 +727,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=111" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=112" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1144,7 +1149,7 @@ if(PLAYER_KEY){
   if(_tk && _tv){ _tv.textContent=PLAYER_KEY; _tk.classList.remove('hidden'); }
 }
 
-const BUILD_MARKER='· Build v111';
+const BUILD_MARKER='· Build v112';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1461,7 +1466,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=111'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=112'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -3641,12 +3646,12 @@ window.showMarkedGames=async function(){
   showOverlay('marks-overlay');
   const fb=document.getElementById('marks-feedback'); if(fb) fb.textContent='';
   const listEl=document.getElementById('marks-list');
-  listEl.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;">Lade…</div>';
+  listEl.innerHTML='<div style="color:var(--text3);font-size:15px;text-align:center;">Lade…</div>';
   try{
     const q=query(ref(db,'games_countred_marks'), orderByChild('ts'), limitToLast(20));
     const snap=await get(q);
     if(!snap.exists()){
-      listEl.innerHTML='<div style="color:var(--text3);font-size:13px;text-align:center;">Noch keine markierten Partien.<br>Im Spiel gegen Max Michu: ☰ Optionen → 📌 markieren.</div>';
+      listEl.innerHTML='<div style="color:var(--text3);font-size:15px;text-align:center;">Noch keine markierten Partien.<br>Im Spiel gegen Max Michu: ☰ Optionen → 📌 markieren.</div>';
       return;
     }
     const items=[]; snap.forEach(ch=>{ const v=ch.val(); if(v) items.push(v); });
@@ -3659,7 +3664,7 @@ window.showMarkedGames=async function(){
     console.error('§88 showMarkedGames: Laden fehlgeschlagen:', e);
     const why=String((e&&(e.code||e.message))||e||'unbekannt'); // §89c: Ursache anzeigen
     const hint=/PERMISSION/i.test(why)?'<br>Firebase-Rules: games_countred_marks freischalten (s. HANDOVER §88/§89).':'';
-    listEl.innerHTML=`<div style="color:var(--text3);font-size:13px;text-align:center;">Laden fehlgeschlagen: ${escapeHtml(why)}${hint}</div>`;
+    listEl.innerHTML=`<div style="color:var(--text3);font-size:15px;text-align:center;">Laden fehlgeschlagen: ${escapeHtml(why)}${hint}</div>`;
   }
 };
 
