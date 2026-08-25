@@ -125,7 +125,7 @@ function schreibe(){
   L.push('| **dick** | auf diesem Feld stehen (oder landen) zählende rote Figuren |');
   L.push('| **blinkt** | hier handeln — grün, wenn das Feld selbst zählende rote trägt, sonst blau |');
   L.push('| **blau** | hier ist gehandelt worden |');
-  L.push('| **gesperrt** | Feld eines Dreiers (oranger Rahmen) |');
+  L.push('| **gesperrt** | Basis-Figur eines Dreiers (oranger Rahmen) |');
   L.push('| **Sieg** | die vier Felder der Siegspalte |','');
   L.push('In den Schritten 1 und 2 sowie bei den Zügen des Mitspielers fehlen die grünen');
   L.push('Markierungen bewusst: dort wird noch nichts gerechnet.','');
@@ -154,11 +154,13 @@ function schreibe(){
   L.push('| Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |','');
   L.push('Im Schritt des Lernenden ist **Weiter gesperrt**, bis er getippt hat. Beim Mitspieler');
   L.push('treibt **Weiter** die Teilschritte.','');
-  L.push('## Meldungen, die hoffentlich nie erscheinen','');
-  L.push('> **Die Regelschicht fehlt.** Diese Anleitung braucht **gembel_rules.js** … im **selben Ordner** wie diese Seite.','');
-  L.push('> **Selbsttest fehlgeschlagen.** Diese Anleitung stimmt nicht mit der Regelschicht überein und wird deshalb nicht angezeigt: …','');
-  L.push('> **Die Anleitung stoppt hier.** Erklärung und Regelschicht stimmen nicht überein (…). Das ist ein Fehler in der Anleitung, nicht im Spiel.','');
-  L.push('> **Die Anleitung konnte nicht starten.** / **Die Anleitung ist nicht gestartet.** — vom Wachhund, wenn der Programmteil gar nicht läuft.','');
+  L.push('## Wenn etwas schiefgeht','');
+  L.push('Der Lernende sieht in **jedem** Ausfall genau einen Satz — fehlende Regelschicht,');
+  L.push('fehlgeschlagener Selbsttest, Abweichung zur Regelschicht, gar nicht gestarteter');
+  L.push('Programmteil, alles dasselbe:','');
+  L.push('> **Die Anleitung konnte nicht starten.**','');
+  L.push('Sichtbar bleiben daneben nur der Fassungsstempel und der Ausgang ins Spiel.');
+  L.push('Was wirklich los war, steht in der Konsole.','');
   const md=L.join('\n')+'\n';
   fs.writeFileSync(D+'/ANLEITUNG_TEXTE.md',md);
   console.log('geschrieben: ANLEITUNG_TEXTE.md — '+md.split('\n').length+' Zeilen, '+out.length+' Teilschritte erfasst');

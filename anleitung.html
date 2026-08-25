@@ -44,6 +44,13 @@
        blaue Fuellung         = hier ist gehandelt worden
      Gruene FLAECHEN gibt es nicht. GEZAEHLT wird im Text, nicht am Rahmen.
 
+     SPRACHREGELUNG (Walter, §140): GESPERRT IST DIE FIGUR, NICHT DAS FELD.
+     Es gibt keine gesperrten Felder — nur die drei Basis-Figuren eines Dreiers sind
+     gesperrt. Genau deshalb darf auf sie weiter gestapelt werden (canStack prueft
+     `locked` NICHT), und der so gebildete Stapel laesst sich auch wieder aufloesen.
+     Wer vom „gesperrten Feld" spricht, behauptet das Gegenteil. Im Code heisst das
+     Merkmal weiterhin `cell.locked` — das ist die Zelle, die die Figur traegt.
+
      ROH-SCHRITTE (`roh:true`): Schritt 1 und 2 zeigen NUR die Markierungen
      des Spiels selbst — blaue Zugmarkierung, Sperrrahmen, Siegrahmen.
      Keine gruenen Erklaerungsmarkierungen, keine Rechnung. Walters Regel:
@@ -269,9 +276,10 @@ window.addEventListener('error', function(e){
   var el=document.getElementById('meldung');
   if(!el) return;
   el.style.display='block';
-  el.innerHTML='<b>Die Anleitung konnte nicht starten.</b> ' +
-    String((e && e.message) || 'Unbekannter Fehler').replace(/</g,'&lt;') +
-    '<br>Diese Seite zeigt deshalb nichts an — das ist Absicht, damit sie nichts Falsches lehrt.';
+  // §141: derselbe eine Satz wie in bail() — der Wachhund laeuft aber in einem eigenen
+  // Skriptblock und kann die Konstante von dort nicht sehen. Die Suite haelt beide gegeneinander.
+  el.innerHTML='<b>Die Anleitung konnte nicht starten.</b>';
+  console.error('anleitung.html: Hauptblock nicht gestartet — ' + String((e && e.message) || 'Unbekannter Fehler'));
   ['lesson','board-area','nav','bar'].forEach(function(id){
     var n=document.getElementById(id); if(n) n.style.display='none';
   });
@@ -281,8 +289,8 @@ setTimeout(function(){
   var el=document.getElementById('meldung');
   if(el && el.style.display!=='block'){
     el.style.display='block';
-    el.innerHTML='<b>Die Anleitung ist nicht gestartet.</b> Der Programmteil der Seite wurde '
-      + 'nicht ausgeführt. Bitte melden — und in der Konsole nachsehen, was dort steht.';
+    el.innerHTML='<b>Die Anleitung konnte nicht starten.</b>';
+    console.error('anleitung.html: der Programmteil wurde nicht ausgefuehrt (Wachhund nach 1500 ms).');
     ['lesson','board-area','nav','bar'].forEach(function(id){
       var n=document.getElementById(id); if(n) n.style.display='none';
     });
@@ -300,7 +308,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 16 · 25.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 19 · 25.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -402,7 +410,7 @@ function markAnheben(b, fr, fc, spieler){
   }
   if(cell.locked)
     return {bereich:null, zaehlt:[], tippen:null, summe:null, ok:ok,
-      text: lab(fr,fc)+' gehört zu einem gesperrten Dreier. Eine <b>einzelne</b> Figur ist dort unbeweglich.'};
+      text: lab(fr,fc)+' ist eine <b>gesperrte</b> Basis-Figur im Dreier.'};
   const bereich=[[fr,fc]].concat(nachbarn(fr,fc));
   const zaehlt=bereich.filter(function(p){ return roteAuf(b,p[0],p[1])>0; });
   const nb=countRedNeighbors(b,fr,fc), self=(mp.color==='red'?1:0), summe=nb+self;
@@ -582,7 +590,7 @@ const STEPS = [
       text:'<p>Jetzt gelten mehrere Besonderheiten. Die wichtigste: <b>Du bekommst einen '
           +'Bonuszug.</b> Ist kein Bonuszug möglich, zieht der Mitspieler.</p>'
           +'<p>Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf '
-          +'bleibt erlaubt, und einen so gebildeten Stapel darfst du auch wieder auflösen. Für die '
+          +'bleibt erlaubt, und die obere Figur darfst du auch wieder herunternehmen. Für die '
           +'Parität zählen auch die gesperrten Figuren weiterhin mit.</p>' }
   ]},
 
@@ -1148,19 +1156,26 @@ function groesse(){
 // ═══════════════════════════════════════════════════════════════════
 //  Ausfallmeldungen — eine leere Seite ist die schlechteste Fehlermeldung
 // ═══════════════════════════════════════════════════════════════════
-function bail(titel, text){
+// §141: DER LERNENDE SIEHT IMMER NUR DIESEN EINEN SATZ.
+// Walters Auflage. Wer die Anleitung oeffnet, kann mit "Selbsttest fehlgeschlagen",
+// einem fehlenden Dateinamen oder einer Feldkoordinate nichts anfangen — es beunruhigt
+// nur und sieht nach einem kaputten Spiel aus, obwohl das Spiel in Ordnung ist.
+// Alles Diagnostische geht in die KONSOLE, wo es hingehoert.
+// Sichtbar bleiben ausserdem: der Fassungsstempel (sonst ist unklar, welche Datei laeuft)
+// und der Ausgang ins Spiel oben rechts (sonst sitzt der Lernende fest).
+const AUSFALL_SATZ = '<b>Die Anleitung konnte nicht starten.</b>';
+function bail(diagnose){
   const el=document.getElementById('meldung');
-  if(el){ el.style.display='block'; el.innerHTML='<b>'+titel+'</b> '+text; }
+  if(el){ el.style.display='block'; el.innerHTML=AUSFALL_SATZ; }
   ['lesson','board-area','nav','bar'].forEach(function(id){
     const n=document.getElementById(id); if(n) n.style.display='none';
-  });   // #fassung bleibt sichtbar — sonst ist im Fehlerfall unklar, welche Datei laeuft
-  console.error('anleitung.html: '+titel+' '+String(text).replace(/<[^>]+>/g,''));
+  });
+  console.error('anleitung.html: '+String(diagnose).replace(/<[^>]+>/g,''));
 }
 function abweichung(wo){
   laeuft=true;
-  bail('Die Anleitung stoppt hier.',
-    'Erklärung und Regelschicht stimmen nicht überein (' + wo + '). Das ist ein Fehler in der '
-    + 'Anleitung, nicht im Spiel — bitte melden. Bis dahin gelten die Regeln aus dem Spiel, nicht diese Seite.');
+  bail('Erklaerung und Regelschicht stimmen nicht ueberein (' + wo + ') — Fehler in der '
+     + 'Anleitung, nicht im Spiel.');
 }
 
 // ═══════════════════════════════════════════════════════════════════
@@ -1423,21 +1438,18 @@ function init(){
                 'getLegalMoves','applyMove','applyMoveOn','applyLockOn','checkFourInRow',
                 'cloneBoard','hasAnyMove','coordToLabel'];
   const fehlt=noetig.filter(n=>typeof window[n]!=='function');
-  if(fehlt.length) return bail('Die Regelschicht fehlt.',
-    'Diese Anleitung braucht <b>gembel_rules.js</b> — dieselbe Datei, die das Spiel lädt — im '
-    + '<b>selben Ordner</b> wie diese Seite. Nicht gefunden: ' + fehlt.slice(0,3).join(', ')
-    + (fehlt.length>3?' …':'') + '.<br><br>Eine einzeln heruntergeladene HTML-Datei kann ihre '
-    + 'Nachbardatei meist nicht holen — dafür gibt es die Vorschaufassung.');
+  if(fehlt.length) return bail('Die Regelschicht fehlt — gembel_rules.js muss im selben Ordner '
+    + 'liegen wie diese Seite. Nicht gefunden: ' + fehlt.join(', ')
+    + '. (Eine einzeln heruntergeladene HTML-Datei kann ihre Nachbardatei meist nicht holen — '
+    + 'dafuer gibt es die Vorschaufassung.)');
 
   let err;
   try { err=selfTest(); }
-  catch(e){ return bail('Start fehlgeschlagen.',
-    'Beim Prüfen der Anleitung ist ein Fehler aufgetreten: ' + String((e&&e.message)||e).replace(/</g,'&lt;')); }
+  catch(e){ return bail('Selbsttest abgestuerzt: ' + String((e&&e.message)||e)); }
   if(err.length){
     console.error('anleitung.html selfTest:', err);
-    return bail('Selbsttest fehlgeschlagen.',
-      'Diese Anleitung stimmt nicht mit der Regelschicht überein und wird deshalb nicht angezeigt:<br>· '
-      + err.map(e=>String(e).replace(/</g,'&lt;')).join('<br>· '));
+    return bail('Selbsttest fehlgeschlagen — Anleitung und Regelschicht stimmen nicht ueberein: '
+      + err.join(' | '));
   }
 
   document.getElementById('btn-next').onclick=weiter;
@@ -1448,7 +1460,7 @@ function init(){
 }
 if(typeof document!=='undefined' && typeof window!=='undefined'){
   try { init(); }
-  catch(e){ bail('Start fehlgeschlagen.','Unerwarteter Fehler: '+String((e&&e.message)||e).replace(/</g,'&lt;')); }
+  catch(e){ bail('Unerwarteter Fehler beim Start: '+String((e&&e.message)||e)); }
 }
 </script>
 </body>

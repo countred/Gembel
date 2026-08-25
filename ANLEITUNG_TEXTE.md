@@ -1,6 +1,6 @@
 # Count Red — Interaktive Spielanleitung: alle Texte
 
-**Quelle: `anleitung.html` · Anleitung · Fassung 16 · 25.08.2026**
+**Quelle: `anleitung.html` · Anleitung · Fassung 19 · 25.08.2026**
 
 > Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`
 > im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt
@@ -36,7 +36,7 @@ Die Markierungen auf dem Brett sind mit aufgeführt:
 | **dick** | auf diesem Feld stehen (oder landen) zählende rote Figuren |
 | **blinkt** | hier handeln — grün, wenn das Feld selbst zählende rote trägt, sonst blau |
 | **blau** | hier ist gehandelt worden |
-| **gesperrt** | Feld eines Dreiers (oranger Rahmen) |
+| **gesperrt** | Basis-Figur eines Dreiers (oranger Rahmen) |
 | **Sieg** | die vier Felder der Siegspalte |
 
 In den Schritten 1 und 2 sowie bei den Zügen des Mitspielers fehlen die grünen
@@ -361,7 +361,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 > Jetzt gelten mehrere Besonderheiten. Die wichtigste: **Du bekommst einen Bonuszug.** Ist kein Bonuszug möglich, zieht der Mitspieler.
 >
-> Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf bleibt erlaubt, und einen so gebildeten Stapel darfst du auch wieder auflösen. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.
+> Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf bleibt erlaubt, und die obere Figur darfst du auch wieder herunternehmen. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.
 
 *Brett:*  gesperrt: 2B, 3B, 4B
 
@@ -501,20 +501,21 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 |---|---|
 | Kopfzeile links | `COUNT · RED` |
 | Kopfzeile rechts | `Schritt N von 9` |
-| unter dem Fortschrittsbalken | `Anleitung · Fassung 16 · 25.08.2026` |
+| unter dem Fortschrittsbalken | `Anleitung · Fassung 19 · 25.08.2026` |
 | Knopf links | `Zurück` — einen Teilschritt zurück |
 | Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |
 
 Im Schritt des Lernenden ist **Weiter gesperrt**, bis er getippt hat. Beim Mitspieler
 treibt **Weiter** die Teilschritte.
 
-## Meldungen, die hoffentlich nie erscheinen
+## Wenn etwas schiefgeht
 
-> **Die Regelschicht fehlt.** Diese Anleitung braucht **gembel_rules.js** … im **selben Ordner** wie diese Seite.
+Der Lernende sieht in **jedem** Ausfall genau einen Satz — fehlende Regelschicht,
+fehlgeschlagener Selbsttest, Abweichung zur Regelschicht, gar nicht gestarteter
+Programmteil, alles dasselbe:
 
-> **Selbsttest fehlgeschlagen.** Diese Anleitung stimmt nicht mit der Regelschicht überein und wird deshalb nicht angezeigt: …
+> **Die Anleitung konnte nicht starten.**
 
-> **Die Anleitung stoppt hier.** Erklärung und Regelschicht stimmen nicht überein (…). Das ist ein Fehler in der Anleitung, nicht im Spiel.
-
-> **Die Anleitung konnte nicht starten.** / **Die Anleitung ist nicht gestartet.** — vom Wachhund, wenn der Programmteil gar nicht läuft.
+Sichtbar bleiben daneben nur der Fassungsstempel und der Ausgang ins Spiel.
+Was wirklich los war, steht in der Konsole.
 

@@ -285,8 +285,20 @@ console.log('\u00a7140 \u2014 Wortlaut:');
   ok(!/Wegziehen|Abstellen auf/.test(sicht), 'kein "Wegziehen"/"Abstellen" \u2014 es hei\u00dft "Anheben"/"Absetzen"');
   ok(!/Entstapeln/.test(sicht), 'kein "Entstapeln" \u2014 es hei\u00dft "Stapel aufl\u00f6sen"');
   // Vollstaendigkeit: die vier Regeln, die beim Abgleich gefehlt haben.
-  ok(/Eine Einzelfigur auf einem gesperrten Feld ist unbeweglich/.test(html),
-     'Regeltext nennt die unbewegliche Einzelfigur auf gesperrtem Feld (canLift: locked \u2192 false)');
+  ok(/Gesperrt hei\u00dft: Diese Figur l\u00e4sst sich nicht mehr bewegen/.test(html),
+     'Regeltext sagt, was gesperrt heisst (canLift: locked \u2192 false)');
+  // Und ebenso, was es NICHT heisst. "Gesperrt" liest sich sonst als "hier geht gar
+  // nichts mehr" — dabei erlaubt canStack das Stapeln auf die gesperrte Figur, und
+  // canLift gibt dem Stapelbauer die obere Figur wieder her.
+  ok(/Auf sie darf aber weiterhin gestapelt werden/.test(html),
+     'Regeltext: auf die gesperrte Figur darf gestapelt werden');
+  ok(/obere Figur eines so gebildeten Stapels darf auch wieder heruntergenommen werden/.test(html),
+     'Regeltext: die obere Figur darf wieder heruntergenommen werden');
+  // §140-Sprachregelung: gesperrt ist die FIGUR, nicht das Feld. Auf eine gesperrte
+  // Basis-Figur darf gestapelt werden — wer vom „gesperrten Feld" spricht, behauptet
+  // das Gegenteil und widerspricht canStack.
+  ok(!/gesperrte[snm]? Feld|Felder werden gesperrt|gesperrten Feldern/.test(sicht),
+     'kein "gesperrtes Feld" \u2014 gesperrt ist die Basis-Figur, das Feld bleibt bespielbar');
   ok(/nur die Top-Figur, nie der Stapel als Ganzes/.test(html),
      'Regeltext nennt: bewegt wird nur die Top-Figur');
   ok(/Ist kein Bonuszug m\u00f6glich, zieht der Mitspieler/.test(html),

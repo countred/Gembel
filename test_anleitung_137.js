@@ -56,7 +56,7 @@ pruef('A4 kein Browser-Speicher', !/localStorage|sessionStorage|document\.cookie
 pruef('A5 keine KI', !/countred_ai/.test(ohneKommentar));
 pruef('A6 keine externe Quelle', !/https?:\/\/(?!www\.w3\.org)/.test(HTML.replace(/<!--[\s\S]*?-->/g,'')));
 pruef('A7 Fassungsstempel vorhanden', /Anleitung · Fassung \d+ · \d\d\.\d\d\.\d{4}/.test(M.ANL_FASSUNG), M.ANL_FASSUNG);
-pruef('A8 Fassung ist hochgezaehlt (>=16)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=16);
+pruef('A8 Fassung ist hochgezaehlt (>=19)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=19);
 pruef('A9 Wachhund steht in einem EIGENEN Skriptblock',
   /__anlGestartet\s*=\s*false[\s\S]*?<\/script>\s*(<!--[\s\S]*?-->\s*)?<script src="gembel_rules/.test(HTML));
 pruef('A10 ALL8 wird nicht neu deklariert', !/const ALL8/.test(HTML));
@@ -91,6 +91,31 @@ pruef('A23 kein "Gegner" mehr im sichtbaren Text', !/Gegner/.test(sichtbar));
 // §140-Wortlaut: EIN Wort je Sache, in Anleitung, Regeltext und Meldungen gleich.
 pruef('A23b kein "Halbzug" mehr im sichtbaren Text', !/Halbzug|Halbzüge/.test(sichtbar));
 pruef('A23c kein "Rematch"/"Revanche" mehr im sichtbaren Text', !/Rematch|Revanche/.test(sichtbar));
+// §140: gesperrt ist die FIGUR, nicht das Feld — sonst widerspricht der Text canStack.
+pruef('A23d kein "gesperrtes Feld" im sichtbaren Text',
+  !/gesperrte[snm]? Feld|Felder werden gesperrt/.test(sichtbar));
+// "Gesperrt" allein liest sich als "hier geht gar nichts mehr". Die Anleitung muss
+// beides nennen: stapeln bleibt erlaubt, und die obere Figur kommt wieder herunter.
+// Am MODELL pruefen, nicht am Quelltext: die Saetze sind dort ueber mehrere
+// String-Teile verteilt, ein Regex auf die Datei findet sie nur zufaellig.
+{
+  const alleTexte = M.STEPS.map(s => (s.intro||'') +
+    s.aktionen.map(x => (x.text||'')+(x.vorher||'')+(x.nachher||'')).join(' ')).join(' ');
+  // §141: es gibt genau EINEN sichtbaren Ausfalltext, und zwar ueberall denselben —
+// auch im Wachhund, der in einem eigenen Skriptblock liegt und die Konstante nicht sieht.
+{
+  const saetze=[...HTML.matchAll(/<b>Die Anleitung [^<]*<\/b>/g)].map(x=>x[0]);
+  pruef('A43 nur ein einziger sichtbarer Ausfallsatz',
+    saetze.length>0 && new Set(saetze).size===1, [...new Set(saetze)].join(' | '));
+  pruef('A44 die alten Ausfalltexte sind weg',
+    !/Selbsttest fehlgeschlagen\.<|Die Anleitung stoppt hier|Die Regelschicht fehlt\.<|ist nicht gestartet/.test(HTML));
+  pruef('A45 die Diagnose geht in die Konsole',
+    /console\.error\('anleitung\.html: '\+String\(diagnose\)/.test(HTML));
+}
+pruef('A23e die Anleitung sagt, was trotz Sperrung erlaubt bleibt',
+    /Stapeln darauf bleibt erlaubt/.test(alleTexte) &&
+    /obere Figur darfst du auch wieder herunternehmen/.test(alleTexte));
+}
 
 // Die Zuege des Mitspielers: genau zwei, und beide dort, wo Walter sie wollte.
 const mitZuege=[];
@@ -136,8 +161,10 @@ pruef('A32 Mitspielerzuege haengen an einer Seite, statt eine eigene zu bekommen
 // §139: der Ausgang ins Spiel.
 pruef('A38 es gibt einen Ausgang ins Spiel', /id="btn-exit"/.test(HTML));
 pruef('A39 der Ausgang wird VOR der Regelschicht-Pruefung verdrahtet', (function(){
+  // Anker ist der CODE, nicht der Meldungstext: der Text hat sich mit §141 geaendert,
+  // und die Pruefung schlug fehl, obwohl die Reihenfolge stimmte.
   const i=HTML.indexOf("getElementById('btn-exit')");
-  const j=HTML.indexOf('Die Regelschicht fehlt.');
+  const j=HTML.indexOf('const fehlt=noetig.filter');
   return i>0 && j>0 && i<j;
 })());
 // Der fuenfte Ladeweg: die Anleitung laedt die Regelschicht selbst, und index.html
@@ -197,7 +224,7 @@ async function durchklick(){
   await warte(60);
   pruef('B1 Seite ist gestartet (kein Wachhund-Alarm)',
     d.getElementById('meldung').style.display!=='block', d.getElementById('meldung').textContent.slice(0,90));
-  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 16/.test(d.getElementById('fassung').textContent));
+  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 19/.test(d.getElementById('fassung').textContent));
 
   const langsam=Math.max(M.ANKUNFT_MIT_MS, M.ANKUNFT_MS)+200;
   let gesehen=0, sieger=0;
@@ -366,7 +393,11 @@ if(JSDOM){
     {runScripts:'dangerously',pretendToBeVisual:true});
   const dm=ohne.window.document.getElementById('meldung');
   pruef('D1 fehlende Regelschicht wird gemeldet', dm && dm.style.display==='block');
-  pruef('D2 die Meldung nennt die Datei', dm && /gembel_rules\.js/.test(dm.textContent));
+  // §141: der Lernende sieht NUR diesen einen Satz — keine Dateinamen, keine Diagnose.
+  pruef('D2 die Meldung ist genau der eine Satz',
+    dm && dm.textContent.trim()==='Die Anleitung konnte nicht starten.', dm && dm.textContent.trim().slice(0,90));
+  pruef('D2b die Meldung nennt KEINE Diagnose',
+    dm && !/gembel_rules|Selbsttest|canLift|Regelschicht/.test(dm.textContent), dm && dm.textContent.slice(0,90));
   pruef('D3 Brett und Knoepfe sind dann ausgeblendet',
     ohne.window.document.getElementById('board-area').style.display==='none');
   pruef('D4b der Ausgang ins Spiel bleibt auch im Fehlerfall bedienbar',
