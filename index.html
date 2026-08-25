@@ -404,7 +404,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          damit Aussehen und Verhalten zum Rest des Menues passen. -->
     <div id="anleitung-zeile">
       <button type="button" class="anleitung-link"
-        onclick="location.href='anleitung.html?v=110'"><span class="vor">Neu hier?</span> Spielanleitung</button>
+        onclick="location.href='anleitung.html?v=111'"><span class="vor">Neu hier?</span> Spielanleitung</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -427,8 +427,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- §133 (4.8.): Impressum AUSGEFUELLT. Die Angaben stammen von Walter selbst.
      ⚠️ Wer hier etwas aendert, muss die Datenschutzerklaerung mitziehen — dort steht
      „Verantwortlich ist die im Impressum genannte Person". -->
+<!-- §142: die vier Karten mit langem Fliesstext (Impressum, Datenschutz, Markierungen,
+     Regeln) tragen 560px statt 360px. Grund ist NICHT "der Bildschirm ist breiter",
+     sondern die ZEILENLAENGE: 360px ergaben abzueglich Innenabstand rund 47 Zeichen je
+     Zeile — das untere Ende des gut Lesbaren. 560px ergeben rund 75 Zeichen, das obere.
+     Volle Breite waeren auf einem 1440er Schirm rund 200 Zeichen und deutlich SCHLECHTER
+     lesbar. Auf dem Telefon aendert sich nichts, dort greift 94vw.
+     Die DIALOGKARTEN (300/320px) bleiben schmal — "Nochmal spielen?" mit zwei Knoepfen
+     auf 560px saehe verloren aus. test_ui_97 haelt beide Gruppen auseinander. -->
 <div class="overlay hidden" id="impressum-overlay">
-  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(360px,94vw);">
+  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <h2 style="text-align:center;font-size:18px;">Impressum</h2>
     <div style="font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Angaben gemäß § 5 DDG</strong><br>
@@ -450,7 +458,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      keine Cookies, kein Tracking, nur Spieldaten und eine Zufallskennung. Wer daran etwas
      aendert (GA4 zurueck, Geraetekennung, Namen), muss diesen Text mitziehen. -->
 <div class="overlay hidden" id="datenschutz-overlay">
-  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(360px,94vw);">
+  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <h2 style="text-align:center;font-size:18px;">Datenschutz</h2>
     <div style="font-size:13px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Kurz gesagt</strong><br>
@@ -487,7 +495,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- §88: Liste der markierten Partien (MvKI-Analyse). Eintrag antippen = Partie-Code kopieren,
      damit er im Replay-Werkzeug eingefügt werden kann. Gefüllt aus games_countred_marks/. -->
 <div class="overlay hidden" id="marks-overlay">
-  <div class="card" style="width:min(360px,94vw);max-height:86vh;">
+  <div class="card" style="width:min(560px,94vw);max-height:86vh;">
     <h2 style="font-size:17px;">📌 Markierte Partien</h2>
     <div id="marks-feedback" style="font-size:12px;color:var(--online-text);min-height:16px;text-align:center;"></div>
     <div id="marks-list" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:56vh;"></div>
@@ -650,7 +658,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 
 <!-- Regeln Overlay -->
 <div class="overlay hidden" id="regeln-overlay">
-  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(360px,94vw);">
+  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <h2 style="text-align:center;font-size:18px;">Regeln</h2>
     <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:-8px;">First published in 1998 as Gembel</p>
 
@@ -699,10 +707,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      einem Deploy countred.html (neu) mit gembel_rules.js/countred_ai_core.js (alt aus Cache)
      MISCHEN — genau die §51-Klasse „aktualisiert nicht mehr". Bei JEDEM Release hochzählen,
      an ALLEN vier Ladewegen synchron (hier, countred_ai_core.js unten, Worker-new-Worker und
-     dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v110. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
+     dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v111. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=110" charset="utf-8"></script>
+<script src="gembel_rules.js?v=111" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -714,7 +722,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=110" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=111" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1136,7 +1144,7 @@ if(PLAYER_KEY){
   if(_tk && _tv){ _tv.textContent=PLAYER_KEY; _tk.classList.remove('hidden'); }
 }
 
-const BUILD_MARKER='· Build v110';
+const BUILD_MARKER='· Build v111';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1453,7 +1461,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=110'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=111'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

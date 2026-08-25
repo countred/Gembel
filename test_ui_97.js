@@ -274,6 +274,37 @@ console.log('\u00a7134 \u2014 sichtbare Test-Kennung:');
 // Geprueft wird der SICHTBARE Text (Kommentare und Bezeichner ausgeblendet) — die
 // internen Namen halfmoves/HALFMOVE_DRAW_LIMIT bleiben ausdruecklich, die Suiten pinnen sie.
 // ═══════════════════════════════════════════════════════════════════
+console.log('\u00a7142 \u2014 Kartenbreiten:');
+{
+  // Die vier Karten mit langem Fliesstext gehoeren zusammen und muessen breit sein
+  // (Zeilenlaenge, s. Kommentar in index.html). Die Dialogkarten bleiben schmal.
+  const breiteVon = id => {
+    const i = html.indexOf('id="'+id+'"');
+    if(i < 0) return null;
+    const m = html.slice(i, i+400).match(/width:min\((\d+)px,\s*(\d+)vw\)/);
+    return m ? {px:Number(m[1]), vw:Number(m[2])} : null;
+  };
+  const lang  = ['impressum-overlay','datenschutz-overlay','marks-overlay','regeln-overlay'];
+  const kurz  = ['mode-overlay','neu-overlay','ai-setup-overlay'];
+  const werte = lang.map(breiteVon);
+  ok(werte.every(x => x && x.px === 560),
+     'die vier Fliesstext-Karten tragen 560px: ' + lang.map((n,i)=>n+'='+(werte[i]?werte[i].px:'?')).join(', '));
+  ok(werte.every(x => x && x.vw >= 90),
+     'auf dem Telefon greift weiterhin die Prozentbreite (\u2265 90vw)');
+  // 75 Zeichen je Zeile sind das obere Ende des gut Lesbaren — darueber wird es schlechter,
+  // nicht besser. Die Grenze steht hier, damit "noch breiter" nicht unbemerkt passiert.
+  ok(werte.every(x => x && x.px <= 640),
+     'keine Fliesstext-Karte ueber 640px \u2014 laengere Zeilen lesen sich SCHLECHTER');
+  // Die Dialogkarten tragen KEINE eigene Breite — sie erben die schmale Grundbreite aus
+  // `.card`. Genau das ist die Trennlinie: wer Fliesstext zeigt, setzt sich breiter; wer
+  // zwei Knoepfe zeigt, laesst es. Geprueft wird deshalb beides.
+  const grund = (html.match(/\.card\{[^}]*width:min\((\d+)px/)||[])[1];
+  ok(Number(grund) <= 360, 'die Grundbreite der Karten bleibt schmal (' + grund + 'px)');
+  ok(kurz.every(id => breiteVon(id) === null),
+     'die Dialogkarten setzen keine eigene Breite und erben die schmale: ' +
+     kurz.filter(id => breiteVon(id) !== null).join(', ') || 'alle erben');
+}
+
 console.log('\u00a7140 \u2014 Wortlaut:');
 {
   const sicht = html.replace(/<!--[\s\S]*?-->/g,'')
