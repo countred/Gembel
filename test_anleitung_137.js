@@ -56,7 +56,7 @@ pruef('A4 kein Browser-Speicher', !/localStorage|sessionStorage|document\.cookie
 pruef('A5 keine KI', !/countred_ai/.test(ohneKommentar));
 pruef('A6 keine externe Quelle', !/https?:\/\/(?!www\.w3\.org)/.test(HTML.replace(/<!--[\s\S]*?-->/g,'')));
 pruef('A7 Fassungsstempel vorhanden', /Anleitung · Fassung \d+ · \d\d\.\d\d\.\d{4}/.test(M.ANL_FASSUNG), M.ANL_FASSUNG);
-pruef('A8 Fassung ist hochgezaehlt (>=19)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=19);
+pruef('A8 Fassung ist hochgezaehlt (>=22)', parseInt(M.ANL_FASSUNG.match(/Fassung (\d+)/)[1],10)>=22);
 pruef('A9 Wachhund steht in einem EIGENEN Skriptblock',
   /__anlGestartet\s*=\s*false[\s\S]*?<\/script>\s*(<!--[\s\S]*?-->\s*)?<script src="gembel_rules/.test(HTML));
 pruef('A10 ALL8 wird nicht neu deklariert', !/const ALL8/.test(HTML));
@@ -224,7 +224,7 @@ async function durchklick(){
   await warte(60);
   pruef('B1 Seite ist gestartet (kein Wachhund-Alarm)',
     d.getElementById('meldung').style.display!=='block', d.getElementById('meldung').textContent.slice(0,90));
-  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 19/.test(d.getElementById('fassung').textContent));
+  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 22/.test(d.getElementById('fassung').textContent));
 
   const langsam=Math.max(M.ANKUNFT_MIT_MS, M.ANKUNFT_MS)+200;
   let gesehen=0, sieger=0;

@@ -299,7 +299,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=109" charset="utf-8"></script>
+<script src="gembel_rules.js?v=110" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -308,7 +308,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 19 · 25.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 22 · 25.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -551,9 +551,13 @@ const STEPS = [
     // Seite 1: antippen, Rechnung sofort. Die beiden Folgeseiten zeigen dasselbe
     // Bild noch einmal, damit Merksatz und Klickergebnis zusammen zu sehen sind.
     { art:'tippen', feld:'4D' },
-    { art:'zeigen', feld:'4D', getan:'4D', rechnung:'anheben',
+    // Die Rechnung ist hier NICHT die gerechnete Summe, sondern die Hoheit — das ist die
+    // Regel, um die es auf dieser Seite geht. `rechnung` traegt deshalb den Wortlaut selbst;
+    // der Selbsttest haelt die Behauptung gegen canLift und formedBy.
+    { art:'zeigen', feld:'4D', getan:'4D',
+      rechnung:'Du darfst anheben. Du hast den Stapel gebildet.',
       text:'<p>Leichter zu merken: Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.</p>' },
-    { art:'zeigen', feld:'4D', getan:'4D', rechnung:'anheben',
+    { art:'zeigen', feld:'4D', getan:'4D',
       text:'<p>Wichtig: nur die Top-Figur darf bewegt werden, nicht der Stapel als ganzes.</p>'
           +'<p>Strategie: mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. '
           +'Da, wo die Figur weggezogen wird, und auch dort, wo sie abgesetzt wird. Nur im Stapel ist '
@@ -561,6 +565,8 @@ const STEPS = [
     { art:'lesen',
       text:'<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht '
           +'der Mitspieler von 1D auf 2C:</p>',
+      textNach:'<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. '
+              +'Dein Mitspieler ist von 1D auf 2C gezogen.</p>',
       zugDanach:{ von:'1D', nach:'2C', actor:OPPONENT, roh:true } }
   ]},
 
@@ -869,12 +875,18 @@ function textTeile(i, variante){
   const ph=PHASES[i], s=STEPS[ph.si], a=s.aktionen[ph.ai], b=boardFor(i);
   const kopf = (ersteImSchritt(i) ? (s.intro||'') : '')
              + (ersteDerAktion(i) ? (a.vorher||'') : '');
-  if(ph.p==='lesen') return {html: kopf + (a.text||'')
+  // textNach: derselbe Platz, anderer Wortlaut, sobald der Zug dieser Seite gelaufen ist
+  // ("Mit Weiter zieht …" → "… ist gezogen"). Sonst stuende die Aufforderung noch da,
+  // obwohl sie schon befolgt ist.
+  if(ph.p==='lesen') return {html: kopf
+    + ((variante==='nach' && a.textNach) ? a.textNach : (a.text||''))
     + (variante==='nach' && a.zugDanach ? (a.zugDanach.nachher||'') : '')};
   if(ph.p==='zeigen'){
     const m=markZeigen(b,a);
     return {html: kopf + (a.text||'') + (variante==='nach' && a.zugDanach ? (a.zugDanach.nachher||'') : ''),
-            rechnung: a.rechnung ? m.text : ''};
+            // `rechnung:'anheben'` → die gerechnete Summe; jeder andere String → dieser
+            // Wortlaut (fuer Regeln, die keine Summe sind, etwa die Stapelhoheit).
+            rechnung: a.rechnung ? (a.rechnung==='anheben' ? m.text : a.rechnung) : ''};
   }
 
   if(ph.p==='tap'){
@@ -1291,6 +1303,14 @@ function selfTest(){
       (a.blass||[]).forEach(function(n){
         if(!CELL[n]) err.push(s.id+': unbekanntes Feld '+n+' unter blass');
         else if(!b[CELL[n][0]][CELL[n][1]].piece) err.push(s.id+': '+n+' ist leer und kann nicht blass sein'); });
+      // Ein selbst gesetzter Rechnungs-Wortlaut behauptet etwas — das wird nachgerechnet.
+      if(typeof a.rechnung==='string' && a.rechnung!=='anheben' && a.feld){
+        const q=CELL[a.feld], zelle=b[q[0]][q[1]];
+        if(/darfst anheben/.test(a.rechnung) && !canLift(b,q[0],q[1],LEARNER,PARITY))
+          err.push(s.id+': der Text sagt "darfst anheben", canLift sagt nein ('+a.feld+')');
+        if(/den Stapel gebildet/.test(a.rechnung) && !(zelle.stack && zelle.stack.formedBy===LEARNER))
+          err.push(s.id+': der Text behauptet eigene Stapelhoheit, das Brett sagt etwas anderes ('+a.feld+')');
+      }
       pruefZug(s, a.zugDanach, b, i);
       continue;
     }

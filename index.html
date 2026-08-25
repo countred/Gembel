@@ -404,7 +404,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          damit Aussehen und Verhalten zum Rest des Menues passen. -->
     <div id="anleitung-zeile">
       <button type="button" class="anleitung-link"
-        onclick="location.href='anleitung.html?v=109'"><span class="vor">Neu hier?</span> Spielanleitung</button>
+        onclick="location.href='anleitung.html?v=110'"><span class="vor">Neu hier?</span> Spielanleitung</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -699,10 +699,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      einem Deploy countred.html (neu) mit gembel_rules.js/countred_ai_core.js (alt aus Cache)
      MISCHEN — genau die §51-Klasse „aktualisiert nicht mehr". Bei JEDEM Release hochzählen,
      an ALLEN vier Ladewegen synchron (hier, countred_ai_core.js unten, Worker-new-Worker und
-     dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v109. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
+     dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v110. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=109" charset="utf-8"></script>
+<script src="gembel_rules.js?v=110" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -714,7 +714,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=109" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=110" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1136,7 +1136,7 @@ if(PLAYER_KEY){
   if(_tk && _tv){ _tv.textContent=PLAYER_KEY; _tk.classList.remove('hidden'); }
 }
 
-const BUILD_MARKER='· Build v109';
+const BUILD_MARKER='· Build v110';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1453,7 +1453,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=109'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=110'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

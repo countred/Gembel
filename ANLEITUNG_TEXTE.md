@@ -1,6 +1,6 @@
 # Count Red — Interaktive Spielanleitung: alle Texte
 
-**Quelle: `anleitung.html` · Anleitung · Fassung 19 · 25.08.2026**
+**Quelle: `anleitung.html` · Anleitung · Fassung 22 · 25.08.2026**
 
 > Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`
 > im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt
@@ -261,7 +261,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 > Leichter zu merken: Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.
 
-*Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
+*Rechnung:*  Du darfst anheben. Du hast den Stapel gebildet.
 
 *Brett:*  dick: 4D · blau: 4D
 
@@ -271,8 +271,6 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 >
 > Strategie: mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. Da, wo die Figur weggezogen wird, und auch dort, wo sie abgesetzt wird. Nur im Stapel ist eine Figur also vor dem Zugriff deines Mitspielers sicher.
 
-*Rechnung:*  Du darfst anheben. Summe der roten Figuren im Stapel: 1 = ungerade
-
 *Brett:*  dick: 4D · blau: 4D
 
 **·  lesen**
@@ -281,7 +279,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  ausgeführt**
 
-> Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht der Mitspieler von 1D auf 2C:
+> Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Dein Mitspieler ist von 1D auf 2C gezogen.
 
 
 ### Schritt 6 von 9 — Figur auf ein leeres Feld
@@ -501,7 +499,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 |---|---|
 | Kopfzeile links | `COUNT · RED` |
 | Kopfzeile rechts | `Schritt N von 9` |
-| unter dem Fortschrittsbalken | `Anleitung · Fassung 19 · 25.08.2026` |
+| unter dem Fortschrittsbalken | `Anleitung · Fassung 22 · 25.08.2026` |
 | Knopf links | `Zurück` — einen Teilschritt zurück |
 | Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |
 
