@@ -1,0 +1,10 @@
+HANDOVER*
+*.pages
+*.pdf
+gembel_kiki*
+kiki_*
+gembel_ai*
+*vollst*.json
+*rtdb-export*
+firebase_rules*.json
+loeschliste.txt
