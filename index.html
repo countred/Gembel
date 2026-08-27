@@ -89,17 +89,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .legal-sep{font-size:12px;color:var(--text3);}
 @media (max-width:520px){ #legal-footer{margin-top:18px;} .legal-link{font-size:13px;} }
 
-/* §139: Verweis auf die interaktive Anleitung. BEWUSST KEIN dritter big-btn — §134 hat das
-   Startmenue auf zwei Knoepfe gebracht, und ein dritter gleichrangiger Knopf naehme den
-   beiden Spielknoepfen genau die Betonung, die §134 ihnen ueber die REIHENFOLGE gegeben hat.
-   Diese Zeile ist leichter als ein Knopf und schwerer als die Rechtszeile — sie steht
-   zwischen beiden, direkt unter den Knoepfen, wo ein Neuling vor der ersten Partie liest. */
-#anleitung-zeile{margin-top:12px;text-align:center;width:100%;}
-.anleitung-link{background:none;border:none;padding:4px 6px;cursor:pointer;
-  font:inherit;font-size:13.5px;color:var(--sel-bd);text-decoration:underline;
-  text-underline-offset:3px;}
-.anleitung-link:hover{opacity:.75;}
-.anleitung-link .vor{color:var(--text2);text-decoration:none;}
+/* §144: die Anleitung ist seit v113 ein gleichrangiger big-btn und OBEN (s. Startmenue-
+   Kommentar). Die frueheren Stile #anleitung-zeile/.anleitung-link sind damit entfallen.
+   An ihre Stelle treten die beiden Gate-Elemente.
+   Der gesperrte Knopf bleibt ein normaler big-btn — er wird NICHT ausgegraut und NICHT
+   disabled: er muss antippbar bleiben, sonst kommt niemand an den Erklaertext. Er sieht
+   nur leiser aus und traegt ein Schloss. */
+.big-btn.locked{opacity:.62;border-style:dashed;}
+#gate-score{font-size:11px;color:var(--text3);text-align:center;margin-top:10px;
+  letter-spacing:0.3px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+#gate-score.hidden{display:none;}
 
 /* ── Testversion label ── */
 #testlabel{font-size:9px;letter-spacing:2px;color:var(--text3);text-align:center;text-transform:uppercase;margin-top:-4px;}
@@ -392,19 +391,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          sondern ein Bedeutungskonflikt: blau heisst in dieser Datei „unter dem Zeiger", und
          genau so halten es alle Untermenues (Stufenauswahl: drei Knoepfe, keiner primary).
          Die Betonung traegt jetzt allein die REIHENFOLGE — „Mit Code zu zweit" steht oben. -->
+    <!-- §144 (Walter, 27.8.): DREI gleichrangige Knoepfe, neue Reihenfolge. Das kippt zwei
+         frueher ausdruecklich begruendete Entscheidungen, und zwar bewusst:
+           - §139 („bewusst KEIN dritter big-btn\"): die Anleitung war eine leichte Zeile, damit
+             sie den Spielknoepfen die Betonung nicht nimmt. Walter will sie gleichrangig und
+             OBEN — ein Neuling soll sie zuerst sehen, nicht als Fussnote unter den Knoepfen.
+           - §134 („Mit Code zu zweit\" oben, damit die Leute das Spiel weitertragen): dieser
+             Modus ist seit §144 GESPERRT (s. Gate-Block im Skript). Ein gesperrter Knopf
+             gehoert nicht an die betonte Stelle, deshalb steht er jetzt unten.
+         Unveraendert gilt: card-col (§95, gleich breite Knoepfe), KEINE Vorauswahl (§134,
+         5.8.) — blau heisst in dieser Datei ausschliesslich „unter dem Zeiger\".
+         `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
+         elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="showLobby()">👥 Mit Code zu zweit</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=113'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
-    </div>
-    <!-- §139: Einstieg in die interaktive Anleitung. Die fuenf Neuling-Partien vom 2.8. gingen
-         0:5 und waren nach rund sieben eigenen Zuegen vorbei, weil niemand die Paritaetsregel
-         verstanden hatte — die Anleitung muss VOR der ersten Partie auffindbar sein, nicht
-         danach. `?v=` ist der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller elf Suiten
-         prueft ihn seit §139 mit. Kein <a href>, sondern ein Knopf wie in der Rechtszeile,
-         damit Aussehen und Verhalten zum Rest des Menues passen. -->
-    <div id="anleitung-zeile">
-      <button type="button" class="anleitung-link"
-        onclick="location.href='anleitung.html?v=112'"><span class="vor">Neu hier?</span> Spielanleitung</button>
+      <button class="big-btn" id="btn-mvm" onclick="tryLobby()">👥 Mit Code zu zweit</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -420,6 +422,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          in jeder Partie mitgeschrieben wird — hier nur lesbar gemacht, damit ein Testspieler
          sie einmal durchgeben kann und seine Partien zuordenbar sind. Kein neues Datum, keine
          Geraetekennung. Bleibt LEER (und die Zeile unsichtbar), wenn der Speicher gesperrt ist. -->
+    <!-- §144: Punktestand fuer die Freischaltung. Steht bewusst direkt UEBER der Test-Kennung
+         (Walters Vorgabe) — beide gehoeren zu derselben Person und werden zusammen gelesen.
+         Anklickbar: das ist der einzige Weg zum Erklaertext, sobald der Modus offen ist und
+         der gesperrte Knopf nicht mehr antippbar ist. -->
+    <div id="gate-score" class="hidden" onclick="openGateInfo()"></div>
     <div id="test-key" class="hidden">Test-Kennung: <span id="test-key-val"></span></div>
   </div>
 </div>
@@ -469,13 +476,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div><strong style="color:var(--text);">Kurz gesagt</strong><br>
         Diese Seite setzt keine Cookies, bindet keine Werbung ein und verwendet kein
         Analyse-Werkzeug. Name, E-Mail-Adresse und Gerätedaten werden nicht erhoben —
-        gespeichert werden nur der Spielverlauf und eine zufällige Kennung deines Browsers.</div>
+        gespeichert werden nur der Spielverlauf und eine zufällige Kennung deines Browsers.
+        Dein Punktestand und die Freischaltung des Zwei-Personen-Modus bleiben allein in
+        deinem Browser.</div>
       <div><strong style="color:var(--text);">Was gespeichert wird</strong><br>
         Beim Spielen werden der Spielverlauf (Züge, Zeitpunkte, Ergebnis, gewählte Spielstärke)
         und technische Kennzahlen zur Spielstärke-Auswertung gespeichert. Dazu gehört eine
         zufällige Kennung, die dein Browser einmalig erzeugt und die nur dazu dient, mehrere
         Partien derselben Person zusammenzuführen. Sie enthält keinen Namen und keine
         Gerätedaten.</div>
+      <div><strong style="color:var(--text);">Was nur in deinem Browser bleibt</strong><br>
+        Für die Freischaltung des Zwei-Personen-Modus merkt sich dein Browser, wie viele
+        Punkte du gesammelt hast und ob der Modus offen ist. Diese Angaben werden nicht
+        übertragen. Löschst du die Website-Daten, sind sie ebenso weg wie die Kennung.</div>
+      <div><strong style="color:var(--text);">Wechsel auf ein anderes Gerät</strong><br>
+        Du kannst dir einen Übertragungscode anzeigen lassen und ihn auf einem zweiten Gerät
+        eingeben. Er enthält deine Kennung und deinen Punktestand, sonst nichts. Das zweite
+        Gerät behält dabei seine eigene Kennung.</div>
       <div><strong style="color:var(--text);">Warum</strong><br>
         Ausschließlich zur Weiterentwicklung des Spiels, insbesondere zur Einstellung der
         Spielstärke. Es findet keine Auswertung einzelner Personen statt und keine Weitergabe
@@ -490,10 +507,48 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Kennung. Für Auskunft oder Löschung genügt eine Nachricht an die im Impressum
         genannte Adresse.</div>
       <div style="font-size:12px;color:var(--text3);">
-        Verantwortlich ist die im Impressum genannte Person. Stand: 5. August 2026</div>
+        Verantwortlich ist die im Impressum genannte Person. Stand: 27. August 2026</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('datenschutz-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
+  </div>
+</div>
+
+<!-- §144: Erklaertext zur Freischaltung des Zwei-Personen-Modus. Erreichbar ueber den
+     gesperrten Knopf UND ueber die Punktezeile (die bleibt auch nach der Freischaltung da,
+     sonst kaeme man an den Uebertragungscode nicht mehr heran).
+     ⚠️ §4.4-DAUERREGEL: hier steht KEIN innerHTML mit fremden Daten. Der Code und alle
+     Rueckmeldungen gehen per textContent hinein — die einzige Eingabe der Seite (das
+     Codefeld) darf nie als HTML interpretiert werden. -->
+<div class="overlay hidden" id="gate-overlay">
+  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
+    <h2 style="text-align:center;font-size:18px;">Mit Code zu zweit</h2>
+    <div style="font-size:15px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
+      <div id="gate-state" style="color:var(--text);font-weight:600;"></div>
+      <div>Bevor du gegen einen Menschen spielst, solltest du das Spiel selbst kennen.
+        Drei Punkte schalten den Modus frei:</div>
+      <div style="color:var(--text);">
+        ein Sieg gegen <strong>Einsteiger</strong> = 1 Punkt<br>
+        ein Sieg gegen <strong>Fortgeschritten</strong> = 1,5 Punkte<br>
+        ein Sieg gegen <strong>Meister</strong> = 3 Punkte</div>
+      <div>Also: dreimal Einsteiger, zweimal Fortgeschritten oder einmal Meister. Remis zählt
+        nicht. <strong>Einladen darfst du danach jeden</strong> — wer deinen Partie-Code
+        bekommt, braucht selbst keine Punkte.</div>
+      <div><strong style="color:var(--text);">Anderes Gerät</strong><br>
+        Dein Punktestand liegt in diesem Browser. Für ein zweites Gerät nimmst du diesen
+        Übertragungscode mit:</div>
+      <div id="gate-code" style="font-family:monospace;font-size:13px;letter-spacing:1px;
+        color:var(--text);word-break:break-all;background:var(--bg2);padding:8px 10px;border-radius:8px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input id="gate-input" type="text" autocomplete="off" spellcheck="false"
+          placeholder="Code eingeben" style="flex:1;min-width:180px;padding:9px 10px;border-radius:8px;
+          border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:monospace;font-size:13px;">
+        <button class="big-btn" style="flex:none;padding:9px 14px;" onclick="redeemGateCode()">Einlösen</button>
+      </div>
+      <div id="gate-msg" style="font-size:13.5px;"></div>
+    </div>
+    <button class="big-btn primary" style="width:100%;"
+      onclick="document.getElementById('gate-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
   </div>
 </div>
 
@@ -715,7 +770,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=112" charset="utf-8"></script>
+<script src="gembel_rules.js?v=113" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -727,7 +782,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=112" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=113" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1149,7 +1204,157 @@ if(PLAYER_KEY){
   if(_tk && _tv){ _tv.textContent=PLAYER_KEY; _tk.classList.remove('hidden'); }
 }
 
-const BUILD_MARKER='· Build v112';
+// ═══════════════════════════════════════════════════════════════════
+// §144: FREISCHALTUNG DES ZWEI-PERSONEN-MODUS (Walter, 27.8.)
+// ═══════════════════════════════════════════════════════════════════
+// WOZU: „Mit Code zu zweit" ist zuerst ein Marketinginstrument (das Spiel soll
+//   weitergetragen werden) und zweitens eine Erfahrungsschwelle — wer mit einem Menschen
+//   spielt, soll das Spiel selbst kennen. Wer eingeladen WIRD, braucht nichts: gesperrt
+//   ist nur das Eroeffnen eines Raums, nicht das Beitreten.
+//
+// ZWEI SCHALTER, beide bewusst hier oben und beide fuer sich allein wirksam:
+//   MVM_GATE=false  → der Modus ist wieder offen wie vor v113, ohne jeden weiteren Eingriff.
+//   MARK_UI=true    → der Markierknopf ist wieder da (s. showNeuMenu).
+//   Die Suiten pruefen BEIDE Stellungen, nicht nur die ausgelieferte — sonst ist der
+//   Rueckweg beim ersten Zurueckschalten rot und niemand weiss, ob das der Schalter war.
+//
+// WAS DIE MECHANIK NICHT IST: ein Betrugsschutz. Das Spiel ist client-autoritativ, der
+//   Zaehler liegt im Browser. Wer die Entwicklerwerkzeuge oeffnet, schaltet frei — und
+//   genau das ist der Grund, warum Betrug hier nicht lohnt: Umgehen ist billiger als
+//   Faelschen, es gibt keine Bestenliste und keinen Rang zu gewinnen (Ausloeser 13 bleibt
+//   unberuehrt). Die Pruefsumme hebt die Huerde nur von „Wert aendern" auf „Verfahren
+//   verstehen". Der WIRKLICHE Nachweis liegt woanders: der Zaehler steigt ausschliesslich
+//   in finalizeMvkiGame, also genau dann, wenn eine gewonnene Partie mit playerKey und
+//   skillLevel nach games_countred geschrieben wird. Jede Freischaltung ist damit im
+//   Export nachrechenbar.
+//
+// ⚠️ NICHT aus Firebase lesen. Wuerde die Freischaltung aus der Datenbank kommen, waere
+//   das Schreiben erfundener Partien erstmals LOHNEND — `!data.exists()` schuetzt nur den
+//   Altbestand, neue Falschdaten sind jederzeit moeglich. Lokal pruefen haelt den Anreiz
+//   bei null und braucht keine Regelaenderung.
+const MVM_GATE = true;          // §144: Sperre aktiv
+const MARK_UI  = false;         // §144: Markierknopf ausgehaengt (Funktion bleibt, s.u.)
+const GATE_NEED = 3;            // Punkte fuer die Freischaltung
+// Walters Schwelle „3× Einsteiger ODER 2× Fortgeschritten ODER 1× Meister" als Punktekonto.
+// Als reines ODER gelesen bliebe jemand mit 2 Einsteiger- und 1 Fortgeschritten-Sieg gesperrt,
+// obwohl er mehr geleistet hat als der mit drei Einsteiger-Siegen — das Konto schliesst die
+// Luecke und ergibt in den drei genannten Faellen exakt Walters Zahlen.
+// `stark` ist geparkt (§122) und ueber keinen Knopf erreichbar; der Eintrag steht hier nur,
+// damit eine ueber die Konsole gestartete Partie keinen undefinierten Wert liefert.
+const GATE_WIN_POINTS = { einsteiger:1, fortgeschritten:1.5, stark:1.5, meister:3 };
+const GATE_STORE = 'countred_gate';
+const GATE_SALT  = 'countred-gate-1';
+const GATE_TIP   = 'Erst drei Punkte sammeln: 3× Einsteiger, 2× Fortgeschritten oder 1× Meister schlagen.';
+
+// Kurzer, synchroner Streuwert (FNV-1a). BEWUSST kein SubtleCrypto: das ist asynchron und
+// wuerde den ganzen Pfad umbauen, ohne etwas zu schuetzen — das Verfahren steht ohnehin im
+// Quelltext. Zweck ist ausschliesslich, dass im Speicher kein glatter Klartextwert steht.
+function gateHash(s){
+  let h = 2166136261 >>> 0;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h.toString(36).toUpperCase().padStart(7,'0').slice(-7);
+}
+function gateNum(p){ return String(p).replace('.', ','); }          // 1.5 → „1,5"
+function gateSig(p,u){ return gateHash((PLAYER_KEY||'-')+'|'+p+'|'+(u?'1':'0')+'|'+GATE_SALT); }
+
+// Beim Laden wird die Pruefsumme geprueft. Passt sie nicht (von Hand geaendert, halb
+// geschrieben, aus einem anderen Browserprofil kopiert), faellt der Stand auf null zurueck —
+// NICHT auf „freigeschaltet". Ein kaputter Speicher darf nie mehr erlauben als ein leerer.
+let gateState = { p:0, u:false };
+function gateLoad(){
+  try{
+    const raw = localStorage.getItem(GATE_STORE);
+    if(!raw) return { p:0, u:false };
+    const o = JSON.parse(raw);
+    const p = (typeof o.p==='number' && isFinite(o.p) && o.p>=0) ? o.p : 0;
+    const u = (o.u===true);
+    if(o.c !== gateSig(p,u)){ console.warn('§144: Freischalt-Stand verworfen (Pruefsumme passt nicht)'); return { p:0, u:false }; }
+    return { p, u };
+  }catch(e){ return { p:0, u:false }; }   // privater Modus: gesperrt, aber kein Absturz
+}
+function gateSave(){
+  try{ localStorage.setItem(GATE_STORE, JSON.stringify({ p:gateState.p, u:gateState.u, c:gateSig(gateState.p,gateState.u) })); }
+  catch(e){ /* gesperrter Speicher: der Stand haelt dann nur diese Sitzung */ }
+}
+function gateOpen(){ return !MVM_GATE || gateState.u || gateState.p >= GATE_NEED; }
+
+// Wird NUR aus finalizeMvkiGame gerufen (s. dort) — kein zweiter Aufrufer, sonst zaehlt
+// irgendwann etwas mit, das keine beendete Partie ist.
+function gateAward(skill){
+  if(!MVM_GATE) return;
+  const add = GATE_WIN_POINTS[skill] || 0;
+  if(!add) return;
+  gateState.p = Math.round((gateState.p + add) * 10) / 10;   // 1,5 + 1 bleibt 2,5
+  gateSave(); gateRefresh();
+}
+
+// ── Uebertragungscode ────────────────────────────────────────────
+// Aufbau: <Kennung>-<Punkte×10>-<Streuwert>. Er traegt die Kennung des Geraets, das ihn
+// AUSGESTELLT hat — Walters Wahl („individuell gestempelt, ueberall einloesbar"): so ist
+// jeder Code unterscheidbar und Walter kann im Notfall selbst einen ausstellen, ohne eine
+// Liste zu fuehren. Eingeloest wird NUR die Freischaltung; die Kennung des Zielgeraets
+// bleibt seine eigene (Walters Entscheid: kein Zusammenwachsen, §124 bleibt intakt).
+function gateMakeCode(){
+  const t = Math.round(gateState.p * 10), k = PLAYER_KEY || '0';
+  return k + '-' + t + '-' + gateHash(k+'|'+t+'|'+GATE_SALT);
+}
+function gateReadCode(txt){
+  const m = String(txt||'').trim().match(/^([A-Za-z0-9]{1,16})-(\d{1,4})-([0-9A-Z]{7})$/);
+  if(!m) return null;
+  if(gateHash(m[1]+'|'+m[2]+'|'+GATE_SALT) !== m[3]) return null;
+  return { key:m[1], p: parseInt(m[2],10)/10 };
+}
+
+// ── Anzeige ──────────────────────────────────────────────────────
+function gateRefresh(){
+  const btn = document.getElementById('btn-mvm'), sc = document.getElementById('gate-score');
+  if(btn){
+    const open = gateOpen();
+    btn.classList.toggle('locked', !open);
+    btn.textContent = open ? '👥 Mit Code zu zweit' : '🔒 Mit Code zu zweit';
+    btn.title = open ? '' : GATE_TIP;
+  }
+  if(sc){
+    if(!MVM_GATE){ sc.classList.add('hidden'); return; }
+    sc.classList.remove('hidden');
+    sc.textContent = gateOpen()
+      ? 'Zwei-Personen-Modus: freigeschaltet'
+      : ('Punkte: ' + gateNum(gateState.p) + ' von ' + GATE_NEED);
+  }
+}
+window.tryLobby = function(){ if(gateOpen()) showLobby(); else openGateInfo(); };
+window.openGateInfo = function(){
+  if(!MVM_GATE) return;
+  const st = document.getElementById('gate-state'), cd = document.getElementById('gate-code'),
+        ms = document.getElementById('gate-msg'), inp = document.getElementById('gate-input');
+  if(st) st.textContent = gateOpen()
+    ? 'Freigeschaltet — du kannst einen Raum eröffnen.'
+    : ('Du hast ' + gateNum(gateState.p) + ' von ' + GATE_NEED + ' Punkten.');
+  if(cd) cd.textContent = gateMakeCode();      // textContent, nie innerHTML (§4.4)
+  if(ms) ms.textContent = '';
+  if(inp) inp.value = '';
+  showOverlay('gate-overlay');
+};
+window.redeemGateCode = function(){
+  const inp = document.getElementById('gate-input'), ms = document.getElementById('gate-msg');
+  if(!inp || !ms) return;
+  const r = gateReadCode(inp.value);
+  if(!r){ ms.style.color='#ef4444'; ms.textContent='Der Code stimmt nicht. Bitte vollständig kopieren.'; return; }
+  if(r.p < GATE_NEED){
+    ms.style.color='var(--text2)';
+    ms.textContent = 'Der Code trägt erst ' + gateNum(r.p) + ' von ' + GATE_NEED + ' Punkten.';
+    return;
+  }
+  gateState.u = true; gateSave(); gateRefresh();
+  ms.style.color='var(--online-text)';
+  ms.textContent = 'Freigeschaltet. Deine eigene Test-Kennung bleibt unverändert.';
+  const st = document.getElementById('gate-state');
+  if(st) st.textContent = 'Freigeschaltet — du kannst einen Raum eröffnen.';
+};
+gateState = gateLoad();
+gateRefresh();
+
+const BUILD_MARKER='· Build v113';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1466,7 +1671,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=112'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=113'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -1589,7 +1794,7 @@ function makeLogCode(){
 function showOverlay(id){
   ['mode-overlay','ai-setup-overlay','lobby-overlay','create-overlay','join-overlay','wait-overlay','dc-overlay',
    'neu-overlay','rematch-req-overlay','regeln-overlay','maintenance-overlay','draw-offer-overlay','ai-draw-offer-overlay','opp-offline-overlay','marks-overlay',
-   'impressum-overlay','datenschutz-overlay']  // §126
+   'impressum-overlay','datenschutz-overlay','gate-overlay']  // §126, §144
     .forEach(o=>document.getElementById(o).classList.toggle('hidden',o!==id));
 }
 window.showModeMenu=function(){ gameMode='mvm'; showOverlay('mode-overlay'); };
@@ -1607,6 +1812,16 @@ window.showNeuMenu=function(){
   const descEl=document.getElementById('neu-desc');
   const btnsEl=document.getElementById('neu-buttons');
 
+  // §144 (Walter, 27.8.): der Markierknopf ist AUSGEHAENGT, nicht entfernt — MARK_UI oben im
+  // Modul schaltet ihn an beiden Stellen (laufende und beendete Partie) wieder ein. Begruendung
+  // fuer das Aushaengen: fuer Testpersonen ist er ein Raetselknopf und erzeugt entweder
+  // Verunsicherung oder unnoetige Rueckfragen. Walter braucht ihn selbst weiter, deshalb
+  // bleiben markMvkiPosition(), das marks-overlay und der Firebase-Schreibweg unangetastet —
+  // dasselbe Muster wie showMarkedGames() seit §134. Auch die Regel fuer
+  // games_countred_marks bleibt unveraendert, es ist KEINE Regelarbeit noetig.
+  // ⚠️ Wer ihn zurueckholt: MARK_UI=true genuegt. Mitziehen muss dann nichts — der
+  // Datenschutztext nennt den Knopf nicht, er beschreibt nur, WAS gespeichert wird.
+  //
   // MvKI: eigenes kleines Menü (§38f/§53) statt direktem Sprung ins Modus-Menü — damit Platz
   // für "Aufgeben" (während des Spiels) bzw. einen schnellen Rematch-Shortcut (nach Spielende).
   // §47c Punkt 6: cancelAIJob() weiterhin nötig, falls der Worker gerade rechnet — sonst könnte
@@ -1634,7 +1849,7 @@ window.showNeuMenu=function(){
       }
       btnsEl.innerHTML=`
         <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">Weiterspielen</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmt was nicht</button>
+        ${MARK_UI ? `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmt was nicht</button>` : ''}
         ${drawBtn}
         <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvki()">🏳️ Aufgeben</button>
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();">↺ Neu (anderer Modus/Stufe)</button>
@@ -1645,7 +1860,7 @@ window.showNeuMenu=function(){
       descEl.textContent='';
       btnsEl.innerHTML=`
         <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu();startAIGame('${aiSkill}')">🔄 Nochmal (${skillLabel(aiSkill)})</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmte was nicht</button>
+        ${MARK_UI ? `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmte was nicht</button>` : ''}
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();">↺ Neu (anderer Modus/Stufe)</button>
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu()">↩ Zurück zum Brett</button>
         <div style="font-size:11.5px;color:var(--text3);text-align:center;">Partie <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
@@ -3776,6 +3991,13 @@ async function logMvkiMove(move, meta, by='ai'){
 // unterscheidbar bleibt, wie Remis zustande kommen.
 async function finalizeMvkiGame(winner, reason){
   if(gameMode!=='mvki'||!mvkiGameCode) return;
+  // §144: Punkte fuer die Freischaltung. ABSICHTLICH HIER und nirgends sonst — an genau
+  // dieser Stelle wird die Partie mit playerKey und skillLevel nach games_countred
+  // geschrieben, also ist zu jeder Gutschrift ein pruefbarer Datensatz vorhanden (§136
+  // Belegregel). Nur ein echter Sieg des Menschen zaehlt: `winner` traegt die Spielernummer,
+  // Remis kommt als null herein, und Aufgeben liefert aiPlayer. Synchron VOR dem await,
+  // damit eine haengende Netzverbindung dem Spieler nicht seinen Punkt kostet.
+  if(winner && winner===myPlayer) gateAward(aiSkill);
   // §61a/§65a: gehärtet. Vorher warf ein fehlendes HEURISTIC_VERSION hier einen synchronen
   // ReferenceError BEIM OBJEKTBAU — also VOR dem await/.catch — der als unhandled rejection
   // still verschwand (kein MvKI-Ergebnis wurde je geloggt). Jetzt: try/catch um den GESAMTEN

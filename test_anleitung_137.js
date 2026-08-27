@@ -224,7 +224,15 @@ async function durchklick(){
   await warte(60);
   pruef('B1 Seite ist gestartet (kein Wachhund-Alarm)',
     d.getElementById('meldung').style.display!=='block', d.getElementById('meldung').textContent.slice(0,90));
-  pruef('B2 Fassungsstempel steht in der Seite', /Fassung 24/.test(d.getElementById('fassung').textContent));
+  // \u00a7144: NICHT mehr die feste Nummer pruefen \u2014 jede Auslieferung zaehlt die Fassung hoch
+// (Regel 9.a), ein gepflegter Erwartungswert waere beim naechsten Mal wieder falsch. Geprueft
+// wird die FORM und die Uebereinstimmung mit ANL_FASSUNG. Dieselbe Lehre wie \u00a7136 beim Datum.
+{
+  const sichtbar = d.getElementById('fassung').textContent;
+  const nr = (M.ANL_FASSUNG.match(/Fassung (\d+)/)||[])[1];
+  pruef('B2 Fassungsstempel steht in der Seite und stimmt mit ANL_FASSUNG ueberein',
+        !!nr && new RegExp('Fassung '+nr+'\\b').test(sichtbar), sichtbar);
+}
 
   const langsam=Math.max(M.ANKUNFT_MIT_MS, M.ANKUNFT_MS)+200;
   let gesehen=0, sieger=0;
