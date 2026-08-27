@@ -8,3 +8,19 @@ gembel_ai*
 *rtdb-export*
 firebase_rules*.json
 loeschliste.txt
+
+# §143: das Repository ist die AUSLIEFERUNG, nicht das Archiv.
+# Umgekehrte Logik — alles bleibt draußen, Ausnahmen werden benannt.
+*
+!.gitignore
+!index.html
+!anleitung.html
+!gembel_rules.js
+!countred_ai_core.js
+!countred_ai_worker.js
+!README.md
+!ANLEITUNG_TEXTE.md
+!texte.js
+!layout.js
+!bau_vorschau.js
+!test_*.js
