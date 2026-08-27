@@ -104,9 +104,19 @@ pruef('A23d kein "gesperrtes Feld" im sichtbaren Text',
   // §141: es gibt genau EINEN sichtbaren Ausfalltext, und zwar ueberall denselben —
 // auch im Wachhund, der in einem eigenen Skriptblock liegt und die Konstante nicht sieht.
 {
-  const saetze=[...HTML.matchAll(/<b>Die Anleitung [^<]*<\/b>/g)].map(x=>x[0]);
-  pruef('A43 nur ein einziger sichtbarer Ausfallsatz',
-    saetze.length>0 && new Set(saetze).size===1, [...new Set(saetze)].join(' | '));
+  // §145: der Satz steht jetzt an EINER Stelle (window.__ANL_AUSFALL im Wachhund-Block);
+  // der Hauptblock liest ihn von dort. Geprueft wird deshalb nicht mehr die Gleichheit
+  // mehrerer Vorkommen, sondern dass es wirklich nur EINE Quelle gibt und der alte,
+  // zu enge Satz („konnte nicht starten") nicht zurueckkommt.
+  const quellen=[...HTML.matchAll(/<b>Es gab ein technisches Problem mit der Anleitung\.<\/b>/g)];
+  pruef('A43 der Ausfallsatz hat genau EINE Quelle im Quelltext',
+    quellen.length===1, 'Vorkommen: '+quellen.length);
+  pruef('A43b der Hauptblock liest sie, statt sie zu wiederholen',
+    /const AUSFALL_SATZ = \(typeof window!=='undefined' && window\.__ANL_AUSFALL\)/.test(HTML));
+  pruef('A43c der zu enge Satz ist weg (deckt auch den Ausfall MITTEN im Durchgang ab)',
+    !/konnte nicht starten/.test(HTML));
+  pruef('A43d der zweite Satz steht dabei',
+    /Bitte versuche es sp\u00e4ter nochmals\./.test(HTML));
   pruef('A44 die alten Ausfalltexte sind weg',
     !/Selbsttest fehlgeschlagen\.<|Die Anleitung stoppt hier|Die Regelschicht fehlt\.<|ist nicht gestartet/.test(HTML));
   pruef('A45 die Diagnose geht in die Konsole',
@@ -402,10 +412,27 @@ if(JSDOM){
   const dm=ohne.window.document.getElementById('meldung');
   pruef('D1 fehlende Regelschicht wird gemeldet', dm && dm.style.display==='block');
   // §141: der Lernende sieht NUR diesen einen Satz — keine Dateinamen, keine Diagnose.
-  pruef('D2 die Meldung ist genau der eine Satz',
-    dm && dm.textContent.trim()==='Die Anleitung konnte nicht starten.', dm && dm.textContent.trim().slice(0,90));
+  // §145: die Meldung traegt jetzt zwei Saetze UND den Rueckweg-Knopf. Geprueft wird der
+  // Wortlaut ohne den Knopf — und der Knopf selbst gleich darunter.
+  const dmText = dm ? dm.textContent.replace('Zum Spiel','').trim() : '';
+  pruef('D2 die Meldung ist genau der eine Wortlaut',
+    dmText==='Es gab ein technisches Problem mit der Anleitung.Bitte versuche es sp\u00e4ter nochmals.',
+    dmText.slice(0,110));
   pruef('D2b die Meldung nennt KEINE Diagnose',
     dm && !/gembel_rules|Selbsttest|canLift|Regelschicht/.test(dm.textContent), dm && dm.textContent.slice(0,90));
+  // §145 (Walters Befund, 27.8.): der Ausgang oben rechts war beim Ausfall SICHTBAR, aber
+  // TOT — verdrahtet wurde er in init(), also genau dort, wo im Ausfall nichts mehr laeuft.
+  // Beide Rueckwege werden jetzt geprueft: der Knopf IN der Meldung und der im Kopf.
+  {
+    const knopf=[...ohne.window.document.querySelectorAll('#meldung button')]
+      .find(b=>/Zum Spiel/.test(b.textContent));
+    pruef('D2c die Meldung traegt einen Rueckweg ins Spiel', !!knopf && typeof knopf.onclick==='function');
+    const ex=ohne.window.document.getElementById('btn-exit');
+    pruef('D2d der Ausgang im Kopf ist auch im Ausfall verdrahtet (nicht nur sichtbar)',
+      !!ex && typeof ex.onclick==='function');
+    pruef('D2e der Kopfbereich bleibt sichtbar',
+      ohne.window.document.getElementById('head').style.display!=='none');
+  }
   pruef('D3 Brett und Knoepfe sind dann ausgeblendet',
     ohne.window.document.getElementById('board-area').style.display==='none');
   pruef('D4b der Ausgang ins Spiel bleibt auch im Fehlerfall bedienbar',

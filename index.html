@@ -404,7 +404,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=113'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=114'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="tryLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -483,7 +483,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Beim Spielen werden der Spielverlauf (Züge, Zeitpunkte, Ergebnis, gewählte Spielstärke)
         und technische Kennzahlen zur Spielstärke-Auswertung gespeichert. Dazu gehört eine
         zufällige Kennung, die dein Browser einmalig erzeugt und die nur dazu dient, mehrere
-        Partien derselben Person zusammenzuführen. Sie enthält keinen Namen und keine
+        Partien aus demselben Browser zusammenzuführen. Sie enthält keinen Namen und keine
         Gerätedaten.</div>
       <div><strong style="color:var(--text);">Was nur in deinem Browser bleibt</strong><br>
         Für die Freischaltung des Zwei-Personen-Modus merkt sich dein Browser, wie viele
@@ -525,18 +525,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <h2 style="text-align:center;font-size:18px;">Mit Code zu zweit</h2>
     <div style="font-size:15px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div id="gate-state" style="color:var(--text);font-weight:600;"></div>
-      <div>Bevor du gegen einen Menschen spielst, solltest du das Spiel selbst kennen.
-        Drei Punkte schalten den Modus frei:</div>
+      <div>Um jemand zum Spiel mit dir einzuladen, brauchst du 3 Punkte:</div>
       <div style="color:var(--text);">
-        ein Sieg gegen <strong>Einsteiger</strong> = 1 Punkt<br>
-        ein Sieg gegen <strong>Fortgeschritten</strong> = 1,5 Punkte<br>
-        ein Sieg gegen <strong>Meister</strong> = 3 Punkte</div>
-      <div>Also: dreimal Einsteiger, zweimal Fortgeschritten oder einmal Meister. Remis zählt
-        nicht. <strong>Einladen darfst du danach jeden</strong> — wer deinen Partie-Code
-        bekommt, braucht selbst keine Punkte.</div>
+        Sieg gegen Max Michu <strong>Einsteiger</strong> = 1 Punkt<br>
+        Sieg gegen Max Michu <strong>Fortgeschritten</strong> = 1,5 Punkte<br>
+        Sieg gegen Max Michu <strong>Meister</strong> = 3 Punkte</div>
+      <div>Also: dreimal gegen Einsteiger, zweimal gegen Fortgeschritten oder einmal gegen
+        Meister gewinnen. <strong>Einladen darfst du danach jeden.</strong></div>
       <div><strong style="color:var(--text);">Anderes Gerät</strong><br>
-        Dein Punktestand liegt in diesem Browser. Für ein zweites Gerät nimmst du diesen
-        Übertragungscode mit:</div>
+        Willst du deinen Punktestand auf ein anderes Gerät mitnehmen? Kopier einfach diesen
+        Übertragungscode in das Fenster auf deinem anderen Gerät:</div>
       <div id="gate-code" style="font-family:monospace;font-size:13px;letter-spacing:1px;
         color:var(--text);word-break:break-all;background:var(--bg2);padding:8px 10px;border-radius:8px;"></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
@@ -770,7 +768,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=113" charset="utf-8"></script>
+<script src="gembel_rules.js?v=114" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -782,7 +780,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=113" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=114" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1327,8 +1325,10 @@ window.openGateInfo = function(){
   if(!MVM_GATE) return;
   const st = document.getElementById('gate-state'), cd = document.getElementById('gate-code'),
         ms = document.getElementById('gate-msg'), inp = document.getElementById('gate-input');
+  // Walters Wortlaut: „Du hast 0 von 3 Punkten." — auch im freigeschalteten Zustand bleibt
+  // der Stand sichtbar, sonst weiss niemand, was der Uebertragungscode gerade traegt.
   if(st) st.textContent = gateOpen()
-    ? 'Freigeschaltet — du kannst einen Raum eröffnen.'
+    ? ('Freigeschaltet. Du hast ' + gateNum(gateState.p) + ' von ' + GATE_NEED + ' Punkten.')
     : ('Du hast ' + gateNum(gateState.p) + ' von ' + GATE_NEED + ' Punkten.');
   if(cd) cd.textContent = gateMakeCode();      // textContent, nie innerHTML (§4.4)
   if(ms) ms.textContent = '';
@@ -1339,7 +1339,7 @@ window.redeemGateCode = function(){
   const inp = document.getElementById('gate-input'), ms = document.getElementById('gate-msg');
   if(!inp || !ms) return;
   const r = gateReadCode(inp.value);
-  if(!r){ ms.style.color='#ef4444'; ms.textContent='Der Code stimmt nicht. Bitte vollständig kopieren.'; return; }
+  if(!r){ ms.style.color='#ef4444'; ms.textContent='Der Code ist nicht korrekt. Bitte vollständigen Code eingeben.'; return; }
   if(r.p < GATE_NEED){
     ms.style.color='var(--text2)';
     ms.textContent = 'Der Code trägt erst ' + gateNum(r.p) + ' von ' + GATE_NEED + ' Punkten.';
@@ -1347,14 +1347,16 @@ window.redeemGateCode = function(){
   }
   gateState.u = true; gateSave(); gateRefresh();
   ms.style.color='var(--online-text)';
-  ms.textContent = 'Freigeschaltet. Deine eigene Test-Kennung bleibt unverändert.';
+  // Walters Wortlaut. Genannt wird die Punktzahl AUS DEM CODE — der eigene Punktestand des
+  // Zielgeraets bleibt unberuehrt (nur die Freischaltung wird uebernommen, kein Zusammenwachsen).
+  ms.textContent = 'Code erfolgreich übertragen. Du hast ' + gateNum(r.p) + ' von ' + GATE_NEED + ' Punkten.';
   const st = document.getElementById('gate-state');
-  if(st) st.textContent = 'Freigeschaltet — du kannst einen Raum eröffnen.';
+  if(st) st.textContent = 'Freigeschaltet. Du hast ' + gateNum(gateState.p) + ' von ' + GATE_NEED + ' Punkten.';
 };
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v113';
+const BUILD_MARKER='· Build v114';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1671,7 +1673,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=113'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=114'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

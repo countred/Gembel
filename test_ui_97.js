@@ -514,6 +514,33 @@ console.log('\u00a7144 \u2014 VERHALTEN: die Mechanik wird wirklich gefahren (\u
   }
 }
 
+console.log('\u00a7145 \u2014 Wortlaut der Freischalttexte (Walters Fassung, 27.8.):');
+{
+  // \u00a7140-Wortlautregel: ein Wort je Sache. Die Texte hier sind Walters eigene Formulierung
+  // \u2014 wer sie umschreibt, soll darueber stolpern, nicht sie nebenbei verlieren.
+  ok(/Um jemand zum Spiel mit dir einzuladen, brauchst du 3 Punkte:/.test(html),
+     'Einleitung nennt den ZWECK (jemanden einladen), nicht die Sperre');
+  ok((html.match(/Sieg gegen Max Michu <strong>/g)||[]).length === 3,
+     'alle drei Zeilen nennen \u201eMax Michu\u201c \u2014 der Name aus dem Startmen\u00fc, nicht nur die Stufe');
+  ok(/Einladen darfst du danach jeden\./.test(html),
+     'der Satz, dass Eingeladene selbst keine Punkte brauchen, steht da');
+  ok(/Willst du deinen Punktestand auf ein anderes Ger\u00e4t mitnehmen\?/.test(html),
+     '\u00dcbertragungscode ist als Frage eingef\u00fchrt, nicht als Technik');
+  ok(/Der Code ist nicht korrekt\. Bitte vollst\u00e4ndigen Code eingeben\./.test(html),
+     'Fehlermeldung im Wortlaut');
+  ok(/'Code erfolgreich \u00fcbertragen\. Du hast ' \+ gateNum\(r\.p\)/.test(html),
+     'Erfolgsmeldung nennt die Punktzahl AUS DEM CODE (nicht den eigenen Stand)');
+  ok(/Du hast ' \+ gateNum\(gateState\.p\) \+ ' von ' \+ GATE_NEED \+ ' Punkten\./.test(html),
+     'die Zustandszeile nennt Stand und Schwelle');
+  // \u00a7145: der Datenschutztext ist genauer geworden \u2014 die Kennung bindet an den BROWSER,
+  // nicht an eine Person (zwei Browser auf einem Ger\u00e4t haben zwei Kennungen; Beleg: die
+  // zweite Kennung wWyMlHiLHJhg am 6.8.). Das bestreitet den Personenbezug NICHT, es
+  // beschreibt den Zweck zutreffend \u2014 anders als der \u00a7136-Satz, der genau das tat.
+  ok(/Partien aus demselben Browser zusammenzuf\u00fchren/.test(html) &&
+     !/Partien derselben Person zusammenzuf\u00fchren/.test(html),
+     'Datenschutz: \u201eaus demselben Browser\u201c statt \u201ederselben Person\u201c');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];

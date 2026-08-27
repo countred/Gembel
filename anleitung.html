@@ -270,36 +270,81 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 // Wachhund — MUSS ein eigener Block bleiben. Faellt der Hauptblock schon beim Parsen
 // aus (Syntaxfehler, doppelte const-Deklaration gegen gembel_rules.js), laeuft dort
 // keine Zeile, auch kein try/catch. Dann bliebe die Seite stumm und leer.
+//
+// ⚠️ §145 (27.8.) — WAS HIER FALSCH WAR, gemessen statt vermutet:
+//   Der Wecker stand auf FESTEN 1500 ms ab dem Parsen DIESES Blocks. Zwischen ihm und
+//   init() liegt aber ein BLOCKIERENDER Netzabruf von gembel_rules.js?v=NN. Gemessen:
+//   der Start allein braucht 728 ms in jsdom auf Desktop-CPU, mit der Regelschicht
+//   bereits im Speicher und ganz ohne Netz. Auf dem Telefon kommen Abruf und langsamere
+//   CPU dazu — und weil der Cache-Bust `?v=` sich bei JEDEM Deploy aendert, ist der
+//   erste mobile Aufruf nach einem Deploy IMMER ein Kaltabruf. Der Wachhund schlug
+//   deshalb bei LANGSAMKEIT an, nicht bei Versagen (Walters Befund, mehrfach in Folge
+//   direkt nach dem v113-Deploy).
+//   JETZT: gemessen wird am `load`-Ereignis — dann sind alle Unterressourcen durch.
+//   Ist init() bis kurz danach nicht gelaufen, ist wirklich etwas kaputt. Ein hartes
+//   Deckenlimit fasst den Fall ab, dass `load` nie eintritt.
+//
+// ⚠️ ZWEITER FUND (27.8.): der Ausgang „Zum Spiel" oben rechts war beim Ausfall zwar
+//   SICHTBAR (der Wachhund blendet den Kopfbereich nicht aus), aber TOT — verdrahtet
+//   wurde er in init(), also genau dort, wo im Ausfall nichts mehr laeuft. Der Lernende
+//   sass vor einem Knopf, der nichts tut. Deshalb haengt der Ausgang jetzt HIER, im
+//   ersten Block, vor allem anderen.
 window.__anlGestartet = false;
-window.addEventListener('error', function(e){
-  if(window.__anlGestartet) return;
-  var el=document.getElementById('meldung');
-  if(!el) return;
-  el.style.display='block';
-  // §141: derselbe eine Satz wie in bail() — der Wachhund laeuft aber in einem eigenen
-  // Skriptblock und kann die Konstante von dort nicht sehen. Die Suite haelt beide gegeneinander.
-  el.innerHTML='<b>Die Anleitung konnte nicht starten.</b>';
-  console.error('anleitung.html: Hauptblock nicht gestartet — ' + String((e && e.message) || 'Unbekannter Fehler'));
-  ['lesson','board-area','nav','bar'].forEach(function(id){
-    var n=document.getElementById(id); if(n) n.style.display='none';
-  });
-});
-setTimeout(function(){
-  if(window.__anlGestartet) return;
+
+// Ausgang zuerst — er muss auch dann tragen, wenn danach keine Zeile mehr laeuft.
+(function(){
+  var ex=document.getElementById('btn-exit');
+  if(ex) ex.onclick=function(){ location.href='index.html'; };
+})();
+
+// §145: Walters Wortlaut. Deckt AUCH den Ausfall waehrend der Anwendung ab — „konnte nicht
+// starten" war zu eng, die Anleitung kann sich auch mitten im Durchgang aufhaengen.
+window.__ANL_AUSFALL = '<b>Es gab ein technisches Problem mit der Anleitung.</b><br>'
+                     + 'Bitte versuche es später nochmals.';
+window.__anlAusfall = function(diagnose){
   var el=document.getElementById('meldung');
   if(el && el.style.display!=='block'){
     el.style.display='block';
-    el.innerHTML='<b>Die Anleitung konnte nicht starten.</b>';
-    console.error('anleitung.html: der Programmteil wurde nicht ausgefuehrt (Wachhund nach 1500 ms).');
-    ['lesson','board-area','nav','bar'].forEach(function(id){
-      var n=document.getElementById(id); if(n) n.style.display='none';
-    });
+    el.innerHTML=window.__ANL_AUSFALL;                     // feste Literale, nie Fremddaten
+    // §145: Rueckweg IN der Meldung. Der Kopfknopf ist klein und wird im Schreck uebersehen;
+    // ein automatischer Sprung waere schlechter — er risse die Meldung weg, bevor sie
+    // gelesen ist, und naehme Walter die Diagnose.
+    var b=document.createElement('button');
+    b.type='button'; b.textContent='Zum Spiel';
+    b.setAttribute('style','margin-top:10px;padding:8px 14px;border-radius:10px;'
+      + 'border:1.5px solid #ba7517;background:#fff;color:#7a4c0a;font:600 13px/1.2 system-ui;cursor:pointer;');
+    b.onclick=function(){ location.href='index.html'; };
+    el.appendChild(b);
   }
-}, 1500);
+  if(diagnose) console.error('anleitung.html: '+String(diagnose));
+  ['lesson','board-area','nav','bar'].forEach(function(id){
+    var n=document.getElementById(id); if(n) n.style.display='none';
+  });
+};
+
+// Echter Fehler: sofort melden, unabhaengig von jeder Frist.
+window.addEventListener('error', function(e){
+  if(window.__anlGestartet) return;
+  window.__anlAusfall('Hauptblock nicht gestartet — ' + String((e && e.message) || 'Unbekannter Fehler'));
+});
+// Die Regelschicht selbst laesst sich nicht laden — das ist der haeufigste echte Ausfall
+// und meldet sich sofort, statt auf eine Frist zu warten.
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    if(window.__anlGestartet) return;
+    window.__anlAusfall('der Programmteil wurde nicht ausgefuehrt (geprueft nach dem load-Ereignis).');
+  }, 400);
+});
+// Deckenlimit, falls `load` nie eintritt (haengender Abruf). Grosszuegig: lieber spaet
+// melden als eine gesunde, nur langsame Seite abwuergen.
+setTimeout(function(){
+  if(window.__anlGestartet) return;
+  window.__anlAusfall('der Programmteil wurde nicht ausgefuehrt (Deckenlimit 12 s).');
+}, 12000);
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=113" charset="utf-8"></script>
+<script src="gembel_rules.js?v=114" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -308,7 +353,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 25 · 27.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 26 · 27.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -1175,10 +1220,23 @@ function groesse(){
 // Alles Diagnostische geht in die KONSOLE, wo es hingehoert.
 // Sichtbar bleiben ausserdem: der Fassungsstempel (sonst ist unklar, welche Datei laeuft)
 // und der Ausgang ins Spiel oben rechts (sonst sitzt der Lernende fest).
-const AUSFALL_SATZ = '<b>Die Anleitung konnte nicht starten.</b>';
+// §145: EINE QUELLE fuer den Satz. Bis Fassung 25 stand er dreimal woertlich da (einmal hier,
+// zweimal im Wachhund-Block) und musste von der Suite gegeneinander gehalten werden. Jetzt
+// setzt der Wachhund-Block ihn auf window, und beide Bloecke lesen dieselbe Zeichenkette —
+// auseinanderlaufen koennen sie nicht mehr. Der Rueckfallwert greift nur, wenn der erste
+// Block gar nicht lief; dann ist ohnehin alles kaputt.
+// KEIN Rueckfall-Literal: eine zweite Kopie des Satzes waere genau die Drift, gegen die
+// §141 gebaut ist. Faellt der erste Block aus, laeuft auch dieser nicht — dann gibt es
+// nichts anzuzeigen. Die Suite prueft, dass der Satz genau EINMAL im Quelltext steht.
+const AUSFALL_SATZ = (typeof window!=='undefined' && window.__ANL_AUSFALL) || '';
 function bail(diagnose){
+  // Auch der Ausfall MITTEN im Durchgang bekommt den Rueckweg — dafuer ist __anlAusfall da.
+  if(typeof window!=='undefined' && typeof window.__anlAusfall==='function'){
+    window.__anlAusfall(String(diagnose).replace(/<[^>]+>/g,''));
+    return;
+  }
   const el=document.getElementById('meldung');
-  if(el){ el.style.display='block'; el.innerHTML=AUSFALL_SATZ; }
+  if(el && AUSFALL_SATZ){ el.style.display='block'; el.innerHTML=AUSFALL_SATZ; }
   ['lesson','board-area','nav','bar'].forEach(function(id){
     const n=document.getElementById(id); if(n) n.style.display='none';
   });
