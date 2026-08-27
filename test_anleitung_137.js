@@ -483,8 +483,41 @@ function rechneCalc(ausdruck, gesamt){
 });
 
 // ═══════════════════════════════════════════════════════════════════
+
+// §146 (Walters Befund, 27.8.): EIN Tipp auf das Quellfeld, der als ZWEI Klickereignisse
+// ankommt (Doppeltipp/Zittern auf dem Telefon), hob die Figur an und nahm sie sofort wieder
+// zurueck. Der Lernende sah nur einen Ruecksprung an den Anfang und ein gesperrtes "Weiter".
+// Geprueft wird BEIDES: der Unfall wird geschluckt, die gewollte Ruecknahme bleibt.
+// Eigene async-Funktion — der D-Block laeuft synchron und vertraegt kein await.
+async function doppeltipp(){
+  if(!JSDOM) return;
+  const schlaf=ms=>new Promise(r=>setTimeout(r,ms));
+  const dop=new JSDOM(HTML.replace(/<script src="gembel_rules\.js[^>]*><\/script>/,'<script>'+RULES+'</script>'),
+    {runScripts:'dangerously',pretendToBeVisual:true});
+  const dd=dop.window.document;
+  const zz=n=>[...dd.querySelectorAll('#board .cell')].find(x=>x.title===n);
+  const tt=()=>(dd.getElementById('ltext').textContent||'').replace(/\s+/g,' ').trim();
+  await schlaf(300);
+  zz('1D').onclick(); await schlaf(20);
+  const inDrop = /Jetzt 1B antippen/.test(tt());
+  zz('1D').onclick(); await schlaf(30);
+  pruef('D6 §146 Doppelereignis wird geschluckt (bleibt in der Absetz-Phase)',
+    inDrop && /Jetzt 1B antippen/.test(tt()), tt().slice(0,60));
+  await schlaf(400);
+  zz('1D').onclick(); await schlaf(30);
+  pruef('D7 §146 nach der Sperrfrist nimmt derselbe Tipp zurueck (Funktion bleibt)',
+    /Gewonnen hat, wer die vierte/.test(tt()), tt().slice(0,60));
+  zz('1D').onclick(); await schlaf(20);
+  zz('1B').onclick(); await schlaf(700);
+  pruef('D8 §146 der Zug laeuft danach normal zu Ende, "Weiter" wird frei',
+    /Vier schwarze Figuren in Spalte B/.test(tt()) && dd.getElementById('btn-next').disabled===false);
+  pruef('D9 §146 die Frist steht als benannte Konstante im Quelltext',
+    /const RUECKNAHME_SPERRE_MS = 350;/.test(HTML) && /\(Date\.now\(\)-phaseSeit\) >= RUECKNAHME_SPERRE_MS/.test(HTML));
+}
+
 (async function(){
   if(JSDOM){ try { await durchklick(); } catch(e){ pruef('B· Durchklick abgebrochen', false, e.message); } }
+  if(JSDOM){ try { await doppeltipp(); } catch(e){ pruef('D· §146-Probe abgebrochen', false, e.message); } }
   else { console.log('\n⚠ jsdom fehlt — Block B uebersprungen. Mit  npm i jsdom  nachinstallieren.'); }
   console.log('\n'+'═'.repeat(62));
   if(bad){ console.log('FEHLER ('+bad+'):'); fehler.forEach(f=>console.log(' · '+f)); }

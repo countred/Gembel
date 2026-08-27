@@ -344,7 +344,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=114" charset="utf-8"></script>
+<script src="gembel_rules.js?v=115" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -353,13 +353,25 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 26 · 27.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 27 · 27.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
 // (Mitspieler) im Stylesheet uebereinstimmen — die Suite prueft das.
 const ABFLUG_MS = 500,  ANKUNFT_MS = 1900;
 const ABFLUG_MIT_MS = 1100, ANKUNFT_MIT_MS = 2600;
+// §146 (Walters Befund, 27.8.): SPERRFRIST FUER DAS ZURUECKNEHMEN.
+// Ein Tipp auf das Quellfeld waehrend der Absetz-Phase bedeutet „Figur wieder absetzen"
+// und geht eine Phase zurueck. Diese Ruecknahme stand bisher SOFORT scharf — also genau in
+// dem Moment, in dem beim Telefon das zweite Ereignis eines Doppeltipps eintrifft (schneller
+// Doppeltipp, Zittern, oder der nach der Beruehrung nachgereichte Klick). Folge: EIN Tipp
+// auf das Quellfeld hob die Figur an UND setzte sie sofort wieder ab; der Lernende sah nur,
+// wie die Anleitung an den Anfang zurueckspringt und „Weiter" gesperrt blieb.
+// Walter fiel es im ERSTEN Schritt auf, wo man noch suchend tippt.
+// 350 ms trennt beides zuverlaessig: ein gewolltes Zuruecknehmen kommt nie so schnell
+// (man muss erst hinsehen), ein Doppelereignis praktisch immer innerhalb von 300 ms.
+const RUECKNAHME_SPERRE_MS = 350;
+let phaseSeit = 0;   // Zeitpunkt, an dem die aktuelle Phase betreten wurde
 
 const COL = {0:'A',1:'B',2:'C',3:'D'};
 const ROW = {3:'1',2:'2',1:'3',0:'4'};
@@ -1011,6 +1023,7 @@ function zeigePhase(rueck){
   const ph=PHASES[idx], s=STEPS[ph.si], a=s.aktionen[ph.ai];
   board=boardFor(idx);
   leerMark(); gezeigt=false; laeuft=false; gezogen=false;
+  phaseSeit = Date.now();                      // §146: Beginn der Sperrfrist
 
   document.getElementById('stepno').textContent='Schritt '+(ph.si+1)+' von '+STEPS.length;
   document.getElementById('barfill').style.width=Math.round(idx/(PHASES.length-1)*100)+'%';
@@ -1148,7 +1161,11 @@ function onCell(r,c){
     if(a.actor!==LEARNER) return;
     const f=CELL[a.von];
     if(a.nach!==lab(r,c)){
-      if(f[0]===r && f[1]===c){ idx--; zeigePhase(true); }   // Figur wieder absetzen
+      // §146: Ruecknahme erst nach der Sperrfrist — sonst nimmt das zweite Ereignis eines
+      // Doppeltipps das gerade erfolgte Anheben sofort wieder zurueck.
+      if(f[0]===r && f[1]===c && (Date.now()-phaseSeit) >= RUECKNAHME_SPERRE_MS){
+        idx--; zeigePhase(true);               // Figur wieder absetzen
+      }
       return;
     }
     if(!canDrop(board,f[0],f[1],r,c,LEARNER,PARITY)) return abweichung('canDrop '+a.von+'->'+a.nach);
