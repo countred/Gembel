@@ -125,7 +125,7 @@
    16px ist der Browser-Standard fuer Fliesstext (Apple 17pt, Material 16sp). */
 --fs-read: 16px;  /* Lesetext — Anleitung, Regeln, Rechtstexte */
 
-  --bg:#f5f4ef;--bg2:#ebe9e2;--bg3:#fff;
+  --bg:#f5f4ef;--bg2:#ebe9e2;--bg3:#fbfaf6;   /* §150: kein strahlendes Weiss mehr */
   --text:#2c2c2a;--text2:#5f5e5a;--text3:#888780;
   --border:#d3d1c7;--border2:#b4b2a9;
   --sel-bg:#dceafa;--sel-bd:#185fa5;
@@ -154,12 +154,16 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 
 #head{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
 #head .t{font-size:var(--fs-sm);font-weight:600;letter-spacing:3px;color:var(--red-fig-bg);text-transform:uppercase;}
-#head .n{font-size:var(--fs-xs);color:var(--text3);}
+/* §150: die Kopfzeile war zu leise. „Schritt 3 von 9" ist die Orientierung, „Zum Spiel"
+   der einzige sichtbare Ausweg — beide standen auf der kleinsten Stufe in der blassesten
+   Farbe. Jetzt eine Stufe groesser, der Ausgang zusaetzlich fett und in der Akzentfarbe. */
+#head .n{font-size:var(--fs-sm);color:var(--text2);}
 #head .rechts{display:flex;align-items:baseline;gap:11px;}
 /* §139: der Weg zurueck ins Spiel muss JEDERZEIT offen sein, nicht erst am Ende.
    Wer die Anleitung nur kurz nachschlaegt, soll nicht durch neun Schritte klicken
    muessen. Bewusst klein: ein Ausgang, kein Angebot. */
 #btn-exit{background:none;border:none;padding:2px 0;cursor:pointer;font:inherit;
+  font-size:var(--fs-md);font-weight:700;
   font-size:var(--fs-xs);color:var(--sel-bd);text-decoration:underline;text-underline-offset:3px;}
 #btn-exit:hover{opacity:.7;}
 #bar{flex:0 0 auto;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden;}
@@ -170,7 +174,10 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
    zwischen den Teilschritten nicht springt. Laengeres scrollt im Kasten. */
 #lesson,#lessonProbe{background:var(--bg3);border:1px solid var(--border);
   border-radius:14px;padding:11px 13px;}
-#lesson{flex:0 0 auto;height:clamp(148px,30vh,236px);overflow-y:auto;}
+/* §150: der Kasten war gegenueber dem Brett ueberdimensioniert — er wurde nach der
+   LAENGSTEN Seite bemessen, und die meisten Seiten zeigen viel weniger. Jetzt kleiner,
+   dafuer scrollen die zwei, drei langen Seiten. Walters Entscheid. */
+#lesson{flex:0 0 auto;height:clamp(120px,23vh,186px);overflow-y:auto;}
 /* Messkasten: unsichtbar, gleiche Breite und Schrift wie der echte — daraus wird die
    feste Hoehe bestimmt, damit KEIN Text scrollen muss und das Brett trotzdem
    zwischen den Teilschritten nicht springt. */
@@ -181,7 +188,7 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 #lessonProbe h2{font-size:var(--fs-xl);font-weight:600;margin-bottom:5px;}
 #lessonProbe p{font-size:var(--fs-read);line-height:1.5;}
 #lessonProbe p + p{margin-top:6px;}
-#lessonProbe .rechnung{margin-top:7px;font-size:var(--fs-md);line-height:1.5;}
+#lessonProbe .rechnung{margin-top:7px;font-size:var(--fs-read);line-height:1.5;}
 #lessonProbe .aufgabe{margin-top:8px;font-size:var(--fs-read);font-weight:600;line-height:1.4;}
 #lesson h2{font-size:var(--fs-xl);font-weight:600;margin-bottom:5px;}
 #lesson p{font-size:var(--fs-read);line-height:1.5;color:var(--text2);}
@@ -189,7 +196,7 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 #lesson b{color:var(--text);font-weight:600;}
 /* Kein gruener Balken mehr (Walter, Fassung 12): die Rechnung steht fuer sich.
    Die gruene Sprache gehoert aufs BRETT, nicht in den Text. */
-#lesson .rechnung{margin-top:7px;font-size:var(--fs-md);line-height:1.5;color:var(--text2);}
+#lesson .rechnung{margin-top:7px;font-size:var(--fs-read);line-height:1.5;color:var(--text2);}
 #lesson .rechnung .sum{font-weight:700;color:var(--text);}
 #lesson .aufgabe{margin-top:8px;font-size:var(--fs-read);font-weight:600;color:var(--sel-bd);line-height:1.4;}
 
@@ -390,7 +397,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=118" charset="utf-8"></script>
+<script src="gembel_rules.js?v=119" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -399,7 +406,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 30 · 27.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 31 · 27.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -417,6 +424,27 @@ const ABFLUG_MIT_MS = 1100, ANKUNFT_MIT_MS = 2600;
 // 350 ms trennt beides zuverlaessig: ein gewolltes Zuruecknehmen kommt nie so schnell
 // (man muss erst hinsehen), ein Doppelereignis praktisch immer innerhalb von 300 ms.
 const RUECKNAHME_SPERRE_MS = 350;
+
+// §150 (Walters Befund, 27.8.): LAUFENDE WECKER GEHOEREN ZUR PHASE, DIE SIE GESTARTET HAT.
+// Der Zug wird in zwei Stufen animiert: Abflug (500 ms), dann Ankunft — und der Siegrahmen
+// erst nach dem blauen Blinken, also nach ANKUNFT_MS = 1900 ms. „Weiter" wird aber schon
+// nach dem Abflug frei. Wer zuegig liest, blaettert also WEITER, bevor der Vierer-Wecker
+// ueberhaupt gelaufen ist — und der schrieb dann in die naechste Seite hinein:
+// `mark.sieg` gesetzt, renderBoard() darueber. Auf dem Schirm: ein Siegrahmen auf einem
+// Schritt, der keinen hat, dazu ein grauer „Weiter"-Knopf, weil die neue Phase auf ein
+// Antippen wartet. Es SIEHT aus wie ein Aufhaenger nach dem Vierer und ist in Wahrheit
+// eine Seite zu spaet eintreffende Farbe. Walter traf es auf Laptop UND Telefon.
+// Jeder Wecker laeuft ab jetzt ueber `spaeter()` und wird beim Phasenwechsel abbestellt.
+let weckerListe = [];
+function spaeter(fn, ms){
+  const t = setTimeout(function(){
+    weckerListe = weckerListe.filter(x => x !== t);
+    fn();
+  }, ms);
+  weckerListe.push(t);
+  return t;
+}
+function weckerAus(){ weckerListe.forEach(clearTimeout); weckerListe = []; }
 let phaseSeit = 0;   // Zeitpunkt, an dem die aktuelle Phase betreten wurde
 
 const COL = {0:'A',1:'B',2:'C',3:'D'};
@@ -1043,7 +1071,9 @@ function messeKastenhoehe(){
   }
   probe.innerHTML='';
   if(max<40) return;                     // keine belastbare Messung — CSS-Wert lassen
-  kasten.style.height=Math.min(max+2, Math.round(window.innerHeight*0.60))+'px';
+  // §150: Deckel von 60 % auf 46 % der Fensterhoehe. Der Kasten folgt weiter der laengsten
+  // Seite, aber nur bis hierhin — darueber scrollt er, statt dem Brett Flaeche zu nehmen.
+  kasten.style.height=Math.min(max+2, Math.round(window.innerHeight*0.46))+'px';
   kasten.dataset.gemessen=max;
   // Zweiter Durchgang: das BRETT hat Vorrang. Es ist eine Anleitung zu einem Brettspiel —
   // lieber ein Text, der scrollt, als Felder, die kleiner sind als die Figuren darauf.
@@ -1069,6 +1099,11 @@ function zeigePhase(rueck){
   const ph=PHASES[idx], s=STEPS[ph.si], a=s.aktionen[ph.ai];
   board=boardFor(idx);
   leerMark(); gezeigt=false; laeuft=false; gezogen=false;
+  // §150: ZUERST alle Wecker der vorigen Phase abbestellen. Sonst faellt eine verspaetete
+  // Animation in die neue Phase — genau der „Aufhaenger nach dem Vierer".
+  weckerAus();
+  const brett = document.getElementById('board');
+  if(brett) brett.removeAttribute('data-sieg');   // auch die Sieg-Kennzeichnung zuruecknehmen
   phaseSeit = Date.now();                      // §146: Beginn der Sperrfrist
 
   document.getElementById('stepno').textContent='Schritt '+(ph.si+1)+' von '+STEPS.length;
@@ -1143,7 +1178,7 @@ function spieleAus(z, brettDanach, fertig){
   const f=CELL[z.von], t=CELL[z.nach];
   const hol=(r,c)=>document.querySelector('#board .cell[data-rc="'+r+','+c+'"]');
   const ab=hol(f[0],f[1]); if(ab) ab.classList.add(abKlasse);
-  setTimeout(function(){
+  spaeter(function(){
     board=brettDanach();                       // jetzt erst zieht die Figur um
     leerMark();
     renderBoard(); groesse();
@@ -1152,7 +1187,7 @@ function spieleAus(z, brettDanach, fertig){
     // Siegrahmen die Ankunft, und der zweite Teil des Zuges ist nicht zu sehen.
     const vier=checkFourInRow(board,'black')||checkFourInRow(board,'red');
     if(vier){ document.getElementById('board').setAttribute('data-sieg','wartet');
-      setTimeout(function(){ mark.sieg=vier; renderBoard(); groesse();
+      spaeter(function(){ mark.sieg=vier; renderBoard(); groesse();
         document.getElementById('board').setAttribute('data-sieg','gezeigt'); }, anDauer); }
     laeuft=false; gezeigt=true; gezogen=true;
     if(fertig) fertig();

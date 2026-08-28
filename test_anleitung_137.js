@@ -433,6 +433,48 @@ block('F \u00b7 \u00a7149 Lesetext und Messzwilling');
     /#lesson\{[^}]*overflow-y:auto/.test(HTML));
 }
 
+block('G \u00b7 \u00a7150 Wecker geh\u00f6ren zur Phase');
+{
+  pruef('G1 alle Animations-Wecker laufen ueber spaeter()',
+    /function spaeter\(fn, ms\)\{/.test(HTML) &&
+    !/(?<!\/\/[^\n]*)\bsetTimeout\(function\(\)\{\s*\n?\s*board=brettDanach/.test(HTML) &&
+    /spaeter\(function\(\)\{\s*\n?\s*board=brettDanach/.test(HTML));
+  pruef('G2 der Vierer-Wecker ebenfalls',
+    /spaeter\(function\(\)\{ mark\.sieg=vier;/.test(HTML));
+  pruef('G3 der Phasenwechsel bestellt sie ab',
+    /function weckerAus\(\)\{ weckerListe\.forEach\(clearTimeout\); weckerListe = \[\]; \}/.test(HTML) &&
+    /leerMark\(\); gezeigt=false; laeuft=false; gezogen=false;[\s\S]{0,320}weckerAus\(\);/.test(HTML));
+  pruef('G4 auch die Sieg-Kennzeichnung wird zurueckgenommen',
+    /brett\.removeAttribute\('data-sieg'\)/.test(HTML));
+}
+
+async function verspaeteterWecker(){
+  if(!JSDOM) return;
+  // \u00a7150 (Walters Befund, 27.8.): „Weiter\" wird nach dem ABFLUG frei (500 ms), der
+  // Siegrahmen kommt erst nach der ANKUNFT (1900 ms). Wer zuegig blaettert, ist laengst
+  // eine Seite weiter, wenn der alte Wecker laeuft — der schrieb dann dort hinein.
+  // Auf dem Schirm: Siegrahmen auf einem Schritt ohne Vierer, dazu ein grauer Knopf, weil
+  // die neue Phase auf ein Antippen wartet. Sieht aus wie ein Aufhaenger, ist eine Farbe
+  // zu spaet. Diese Probe blaettert absichtlich zu frueh weiter.
+  const schlaf=ms=>new Promise(r=>setTimeout(r,ms));
+  const dom=new JSDOM(HTML.replace(/<script src="gembel_rules\.js[^>]*><\/script>/,'<script>'+RULES+'</script>'),
+    {runScripts:'dangerously',pretendToBeVisual:true});
+  const dd=dom.window.document;
+  const zz=n=>[...dd.querySelectorAll('#board .cell')].find(x=>x.title===n);
+  const brett=()=>dd.getElementById('board').getAttribute('data-sieg');
+  const txt=()=>(dd.getElementById('ltext').textContent||'').replace(/\s+/g,' ').trim();
+  await schlaf(300);
+  zz('1D').onclick(); await schlaf(30); zz('1B').onclick(); await schlaf(600);
+  pruef('G5 nach dem Zug ist „Weiter\" frei, der Siegrahmen noch unterwegs',
+    dd.getElementById('btn-next').disabled===false && brett()==='wartet', String(brett()));
+  const vorher=txt();
+  dd.getElementById('btn-next').onclick(); await schlaf(80);
+  pruef('G6 zu frueh weitergeblaettert: die neue Seite steht', txt()!==vorher, txt().slice(0,40));
+  await schlaf(2400);
+  pruef('G7 der alte Wecker schreibt NICHT mehr in die neue Seite hinein',
+    brett()===null, 'data-sieg=' + String(brett()));
+}
+
 block('D · Ausfallverhalten');
 // ═══════════════════════════════════════════════════════════════════
 if(JSDOM){
@@ -548,6 +590,7 @@ async function doppeltipp(){
 (async function(){
   if(JSDOM){ try { await durchklick(); } catch(e){ pruef('B· Durchklick abgebrochen', false, e.message); } }
   if(JSDOM){ try { await doppeltipp(); } catch(e){ pruef('D· §146-Probe abgebrochen', false, e.message); } }
+  if(JSDOM){ try { await verspaeteterWecker(); } catch(e){ pruef('G· §150-Probe abgebrochen', false, e.message); } }
   else { console.log('\n⚠ jsdom fehlt — Block B uebersprungen. Mit  npm i jsdom  nachinstallieren.'); }
   console.log('\n'+'═'.repeat(62));
   if(bad){ console.log('FEHLER ('+bad+'):'); fehler.forEach(f=>console.log(' · '+f)); }
