@@ -403,6 +403,36 @@ MUTATIONEN.forEach(function(mu){
 });
 
 // ═══════════════════════════════════════════════════════════════════
+block('F \u00b7 \u00a7149 Lesetext und Messzwilling');
+{
+  // ⚠️ #lessonProbe ist der unsichtbare MESSZWILLING: aus ihm wird die Kastenhoehe gerechnet.
+  // Weicht auch nur EINE Groesse ab, misst die Seite eine andere Hoehe, als sie danach
+  // anzeigt — der Text wuerde abgeschnitten oder es entstuende Leerraum. Beim §149-Umbau
+  // waren acht Regeln paarweise anzufassen; genau dort passiert so ein Fehler.
+  const paare = [
+    ['h2',       /#lesson h2\{font-size:var\((--fs-[a-z]+)\)/,        /#lessonProbe h2\{font-size:var\((--fs-[a-z]+)\)/],
+    ['p',        /#lesson p\{font-size:var\((--fs-[a-z]+)\)/,         /#lessonProbe p\{font-size:var\((--fs-[a-z]+)\)/],
+    ['aufgabe',  /#lesson \.aufgabe\{[^}]*font-size:var\((--fs-[a-z]+)\)/,  /#lessonProbe \.aufgabe\{[^}]*font-size:var\((--fs-[a-z]+)\)/],
+    ['rechnung', /#lesson \.rechnung\{[^}]*font-size:var\((--fs-[a-z]+)\)/, /#lessonProbe \.rechnung\{[^}]*font-size:var\((--fs-[a-z]+)\)/],
+  ];
+  for(const [name, rL, rP] of paare){
+    const a = (HTML.match(rL)||[])[1], b = (HTML.match(rP)||[])[1];
+    pruef('F1 ' + name + ': Kasten und Messzwilling tragen dieselbe Groesse',
+      !!a && a === b, a + ' / ' + b);
+  }
+  const skala = {};
+  for(const m of (HTML.match(/--fs-[a-z]+:\s*[0-9.]+px/g) || []))
+    skala[m.split(':')[0].trim()] = parseFloat(m.split(':')[1]);
+  pruef('F2 der Anleitungstext laeuft auf --fs-read', /#lesson p\{font-size:var\(--fs-read\)/.test(HTML));
+  pruef('F3 die Aufgabenzeile ist genauso gross wie der Fliesstext (sie ist die wichtigste Zeile)',
+    /#lesson \.aufgabe\{[^}]*font-size:var\(--fs-read\)/.test(HTML));
+  pruef('F4 Lesetext mindestens 16px', skala['--fs-read'] >= 16, skala['--fs-read'] + 'px');
+  pruef('F5 die Ueberschrift ist groesser als der Lesetext',
+    skala['--fs-xl'] > skala['--fs-read'], skala['--fs-xl'] + ' > ' + skala['--fs-read']);
+  pruef('F6 der Kasten kann ueberlaufen (Scrollen erlaubt, statt Text abzuschneiden)',
+    /#lesson\{[^}]*overflow-y:auto/.test(HTML));
+}
+
 block('D · Ausfallverhalten');
 // ═══════════════════════════════════════════════════════════════════
 if(JSDOM){

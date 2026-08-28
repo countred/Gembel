@@ -617,14 +617,20 @@ console.log('\u00a7147 \u2014 Typo-Skala (Boden 12px, keine Sondergr\u00f6\u00df
 {
   // Vorher: 20 verschiedene Groessen in 72 Deklarationen. Diese Gruppe haelt fest, dass es
   // dabei nicht wieder losgeht \u2014 eine neue Zwischengroesse faellt sofort auf.
-  ok(Object.keys(SKALA).length === 6,
-     'genau SECHS Stufen in :root (gefunden: ' + Object.keys(SKALA).join(' ') + ')');
+  ok(Object.keys(SKALA).length === 7,
+     'genau SIEBEN Stufen in :root (gefunden: ' + Object.keys(SKALA).join(' ') + ')');
   ok(SKALA['--fs-xs'] >= 12,
      'die kleinste Stufe liegt bei mindestens 12px (gemessen ' + SKALA['--fs-xs'] + 'px)');
   {
-    const w = Object.values(SKALA);
-    ok(w.every((v,i) => i === 0 || v > w[i-1]),
-       'die Stufen steigen streng an (' + w.join(' < ') + ')');
+    // \u00a7149: --fs-read ist KEINE Stufe der Leiter, sondern eine eigene Achse f\u00fcr Lesetext.
+    // Die sechs Bedien-Stufen m\u00fcssen weiter streng steigen; --fs-read wird getrennt gepr\u00fcft.
+    const leiter = ['--fs-xs','--fs-sm','--fs-md','--fs-lg','--fs-xl','--fs-xxl'].map(k => SKALA[k]);
+    ok(leiter.every((v,i) => i === 0 || v > leiter[i-1]),
+       'die sechs Bedien-Stufen steigen streng an (' + leiter.join(' < ') + ')');
+    ok(SKALA['--fs-read'] >= 16,
+       'Lesetext ist mindestens 16px \u2014 Browser-Standard (gemessen ' + SKALA['--fs-read'] + 'px)');
+    ok(SKALA['--fs-read'] > SKALA['--fs-md'],
+       'Lesetext ist gr\u00f6\u00dfer als der Oberfl\u00e4chentext (' + SKALA['--fs-read'] + ' > ' + SKALA['--fs-md'] + ')');
   }
   // Literale duerfen nur noch Titelgroessen sein. Alles darunter gehoert in die Skala \u2014
   // genau dort sassen die 9- und 10-px-Stellen, die niemand mehr lesen konnte.

@@ -114,6 +114,16 @@
 --fs-lg: 15px;    /* hervorgehobener Text, Knopfbeschriftungen */
 --fs-xl: 18px;    /* Ueberschriften in Karten */
 --fs-xxl: 20px;   /* groesste abgeleitete Stufe */
+/* §149 (27.8.): eigene Stufe fuer LESETEXT — laengere Absaetze, die man wirklich liest:
+   der Anleitungstext und die drei Textkarten (Regeln, Impressum, Datenschutz) plus der
+   Erklaertext zur Freischaltung. Bedienelemente, Beschriftungen und Statuszeilen bleiben
+   bewusst draussen; dort gab es kein Leseproblem, und dort kostet jede Vergroesserung
+   sofort Flaeche.
+   WARUM eine eigene Stufe und nicht --fs-md anheben: --fs-md haengt an Knoepfen, Zaehlern
+   und Schildern rund ums Brett. Lesetext und Bedienflaeche haben verschiedene Aufgaben und
+   vertragen verschiedene Groessen.
+   16px ist der Browser-Standard fuer Fliesstext (Apple 17pt, Material 16sp). */
+--fs-read: 16px;  /* Lesetext — Anleitung, Regeln, Rechtstexte */
 
   --bg:#f5f4ef;--bg2:#ebe9e2;--bg3:#fff;
   --text:#2c2c2a;--text2:#5f5e5a;--text3:#888780;
@@ -165,20 +175,23 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
    feste Hoehe bestimmt, damit KEIN Text scrollen muss und das Brett trotzdem
    zwischen den Teilschritten nicht springt. */
 #lessonProbe{position:absolute;visibility:hidden;left:-9999px;top:0;height:auto;overflow:visible;}
-#lessonProbe h2{font-size:var(--fs-lg);font-weight:600;margin-bottom:5px;}
-#lessonProbe p{font-size:var(--fs-md);line-height:1.5;}
+/* §149: Lesetext auf --fs-read. ⚠️ #lessonProbe ist der MESSZWILLING —
+   jede Groesse muss dort ZEICHENGLEICH stehen, sonst misst die Seite eine andere
+   Hoehe, als sie danach anzeigt (die Suite prueft die Paarigkeit). */
+#lessonProbe h2{font-size:var(--fs-xl);font-weight:600;margin-bottom:5px;}
+#lessonProbe p{font-size:var(--fs-read);line-height:1.5;}
 #lessonProbe p + p{margin-top:6px;}
-#lessonProbe .rechnung{margin-top:7px;font-size:var(--fs-sm);line-height:1.5;}
-#lessonProbe .aufgabe{margin-top:8px;font-size:var(--fs-md);font-weight:600;line-height:1.4;}
-#lesson h2{font-size:var(--fs-lg);font-weight:600;margin-bottom:5px;}
-#lesson p{font-size:var(--fs-md);line-height:1.5;color:var(--text2);}
+#lessonProbe .rechnung{margin-top:7px;font-size:var(--fs-md);line-height:1.5;}
+#lessonProbe .aufgabe{margin-top:8px;font-size:var(--fs-read);font-weight:600;line-height:1.4;}
+#lesson h2{font-size:var(--fs-xl);font-weight:600;margin-bottom:5px;}
+#lesson p{font-size:var(--fs-read);line-height:1.5;color:var(--text2);}
 #lesson p + p{margin-top:6px;}
 #lesson b{color:var(--text);font-weight:600;}
 /* Kein gruener Balken mehr (Walter, Fassung 12): die Rechnung steht fuer sich.
    Die gruene Sprache gehoert aufs BRETT, nicht in den Text. */
-#lesson .rechnung{margin-top:7px;font-size:var(--fs-sm);line-height:1.5;color:var(--text2);}
+#lesson .rechnung{margin-top:7px;font-size:var(--fs-md);line-height:1.5;color:var(--text2);}
 #lesson .rechnung .sum{font-weight:700;color:var(--text);}
-#lesson .aufgabe{margin-top:8px;font-size:var(--fs-md);font-weight:600;color:var(--sel-bd);line-height:1.4;}
+#lesson .aufgabe{margin-top:8px;font-size:var(--fs-read);font-weight:600;color:var(--sel-bd);line-height:1.4;}
 
 #board-area{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;}
 #board-container{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 20px;}
@@ -377,7 +390,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=117" charset="utf-8"></script>
+<script src="gembel_rules.js?v=118" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -386,7 +399,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 29 · 27.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 30 · 27.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
