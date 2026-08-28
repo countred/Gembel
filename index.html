@@ -441,9 +441,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=116'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=117'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
-      <button class="big-btn" id="btn-mvm" onclick="tryLobby()">👥 Mit Code zu zweit</button>
+      <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -624,7 +624,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     </div>
     <p>Spiele mit Code gegen jemanden aus deinem Freundeskreis.</p>
     <div class="card-row">
-      <button class="big-btn primary" onclick="createRoom()">🎯 Raum erstellen</button>
+      <!-- §148: HIER sitzt die Sperre, nicht an der Lobbytuer. Bis v116 lag sie auf dem
+           Startmenue-Knopf — und der ist die Tuer zu BEIDEM. Ein Eingeladener mit 0 Punkten
+           kam dadurch nicht einmal an das Feld fuer den Partie-Code, obwohl im Quelltext und
+           im Handover stand „nur das Eroeffnen ist gesperrt". Walters Befund. -->
+      <button class="big-btn primary" id="btn-create" onclick="tryCreateRoom()">🎯 Raum erstellen</button>
       <button class="big-btn" onclick="showJoinScreen()">🔗 Beitreten</button>
     </div>
     <button class="big-btn" style="margin-top:8px;" onclick="showModeMenu()">Zurück</button>
@@ -805,7 +809,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=116" charset="utf-8"></script>
+<script src="gembel_rules.js?v=117" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -817,7 +821,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=116" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=117" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1290,28 +1294,58 @@ function gateHash(s){
   return h.toString(36).toUpperCase().padStart(7,'0').slice(-7);
 }
 function gateNum(p){ return String(p).replace('.', ','); }          // 1.5 → „1,5"
-function gateSig(p,u){ return gateHash((PLAYER_KEY||'-')+'|'+p+'|'+(u?'1':'0')+'|'+GATE_SALT); }
+// §148: EIN Satz fuer den Punktestand, ueberall derselbe (§140-Wortlautregel). Zwei Fassungen,
+// weil die Schwelle nur zaehlt, solange sie nicht erreicht ist — danach ist sie keine
+// Information mehr, und der Stand laeuft als Score weiter (Walters Wunsch: kein Deckel).
+function gateStandSatz(){
+  const t = gateSumme();
+  return gateOpen() ? ('Du hast ' + gateNum(t) + ' Punkte.')
+                    : ('Du hast ' + gateNum(t) + ' von ' + GATE_NEED + ' Punkten.');
+}
+function gateSig(p,von){
+  // Die Gutschriften gehen SORTIERT in die Pruefsumme — sonst haengt sie an der zufaelligen
+  // Reihenfolge der Objektschluessel und der Stand wuerde sich selbst verwerfen.
+  const teile = Object.keys(von||{}).sort().map(k => k+':'+von[k]).join(',');
+  return gateHash((PLAYER_KEY||'-')+'|'+p+'|'+teile+'|'+GATE_SALT);
+}
 
 // Beim Laden wird die Pruefsumme geprueft. Passt sie nicht (von Hand geaendert, halb
 // geschrieben, aus einem anderen Browserprofil kopiert), faellt der Stand auf null zurueck —
 // NICHT auf „freigeschaltet". Ein kaputter Speicher darf nie mehr erlauben als ein leerer.
-let gateState = { p:0, u:false };
+// §148: `p` sind die SELBST erspielten Punkte, `von` die Gutschriften aus eingeloesten Codes,
+// je ausstellender Kennung EIN Eintrag. Daraus folgt beides, was Walter wollte:
+//   - ein Code zaehlt nur EINMAL (derselbe Aussteller ueberschreibt seinen Eintrag, statt
+//     ihn zu addieren — dreimal einloesen bringt nichts mehr als einmal);
+//   - ein DRITTES Geraet traegt zur Summe bei (eigener Eintrag unter eigener Kennung).
+// KEIN Deckel: der Punktestand laeuft ueber die Schwelle hinaus weiter (Walters Wunsch nach
+// einem „heimlichen" Score). Deshalb gibt es auch kein `u`-Flag mehr — freigeschaltet ist,
+// wer die Schwelle erreicht, und das ist jederzeit aus dem Stand ablesbar. Ein zweites,
+// unabhaengig gesetztes Flag koennte davon abweichen; eine Quelle kann das nicht.
+let gateState = { p:0, von:{} };
+function gateSumme(){
+  let t = gateState.p;
+  for(const k in gateState.von) t += gateState.von[k];
+  return Math.round(t*10)/10;
+}
 function gateLoad(){
   try{
     const raw = localStorage.getItem(GATE_STORE);
-    if(!raw) return { p:0, u:false };
+    if(!raw) return { p:0, von:{} };
     const o = JSON.parse(raw);
     const p = (typeof o.p==='number' && isFinite(o.p) && o.p>=0) ? o.p : 0;
-    const u = (o.u===true);
-    if(o.c !== gateSig(p,u)){ console.warn('§144: Freischalt-Stand verworfen (Pruefsumme passt nicht)'); return { p:0, u:false }; }
-    return { p, u };
-  }catch(e){ return { p:0, u:false }; }   // privater Modus: gesperrt, aber kein Absturz
+    const von = {};
+    if(o.von && typeof o.von==='object')
+      for(const k in o.von)
+        if(typeof o.von[k]==='number' && isFinite(o.von[k]) && o.von[k]>0) von[k]=o.von[k];
+    if(o.c !== gateSig(p,von)){ console.warn('§144: Freischalt-Stand verworfen (Pruefsumme passt nicht)'); return { p:0, von:{} }; }
+    return { p, von };
+  }catch(e){ return { p:0, von:{} }; }   // privater Modus: gesperrt, aber kein Absturz
 }
 function gateSave(){
-  try{ localStorage.setItem(GATE_STORE, JSON.stringify({ p:gateState.p, u:gateState.u, c:gateSig(gateState.p,gateState.u) })); }
+  try{ localStorage.setItem(GATE_STORE, JSON.stringify({ p:gateState.p, von:gateState.von, c:gateSig(gateState.p,gateState.von) })); }
   catch(e){ /* gesperrter Speicher: der Stand haelt dann nur diese Sitzung */ }
 }
-function gateOpen(){ return !MVM_GATE || gateState.u || gateState.p >= GATE_NEED; }
+function gateOpen(){ return !MVM_GATE || gateSumme() >= GATE_NEED; }
 
 // Wird NUR aus finalizeMvkiGame gerufen (s. dort) — kein zweiter Aufrufer, sonst zaehlt
 // irgendwann etwas mit, das keine beendete Partie ist.
@@ -1342,31 +1376,31 @@ function gateReadCode(txt){
 
 // ── Anzeige ──────────────────────────────────────────────────────
 function gateRefresh(){
-  const btn = document.getElementById('btn-mvm'), sc = document.getElementById('gate-score');
-  if(btn){
+  // §148: das Schloss sitzt am ERSTELLEN-Knopf in der Lobby, nicht am Startmenue-Knopf.
+  // Die Lobby steht jedem offen — sonst kaeme ein Eingeladener nicht an das Codefeld.
+  const cr = document.getElementById('btn-create'), sc = document.getElementById('gate-score');
+  if(cr){
     const open = gateOpen();
-    btn.classList.toggle('locked', !open);
-    btn.textContent = open ? '👥 Mit Code zu zweit' : '🔒 Mit Code zu zweit';
-    btn.title = open ? '' : GATE_TIP;
+    cr.classList.toggle('locked', !open);
+    cr.textContent = open ? '🎯 Raum erstellen' : '🔒 Raum erstellen';
+    cr.title = open ? '' : GATE_TIP;
   }
   if(sc){
     if(!MVM_GATE){ sc.classList.add('hidden'); return; }
     sc.classList.remove('hidden');
-    sc.textContent = gateOpen()
-      ? 'Zwei-Personen-Modus: freigeschaltet'
-      : ('Punkte: ' + gateNum(gateState.p) + ' von ' + GATE_NEED);
+    sc.textContent = gateOpen() ? ('Punkte: ' + gateNum(gateSumme()))
+                                : ('Punkte: ' + gateNum(gateSumme()) + ' von ' + GATE_NEED);
   }
 }
-window.tryLobby = function(){ if(gateOpen()) showLobby(); else openGateInfo(); };
+// Beitreten ist IMMER frei. Gesperrt ist nur das Eroeffnen eines Raums.
+window.tryCreateRoom = function(){ if(gateOpen()) createRoom(); else openGateInfo(); };
 window.openGateInfo = function(){
   if(!MVM_GATE) return;
   const st = document.getElementById('gate-state'), cd = document.getElementById('gate-code'),
         ms = document.getElementById('gate-msg'), inp = document.getElementById('gate-input');
   // Walters Wortlaut: „Du hast 0 von 3 Punkten." — auch im freigeschalteten Zustand bleibt
   // der Stand sichtbar, sonst weiss niemand, was der Uebertragungscode gerade traegt.
-  if(st) st.textContent = gateOpen()
-    ? ('Freigeschaltet. Du hast ' + gateNum(gateState.p) + ' von ' + GATE_NEED + ' Punkten.')
-    : ('Du hast ' + gateNum(gateState.p) + ' von ' + GATE_NEED + ' Punkten.');
+  if(st) st.textContent = gateStandSatz();
   if(cd) cd.textContent = gateMakeCode();      // textContent, nie innerHTML (§4.4)
   if(ms) ms.textContent = '';
   if(inp) inp.value = '';
@@ -1377,23 +1411,30 @@ window.redeemGateCode = function(){
   if(!inp || !ms) return;
   const r = gateReadCode(inp.value);
   if(!r){ ms.style.color='#ef4444'; ms.textContent='Der Code ist nicht korrekt. Bitte vollständigen Code eingeben.'; return; }
-  if(r.p < GATE_NEED){
+  // Der eigene Code auf dem eigenen Geraet waere eine glatte Verdopplung.
+  if(PLAYER_KEY && r.key === PLAYER_KEY){
     ms.style.color='var(--text2)';
-    ms.textContent = 'Der Code trägt erst ' + gateNum(r.p) + ' von ' + GATE_NEED + ' Punkten.';
+    ms.textContent = 'Das ist der Code dieses Geräts. Gib den Code deines anderen Geräts ein.';
     return;
   }
-  gateState.u = true; gateSave(); gateRefresh();
-  ms.style.color='var(--online-text)';
-  // Walters Wortlaut. Genannt wird die Punktzahl AUS DEM CODE — der eigene Punktestand des
-  // Zielgeraets bleibt unberuehrt (nur die Freischaltung wird uebernommen, kein Zusammenwachsen).
-  ms.textContent = 'Code erfolgreich übertragen. Du hast ' + gateNum(r.p) + ' von ' + GATE_NEED + ' Punkten.';
+  // §148: je Aussteller EIN Eintrag. Nochmal einloesen aendert nichts; ein spaeterer Code
+  // desselben Geraets mit hoeherem Stand HEBT den Eintrag AN, statt ihn zu addieren.
+  // Ein Code unterhalb der Schwelle wird jetzt angenommen — er traegt ja echte Punkte bei;
+  // bis v116 wurde er abgewiesen, was bei getrennt erspielten Punkten die Freischaltung
+  // unmoeglich machte (2 auf dem Telefon + 2 auf dem Laptop ergaben nie 3).
+  const vorher = gateSumme(), alt = gateState.von[r.key] || 0;
+  if(r.p > alt){ gateState.von[r.key] = r.p; gateSave(); gateRefresh(); }
+  const jetzt = gateSumme();
+  ms.style.color = (jetzt > vorher) ? 'var(--online-text)' : 'var(--text2)';
+  ms.textContent = (jetzt > vorher ? 'Code erfolgreich übertragen. ' : 'Dieser Code war schon eingelöst. ')
+                 + gateStandSatz();
   const st = document.getElementById('gate-state');
-  if(st) st.textContent = 'Freigeschaltet. Du hast ' + gateNum(gateState.p) + ' von ' + GATE_NEED + ' Punkten.';
+  if(st) st.textContent = gateStandSatz();
 };
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v116';
+const BUILD_MARKER='· Build v117';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1710,7 +1751,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=116'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=117'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

@@ -427,10 +427,20 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
      'nur ein echter Sieg des Menschen z\u00e4hlt (Remis kommt als null, Aufgeben als aiPlayer)');
 
   // Der gesperrte Knopf muss ANTIPPBAR bleiben \u2014 sonst kommt niemand an den Erkl\u00e4rtext.
-  ok(!/id="btn-mvm"[^>]*disabled/.test(html),
+  // \u00a7148 (Walters Befund, 27.8.): die Sperre lag auf dem Startmen\u00fc-Knopf \u2014 und der ist die
+  // T\u00fcr zu BEIDEM. Ein Eingeladener mit 0 Punkten kam dadurch nicht an das Codefeld, obwohl
+  // Quelltext und Handover „nur das Er\u00f6ffnen ist gesperrt\" behaupteten. Gepr\u00fcft wird jetzt
+  // die ABSICHT, nicht die Zeile, die ich geschrieben habe.
+  ok(/id="btn-mvm" onclick="showLobby\(\)"/.test(html),
+     'die Lobby steht JEDEM offen \u2014 der Startmen\u00fc-Knopf ist nicht mehr gesperrt');
+  ok(/id="btn-create" onclick="tryCreateRoom\(\)"/.test(html),
+     'die Sperre sitzt am Knopf \u201eRaum erstellen\u201c');
+  ok(/onclick="showJoinScreen\(\)"/.test(html) && !/tryJoin|gateOpen\(\)[^;]*showJoinScreen/.test(html),
+     '\u201eBeitreten\u201c ist an KEINE Bedingung gekn\u00fcpft (Walters Vorgabe: Eingeladene brauchen keine Punkte)');
+  ok(!/id="btn-create"[^>]*disabled/.test(html),
      'der gesperrte Knopf ist nicht disabled (er f\u00fchrt zum Erkl\u00e4rtext, statt nichts zu tun)');
-  ok(/window\.tryLobby\s*=\s*function\(\)\{ if\(gateOpen\(\)\) showLobby\(\); else openGateInfo\(\); \}/.test(html),
-     'Antippen f\u00fchrt entweder in die Lobby oder in die Erkl\u00e4rung \u2014 nie ins Leere');
+  ok(/window\.tryCreateRoom = function\(\)\{ if\(gateOpen\(\)\) createRoom\(\); else openGateInfo\(\); \}/.test(html),
+     'Antippen f\u00fchrt entweder ins Erstellen oder in die Erkl\u00e4rung \u2014 nie ins Leere');
   ok(/id="gate-score"[^>]*onclick="openGateInfo\(\)"/.test(html),
      'die Punktezeile ist anklickbar \u2014 auch nach der Freischaltung noch der Weg zum \u00dcbertragungscode');
   ok(/title = open \? '' : GATE_TIP/.test(html) && /3\u00d7 Einsteiger, 2\u00d7 Fortgeschritten oder 1\u00d7 Meister/.test(html),
@@ -438,17 +448,19 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
 
   // \u00a7127-Lehre: inline-onclick sucht im GLOBALEN Scope. Modul-interne Funktionen sind dort
   // nicht sichtbar \u2014 genau daran ist die \u00a7126-Fusszeile einmal gescheitert.
-  for(const fn of ['tryLobby','openGateInfo','redeemGateCode'])
+  for(const fn of ['tryCreateRoom','openGateInfo','redeemGateCode'])
     ok(new RegExp('window\\.'+fn+'\\s*=').test(html),
        fn + ' h\u00e4ngt an window (\u00a7127: inline-onclick erreicht Modul-Funktionen sonst nicht)');
   ok(/'impressum-overlay','datenschutz-overlay','gate-overlay'\]/.test(html),
      'gate-overlay steht in der Overlay-Liste (sonst schlie\u00dft es sich nicht sauber)');
 
   // Ein kaputter oder fremder Speicherstand darf NIE mehr erlauben als ein leerer.
-  ok(/if\(o\.c !== gateSig\(p,u\)\)\{[\s\S]{0,200}return \{ p:0, u:false \};/.test(html),
+  ok(/if\(o\.c !== gateSig\(p,von\)\)\{[\s\S]{0,220}return \{ p:0, von:\{\} \};/.test(html),
      'Pr\u00fcfsumme passt nicht \u2192 Stand f\u00e4llt auf NULL zur\u00fcck, nicht auf freigeschaltet');
-  ok(/catch\(e\)\{ return \{ p:0, u:false \}; \}/.test(html),
+  ok(/catch\(e\)\{ return \{ p:0, von:\{\} \}; \}/.test(html),
      'gesperrter Speicher (privater Modus) sperrt ebenfalls, statt zu \u00f6ffnen');
+  ok(!/gateState\.u\b/.test(html),
+     '\u00a7148: kein zweites Freischalt-Flag mehr \u2014 offen ist, wer die Schwelle erreicht (eine Quelle)');
 
   // \u00dcbertragungscode: Walters Bauart \u2014 individuell gestempelt, \u00fcberall einl\u00f6sbar,
   // aber OHNE Kennungs\u00fcbernahme (\u00a7124 bleibt intakt: eine Kennung = ein Browserprofil).
@@ -456,8 +468,11 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
      'der Code tr\u00e4gt die Kennung des ausstellenden Ger\u00e4ts');
   ok(!/localStorage\.setItem\('countred_pkey'[\s\S]{0,200}gateReadCode|gateReadCode[\s\S]{0,400}countred_pkey/.test(html),
      'das Einl\u00f6sen \u00fcberschreibt die eigene Kennung NICHT (kein Zusammenwachsen, Walters Entscheid)');
-  ok(/if\(r\.p < GATE_NEED\)/.test(html),
-     'ein Code unter der Schwelle schaltet nicht frei');
+  ok(/if\(PLAYER_KEY && r\.key === PLAYER_KEY\)/.test(html),
+     'der eigene Code auf dem eigenen Ger\u00e4t wird abgewiesen (w\u00e4re eine Verdopplung)');
+  ok(/const vorher = gateSumme\(\), alt = gateState\.von\[r\.key\] \|\| 0;/.test(html) &&
+     /if\(r\.p > alt\)\{ gateState\.von\[r\.key\] = r\.p;/.test(html),
+     '\u00a7148: je Aussteller EIN Eintrag \u2014 anheben statt addieren');
 
   // Der Schalter muss allein gen\u00fcgen. Geprueft wird die ZWEITE Stellung im vm: MVM_GATE=false
   // muss gateOpen() bedingungslos wahr machen, auch bei leerem Punktestand.
@@ -466,11 +481,14 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
   ok(!!fn, 'gateOpen() als eigene Funktion vorhanden (eine Stelle entscheidet)');
   if(fn){
     const vmod = require('vm');
+    // §148: gateOpen() rechnet ueber gateSumme() — die Funktion muss mit in den vm.
+    const summe = (html.match(/function gateSumme\(\)\{[\s\S]*?\n\}/)||[''])[0];
     const mk = gate => {
-      const ctx = { gateState:{p:0,u:false} };
+      const ctx = {};
       vmod.createContext(ctx);
-      vmod.runInContext(src.replace(/const MVM_GATE\s*=\s*true;/, 'const MVM_GATE = '+gate+';') +
-                        '\n' + fn + '\n;__O=gateOpen();', ctx);
+      vmod.runInContext('let gateState={p:0,von:{}};\n' +
+                        src.replace(/const MVM_GATE\s*=\s*true;/, 'const MVM_GATE = '+gate+';') +
+                        '\n' + summe + '\n' + fn + '\n;__O=gateOpen();', ctx);
       return ctx.__O;
     };
     ok(mk(true) === false, 'MVM_GATE=true, 0 Punkte \u2192 gesperrt');
@@ -495,24 +513,25 @@ console.log('\u00a7144 \u2014 VERHALTEN: die Mechanik wird wirklich gefahren (\u
     vmod.createContext(ctx);
     vmod.runInContext(block + '\nfunction gateRefresh(){}' +
       '\n;__G={gateLoad,gateSave,gateOpen,gateAward,gateMakeCode,gateReadCode,' +
-      'get p(){return gateState.p}, set st(v){gateState=v}};', ctx);
+      'gateSumme,gateStandSatz,get p(){return gateState.p}, set st(v){gateState=v},' +
+      'gutschrift(k,w){const a=gateState.von[k]||0; if(w>a){gateState.von[k]=w; gateSave();}}};', ctx);
     const G = ctx.__G;
 
-    G.st = { p:0, u:false };
+    G.st = { p:0, von:{} };
     ok(G.gateOpen() === false, 'frischer Browser, 0 Punkte \u2192 gesperrt');
     G.gateAward('einsteiger'); G.gateAward('einsteiger');
     ok(G.p === 2 && !G.gateOpen(), 'zwei Einsteiger-Siege = 2 Punkte \u2192 weiter gesperrt');
     G.gateAward('einsteiger');
     ok(G.p === 3 && G.gateOpen(), 'dritter Einsteiger-Sieg \u2192 offen (Walters Weg 1)');
-    G.st = { p:0, u:false }; G.gateAward('fortgeschritten'); G.gateAward('fortgeschritten');
+    G.st = { p:0, von:{} }; G.gateAward('fortgeschritten'); G.gateAward('fortgeschritten');
     ok(G.p === 3 && G.gateOpen(), 'zwei Fortgeschritten-Siege \u2192 offen (Walters Weg 2)');
-    G.st = { p:0, u:false }; G.gateAward('meister');
+    G.st = { p:0, von:{} }; G.gateAward('meister');
     ok(G.p === 3 && G.gateOpen(), 'ein Meister-Sieg \u2192 offen (Walters Weg 3)');
-    G.st = { p:0, u:false }; G.gateAward('einsteiger'); G.gateAward('fortgeschritten');
+    G.st = { p:0, von:{} }; G.gateAward('einsteiger'); G.gateAward('fortgeschritten');
     ok(G.p === 2.5 && !G.gateOpen(), 'gemischt 1 + 1,5 = 2,5 \u2192 noch gesperrt (kein Rundungsgeschenk)');
 
     // Ein kaputter Stand darf NIE mehr erlauben als ein leerer \u2014 hier wirklich nachgefahren.
-    store['countred_gate'] = JSON.stringify({ p:99, u:true, c:'FAELSCH' });
+    store['countred_gate'] = JSON.stringify({ p:99, von:{}, c:'FAELSCH' });
     G.st = G.gateLoad();
     ok(G.p === 0 && !G.gateOpen(), 'gef\u00e4lschte Pr\u00fcfsumme \u2192 Stand f\u00e4llt auf NULL, nicht auf offen');
     store['countred_gate'] = '{kaputt';
@@ -530,6 +549,34 @@ console.log('\u00a7144 \u2014 VERHALTEN: die Mechanik wird wirklich gefahren (\u
        'hochgesetzte Punktzahl f\u00e4llt durch die Pr\u00fcfsumme');
     ok(G.gateReadCode('  ' + code + '  ') !== null, 'Leerzeichen beim Kopieren schaden nicht');
     ok(G.p === 3, 'das Ausstellen \u00e4ndert den eigenen Stand nicht');
+
+    // \u00a7148: Gutschriftenbuch \u2014 addieren, aber je Aussteller nur einmal, und ohne Kreis.
+    G.st = { p:2, von:{} };
+    ok(!G.gateOpen(), 'zwei selbst erspielte Punkte: gesperrt');
+    G.gutschrift('BBBBBBBBBBBB', 1);
+    ok(G.gateSumme() === 3 && G.gateOpen(),
+       'ein Code \u00fcber 1 Punkt bringt die Summe auf 3 \u2014 TEILPUNKTE z\u00e4hlen mit');
+    G.gutschrift('BBBBBBBBBBBB', 1);
+    ok(G.gateSumme() === 3, 'derselbe Aussteller nochmal \u2192 keine Ver\u00e4nderung (nur einmal einl\u00f6sbar)');
+    G.gutschrift('CCCCCCCCCCCC', 1);
+    ok(G.gateSumme() === 4, 'ein DRITTES Ger\u00e4t tr\u00e4gt bei \u2014 und es gibt KEINEN Deckel bei 3');
+    G.gutschrift('BBBBBBBBBBBB', 2.5);
+    ok(G.gateSumme() === 5.5, 'sp\u00e4terer Code desselben Ger\u00e4ts HEBT den Eintrag an (1 \u2192 2,5), addiert ihn nicht');
+    // Der Code darf nur die SELBST erspielten Punkte tragen — sonst entsteht ein Kreis:
+    // A schickt an B, B zur\u00fcck an A, und A schreibt seine eigenen Punkte erneut gut.
+    const eigen = G.gateReadCode(G.gateMakeCode());
+    ok(eigen.p === 2 && G.gateSumme() === 5.5,
+       'der ausgestellte Code tr\u00e4gt nur die eigenen 2 Punkte, nicht die Summe 5,5 (kein Kreis)');
+    ok(G.gateStandSatz() === 'Du hast 5,5 Punkte.',
+       'freigeschaltet: Stand ohne Schwelle \u2014 „' + G.gateStandSatz() + '\u201c');
+    G.st = { p:1, von:{} };
+    ok(G.gateStandSatz() === 'Du hast 1 von 3 Punkten.',
+       'gesperrt: Stand mit Schwelle \u2014 „' + G.gateStandSatz() + '\u201c');
+    // Die Pruefsumme muss das Buch mittragen und darf nicht an der Schluesselreihenfolge haengen.
+    G.st = { p:1, von:{ 'ZZZZZZZZZZZZ':1.5, 'YYYYYYYYYYYY':1 } };
+    G.gateSave();
+    const nachLaden = (G.st = G.gateLoad(), G.gateSumme());
+    ok(nachLaden === 3.5, 'Stand mit mehreren Gutschriften \u00fcbersteht das Neuladen (' + nachLaden + ')');
   }
 }
 
@@ -547,10 +594,16 @@ console.log('\u00a7145 \u2014 Wortlaut der Freischalttexte (Walters Fassung, 27.
      '\u00dcbertragungscode ist als Frage eingef\u00fchrt, nicht als Technik');
   ok(/Der Code ist nicht korrekt\. Bitte vollst\u00e4ndigen Code eingeben\./.test(html),
      'Fehlermeldung im Wortlaut');
-  ok(/'Code erfolgreich \u00fcbertragen\. Du hast ' \+ gateNum\(r\.p\)/.test(html),
-     'Erfolgsmeldung nennt die Punktzahl AUS DEM CODE (nicht den eigenen Stand)');
-  ok(/Du hast ' \+ gateNum\(gateState\.p\) \+ ' von ' \+ GATE_NEED \+ ' Punkten\./.test(html),
-     'die Zustandszeile nennt Stand und Schwelle');
+  // \u00a7148: die Erfolgsmeldung nennt jetzt den NEUEN GESAMTSTAND, nicht mehr den Wert des
+  // Codes \u2014 seit die Punkte addiert werden, ist der Codewert allein keine Auskunft mehr.
+  ok(/'Code erfolgreich \u00fcbertragen\. ' : 'Dieser Code war schon eingel\u00f6st\. '\)\s*\+ gateStandSatz\(\)/.test(html),
+     'Erfolgs- und Wiederholungsmeldung nennen beide den neuen Gesamtstand');
+  ok(/'Du hast ' \+ gateNum\(t\) \+ ' Punkte\.'/.test(html) &&
+     /'Du hast ' \+ gateNum\(t\) \+ ' von ' \+ GATE_NEED \+ ' Punkten\.'/.test(html),
+     '\u00a7148 zwei St\u00e4nde: mit Schwelle solange gesperrt, ohne Schwelle danach (Walters Score)');
+  ok((html.match(/function gateStandSatz\(\)/g)||[]).length === 1 &&
+     (html.match(/gateStandSatz\(\)/g)||[]).length >= 4,
+     'der Standsatz steht an EINER Stelle und wird \u00fcberall von dort gelesen (\u00a7140)');
   // \u00a7145: der Datenschutztext ist genauer geworden \u2014 die Kennung bindet an den BROWSER,
   // nicht an eine Person (zwei Browser auf einem Ger\u00e4t haben zwei Kennungen; Beleg: die
   // zweite Kennung wWyMlHiLHJhg am 6.8.). Das bestreitet den Personenbezug NICHT, es
