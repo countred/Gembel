@@ -135,6 +135,11 @@
   --red-fig-bg:#D94F3D;
   --warn-bg:#fcebeb;--warn-bd:#e24b4a;--warn-tx:#a32d2d;
 }
+/* §151 (Walter, 27.8.): mobil darf der Lesetext noch eine Spur groesser sein. Auf dem
+   Rechner sitzt man weiter weg vom Schirm, aber naeher an einer grossen Flaeche; auf dem
+   Telefon ist die Spalte schmal und der Text wird bei gleicher px-Zahl kleiner
+   wahrgenommen. Beide Dateien tragen dieselbe Regel — die Suite prueft das. */
+@media (max-width:520px){:root{ --fs-read: 17.5px; }}
 @media(prefers-color-scheme:dark){:root{
   --bg:#1a1a18;--bg2:#252522;--bg3:#2c2c2a;
   --text:#c2c0b6;--text2:#888780;--text3:#5f5e5a;
@@ -397,7 +402,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=119" charset="utf-8"></script>
+<script src="gembel_rules.js?v=120" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -406,7 +411,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 31 · 27.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 32 · 27.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -424,6 +429,9 @@ const ABFLUG_MIT_MS = 1100, ANKUNFT_MIT_MS = 2600;
 // 350 ms trennt beides zuverlaessig: ein gewolltes Zuruecknehmen kommt nie so schnell
 // (man muss erst hinsehen), ein Doppelereignis praktisch immer innerhalb von 300 ms.
 const RUECKNAHME_SPERRE_MS = 350;
+// §151: absoluter Deckel fuer den Textkasten. Das ist die EINE Stellschraube fuer das
+// Verhaeltnis Text zu Brett — groesser heisst weniger Scrollen und kleineres Brett.
+const KASTEN_MAX_PX = 176;
 
 // §150 (Walters Befund, 27.8.): LAUFENDE WECKER GEHOEREN ZUR PHASE, DIE SIE GESTARTET HAT.
 // Der Zug wird in zwei Stufen animiert: Abflug (500 ms), dann Ankunft — und der Siegrahmen
@@ -654,7 +662,7 @@ const STEPS = [
   ]},
 
 { id:'stapelbilden', title:'Stapel bilden', setup:()=>initBoard(),
-  intro:'<p>Beim Stapeln zählst du keine Nachbarfiguren, sondern nur die roten Figuren im Stapel. Du '
+  intro:'<p>Beim Stapeln zählst du nur die roten Figuren im Stapel. Du '
        +'darfst eine Figur auf eine andere setzen, wenn danach die Summe der <b>roten</b> Figuren im '
        +'Stapel <b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers '
        +'ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
@@ -725,7 +733,7 @@ const STEPS = [
       nachher:'<p>Du hast einen <b>Dreier</b> gebaut: 4B, 3B, 2B — drei schwarze übereinander.</p>' },
     { art:'lesen',
       text:'<p>Jetzt gelten mehrere Besonderheiten. Die wichtigste: <b>Du bekommst einen '
-          +'Bonuszug.</b> Ist kein Bonuszug möglich, zieht der Mitspieler.</p>'
+          +'Bonuszug.</b></p>'
           +'<p>Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf '
           +'bleibt erlaubt, und die obere Figur darfst du auch wieder herunternehmen. Für die '
           +'Parität zählen auch die gesperrten Figuren weiterhin mit.</p>' }
@@ -1071,9 +1079,16 @@ function messeKastenhoehe(){
   }
   probe.innerHTML='';
   if(max<40) return;                     // keine belastbare Messung — CSS-Wert lassen
-  // §150: Deckel von 60 % auf 46 % der Fensterhoehe. Der Kasten folgt weiter der laengsten
-  // Seite, aber nur bis hierhin — darueber scrollt er, statt dem Brett Flaeche zu nehmen.
-  kasten.style.height=Math.min(max+2, Math.round(window.innerHeight*0.46))+'px';
+  // ⚠️ §151 (27.8.): WARUM §150 NICHTS BEWIRKT HAT. Die Hoehe war `min(max+2, Anteil der
+  // Fensterhoehe)`. Der ANTEIL hat aber nie gegriffen — auf jedem geprueften Geraet war die
+  // laengste Seite niedriger als 46 % (und vorher als 60 %), also galt immer `max+2`.
+  // Der Deckel zu senken war damit wirkungslos; in Wahrheit bestimmte AUSSCHLIESSLICH die
+  // laengste Textseite die Hoehe — und die war durch §149 sogar gewachsen. Walters Eindruck
+  // „gefuehlt nicht kleiner" war richtig.
+  // JETZT: ein ABSOLUTER Deckel in Pixeln, der auf jedem Geraet greift. Der Kasten ist
+  // hoechstens so hoch wie noetig, aber nie hoeher als KASTEN_MAX_PX — die langen Seiten
+  // scrollen (Walters Entscheid), das Brett behaelt seine Flaeche.
+  kasten.style.height=Math.min(max+2, KASTEN_MAX_PX, Math.round(window.innerHeight*0.46))+'px';
   kasten.dataset.gemessen=max;
   // Zweiter Durchgang: das BRETT hat Vorrang. Es ist eine Anleitung zu einem Brettspiel —
   // lieber ein Text, der scrollt, als Felder, die kleiner sind als die Figuren darauf.

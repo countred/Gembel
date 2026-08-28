@@ -420,9 +420,15 @@ block('F \u00b7 \u00a7149 Lesetext und Messzwilling');
     pruef('F1 ' + name + ': Kasten und Messzwilling tragen dieselbe Groesse',
       !!a && a === b, a + ' / ' + b);
   }
+  // \u00a7151: nur der erste :root-Block — sonst ueberschreibt die mobile Medienabfrage den
+  // Grundwert und man vergliche am Ende zwei Mal dieselbe Zahl.
   const skala = {};
-  for(const m of (HTML.match(/--fs-[a-z]+:\s*[0-9.]+px/g) || []))
-    skala[m.split(':')[0].trim()] = parseFloat(m.split(':')[1]);
+  {
+    const i = HTML.indexOf(':root{');
+    const roh = i < 0 ? '' : HTML.slice(i, HTML.indexOf('}', i));
+    for(const m of (roh.match(/--fs-[a-z]+:\s*[0-9.]+px/g) || []))
+      skala[m.split(':')[0].trim()] = parseFloat(m.split(':')[1]);
+  }
   pruef('F2 der Anleitungstext laeuft auf --fs-read', /#lesson p\{font-size:var\(--fs-read\)/.test(HTML));
   pruef('F3 die Aufgabenzeile ist genauso gross wie der Fliesstext (sie ist die wichtigste Zeile)',
     /#lesson \.aufgabe\{[^}]*font-size:var\(--fs-read\)/.test(HTML));
@@ -431,6 +437,16 @@ block('F \u00b7 \u00a7149 Lesetext und Messzwilling');
     skala['--fs-xl'] > skala['--fs-read'], skala['--fs-xl'] + ' > ' + skala['--fs-read']);
   pruef('F6 der Kasten kann ueberlaufen (Scrollen erlaubt, statt Text abzuschneiden)',
     /#lesson\{[^}]*overflow-y:auto/.test(HTML));
+  // \u00a7151: der Deckel muss ABSOLUT sein. Ein Deckel als Anteil der Fensterhoehe hat nie
+  // gegriffen — die laengste Seite lag darunter, also galt immer `max+2`, und der Kasten
+  // wuchs mit jeder Schriftvergroesserung mit. Genau das war \u00a7150s wirkungslose Aenderung.
+  pruef('F7 \u00a7151 der Textkasten hat einen ABSOLUTEN Deckel in Pixeln',
+    /const KASTEN_MAX_PX = (\d+);/.test(HTML) &&
+    /Math\.min\(max\+2, KASTEN_MAX_PX,/.test(HTML),
+    'KASTEN_MAX_PX=' + ((HTML.match(/const KASTEN_MAX_PX = (\d+);/)||[])[1]));
+  pruef('F8 \u00a7151 mobil ist der Lesetext groesser als auf dem Rechner',
+    /@media \(max-width:520px\)\{:root\{ --fs-read: ([0-9.]+)px; \}\}/.test(HTML) &&
+    parseFloat((HTML.match(/@media \(max-width:520px\)\{:root\{ --fs-read: ([0-9.]+)px/)||[])[1]) > skala['--fs-read']);
 }
 
 block('G \u00b7 \u00a7150 Wecker geh\u00f6ren zur Phase');

@@ -21,8 +21,18 @@ const html = fs.readFileSync(HTML_PATH, 'utf8');
 // will, muss sie AUFLOESEN — sonst prueft man den Variablennamen statt der Zahl. Der Helfer
 // liest die Skala aus der Auslieferung, damit kein zweiter Wert gepflegt werden muss.
 const SKALA = {};
-for(const m of (html.match(/--fs-[a-z]+:\s*[0-9.]+px/g) || []))
-  SKALA[m.split(':')[0].trim()] = parseFloat(m.split(':')[1]);
+// \u00a7151: NUR der erste :root-Block. Seit es eine mobile Ueberschreibung gibt, wuerde ein
+// Suchlauf ueber die ganze Datei den Grundwert mit dem Mobilwert ueberschreiben — und dann
+// pruefte man am Ende zwei Mal dieselbe Zahl gegeneinander.
+function skalaAus(text){
+  const i = text.indexOf(':root{');
+  const roh = i < 0 ? '' : text.slice(i, text.indexOf('}', i));
+  const o = {};
+  for(const m of (roh.match(/--fs-[a-z]+:\s*[0-9.]+px/g) || []))
+    o[m.split(':')[0].trim()] = parseFloat(m.split(':')[1]);
+  return o;
+}
+Object.assign(SKALA, skalaAus(html));
 // px-Wert einer Deklaration, egal ob Literal oder Variable
 function px(text){
   if(text == null) return null;
@@ -649,13 +659,18 @@ console.log('\u00a7147 \u2014 Typo-Skala (Boden 12px, keine Sondergr\u00f6\u00df
   {
     const anl = fs.existsSync(__dirname + '/anleitung.html')
       ? fs.readFileSync(__dirname + '/anleitung.html', 'utf8') : '';
-    const anlSkala = {};
-    for(const m of (anl.match(/--fs-[a-z]+:\s*[0-9.]+px/g) || []))
-      anlSkala[m.split(':')[0].trim()] = parseFloat(m.split(':')[1]);
+    const anlSkala = skalaAus(anl);
     ok(JSON.stringify(anlSkala) === JSON.stringify(SKALA),
        'anleitung.html tr\u00e4gt DIESELBE Skala \u2014 sonst sieht die Anleitung anders aus als das Spiel');
     const anlLit = (anl.match(/font-size:\s*([0-9.]+)px/g) || []).map(x => parseFloat(x.split(':')[1]));
     ok(anlLit.length === 0, 'die Anleitung hat gar keine festen Gr\u00f6\u00dfen mehr');
+    // \u00a7151: die mobile Lesegroesse muss in BEIDEN Dateien gleich sein — sonst liest sich
+    // die Anleitung auf dem Telefon anders als die Regeln im Spiel.
+    const mob = t => (t.match(/@media \(max-width:520px\)\{:root\{ --fs-read: ([0-9.]+)px/)||[])[1];
+    ok(!!mob(html) && mob(html) === mob(anl),
+       'mobile Lesegr\u00f6\u00dfe in beiden Dateien gleich (' + mob(html) + 'px)');
+    ok(parseFloat(mob(html)) > SKALA['--fs-read'],
+       'mobil gr\u00f6\u00dfer als auf dem Rechner (' + mob(html) + ' > ' + SKALA['--fs-read'] + ')');
   }
 }
 
