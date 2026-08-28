@@ -82,6 +82,39 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
+/* ═══ §147 TYPO-SKALA (27.8.) ═══════════════════════════════════════
+   VORHER: 20 verschiedene Schriftgroessen in 72 Deklarationen (9 · 10 · 10,5 · 11 · 11,5 ·
+   12 · 12,5 · 13 · 13,5 · 14 · 15 · 16 · 17 · 18 · 20 · 24 · 28 · 32 · 36 · 40). Der
+   Unterschied zwischen 12 und 12,5 px sieht niemand, kostete aber jedes Mal eine
+   Entscheidung — und „alles einen Tick groesser" waeren 72 Einzelaenderungen gewesen.
+   JETZT: sechs benannte Stufen. Eine Groessenaenderung ist ab hier EINE Zeile.
+
+   ⚠️ SCHRITT 1 VON 2. Diese Fassung hebt NUR DEN BODEN. Alles, was unter 12 px lag
+   (9 · 10 · 10,5 · 11 · 11,5 px — Stempel, Beschriftungen, Rechtszeile, Testkennung),
+   steht jetzt auf 12 px; das ist die Norm-Untergrenze und war fuer Testpersonen ueber
+   fuenfzig praktisch nicht lesbar. Alle uebrigen Stufen behalten ihren bisherigen Wert,
+   damit sich am Umbruch nichts aendert, was niemand geprueft hat.
+   SCHRITT 2 (offen, Walters Entscheidung): --fs-md auf 16px, --fs-lg auf 18px. Das ist
+   die uebliche Fliesstextgroesse (Browser-Standard 16px, Apple 17pt, Material 16sp).
+   Es kostet Platz und MUSS auf echten Geraeten geprueft werden — siehe unten.
+
+   ⚠️ WAS DIE SUITEN NICHT KOENNEN: jsdom hat keine Layout-Engine. Die Suiten halten fest,
+   DASS die Skala eingehalten wird und dass keine Groesse darunter faellt — ob eine Seite
+   dadurch scrollt, sagt nur ein echtes Geraet. Fuer index.html gilt Walters Auflage
+   „kein Scrollen auf dem normalen Bildschirm"; die Anleitung rechnet ihre Kastenhoehe aus
+   dem LAENGSTEN Text aller neun Seiten, groessere Schrift verkleinert dort also das Brett
+   auf ALLEN Seiten. Beides nach jeder Aenderung am Geraet ansehen.
+
+   KEINE neuen Zwischenwerte einfuehren. Wer eine siebte Groesse braucht, braucht in
+   Wirklichkeit eine der sechs. Titelgroessen (24/28/32/36/40) bleiben bewusst Literale —
+   sie sind Schmuck, kein Lesetext, und folgen keiner Leserlichkeitsnorm. */
+--fs-xs: 12px;    /* Untergrenze — Stempel, Beschriftungen, Rechtszeile */
+--fs-sm: 13px;    /* Hilfstexte, Zaehler */
+--fs-md: 14px;    /* Fliesstext */
+--fs-lg: 15px;    /* hervorgehobener Text, Knopfbeschriftungen */
+--fs-xl: 18px;    /* Ueberschriften in Karten */
+--fs-xxl: 20px;   /* groesste abgeleitete Stufe */
+
   --bg:#f5f4ef;--bg2:#ebe9e2;--bg3:#fff;
   --text:#2c2c2a;--text2:#5f5e5a;--text3:#888780;
   --border:#d3d1c7;--border2:#b4b2a9;
@@ -110,18 +143,18 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 #app{max-width:460px;height:100%;margin:0 auto;display:flex;flex-direction:column;gap:8px;}
 
 #head{flex:0 0 auto;display:flex;align-items:baseline;justify-content:space-between;gap:8px;}
-#head .t{font-size:13px;font-weight:600;letter-spacing:3px;color:var(--red-fig-bg);text-transform:uppercase;}
-#head .n{font-size:11px;color:var(--text3);}
+#head .t{font-size:var(--fs-sm);font-weight:600;letter-spacing:3px;color:var(--red-fig-bg);text-transform:uppercase;}
+#head .n{font-size:var(--fs-xs);color:var(--text3);}
 #head .rechts{display:flex;align-items:baseline;gap:11px;}
 /* §139: der Weg zurueck ins Spiel muss JEDERZEIT offen sein, nicht erst am Ende.
    Wer die Anleitung nur kurz nachschlaegt, soll nicht durch neun Schritte klicken
    muessen. Bewusst klein: ein Ausgang, kein Angebot. */
 #btn-exit{background:none;border:none;padding:2px 0;cursor:pointer;font:inherit;
-  font-size:11px;color:var(--sel-bd);text-decoration:underline;text-underline-offset:3px;}
+  font-size:var(--fs-xs);color:var(--sel-bd);text-decoration:underline;text-underline-offset:3px;}
 #btn-exit:hover{opacity:.7;}
 #bar{flex:0 0 auto;height:4px;border-radius:2px;background:var(--bg2);overflow:hidden;}
 #bar > i{display:block;height:100%;background:var(--sel-bd);width:0;transition:width .25s;}
-#fassung{flex:0 0 auto;font-size:10.5px;color:var(--text3);margin-top:-3px;}
+#fassung{flex:0 0 auto;font-size:var(--fs-xs);color:var(--text3);margin-top:-3px;}
 
 /* DER Kasten: einer, oberhalb des Bretts, FESTE Hoehe — damit das Brett
    zwischen den Teilschritten nicht springt. Laengeres scrollt im Kasten. */
@@ -132,30 +165,30 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
    feste Hoehe bestimmt, damit KEIN Text scrollen muss und das Brett trotzdem
    zwischen den Teilschritten nicht springt. */
 #lessonProbe{position:absolute;visibility:hidden;left:-9999px;top:0;height:auto;overflow:visible;}
-#lessonProbe h2{font-size:15px;font-weight:600;margin-bottom:5px;}
-#lessonProbe p{font-size:13.5px;line-height:1.5;}
+#lessonProbe h2{font-size:var(--fs-lg);font-weight:600;margin-bottom:5px;}
+#lessonProbe p{font-size:var(--fs-md);line-height:1.5;}
 #lessonProbe p + p{margin-top:6px;}
-#lessonProbe .rechnung{margin-top:7px;font-size:13px;line-height:1.5;}
-#lessonProbe .aufgabe{margin-top:8px;font-size:13.5px;font-weight:600;line-height:1.4;}
-#lesson h2{font-size:15px;font-weight:600;margin-bottom:5px;}
-#lesson p{font-size:13.5px;line-height:1.5;color:var(--text2);}
+#lessonProbe .rechnung{margin-top:7px;font-size:var(--fs-sm);line-height:1.5;}
+#lessonProbe .aufgabe{margin-top:8px;font-size:var(--fs-md);font-weight:600;line-height:1.4;}
+#lesson h2{font-size:var(--fs-lg);font-weight:600;margin-bottom:5px;}
+#lesson p{font-size:var(--fs-md);line-height:1.5;color:var(--text2);}
 #lesson p + p{margin-top:6px;}
 #lesson b{color:var(--text);font-weight:600;}
 /* Kein gruener Balken mehr (Walter, Fassung 12): die Rechnung steht fuer sich.
    Die gruene Sprache gehoert aufs BRETT, nicht in den Text. */
-#lesson .rechnung{margin-top:7px;font-size:13px;line-height:1.5;color:var(--text2);}
+#lesson .rechnung{margin-top:7px;font-size:var(--fs-sm);line-height:1.5;color:var(--text2);}
 #lesson .rechnung .sum{font-weight:700;color:var(--text);}
-#lesson .aufgabe{margin-top:8px;font-size:13.5px;font-weight:600;color:var(--sel-bd);line-height:1.4;}
+#lesson .aufgabe{margin-top:8px;font-size:var(--fs-md);font-weight:600;color:var(--sel-bd);line-height:1.4;}
 
 #board-area{flex:1 1 auto;min-height:0;display:flex;align-items:center;justify-content:center;}
 #board-container{display:grid;grid-template-columns:20px 1fr;grid-template-rows:1fr 20px;}
 #row-labels{grid-column:1;grid-row:1;display:grid;grid-template-rows:repeat(4,1fr);gap:6px;}
-.row-label{display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--text3);font-weight:600;}
+.row-label{display:flex;align-items:center;justify-content:center;font-size:var(--fs-xs);color:var(--text3);font-weight:600;}
 #board-wrap{grid-column:2;grid-row:1;}
 #board{position:relative;display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);
   gap:6px;width:100%;height:100%;}
 #col-labels{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;}
-.col-label{text-align:center;font-size:11px;color:var(--text3);font-weight:600;}
+.col-label{text-align:center;font-size:var(--fs-xs);color:var(--text3);font-weight:600;}
 
 .cell{border-radius:14px;border:1px solid var(--border);background:var(--bg2);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
@@ -196,7 +229,7 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
   border-radius:19px;display:none;z-index:2;}
 
 .figure{width:24px;height:24px;border-radius:50%;border:1.5px solid transparent;display:flex;
-  align-items:center;justify-content:center;flex-shrink:0;font-size:11.5px;font-weight:700;line-height:1;}
+  align-items:center;justify-content:center;flex-shrink:0;font-size:var(--fs-xs);font-weight:700;line-height:1;}
 .figure.black-fig{background:#2c2c2a;border-color:rgba(255,255,255,.08);color:#fff;}
 .figure.red-fig{background:var(--red-fig-bg);border-color:rgba(0,0,0,.08);color:#fff;}
 @media(prefers-color-scheme:dark){.figure.black-fig{background:#e0ddd6;border-color:rgba(0,0,0,.08);color:#1a1a18;}}
@@ -208,7 +241,7 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 .stack-wrap .figure:last-child{display:flex;align-items:flex-end;padding-bottom:2px;}
 
 #nav{flex:0 0 auto;display:flex;gap:8px;}
-.btn{flex:1;font-size:13.5px;font-weight:500;padding:12px 8px;border-radius:12px;
+.btn{flex:1;font-size:var(--fs-md);font-weight:500;padding:12px 8px;border-radius:12px;
   border:1px solid var(--border);background:var(--bg3);cursor:pointer;color:var(--text2);
   font-family:inherit;line-height:1;touch-action:manipulation;
   transition:background .1s,border-color .1s,opacity .1s,transform .06s;}
@@ -216,7 +249,7 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 .btn:active:not(:disabled){background:var(--bg2);transform:scale(.97);}
 .btn:disabled{opacity:.32;pointer-events:none;}
 .btn.primary{background:var(--sel-bg);border-color:var(--sel-bd);color:var(--sel-bd);font-weight:600;}
-#meldung{display:none;flex:0 0 auto;font-size:12px;line-height:1.5;padding:9px 12px;border-radius:12px;
+#meldung{display:none;flex:0 0 auto;font-size:var(--fs-sm);line-height:1.5;padding:9px 12px;border-radius:12px;
   border:1px solid var(--warn-bd);background:var(--warn-bg);color:var(--warn-tx);overflow-y:auto;}
 </style>
 </head>
@@ -344,7 +377,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=115" charset="utf-8"></script>
+<script src="gembel_rules.js?v=116" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -353,7 +386,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 27 · 27.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 28 · 27.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit

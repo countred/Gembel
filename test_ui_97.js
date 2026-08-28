@@ -17,6 +17,21 @@ if(fs.existsSync(__dirname + '/countred.html'))
   console.log('  \u26a0\ufe0f  countred.html liegt noch im Ordner \u2014 ALTKOPIE, wird NICHT geprueft.');
 const html = fs.readFileSync(HTML_PATH, 'utf8');
 
+// §147: die Schriftgroessen stehen seit v116 als Skala in :root. Wer eine Groesse pruefen
+// will, muss sie AUFLOESEN — sonst prueft man den Variablennamen statt der Zahl. Der Helfer
+// liest die Skala aus der Auslieferung, damit kein zweiter Wert gepflegt werden muss.
+const SKALA = {};
+for(const m of (html.match(/--fs-[a-z]+:\s*[0-9.]+px/g) || []))
+  SKALA[m.split(':')[0].trim()] = parseFloat(m.split(':')[1]);
+// px-Wert einer Deklaration, egal ob Literal oder Variable
+function px(text){
+  if(text == null) return null;
+  const v = String(text).match(/var\(\s*(--fs-[a-z]+)\s*\)/);
+  if(v) return SKALA[v[1]] != null ? SKALA[v[1]] : null;
+  const z = String(text).match(/([0-9.]+)px/);
+  return z ? Number(z[1]) : null;
+}
+
 let pass = 0, fail = 0;
 function ok(cond, name){
   if(cond){ pass++; console.log('  \u2713 ' + name); }
@@ -141,8 +156,12 @@ ok(!/onclick="showOverlay\(/.test(html) && !/onclick="hideOverlay\(/.test(html),
   ok(/<button type="button" class="legal-link"/.test(foot),
      'echte <button>-Elemente statt <span> \u2014 tastaturbedienbar und sichtbar klickbar');
 }
-ok(/\.legal-link\{[^}]*font-size:12px/.test(html) && /text-decoration:underline/.test(html),
-   '\u00a7127: 12px und unterstrichen \u2014 mit 10.5px in --text3 war die Zeile auf dem Rechner unsichtbar');
+{
+  const regel = (html.match(/\.legal-link\{[^}]*\}/)||[''])[0];
+  const g = px((regel.match(/font-size:[^;]+/)||[''])[0]);
+  ok(g !== null && g >= 12 && /text-decoration:underline/.test(html),
+     '\u00a7127: mindestens 12px und unterstrichen (gemessen ' + g + 'px) \u2014 mit 10.5px war die Zeile auf dem Rechner unsichtbar');
+}
 // §128: zwei gleichzeitig sichtbare Overlays waren der zweite Fehler — auf dem Telefon
 // gewann das spätere DOM-Element, auf dem Rechner nicht (backdrop-filter erzeugt einen
 // eigenen Stacking-Context). Beide Absicherungen müssen stehen.
@@ -322,9 +341,9 @@ console.log('\u00a7142 \u2014 Kartenbreiten:');
   const schriftVon = id => {
     const i = html.indexOf('id="'+id+'"');
     if(i < 0) return null;
-    const m = html.slice(i, i+1400).match(/line-height:1\.6[^"]*"|font-size:([0-9.]+)px;line-height:1\.6/);
-    const m2 = html.slice(i, i+1400).match(/font-size:([0-9.]+)px;line-height:1\.6/);
-    return m2 ? Number(m2[1]) : null;
+    // §147: die Groesse kann Literal ODER var(--fs-xx) sein — beides aufloesen.
+    const m2 = html.slice(i, i+1400).match(/font-size:([^;]+);line-height:1\.6/);
+    return m2 ? px(m2[1]) : null;
   };
   const textKarten = ['impressum-overlay','datenschutz-overlay','regeln-overlay'];
   const groessen = textKarten.map(schriftVon);
@@ -539,6 +558,46 @@ console.log('\u00a7145 \u2014 Wortlaut der Freischalttexte (Walters Fassung, 27.
   ok(/Partien aus demselben Browser zusammenzuf\u00fchren/.test(html) &&
      !/Partien derselben Person zusammenzuf\u00fchren/.test(html),
      'Datenschutz: \u201eaus demselben Browser\u201c statt \u201ederselben Person\u201c');
+}
+
+console.log('\u00a7147 \u2014 Typo-Skala (Boden 12px, keine Sondergr\u00f6\u00dfen):');
+{
+  // Vorher: 20 verschiedene Groessen in 72 Deklarationen. Diese Gruppe haelt fest, dass es
+  // dabei nicht wieder losgeht \u2014 eine neue Zwischengroesse faellt sofort auf.
+  ok(Object.keys(SKALA).length === 6,
+     'genau SECHS Stufen in :root (gefunden: ' + Object.keys(SKALA).join(' ') + ')');
+  ok(SKALA['--fs-xs'] >= 12,
+     'die kleinste Stufe liegt bei mindestens 12px (gemessen ' + SKALA['--fs-xs'] + 'px)');
+  {
+    const w = Object.values(SKALA);
+    ok(w.every((v,i) => i === 0 || v > w[i-1]),
+       'die Stufen steigen streng an (' + w.join(' < ') + ')');
+  }
+  // Literale duerfen nur noch Titelgroessen sein. Alles darunter gehoert in die Skala \u2014
+  // genau dort sassen die 9- und 10-px-Stellen, die niemand mehr lesen konnte.
+  {
+    const lit = (html.match(/font-size:\s*([0-9.]+)px/g) || []).map(x => parseFloat(x.split(':')[1]));
+    const klein = lit.filter(v => v < 24);
+    ok(klein.length === 0,
+       'kein Lesetext mehr als festes px \u2014 alles unter 24px l\u00e4uft \u00fcber die Skala' +
+       (klein.length ? ' (gefunden: ' + [...new Set(klein)].join(', ') + 'px)' : ''));
+    ok(lit.every(v => v >= 24),
+       'die verbliebenen Literale sind Titelgr\u00f6\u00dfen (' + [...new Set(lit)].sort((a,b)=>a-b).join(' ') + 'px)');
+  }
+  ok((html.match(/font-size:var\(--fs-/g) || []).length >= 60,
+     'die Skala wird wirklich benutzt (' + (html.match(/font-size:var\(--fs-/g)||[]).length + ' Deklarationen)');
+  // Der Anleitung ihre eigene Skala \u2014 sie ist eine eigene Seite mit eigenem :root.
+  {
+    const anl = fs.existsSync(__dirname + '/anleitung.html')
+      ? fs.readFileSync(__dirname + '/anleitung.html', 'utf8') : '';
+    const anlSkala = {};
+    for(const m of (anl.match(/--fs-[a-z]+:\s*[0-9.]+px/g) || []))
+      anlSkala[m.split(':')[0].trim()] = parseFloat(m.split(':')[1]);
+    ok(JSON.stringify(anlSkala) === JSON.stringify(SKALA),
+       'anleitung.html tr\u00e4gt DIESELBE Skala \u2014 sonst sieht die Anleitung anders aus als das Spiel');
+    const anlLit = (anl.match(/font-size:\s*([0-9.]+)px/g) || []).map(x => parseFloat(x.split(':')[1]));
+    ok(anlLit.length === 0, 'die Anleitung hat gar keine festen Gr\u00f6\u00dfen mehr');
+  }
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
