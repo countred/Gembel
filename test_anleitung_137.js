@@ -441,9 +441,28 @@ block('F \u00b7 \u00a7149 Lesetext und Messzwilling');
   // gegriffen — die laengste Seite lag darunter, also galt immer `max+2`, und der Kasten
   // wuchs mit jeder Schriftvergroesserung mit. Genau das war \u00a7150s wirkungslose Aenderung.
   pruef('F7 \u00a7151 der Textkasten hat einen ABSOLUTEN Deckel in Pixeln',
-    /const KASTEN_MAX_PX = (\d+);/.test(HTML) &&
+    /const KASTEN_STANDARD = (\d+);/.test(HTML) &&
     /Math\.min\(max\+2, KASTEN_MAX_PX,/.test(HTML),
-    'KASTEN_MAX_PX=' + ((HTML.match(/const KASTEN_MAX_PX = (\d+);/)||[])[1]));
+    'KASTEN_STANDARD=' + ((HTML.match(/const KASTEN_STANDARD = (\d+);/)||[])[1]));
+  // \u00a7152: der Probierweg ueber die Adresse darf die Seite nicht unbrauchbar machen \u2014
+  // ein Tippfehler oder ein Unsinnswert faellt auf den Standard zurueck.
+  {
+    const roh = (HTML.match(/const KASTEN_MAX_PX = \(function\(\)\{[\s\S]*?\}\)\(\);/)||[''])[0];
+    pruef('F7b \u00a7152 der Probierwert ist auf 120\u2013320 begrenzt',
+      /w >= 120 && w <= 320/.test(roh));
+    pruef('F7c \u00a7152 Unsinn faellt auf den Standard zurueck',
+      /return KASTEN_STANDARD;/.test(roh) && /catch\(e\)\{/.test(roh));
+    pruef('F7d \u00a7152 der Probierwert wird NICHT gespeichert (kein Einstellungs-Nebenprodukt)',
+      !/localStorage/.test(roh));
+    // Wirklich ausgefuehrt: die Auswertung aus der Auslieferung loesen und mit Werten fuettern.
+    const fn = new Function('location','console','KASTEN_STANDARD',
+      roh.replace('const KASTEN_MAX_PX = ','return ').replace(/;$/,''));
+    const still = {log(){}};
+    const f = q => fn({search:q}, still, 208);
+    pruef('F7e \u00a7152 gueltiger Wert wird uebernommen', f('?kasten=200') === 200);
+    pruef('F7f \u00a7152 zu klein, zu gross, Unsinn, leer \u2192 Standard',
+      f('?kasten=10')===208 && f('?kasten=9999')===208 && f('?kasten=abc')===208 && f('')===208);
+  }
   pruef('F8 \u00a7151 mobil ist der Lesetext groesser als auf dem Rechner',
     /@media \(max-width:520px\)\{:root\{ --fs-read: ([0-9.]+)px; \}\}/.test(HTML) &&
     parseFloat((HTML.match(/@media \(max-width:520px\)\{:root\{ --fs-read: ([0-9.]+)px/)||[])[1]) > skala['--fs-read']);

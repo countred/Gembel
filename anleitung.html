@@ -402,7 +402,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=120" charset="utf-8"></script>
+<script src="gembel_rules.js?v=121" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -411,7 +411,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 32 · 27.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 33 · 27.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -429,9 +429,28 @@ const ABFLUG_MIT_MS = 1100, ANKUNFT_MIT_MS = 2600;
 // 350 ms trennt beides zuverlaessig: ein gewolltes Zuruecknehmen kommt nie so schnell
 // (man muss erst hinsehen), ein Doppelereignis praktisch immer innerhalb von 300 ms.
 const RUECKNAHME_SPERRE_MS = 350;
-// §151: absoluter Deckel fuer den Textkasten. Das ist die EINE Stellschraube fuer das
-// Verhaeltnis Text zu Brett — groesser heisst weniger Scrollen und kleineres Brett.
-const KASTEN_MAX_PX = 176;
+// §152: absoluter Deckel fuer den Textkasten — die EINE Stellschraube fuer das Verhaeltnis
+// Text zu Brett. Groesser heisst weniger Scrollen und kleineres Brett.
+//   236 (bis v119, faktisch): Kasten zu gross, Brett gedrueckt — Walter: „nicht harmonisch"
+//   176 (v120): zu klein, die meisten Seiten scrollen — Walter
+//   208: die Mitte, ausgeliefert
+// ⚠️ PROBIERWEG, damit die Zahl nicht ueber mehrere Deploys gesucht werden muss:
+// `anleitung.html?kasten=200` setzt den Deckel fuer diesen einen Aufruf. Nur 120–320 werden
+// angenommen, alles andere wird stillschweigend verworfen — ein Tippfehler in der Adresse
+// darf die Seite nicht unbrauchbar machen. Der Wert wird NICHT gespeichert und wirkt nur,
+// solange der Parameter in der Adresse steht; er ist ein Messwerkzeug, keine Einstellung.
+// Wenn die Zahl gefunden ist, gehoert sie HIER hinein.
+const KASTEN_STANDARD = 208;
+const KASTEN_MAX_PX = (function(){
+  try{
+    const w = parseInt(new URLSearchParams(location.search).get('kasten'), 10);
+    if(isFinite(w) && w >= 120 && w <= 320){
+      console.log('anleitung.html: Textkasten-Deckel probeweise auf ' + w + ' px (Standard: ' + KASTEN_STANDARD + ')');
+      return w;
+    }
+  }catch(e){ /* keine Adresse lesbar: Standard */ }
+  return KASTEN_STANDARD;
+})();
 
 // §150 (Walters Befund, 27.8.): LAUFENDE WECKER GEHOEREN ZUR PHASE, DIE SIE GESTARTET HAT.
 // Der Zug wird in zwei Stufen animiert: Abflug (500 ms), dann Ankunft — und der Siegrahmen
