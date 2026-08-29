@@ -440,28 +440,35 @@ block('F \u00b7 \u00a7149 Lesetext und Messzwilling');
   // \u00a7151: der Deckel muss ABSOLUT sein. Ein Deckel als Anteil der Fensterhoehe hat nie
   // gegriffen — die laengste Seite lag darunter, also galt immer `max+2`, und der Kasten
   // wuchs mit jeder Schriftvergroesserung mit. Genau das war \u00a7150s wirkungslose Aenderung.
-  pruef('F7 \u00a7151 der Textkasten hat einen ABSOLUTEN Deckel in Pixeln',
-    /const KASTEN_STANDARD = (\d+);/.test(HTML) &&
-    /Math\.min\(max\+2, KASTEN_MAX_PX,/.test(HTML),
-    'KASTEN_STANDARD=' + ((HTML.match(/const KASTEN_STANDARD = (\d+);/)||[])[1]));
-  // \u00a7152: der Probierweg ueber die Adresse darf die Seite nicht unbrauchbar machen \u2014
-  // ein Tippfehler oder ein Unsinnswert faellt auf den Standard zurueck.
+  pruef('F7 §153 der Textkasten hat einen ABSOLUTEN Deckel in Pixeln',
+    /const KASTEN_MOBIL = (\d+), KASTEN_RECHNER = (\d+)/.test(HTML) &&
+    /Math\.min\(max\+2, kastenDeckel\(\),/.test(HTML),
+    (HTML.match(/const KASTEN_MOBIL = (\d+), KASTEN_RECHNER = (\d+)/)||[]).slice(1,3).join(' / '));
   {
-    const roh = (HTML.match(/const KASTEN_MAX_PX = \(function\(\)\{[\s\S]*?\}\)\(\);/)||[''])[0];
-    pruef('F7b \u00a7152 der Probierwert ist auf 120\u2013320 begrenzt',
-      /w >= 120 && w <= 320/.test(roh));
-    pruef('F7c \u00a7152 Unsinn faellt auf den Standard zurueck',
-      /return KASTEN_STANDARD;/.test(roh) && /catch\(e\)\{/.test(roh));
-    pruef('F7d \u00a7152 der Probierwert wird NICHT gespeichert (kein Einstellungs-Nebenprodukt)',
-      !/localStorage/.test(roh));
-    // Wirklich ausgefuehrt: die Auswertung aus der Auslieferung loesen und mit Werten fuettern.
-    const fn = new Function('location','console','KASTEN_STANDARD',
-      roh.replace('const KASTEN_MAX_PX = ','return ').replace(/;$/,''));
-    const still = {log(){}};
-    const f = q => fn({search:q}, still, 208);
-    pruef('F7e \u00a7152 gueltiger Wert wird uebernommen', f('?kasten=200') === 200);
-    pruef('F7f \u00a7152 zu klein, zu gross, Unsinn, leer \u2192 Standard',
-      f('?kasten=10')===208 && f('?kasten=9999')===208 && f('?kasten=abc')===208 && f('')===208);
+    const roh = (HTML.match(/function kastenDeckel\(\)\{[\s\S]*?\n\}/)||[''])[0];
+    pruef('F7b §152 der Probierwert ist auf 120–320 begrenzt', /w >= 120 && w <= 320/.test(roh));
+    pruef('F7c §152 Unsinn faellt auf den Standard zurueck', /catch\(e\)\{/.test(roh));
+    pruef('F7d §152 der Probierwert wird NICHT gespeichert', !/localStorage/.test(roh));
+    // §153: als FUNKTION, nicht als Konstante — sonst bliebe der Wert nach dem Drehen falsch.
+    pruef('F7g §153 der Deckel wird bei jeder Messung neu bestimmt (Drehen, Fenstergroesse)',
+      /kastenDeckel\(\)/.test((HTML.match(/function messeKastenhoehe[\s\S]*?\n\}/)||[''])[0]));
+    const vor = (HTML.match(/const KASTEN_MOBIL = \d+, KASTEN_RECHNER = \d+, KASTEN_GRENZE_PX = \d+;/)||[''])[0];
+    const fn = new Function('location','window', vor + '\n' + roh + '\nreturn kastenDeckel();');
+    const M = Number((HTML.match(/const KASTEN_MOBIL = (\d+)/)||[])[1]);
+    const R = Number((HTML.match(/KASTEN_RECHNER = (\d+)/)||[])[1]);
+    pruef('F7e §152 gueltiger Probierwert wird uebernommen',
+      fn({search:'?kasten=200'}, {innerWidth:1200}) === 200);
+    pruef('F7f §152 zu klein, zu gross, Unsinn, leer → Standard',
+      fn({search:'?kasten=10'},{innerWidth:1200})===R && fn({search:'?kasten=9999'},{innerWidth:1200})===R &&
+      fn({search:'?kasten=abc'},{innerWidth:1200})===R && fn({search:''},{innerWidth:1200})===R);
+    pruef('F7h §153 schmal → mobiler Deckel', fn({search:''},{innerWidth:390})===M);
+    pruef('F7i §153 breit → Rechner-Deckel',  fn({search:''},{innerWidth:1440})===R);
+    pruef('F7j §153 Tablet (768 px) zaehlt zum Rechner — Umbrueche haengen an der BREITE',
+      fn({search:''},{innerWidth:768})===R);
+    pruef('F7k §153 genau auf der Grenze (520 px) noch mobil',
+      fn({search:''},{innerWidth:520})===M && fn({search:''},{innerWidth:521})===R);
+    pruef('F7l §153 mobil braucht mehr Hoehe als der Rechner (schmalere Spalte, mehr Zeilen)',
+      M > R, M + ' > ' + R);
   }
   pruef('F8 \u00a7151 mobil ist der Lesetext groesser als auf dem Rechner',
     /@media \(max-width:520px\)\{:root\{ --fs-read: ([0-9.]+)px; \}\}/.test(HTML) &&

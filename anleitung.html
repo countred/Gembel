@@ -402,7 +402,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=121" charset="utf-8"></script>
+<script src="gembel_rules.js?v=122" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -411,7 +411,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 33 · 27.08.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 34 · 27.08.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -429,28 +429,35 @@ const ABFLUG_MIT_MS = 1100, ANKUNFT_MIT_MS = 2600;
 // 350 ms trennt beides zuverlaessig: ein gewolltes Zuruecknehmen kommt nie so schnell
 // (man muss erst hinsehen), ein Doppelereignis praktisch immer innerhalb von 300 ms.
 const RUECKNAHME_SPERRE_MS = 350;
-// §152: absoluter Deckel fuer den Textkasten — die EINE Stellschraube fuer das Verhaeltnis
+// §153: absoluter Deckel fuer den Textkasten — die EINE Stellschraube fuer das Verhaeltnis
 // Text zu Brett. Groesser heisst weniger Scrollen und kleineres Brett.
-//   236 (bis v119, faktisch): Kasten zu gross, Brett gedrueckt — Walter: „nicht harmonisch"
-//   176 (v120): zu klein, die meisten Seiten scrollen — Walter
-//   208: die Mitte, ausgeliefert
-// ⚠️ PROBIERWEG, damit die Zahl nicht ueber mehrere Deploys gesucht werden muss:
-// `anleitung.html?kasten=200` setzt den Deckel fuer diesen einen Aufruf. Nur 120–320 werden
-// angenommen, alles andere wird stillschweigend verworfen — ein Tippfehler in der Adresse
-// darf die Seite nicht unbrauchbar machen. Der Wert wird NICHT gespeichert und wirkt nur,
-// solange der Parameter in der Adresse steht; er ist ein Messwerkzeug, keine Einstellung.
-// Wenn die Zahl gefunden ist, gehoert sie HIER hinein.
-const KASTEN_STANDARD = 208;
-const KASTEN_MAX_PX = (function(){
+//   ~236 (bis v119, faktisch die laengste Seite): Kasten zu gross, Brett gedrueckt
+//   176 (v120): zu klein, die meisten Seiten scrollen
+//   208 (v121): Mitte, immer noch nicht rund
+//   JETZT nach Breite getrennt — Walters Werte: mobil 320, Rechner 240.
+//
+// ⚠️ WARUM NACH BREITE UND NICHT NACH GERAETETYP: die Kastenhoehe haengt an den
+// ZEILENUMBRUECHEN, und die haengen an der Spaltenbreite. Auf dem Telefon bricht derselbe
+// Text auf etwa doppelt so viele Zeilen um wie auf dem Rechner — deshalb braucht er dort
+// mehr Hoehe. Ein TABLET ist breit und bricht wie ein Rechner um, zaehlt hier also zum
+// Rechner. Dieselbe 520-px-Grenze steuert schon die mobile Lesegroesse (§151) und das
+// §125-Layout; eine zweite Grenze daneben waere eine Fehlerquelle.
+//
+// Als FUNKTION, nicht als Konstante: messeKastenhoehe laeuft auch beim Drehen und
+// Fenstergroessen-Aendern (resize-Horcher in init). Ein einmal beim Laden festgelegter Wert
+// bliebe nach dem Drehen falsch.
+const KASTEN_MOBIL = 320, KASTEN_RECHNER = 240, KASTEN_GRENZE_PX = 520;
+function kastenDeckel(){
+  // Probierweg (§152): `anleitung.html?kasten=200` setzt den Deckel fuer DIESEN Aufruf.
+  // Nur 120–320 werden angenommen, alles andere faellt still auf den Standard zurueck —
+  // ein Tippfehler in der Adresse darf die Seite nicht unbrauchbar machen. Nichts wird
+  // gespeichert; es ist ein Messwerkzeug, keine Einstellung.
   try{
     const w = parseInt(new URLSearchParams(location.search).get('kasten'), 10);
-    if(isFinite(w) && w >= 120 && w <= 320){
-      console.log('anleitung.html: Textkasten-Deckel probeweise auf ' + w + ' px (Standard: ' + KASTEN_STANDARD + ')');
-      return w;
-    }
+    if(isFinite(w) && w >= 120 && w <= 320) return w;
   }catch(e){ /* keine Adresse lesbar: Standard */ }
-  return KASTEN_STANDARD;
-})();
+  return (window.innerWidth <= KASTEN_GRENZE_PX) ? KASTEN_MOBIL : KASTEN_RECHNER;
+}
 
 // §150 (Walters Befund, 27.8.): LAUFENDE WECKER GEHOEREN ZUR PHASE, DIE SIE GESTARTET HAT.
 // Der Zug wird in zwei Stufen animiert: Abflug (500 ms), dann Ankunft — und der Siegrahmen
@@ -1107,7 +1114,7 @@ function messeKastenhoehe(){
   // JETZT: ein ABSOLUTER Deckel in Pixeln, der auf jedem Geraet greift. Der Kasten ist
   // hoechstens so hoch wie noetig, aber nie hoeher als KASTEN_MAX_PX — die langen Seiten
   // scrollen (Walters Entscheid), das Brett behaelt seine Flaeche.
-  kasten.style.height=Math.min(max+2, KASTEN_MAX_PX, Math.round(window.innerHeight*0.46))+'px';
+  kasten.style.height=Math.min(max+2, kastenDeckel(), Math.round(window.innerHeight*0.46))+'px';
   kasten.dataset.gemessen=max;
   // Zweiter Durchgang: das BRETT hat Vorrang. Es ist eine Anleitung zu einem Brettspiel —
   // lieber ein Text, der scrollt, als Felder, die kleiner sind als die Figuren darauf.
