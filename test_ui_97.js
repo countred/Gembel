@@ -209,6 +209,38 @@ ok(!/nichts erfasst, woraus sich eine Person bestimmen/.test(html),
 ok(/werden nicht erhoben/.test(html) && /Spielverlauf und eine zuf\u00e4llige Kennung/.test(html),
    'die Kurzfassung benennt konkret, was NICHT und was DOCH gespeichert wird');
 
+// \u00a7156 \u2014 DIE KURZFASSUNG WIRD GEGEN DEN CODE GEHALTEN, nicht gegen sich selbst.
+// BEFUND 31.8. (Negativkontrolle): die Zusage liess sich auf „Name, E-Mail-Adresse,
+// Geraetedaten UND DER SPIELVERLAUF werden nicht erhoben" verfaelschen — nachweislich falsch,
+// denn test_obs_99 prueft genau diesen Schreibweg — und ALLE 172 Pruefungen blieben gruen.
+// Zeile 199 macht es bei den Cookies richtig vor (&& !/googletagmanager/); hier fehlte der
+// Abgleich. Eine gepinnte Zeichenfolge ist kein Abgleich mit dem Verhalten.
+{
+  // Die KURZFASSUNG isolieren — der Langtext darf und soll die Kennzahlen benennen.
+  const kurz = (html.match(/Kurz gesagt[\s\S]{0,700}?Was gespeichert wird/) || [''])[0];
+  ok(kurz.length > 100, 'Kurzfassung im Datenschutztext gefunden (Anker „Kurz gesagt")');
+
+  // 1. Wenn perfMs geloggt wird, darf die Kurzfassung Geraetedaten NICHT ausschliessen.
+  //    \u00a7155-Entscheid: perfMs bleibt (deviceBenchMs liegt im eingefrorenen Kern, die
+  //    Kontrollvariable ist die Stoerfaktor-Absicherung aus \u00a799) — also faellt das Wort.
+  const perfGeloggt = /perfMs: \(typeof devicePerfMs==='number'\)/.test(html);
+  ok(!perfGeloggt || !/Ger\u00e4tedaten werden nicht erhoben/.test(kurz),
+     'Kurzfassung schliesst keine Ger\u00e4tedaten aus, solange perfMs geschrieben wird (perfMs geloggt: '+perfGeloggt+')');
+
+  // 2. Und der Langtext MUSS sie dann benennen — sonst ist der Wegfall oben eine Luecke.
+  ok(!perfGeloggt || /technische Kennzahlen/.test(html),
+     'der Langtext benennt die technischen Kennzahlen, solange perfMs geschrieben wird');
+
+  // 3. Was die Kurzfassung ausschliesst, darf nirgends erhoben werden: kein Eingabefeld fuer
+  //    Name oder E-Mail. Das einzige Eingabefeld der Seite ist das Codefeld (\u00a7144).
+  ok(!/type=["']email["']/.test(html) && !/autocomplete=["'](name|email)["']/.test(html),
+     'kein Eingabefeld fuer Name oder E-Mail \u2014 die Zusage deckt sich mit dem Formularbestand');
+
+  // 4. Wiedereinbau-Schutz: der Spielverlauf DARF nicht als „nicht erhoben" auftauchen.
+  ok(!/Spielverlauf[^.]{0,80}werden nicht erhoben/.test(kurz),
+     'die Kurzfassung behauptet NICHT, der Spielverlauf werde nicht erhoben (Negativkontrolle 31.8.)');
+}
+
 console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr):');
 {
   // Ein Impressum mit eckigen Klammern ist schlimmer als keines — es sieht aus wie eines,
