@@ -456,7 +456,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=123'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=124'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -518,9 +518,30 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   </div>
 </div>
 
-<!-- §126: Datenschutz. Beschreibt den TATSAECHLICHEN Stand nach dem Entfernen von GA4:
+<!-- §126/§157: Datenschutz. Beschreibt den TATSAECHLICHEN Stand nach dem Entfernen von GA4:
      keine Cookies, kein Tracking, nur Spieldaten und eine Zufallskennung. Wer daran etwas
-     aendert (GA4 zurueck, Geraetekennung, Namen), muss diesen Text mitziehen. -->
+     aendert (GA4 zurueck, Geraetekennung, Namen), muss diesen Text mitziehen.
+     §157 (2.9.): der Text war inhaltlich richtig, aber als Pflichtinformation UNVOLLSTAENDIG.
+     Es fehlten sechs Angaben, die Art. 13 verlangt — Rechtsgrundlage, die konkreten
+     berechtigten Interessen, Speicherdauer, Widerspruchsrecht nach Art. 21, Beschwerderecht
+     bei der Aufsichtsbehoerde und die vollstaendigen Betroffenenrechte. Dazu drei Aenderungen
+     am Bestand, jede mit eigenem Grund:
+       (1) „Es findet keine Auswertung einzelner Personen statt" ist RAUS. Ausgewertet wird
+           nach playerKey, und bei einer Handvoll bekannter Testspieler ist der Browser
+           faktisch die Person — dieselbe Klasse Zusage wie der §136-Satz und die
+           §156-Kurzfassung. An seiner Stelle steht jetzt, was nachpruefbar NICHT passiert:
+           keine Werbung, keine Profilbildung, keine Weitergabe.
+       (2) „Dabei kann es zu einer Uebermittlung in Drittlaender kommen" ist RAUS. Art. 13
+           Abs. 1 lit. f verlangt die GARANTIEN. Genannt sind jetzt BEIDE — DPF-Zertifizierung
+           und ergaenzend die Standardvertragsklauseln aus den Vertraegen. Das ist Absicht und
+           keine Doppelung: der Angemessenheitsbeschluss steht unter gerichtlicher
+           Ueberpruefung, ein Text mit nur einer Garantie waere bei einem Wegfall sofort falsch.
+       (3) „technisch notwendige Verbindungsdaten" ist praeziser geworden. GitHub Pages
+           protokolliert die IP-Adresse jedes Besuchers, und fuer dieses Protokoll ist GitHub
+           EIGENER Verantwortlicher — nicht unser Auftragsverarbeiter. Die pauschale
+           Rollenzuweisung war an dieser Stelle falsch.
+     ⚠️ Der Rechentest (perfMs, §99) wird jetzt beim Namen genannt. Ausbauen ginge nur mit
+     einer Kernaenderung — deviceBenchMs() liegt im eingefrorenen Kern (§155-Entscheid). -->
 <div class="overlay hidden" id="datenschutz-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <h2 style="text-align:center;font-size:var(--fs-xl);">Datenschutz</h2>
@@ -533,33 +554,65 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         deinem Browser.</div>
       <div><strong style="color:var(--text);">Was gespeichert wird</strong><br>
         Beim Spielen werden der Spielverlauf (Züge, Zeitpunkte, Ergebnis, gewählte Spielstärke)
-        und technische Kennzahlen zur Spielstärke-Auswertung gespeichert. Dazu gehört eine
-        zufällige Kennung, die dein Browser einmalig erzeugt und die nur dazu dient, mehrere
-        Partien aus demselben Browser zusammenzuführen. Sie enthält keinen Namen und keine
-        Gerätedaten.</div>
+        und technische Kennzahlen zur Spielstärke-Auswertung gespeichert. Zu diesen Kennzahlen
+        gehört ein kurzer Rechentest, der einmal je Sitzung misst, wie schnell dein Gerät
+        rechnet — ohne ihn lassen sich Bedenkzeiten verschiedener Geräte nicht vergleichen.
+        Dazu gehört eine zufällige Kennung, die dein Browser einmalig erzeugt und die dazu
+        dient, mehrere Partien aus demselben Browser zusammenzuführen. Sie enthält weder
+        deinen Namen noch eine Kennung deines Geräts.</div>
       <div><strong style="color:var(--text);">Was nur in deinem Browser bleibt</strong><br>
         Für die Freischaltung des Zwei-Personen-Modus merkt sich dein Browser, wie viele
         Punkte du gesammelt hast und ob der Modus offen ist. Diese Angaben werden nicht
-        übertragen. Löschst du die Website-Daten, sind sie ebenso weg wie die Kennung.</div>
+        übertragen. Ohne sie gäbe es die Freischaltung nicht; sie sind für diese von dir
+        angeforderte Funktion erforderlich. Löschst du die Website-Daten, sind sie ebenso
+        weg wie die Kennung.</div>
       <div><strong style="color:var(--text);">Wechsel auf ein anderes Gerät</strong><br>
         Du kannst dir einen Übertragungscode anzeigen lassen und ihn auf einem zweiten Gerät
         eingeben. Er enthält deine Kennung und deinen Punktestand, sonst nichts. Das zweite
         Gerät behält dabei seine eigene Kennung.</div>
-      <div><strong style="color:var(--text);">Warum</strong><br>
-        Ausschließlich zur Weiterentwicklung des Spiels, insbesondere zur Einstellung der
-        Spielstärke. Es findet keine Auswertung einzelner Personen statt und keine Weitergabe
-        an Dritte zu eigenen Zwecken.</div>
-      <div><strong style="color:var(--text);">Wo</strong><br>
-        Die Daten liegen in der Firebase Realtime Database von Google. Die Seite selbst wird
-        über GitHub Pages ausgeliefert. Dabei kann es zu einer Übermittlung in Drittländer
-        kommen. Beim Aufruf verarbeiten beide Anbieter technisch notwendige Verbindungsdaten.</div>
+      <div><strong style="color:var(--text);">Warum, und auf welcher Grundlage</strong><br>
+        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO — unser berechtigtes Interesse. Es
+        besteht darin, das Spiel zu betreiben und weiterzuentwickeln: die Spielstärke der
+        Computergegner einzustellen, Fehler in den Spielregeln und in der Suche zu finden und
+        zu erkennen, ob eine Schwierigkeitsstufe wirklich das leistet, was sie soll. Dafür
+        müssen mehrere Partien zusammengehören; einzelne Partien ohne Zusammenhang beantworten
+        diese Fragen nicht. Es findet keine Werbung, keine Profilbildung und keine Weitergabe
+        an Dritte zu deren eigenen Zwecken statt.</div>
+      <div><strong style="color:var(--text);">Wie lange</strong><br>
+        Spielverlauf und Kennung werden gespeichert, solange sie für diese Auswertung
+        gebraucht werden. Ein festes Datum gibt es dafür nicht; die Daten werden gelöscht,
+        sobald die Auswertung abgeschlossen ist, spätestens aber auf deine Aufforderung hin.
+        Die Angaben in deinem Browser bleiben, bis du die Website-Daten löschst.</div>
+      <div><strong style="color:var(--text);">Wo, und wer die Daten sieht</strong><br>
+        Die Daten liegen in der Firebase Realtime Database von Google (Google Ireland Limited
+        und Google LLC), Region europe-west1. Die Seite selbst wird über GitHub Pages
+        ausgeliefert (GitHub, Inc.). Beide Anbieter sind insoweit Auftragsverarbeiter; es
+        bestehen die jeweiligen Auftragsverarbeitungsbedingungen. Beim Aufruf der Seite
+        protokolliert GitHub zusätzlich die IP-Adresse deines Anschlusses zu
+        Sicherheitszwecken — dafür ist GitHub selbst verantwortlich, nicht wir.</div>
+      <div><strong style="color:var(--text);">Übermittlung in Drittländer</strong><br>
+        Beide Anbieter können Daten auch in den USA verarbeiten. Google und GitHub sind unter
+        dem EU-US Data Privacy Framework zertifiziert, für das ein Angemessenheitsbeschluss
+        der Europäischen Kommission besteht. Ergänzend enthalten die Verträge beider Anbieter
+        die Standardvertragsklauseln der Europäischen Kommission nach Art. 46 Abs. 2 lit. c
+        DSGVO. Eine Kopie der Klauseln ist über die Anbieter erhältlich; auf Anfrage nennen
+        wir dir die Fundstelle.</div>
       <div><strong style="color:var(--text);">Deine Rechte</strong><br>
-        Du kannst die Zufallskennung jederzeit selbst entfernen, indem du die Website-Daten
-        in deinem Browser löschst — danach beginnt die nächste Partie unter einer neuen
-        Kennung. Für Auskunft oder Löschung genügt eine Nachricht an die im Impressum
-        genannte Adresse.</div>
+        Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung
+        und Datenübertragbarkeit. Du kannst der Verarbeitung jederzeit widersprechen
+        (Art. 21 DSGVO) — dann werden deine Daten gelöscht, sofern keine zwingenden Gründe
+        entgegenstehen. Du kannst dich außerdem bei einer Aufsichtsbehörde beschweren; für uns
+        zuständig ist das Bayerische Landesamt für Datenschutzaufsicht, Promenade 18,
+        91522 Ansbach.<br>
+        Am schnellsten geht es ohne uns: löschst du die Website-Daten in deinem Browser, ist
+        die Kennung weg und die nächste Partie beginnt unter einer neuen. Für Auskunft oder
+        Löschung der bereits gespeicherten Partien genügt eine Nachricht an die im Impressum
+        genannte Adresse. Dafür brauchen wir deine Kennung — sie steht am Anfang deines
+        Übertragungscodes. Ohne sie können wir deine Partien nicht finden und sind nach
+        Art. 11 DSGVO auch nicht verpflichtet, zusätzliche Daten zu erheben, nur um dich
+        identifizieren zu können.</div>
       <div style="font-size:var(--fs-sm);color:var(--text3);">
-        Verantwortlich ist die im Impressum genannte Person. Stand: 27. August 2026</div>
+        Verantwortlich ist die im Impressum genannte Person. Stand: 2. September 2026</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('datenschutz-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
@@ -824,7 +877,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=123" charset="utf-8"></script>
+<script src="gembel_rules.js?v=124" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -836,7 +889,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=123" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=124" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1449,7 +1502,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v123';
+const BUILD_MARKER='· Build v124';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1766,7 +1819,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=123'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=124'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

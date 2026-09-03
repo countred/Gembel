@@ -241,6 +241,61 @@ ok(/werden nicht erhoben/.test(html) && /Spielverlauf und eine zuf\u00e4llige Ke
      'die Kurzfassung behauptet NICHT, der Spielverlauf werde nicht erhoben (Negativkontrolle 31.8.)');
 }
 
+// \u00a7157 \u2014 DIE PFLICHTANGABEN NACH ART. 13. Der Text war inhaltlich richtig, aber als
+// Pflichtinformation unvollstaendig: Rechtsgrundlage, berechtigte Interessen, Speicherdauer,
+// Widerspruchsrecht, Beschwerderecht und die vollstaendigen Betroffenenrechte fehlten.
+// ⚠️ ALLE Pruefungen dieser Gruppe laufen gegen den ISOLIERTEN Overlay-Text, nicht gegen die
+//    ganze Datei. Der Quelltextkommentar ueber dem Overlay nennt dieselben Woerter (er begruendet
+//    ja die Aenderung) — eine Suche ueber `html` waere gruen geworden, ohne dass ein einziges
+//    Wort beim Nutzer ankommt. Dieselbe Falle wie \u00a7156, eine Ebene weiter.
+console.log('\u00a7157 \u2014 Datenschutz: Pflichtangaben nach Art. 13:');
+{
+  const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen<\/button>/) || [''])[0];
+  ok(ds.length > 1000, 'Datenschutz-Overlay isoliert (' + ds.length + ' Zeichen)');
+
+  ok(/Art\. 6 Abs\. 1 lit\. f/.test(ds),
+     'die Rechtsgrundlage ist benannt (Art. 6 Abs. 1 lit. f \u2014 Art. 13 Abs. 1 lit. c)');
+  ok(/berechtigtes Interesse/.test(ds) && /Spielst\u00e4rke der\s+Computergegner einzustellen/.test(ds),
+     'die berechtigten Interessen stehen KONKRET da, nicht als Formel (Art. 13 Abs. 1 lit. d)');
+  ok(/Wie lange/.test(ds) && /solange sie f\u00fcr diese Auswertung/.test(ds),
+     'die Speicherdauer ist angegeben (Art. 13 Abs. 2 lit. a)');
+  ok(/Art\. 21 DSGVO/.test(ds) && /widersprechen/.test(ds),
+     'das Widerspruchsrecht ist benannt \u2014 bei lit. f zwingend (Art. 13 Abs. 2 lit. b)');
+  ok(/Aufsichtsbeh\u00f6rde beschweren/.test(ds) && /Landesamt f\u00fcr Datenschutzaufsicht/.test(ds),
+     'Beschwerderecht samt zust\u00e4ndiger Beh\u00f6rde (Art. 13 Abs. 2 lit. d)');
+  ok(/Berichtigung/.test(ds) && /Einschr\u00e4nkung der Verarbeitung/.test(ds) &&
+     /Daten\u00fcbertragbarkeit/.test(ds),
+     'die Betroffenenrechte sind vollst\u00e4ndig, nicht nur Auskunft und L\u00f6schung');
+
+  // DRITTLAND \u2014 BEIDE Garantien, und das ist kein Schmuck: der DPF-Angemessenheitsbeschluss
+  // steht unter gerichtlicher Ueberpruefung. Ein Text mit nur einer Garantie waere bei einem
+  // Wegfall von einem Tag auf den anderen falsch. Wer eine herausnimmt, wird hier rot.
+  ok(/Data Privacy Framework/.test(ds) && /Standardvertragsklauseln/.test(ds) &&
+     /Art\. 46 Abs\. 2 lit\. c/.test(ds),
+     'Drittland: BEIDE Garantien genannt (DPF und SCC) \u2014 nicht nur eine');
+  ok(!/kann es zu einer \u00dcbermittlung in Drittl\u00e4nder\s+kommen/.test(ds),
+     'der pauschale Drittland-Satz ist nicht zur\u00fcck (Wiedereinbau-Schutz)');
+
+  // ROLLENTRENNUNG: fuer das IP-Protokoll ist GitHub eigener Verantwortlicher. Die fruehere
+  // Pauschale „beide sind Auftragsverarbeiter" war an dieser Stelle sachlich falsch.
+  ok(/IP-Adresse/.test(ds) && /GitHub selbst verantwortlich/.test(ds),
+     'die IP-Protokollierung durch GitHub Pages ist benannt, mit der richtigen Rolle');
+
+  // WIEDEREINBAU-SCHUTZ, dritte Stufe nach \u00a7136 und \u00a7156. Beide Male war es dieselbe
+  // Klasse Fehler: eine Zusage, die der Code nicht haelt. Hier: ausgewertet wird nach
+  // playerKey, und bei einer Handvoll bekannter Testspieler IST der Browser die Person.
+  ok(!/keine Auswertung einzelner Personen/.test(ds),
+     'die Zusage „keine Auswertung einzelner Personen" ist nicht zur\u00fcck (Wiedereinbau-Schutz)');
+  ok(!/anonym/i.test(ds),
+     'die Kennung wird nirgends als anonym bezeichnet \u2014 eine Online-Kennung ist es nicht');
+
+  // An perfMs GEKOPPELT, nicht an den Wortlaut \u2014 exakt wie die \u00a7156-Pruefung eine Ebene
+  // darueber: wer den Rechentest ausbaut, darf den Absatz streichen und bleibt gruen.
+  const perfGeloggt2 = /perfMs: \(typeof devicePerfMs==='number'\)/.test(html);
+  ok(!perfGeloggt2 || /wie schnell dein Ger\u00e4t\s+rechnet/.test(ds),
+     'der Rechentest ist beim Namen genannt, solange perfMs geschrieben wird (perfMs geloggt: '+perfGeloggt2+')');
+}
+
 console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr):');
 {
   // Ein Impressum mit eckigen Klammern ist schlimmer als keines — es sieht aus wie eines,
