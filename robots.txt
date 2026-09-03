@@ -1,0 +1,18 @@
+# countred.com
+#
+# Solange nur der Freundestest laeuft, soll die Seite nicht in Suchmaschinen
+# auftauchen. Das aendert die Rechtslage nicht, stuetzt aber die Einordnung als
+# nicht an den Markt gerichtetes Privatprojekt und haelt den ersten Eindruck
+# dort, wo er hingehoert: bei den eingeladenen Testspielern.
+#
+# ⚠️ VOR DER OEFFENTLICHEN OEFFNUNG ENTFERNEN oder auf "Allow: /" aendern.
+#    Diese Datei ist bewusst kein dauerhafter Zustand.
+#
+# ⚠️ robots.txt ist eine BITTE, keine Sperre. Sie haelt die grossen Suchmaschinen
+#    fern; sie macht die Seite nicht unerreichbar und ersetzt keine Zugangshuerde.
+#    Wer den Link hat, kommt weiterhin hinein — genau so ist es gewollt.
+#
+# Stand: 2. September 2026
+
+User-agent: *
+Disallow: /

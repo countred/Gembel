@@ -24,3 +24,6 @@ loeschliste.txt
 !layout.js
 !bau_vorschau.js
 !test_*.js
+
+# robots.txt gehoert zur Auslieferung (§157), nicht zum Archiv
+!robots.txt
