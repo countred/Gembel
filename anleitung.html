@@ -402,7 +402,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=124" charset="utf-8"></script>
+<script src="gembel_rules.js?v=125" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -411,7 +411,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 35 · 02.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 36 · 07.09.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -1290,9 +1290,17 @@ function onCell(r,c){
       }
       return;
     }
+    // §158 (Befund eines Testers, 7.9.): DER WAECHTER STAND EINE ZEILE ZU SPAET.
+    // Auf einer Absetz-Seite ohne eigene Ausfuehrungsseite laeuft der Zug HIER zu Ende;
+    // danach ist `board` die Stellung DANACH und das Quellfeld leer. Ein zweiter Tipp auf
+    // das Zielfeld rechnete dann canDrop gegen ein leeres Quellfeld, bekam zu Recht `false`
+    // und meldete einen Regelwiderspruch, den es nicht gibt — die Anleitung brach mit dem
+    // Ausfalltext ab. Der `gezogen`-Waechter, der genau diesen Tipp schlucken soll, stand
+    // im Zweig DARUNTER, also hinter der Pruefung. Er gehoert davor.
+    // Die §146-Ruecknahme ist nicht betroffen: sie wird im Zweig darueber abgehandelt.
+    if(gezogen) return;
     if(!canDrop(board,f[0],f[1],r,c,LEARNER,PARITY)) return abweichung('canDrop '+a.von+'->'+a.nach);
     if(!a.nachher){                       // keine eigene Seite: hier zu Ende ziehen
-      if(gezogen) return;
       spieleAus(a, function(){ return brettNachZug(idx, a); }, function(){
         const tn=textTeile(idx,'nach'); setText(tn.html, tn.rechnung);
       });

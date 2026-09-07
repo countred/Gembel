@@ -629,10 +629,94 @@ async function doppeltipp(){
     /const RUECKNAHME_SPERRE_MS = 350;/.test(HTML) && /\(Date\.now\(\)-phaseSeit\) >= RUECKNAHME_SPERRE_MS/.test(HTML));
 }
 
+
+// ═══════════════════════════════════════════════════════════════════
+block('H · §158 zweiter Tipp auf das Zielfeld');
+// ═══════════════════════════════════════════════════════════════════
+// Befund eines Testers (7.9.): auf einer Absetz-Seite, auf der der Zug ZU ENDE
+// laeuft, brach die Anleitung mit dem Ausfalltext ab, wenn man das Zielfeld ein
+// zweites Mal antippte. Ursache: `board` ist dann schon die Stellung DANACH, das
+// Quellfeld ist leer, und canDrop meldete zu Recht `false` — die Anleitung machte
+// daraus einen Regelwiderspruch. Nicht zu schnell tippen war das Problem, sondern
+// der Tipp NACH der Animation (waehrend ihrer laeuft `laeuft` und schluckt alles).
+//
+// GEPRUEFT WIRD DIE ABSICHT, nicht die Zeile (§148): ein zweiter Tipp auf das
+// Zielfeld darf die Anleitung nicht abbrechen, und die Seite muss danach benutzbar
+// bleiben. Welche Seiten das betrifft, wird AUSGERECHNET (§138) — wer eine
+// Absetz-Seite hinzufuegt, bekommt die Pruefung von selbst mit.
+const ENDSEITEN = M.PHASES.map((ph,i)=>({i:i, ph:ph, a:M.STEPS[ph.si].aktionen[ph.ai]}))
+                          .filter(x => x.ph.p==='drop' && x.a.actor===1 && !x.a.nachher);
+pruef('H1 es gibt Absetz-Seiten, die auf der Seite zu Ende ziehen', ENDSEITEN.length>0,
+      'gefunden: '+ENDSEITEN.length);
+pruef('H2 der gezogen-Waechter steht VOR der canDrop-Pruefung',
+  /if\(gezogen\) return;\s*\n\s*if\(!canDrop\(board,f\[0\],f\[1\],r,c,LEARNER,PARITY\)\) return abweichung/.test(HTML));
+
+async function zweiterTipp(){
+  if(!JSDOM) return;
+  const warte=ms=>new Promise(r=>setTimeout(r,ms));
+  const langsam=Math.max(M.ANKUNFT_MIT_MS, M.ANKUNFT_MS)+200;
+
+  for(const ziel of ENDSEITEN){
+    const dom=new JSDOM(HTML.replace(/<script src="gembel_rules\.js[^>]*><\/script>/,'<script>'+RULES+'</script>'),
+      {runScripts:'dangerously',pretendToBeVisual:true});
+    const d=dom.window.document;
+    const zelle=n=>[...d.querySelectorAll('#board .cell')].find(x=>x.title===n);
+    const next=()=>d.getElementById('btn-next');
+    const wo=M.STEPS[ziel.ph.si].id+'/'+ziel.a.von+'->'+ziel.a.nach;
+    await warte(200);
+
+    // Bis zur Zielseite fahren — dieselben Handgriffe wie im Durchklick.
+    for(let i=0;i<ziel.i;i++){
+      const ph=M.PHASES[i], a=M.STEPS[ph.si].aktionen[ph.ai];
+      if(ph.p==='tap'){ zelle(a.feld).onclick(); next().onclick(); }
+      else if(ph.p==='lift'){ if(a.actor===1) zelle(a.von).onclick(); else next().onclick(); }
+      else if(ph.p==='drop'){
+        if(a.actor===1) zelle(a.nach).onclick(); else next().onclick();
+        if(!a.nachher){ await warte(langsam); next().onclick(); }
+      }
+      else if(ph.p==='fail'){ zelle(a.nach).onclick(); next().onclick(); }
+      else if(ph.p==='exec'){ await warte(langsam); next().onclick(); }
+      else { if(a.zugDanach){ next().onclick(); await warte(langsam+M.ANKUNFT_MIT_MS+300); }
+             next().onclick(); }
+      await warte(5);
+    }
+    pruef('H· an der richtigen Seite angekommen ('+wo+')',
+      d.getElementById('stepno').textContent==='Schritt '+(ziel.ph.si+1)+' von 9',
+      d.getElementById('stepno').textContent);
+
+    zelle(ziel.a.nach).onclick();                 // erster Tipp: der Zug laeuft ab
+    await warte(langsam);
+    pruef('H· der Zug ist gelaufen, Weiter ist frei ('+wo+')', next().disabled===false);
+
+    zelle(ziel.a.nach).onclick();                 // zweiter Tipp — das ist der Befund
+    await warte(60);
+    pruef('H· zweiter Tipp bricht die Anleitung NICHT ab ('+wo+')',
+      d.getElementById('meldung').style.display!=='block',
+      d.getElementById('meldung').textContent.slice(0,90));
+    pruef('H· zweiter Tipp laesst die Seite stehen ('+wo+')',
+      d.getElementById('stepno').textContent==='Schritt '+(ziel.ph.si+1)+' von 9');
+    pruef('H· zweiter Tipp laesst Weiter frei ('+wo+')', next().disabled===false);
+    pruef('H· Brett und Text bleiben sichtbar ('+wo+')',
+      d.getElementById('board-area').style.display!=='none' &&
+      d.getElementById('lesson').style.display!=='none');
+
+    // Die §146-Ruecknahme darf dabei nicht verlorengehen: ein Tipp auf das QUELLFELD
+    // nach dem Zug fuehrt weiterhin eine Seite zurueck.
+    zelle(ziel.a.von).onclick();
+    await warte(60);
+    pruef('H· §146-Ruecknahme ueber das Quellfeld bleibt erhalten ('+wo+')',
+      d.getElementById('meldung').style.display!=='block' && next().disabled===true,
+      d.getElementById('stepno').textContent);
+
+    dom.window.close();
+  }
+}
+
 (async function(){
   if(JSDOM){ try { await durchklick(); } catch(e){ pruef('B· Durchklick abgebrochen', false, e.message); } }
   if(JSDOM){ try { await doppeltipp(); } catch(e){ pruef('D· §146-Probe abgebrochen', false, e.message); } }
   if(JSDOM){ try { await verspaeteterWecker(); } catch(e){ pruef('G· §150-Probe abgebrochen', false, e.message); } }
+  if(JSDOM){ try { await zweiterTipp(); } catch(e){ pruef('H· §158-Probe abgebrochen', false, e.message); } }
   else { console.log('\n⚠ jsdom fehlt — Block B uebersprungen. Mit  npm i jsdom  nachinstallieren.'); }
   console.log('\n'+'═'.repeat(62));
   if(bad){ console.log('FEHLER ('+bad+'):'); fehler.forEach(f=>console.log(' · '+f)); }

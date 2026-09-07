@@ -37,7 +37,7 @@
 // Die Kommentare unten nennen stellenweise noch den alten Namen — gemeint ist immer index.html.
 // Sonst kann der Worker alte Kern-/Regeldateien aus dem Cache laden, während das Hauptfenster
 // neue nutzt — gemischte Versionen (§51-Klasse).
-importScripts('gembel_rules.js?v=124', 'countred_ai_core.js?v=124');
+importScripts('gembel_rules.js?v=125', 'countred_ai_core.js?v=125');
 
 // §61b-2/§F4: Antisymmetrie-Selbsttest VERDRAHTEN. Der Kern-Kommentar („bleibt verbaut, sperrt
 // bei Verletzung") stimmte bis 12.7. nicht — die Funktion wurde nirgends aufgerufen, die Sperre
