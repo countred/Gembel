@@ -1,3 +1,4 @@
+// Count Red · © 1998–2026 Walter Rehm · Alle Rechte vorbehalten · countred.com
 // ═══════════════════════════════════════════════════════════════════
 // gembel_rules.js — Kanonische Regelschicht für Gembel · Count Red
 // ═══════════════════════════════════════════════════════════════════

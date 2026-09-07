@@ -1,3 +1,4 @@
+// Count Red · © 1998–2026 Walter Rehm · Alle Rechte vorbehalten · countred.com
 // ═══════════════════════════════════════════════════════════════════
 // countred_ai_core.js — Produkt-KI-Kern für CountRed (Mensch vs. KI)
 // ═══════════════════════════════════════════════════════════════════

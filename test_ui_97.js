@@ -296,6 +296,50 @@ console.log('\u00a7157 \u2014 Datenschutz: Pflichtangaben nach Art. 13:');
      'der Rechentest ist beim Namen genannt, solange perfMs geschrieben wird (perfMs geloggt: '+perfGeloggt2+')');
 }
 
+console.log('\u00a7159 \u2014 Urheberrechtsvermerk:');
+{
+  // \u00a7159 (7.9.): Bis v125 stand in KEINER ausgelieferten Datei ein Rechtevermerk — nur
+  // zwei Herkunftss\u00e4tze in Flie\u00dftext ("Das Spiel stammt von \u2026"). Das ist eine Angabe zur
+  // Herkunft, keine Rechteberuehmung. \u00a7 10 UrhG knuepft die Urhebervermutung an die
+  // Bezeichnung "in der ueblichen Weise" auf den Stuecken selbst — bei Software also an den
+  // Dateikopf. Diese Gruppe haelt beides fest: den sichtbaren Absatz und die Dateikoepfe.
+  //
+  // Geprueft wird gegen das ISOLIERTE Overlay, nicht gegen die Datei (\u00a7157-Lehre): der
+  // Kopfvermerk steht als Kommentar in derselben Datei und wuerde jede Suche ueber `html`
+  // gruen faerben, ohne dass beim Nutzer ein Wort ankommt.
+  const imp = html.match(/id="impressum-overlay"[\s\S]*?Schlie\u00dfen<\/button>/)[0];
+  ok(/Urheberrecht/.test(imp) && /\u00a9 1998\u20132026 Walter Rehm/.test(imp) &&
+     /Alle Rechte vorbehalten/.test(imp),
+     'der Urheberrechtsvermerk steht SICHTBAR im Impressum');
+  // Ein Vermerk, der mehr beansprucht als das Gesetz gibt, ist im Streit schwaecher, nicht
+  // staerker: Spielregeln und Spielideen sind urheberrechtlich frei. Der Absatz nennt
+  // deshalb Code, Texte und Gestaltung — und darf die Regeln NICHT beanspruchen.
+  const absatz = (imp.match(/<strong[^>]*>Urheberrecht<\/strong>[\s\S]*?<\/div>/)||[''])[0];
+  ok(absatz.length > 0 && !/Spielidee|Spielregel/.test(absatz),
+     'der Vermerk beansprucht die Spielregeln nicht (nur Code, Texte, Gestaltung)');
+
+  const VERMERK = /Count Red \u00b7 \u00a9 1998\u20132026 Walter Rehm \u00b7 Alle Rechte vorbehalten/;
+  ok(VERMERK.test(html.split('\n').slice(0,4).join('\n')),
+     'index.html traegt den Vermerk im Dateikopf');
+
+  // Nachbardateien: EIN Ergebnis je Datei, ob sie danebenliegt oder nicht — sonst haengt
+  // die Pruefungszahl am Ordnerinhalt (\u00a7158-Lehre, s. Handover Abschnitt 8).
+  for(const f of ['anleitung.html','gembel_rules.js','countred_ai_core.js','countred_ai_worker.js']){
+    const pfad = __dirname + '/' + f;
+    if(!fs.existsSync(pfad)) { ok(true, f + ' liegt nicht daneben (uebersprungen)'); continue; }
+    const kopf = fs.readFileSync(pfad,'utf8').split('\n').slice(0,4).join('\n');
+    ok(VERMERK.test(kopf), f + ' traegt den Vermerk im Dateikopf');
+  }
+
+  const lic = __dirname + '/LICENSE';
+  if(!fs.existsSync(lic)) ok(true, 'LICENSE liegt nicht daneben (uebersprungen)');
+  else {
+    const L = fs.readFileSync(lic,'utf8');
+    ok(/Walter Rehm/.test(L) && /Alle Rechte vorbehalten/.test(L) && /KEINER\s+Open-Source-Lizenz/.test(L),
+       'LICENSE nennt den Rechteinhaber und stellt klar, dass keine Open-Source-Lizenz gilt');
+  }
+}
+
 console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr):');
 {
   // Ein Impressum mit eckigen Klammern ist schlimmer als keines — es sieht aus wie eines,

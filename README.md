@@ -85,3 +85,11 @@ Fehler, Ungereimtheiten und Eindrücke aus dem Spiel sind willkommen:
 ---
 
 *Count Red · digitale Fassung · Testbetrieb 2026*
+
+---
+
+## Urheberrecht
+
+Programmcode, Texte und Gestaltung: © 1998–2026 Walter Rehm. Alle Rechte vorbehalten.
+Das Spiel erschien 1998 erstmals als Brettspiel unter dem Namen Gembel.
+Einzelheiten in [LICENSE](LICENSE).
