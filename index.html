@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=131'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=132'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -904,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=131" charset="utf-8"></script>
+<script src="gembel_rules.js?v=132" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=131" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=132" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1185,25 +1185,34 @@ function updateOppOfflineCountdown(){
 // Cleanup, kollidiert nicht mit der Übergangslösung §66/§68). meta/aborted wird zusätzlich kurz
 // gesetzt, damit ein zurückkehrender Gegner den Abbruch auch dann erkennt, wenn er den Snapshot
 // noch VOR dem remove() erwischt (Race-Absicherung; der visibilitychange-Handler prüft beides).
-async function finalizeOppAbort(msg, reason){
+// §168 (7.9., Walters Livebefund zu v130): KEIN BEDIENWEG DARF AUF DAS NETZ WARTEN.
+// Bis v131 wartete diese Funktion auf DREI Schreibungen (Forensik, meta/aborted, remove),
+// bevor sie `handleDisconnect` erreichte. Ist die EIGENE Leitung weg, lösen die nie auf — der
+// Abbruch kam nie an. `clearOppOffline()` lief aber schon davor und blendete die Tafel aus:
+// das Brett blitzte auf, der nächste Präsenz-Tick holte die Tafel zurück, und es sprang hin
+// und her. Eine Sackgasse, aus der der Nutzer nicht herauskam.
+// JETZT: erst lokal (Zeitgeber aus, aufräumen, Tafel), dann die Schreibungen OHNE await. Die
+// Firebase-Bibliothek stellt sie zurück und schickt sie beim nächsten Verbindungsaufbau —
+// `meta/aborted` landet also weiterhin, nur eben später und ohne jemanden aufzuhalten.
+function finalizeOppAbort(msg, reason){
   // §75-W3-A: Offline-Dauer SICHERN, bevor clearOppOffline() oppOfflineSince auf null setzt —
   // sonst wäre offlineForMs im Forensik-Datensatz immer null (Reihenfolge-Falle, im Self-Review
   // gefunden). Danach erst aufräumen, loggen, löschen.
   const offlineForMs = (oppOfflineSince!==null) ? Math.max(0, serverNow()-oppOfflineSince) : null;
   clearOppOffline();
-  const wasRoom = roomRef;
+  const wasRoom = roomRef, wasRole = myRole;
   // (1) Forensik-Datensatz — nur der wartende Spieler schreibt (kein Doppel-Eintrag).
-  await logMvmAbort(reason||'disconnect-timeout', offlineForMs);
-  if(myRole==='host' && wasRoom){
-    // (2a) Abbruch-Flag setzen (Race-Fenster für schnell zurückkehrende Gegner), dann Raum löschen.
-    try{ await update(wasRoom,{'meta/aborted':true}); }catch(e){}
-    try{ await remove(wasRoom); }catch(e){}   // §75-W3-A: saubere Löschung (Host-Recht)
-  } else if(wasRoom){
-    // Gast wartet: kann den Raum nicht löschen (Host-Recht). meta/aborted setzen, damit der
-    // zurückkehrende Host den Abbruch erkennt; der Host-seitige Cleanup/Lazy-Cleanup räumt später.
-    try{ await update(wasRoom,{'meta/aborted':true}); }catch(e){}
-  }
+  // ⚠️ VOR handleDisconnect aufrufen, aber NICHT erwarten: logMvmAbort liest roomCode, myRole,
+  // phase und moveIndex synchron beim Bauen des Datensatzes; cleanup() nullt sie gleich danach.
+  logMvmAbort(reason||'disconnect-timeout', offlineForMs);
+  // (2) §168: lokal abschließen — ab hier hängt nichts mehr am Netz.
   handleDisconnect(msg||'Mitspieler offline — Spiel abgebrochen.');
+  // (3) Schreibungen best effort, ohne Wartezeit. Gast darf nicht löschen (Host-Recht),
+  // setzt aber das Flag, damit der zurückkehrende Host den Abbruch erkennt.
+  if(wasRoom){
+    update(wasRoom,{'meta/aborted':true}).catch(()=>{});
+    if(wasRole==='host') remove(wasRoom).catch(()=>{});   // §75-W3-A: saubere Löschung
+  }
 }
 
 // §75-W3-A: schlanker Abbruch-Datensatz für die Stabilitätsanalyse (Testphase). Bewusst nach
@@ -1245,7 +1254,12 @@ async function logMvmAbort(reason, offlineForMs){
 
 // §72c: „Sofort abbrechen / zur Lobby" — vom wartenden Spieler geklickt (erst nach 5 s aktiv).
 window.abortToLobbyNow=function(){
-  finalizeOppAbort('Spiel abgebrochen — zurück zur Lobby.', 'manual-abort');
+  // §168: Wortlaut nach Lage. War die EIGENE Leitung weg, ist „Mitspieler offline" falsch —
+  // und „Spiel abgebrochen" allein ließ Walter rätseln, wer da eigentlich abgebrochen hat.
+  const eigene = (EIGENE_PRAESENZ_AN && selbstOffline);
+  finalizeOppAbort(eigene ? 'Partie verlassen — deine Verbindung war unterbrochen.'
+                          : 'Spiel abgebrochen — zurück zur Lobby.',
+                   eigene ? 'manual-abort-offline' : 'manual-abort');
 };
 
 // §75-W3-A: Rückkehr eines Spielers, dessen Raum in seiner Abwesenheit abgebrochen/aufgelöst wurde
@@ -1578,7 +1592,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v131';
+const BUILD_MARKER='· Build v132';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1895,7 +1909,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=131'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=132'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

@@ -360,6 +360,35 @@ console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr
      'die Datenschutzerkl\u00e4rung tr\u00e4gt ein Datum in lesbarer Form');
 }
 
+console.log('\u00a7168 \u2014 kein Bedienweg wartet auf das Netz:');
+{
+  // Walters Livebefund zu v130/v131: bleibt B offline und tippt „Sofort abbrechen", passiert
+  // nichts Bleibendes — das Brett blitzt auf, die Tafel kommt zurueck, und so springt es hin
+  // und her. Ursache: finalizeOppAbort wartete auf drei Netzschreibungen (Forensik,
+  // meta/aborted, remove), bevor es handleDisconnect erreichte. Ohne Leitung loesen die nie
+  // auf. Eine Sackgasse ohne Ausweg.
+  const fo = html.match(/function finalizeOppAbort\(msg, reason\)\{[\s\S]*?\n\}/)[0];
+  ok(!/^\s*async function finalizeOppAbort/.test(html.match(/\n\s*(async )?function finalizeOppAbort/)[0]),
+     '\u00a7168: finalizeOppAbort ist nicht mehr async \u2014 es gibt nichts mehr zu erwarten');
+  ok(!/await /.test(fo),
+     '\u00a7168: im Abbruchweg steht KEIN await mehr (' + ((fo.match(/await /g)||[]).length) + ' gefunden)');
+  const iLog   = fo.indexOf('logMvmAbort(');
+  const iLokal = fo.indexOf('handleDisconnect(');
+  const iSchreib = fo.indexOf("update(wasRoom,{'meta/aborted':true})");
+  ok(iLog > -1 && iLokal > iLog,
+     '\u00a7168: der Forensik-Datensatz wird VOR dem Aufr\u00e4umen gebaut (cleanup nullt roomCode und myRole)');
+  ok(iLokal > -1 && iSchreib > iLokal,
+     '\u00a7168: erst lokal abschlie\u00dfen, dann schreiben \u2014 nicht umgekehrt');
+  ok(/update\(wasRoom,\{'meta\/aborted':true\}\)\.catch\(\(\)=>\{\}\);/.test(fo) &&
+     /remove\(wasRoom\)\.catch\(\(\)=>\{\}\);/.test(fo),
+     '\u00a7168: die Schreibungen laufen best effort und halten niemanden auf');
+  ok(/if\(wasRole==='host'\) remove\(wasRoom\)/.test(fo),
+     '\u00a7168: nur der Host l\u00f6scht den Raum (Host-Recht, wasRole VOR cleanup gesichert)');
+  ok(/const eigene = \(EIGENE_PRAESENZ_AN && selbstOffline\);/.test(html) &&
+     /Partie verlassen \u2014 deine Verbindung war unterbrochen\./.test(html),
+     '\u00a7168: bei EIGENER Unterbrechung sagt die Meldung das auch');
+}
+
 console.log('\u00a7166 \u2014 R\u00fcckkehr des Hosts nach dem Remis:');
 {
   // Walters Livetest zu v129: B (Gast) nimmt an und geht ins Men\u00fc; A (Host) kommt aus dem
