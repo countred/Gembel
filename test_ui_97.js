@@ -360,6 +360,43 @@ console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr
      'die Datenschutzerkl\u00e4rung tr\u00e4gt ein Datum in lesbarer Form');
 }
 
+console.log('\u00a7166 \u2014 R\u00fcckkehr des Hosts nach dem Remis:');
+{
+  // Walters Livetest zu v129: B (Gast) nimmt an und geht ins Men\u00fc; A (Host) kommt aus dem
+  // Flugmodus zur\u00fcck und sieht das Remis NIE. Zwei Ursachen, beide hier festgehalten.
+
+  // (1) Die eigene Ausfall-Tafel braucht einen EIGENEN Merker. Sie hing am Aufr\u00e4umen des
+  //     Gegner-Countdowns — der bei §163 nie gesetzt wird. Also blieb sie stehen.
+  ok(/let eigenerAusfallSichtbar = false;/.test(html) &&
+     /function clearEigenenAusfall\(\)\{/.test(html),
+     '\u00a7166: die eigene Ausfall-Tafel hat einen eigenen Zustand und eine eigene R\u00e4umung');
+  const pt = html.match(/function presenceTick\(\)\{[\s\S]*?\n\}/)[0];
+  ok(/if\(eigenerAusfallSichtbar\) clearEigenenAusfall\(\);\s*\/\/ \u00a7166: auch die eigene Tafel/.test(pt) &&
+     /if\(eigenerAusfallSichtbar\) clearEigenenAusfall\(\);\s*\/\/ \u00a7166: eigene Leitung ist zur\u00fcck/.test(pt),
+     '\u00a7166: sie wird in BEIDEN Richtungen ger\u00e4umt (Partie vorbei / Leitung zur\u00fcck)');
+  ok(/selbstOffline=false;\s*\n\s*clearEigenenAusfall\(\);/.test(html),
+     '\u00a7166: beim Zur\u00fcckkommen sofort, nicht erst beim n\u00e4chsten Tick');
+  const ce = html.match(/function clearEigenenAusfall\(\)\{[\s\S]*?\n\}/)[0];
+  ok(/if\(oppOfflineSince===null\)\{/.test(ce),
+     '\u00a7166: ein laufender ECHTER Gegner-Countdown wird dabei nicht weggewischt');
+
+  // (2) Der Weggang des Gastes darf nicht am eigenen Altstand gemessen werden.
+  const gd = html.match(/async function handleGuestDeparture\(data\)\{[\s\S]*?\n\}/)[0];
+  ok(/const fertig = \(data\.state && data\.state\.phase==='finished'\) \|\| phase==='finished';/.test(gd),
+     '\u00a7166: der RAUM entscheidet, ob die Partie fertig ist \u2014 nicht die lokale phase');
+  ok(/if\(fertig\)\{/.test(gd) && !/if\(phase==='finished'\)\{\n    setLog/.test(gd),
+     '\u00a7166: die alte Abfrage auf die lokale phase ist ersetzt');
+  ok(/if\(fertig\)\{[\s\S]{0,300}?applyRemoteState\(data\.state\)/.test(gd),
+     '\u00a7166: der beendete Zustand wird angewendet, nicht nur gemeldet');
+
+  // (3) Der Rueckkehr-Pfad muss an jedem Ausstieg sagen, warum.
+  const rp = html.match(/async function raumRueckkehrPruefen\(\)\{[\s\S]*?\n\}/)[0];
+  const zeilen = (rp.match(/console\.(log|warn)\('\u00a7162 R\u00fcckkehr/g)||[]).length;
+  ok(zeilen >= 5, '\u00a7166: jeder Ausstieg des R\u00fcckkehr-Pfads protokolliert seinen Grund (' + zeilen + ' Stellen)');
+  ok(/if\(!roomRef \|\| !myRole\)\{ console\.log\('\u00a7162 R\u00fcckkehr: kein Raum mehr/.test(rp),
+     '\u00a7166: auch der fr\u00fcheste Ausstieg meldet sich (der fehlte in der v129-Runde)');
+}
+
 console.log('\u00a7164/\u00a7165 \u2014 Remis-Annahme geht nicht mehr verloren:');
 {
   // Walters Livetest (7.9.) und der Raum Q65KV beweisen den Hergang: `state/lastMove/drawReason`
