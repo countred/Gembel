@@ -434,13 +434,11 @@ console.log('\u00a7164/\u00a7165 \u2014 Remis-Annahme geht nicht mehr verloren:'
   ok(/try\{[\s\S]*?await update\(roomRef,\{state\}\);[\s\S]*?\}catch\(e\)\{[\s\S]*?console\.error/.test(ps),
      '\u00a7164: eine gescheiterte Zustands-Schreibung verschwindet nicht mehr spurlos');
 
-  // Kein Wiedereinstiegs-Knopf nach eigenem Abbruch.
-  ok(/function handleDisconnect\(msg, wiederkehr=true\)\{/.test(html) &&
-     /if\(wiederkehr\) merkeRaumFuerWiederkehr\(wasCode, wasRole, wasPlayer\);/.test(html),
-     '\u00a7164: der Wiedereinstieg ist abschaltbar, wenn es nichts zur\u00fcckzukehren gibt');
-  ok(/handleDisconnect\(msg\|\|'Mitspieler offline \u2014 Spiel abgebrochen\.', false\)/.test(html) &&
-     /handleDisconnect\(msg \|\| 'Verbindung zu lange unterbrochen[^)]*, false\)/.test(html),
-     '\u00a7164: nach eigenem Abbruch und bei aufgel\u00f6stem Raum bleibt der Knopf weg');
+  // §167: die Signatur ist wieder einstellig — es gibt nichts mehr zu unterscheiden.
+  ok(/function handleDisconnect\(msg\)\{/.test(html),
+     '\u00a7167: handleDisconnect braucht keinen Wiederkehr-Schalter mehr');
+  ok(/letzterBlickAufDenRaum\(wasRoom, wasPlayer\)/.test(html),
+     '\u00a7162-B bleibt: der letzte Blick in den Raum ist unber\u00fchrt');
 
   // §165: die Querformat-Sperre darf den Rechner nicht mehr treffen.
   ok(/@media \(orientation:landscape\) and \(max-height:520px\) and \(pointer:coarse\)\{/.test(html),
@@ -461,8 +459,8 @@ console.log('\u00a7162/\u00a7163 \u2014 Verbindungsabbruch: Ergebnis geht nicht 
   ok(hd.indexOf('const wasRoom=roomRef') > -1 &&
      hd.indexOf('const wasRoom=roomRef') < hd.indexOf('cleanup(false)'),
      'handleDisconnect sichert Raum, Rolle und Spielernummer VOR dem Aufr\u00e4umen');
-  ok(/letzterBlickAufDenRaum\(wasRoom, wasPlayer\)/.test(hd) && /merkeRaumFuerWiederkehr\(wasCode, wasRole, wasPlayer\)/.test(hd),
-     '\u00a7162: letzter Blick auf den Raum und Merken f\u00fcr den Wiedereinstieg sind angeh\u00e4ngt');
+  ok(/letzterBlickAufDenRaum\(wasRoom, wasPlayer\)/.test(hd),
+     '\u00a7162-B: der letzte Blick auf den Raum ist angeh\u00e4ngt');
   ok(/st\.phase!=='finished'\) return;/.test(html) && /Die Partie ist beendet: /.test(html),
      '\u00a7162-B: ein beendetes Spiel ersetzt die Abbruchmeldung durch das Ergebnis');
 
@@ -477,17 +475,21 @@ console.log('\u00a7162/\u00a7163 \u2014 Verbindungsabbruch: Ergebnis geht nicht 
      e({winner:2},1) === 'Mitspieler hat gewonnen',
      'ergebnisSatz benennt Remis mit Grund, eigenen Sieg und fremden Sieg richtig');
 
-  // §162-C: der Wiedereinstiegs-Knopf ist da und startet versteckt.
-  ok(/<button class="big-btn primary hidden" id="dc-reconnect" onclick="wiederVerbinden\(\)"/.test(html),
-     '\u00a7162-C: „Erneut verbinden\" liegt auf der Abbruchtafel und ist zun\u00e4chst versteckt');
-  ok(/window\.wiederVerbinden=async function\(\)\{[\s\S]*?raumRueckkehrPruefen\(\)/.test(html),
-     '\u00a7162-C: der Knopf nimmt denselben R\u00fcckkehr-Pfad wie die R\u00fcckkehr aus dem Hintergrund');
+  // §167 (7.9.): „Erneut verbinden" ist AUSGEBAUT. Seit §163 fuehrt die eigene Unterbrechung
+  // nicht mehr auf die Abbruchtafel; uebrig blieben nur Wege mit TOTEM Raum, auf denen der
+  // Knopf nicht wirken konnte (Walters Gegenprobe 4 zu v130). Diese Pruefung haelt fest, dass
+  // er weg ist — samt Mechanik, damit keine Leiche zurueckbleibt.
+  ok(!/dc-reconnect/.test(html) && !/wiederVerbinden/.test(html) && !/merkeRaumFuerWiederkehr/.test(html),
+     '\u00a7167: der wirkungslose Wiedereinstiegs-Knopf ist samt Mechanik ausgebaut');
+  const dcT = html.match(/id="dc-overlay">[\s\S]*?<\/div>/)[0];
+  ok((dcT.match(/<button/g)||[]).length===1 && /Zur\u00fcck zur Auswahl/.test(dcT),
+     '\u00a7167: auf der Abbruchtafel steht genau EIN Knopf, und der f\u00fchrt ins Men\u00fc');
 
   // §162: der Rueckkehr-Pfad ist benannt und wird aus DREI Richtungen gerufen.
   ok(/async function raumRueckkehrPruefen\(\)\{/.test(html),
      '\u00a7162: der R\u00fcckkehr-Pfad ist eine benannte Funktion (vorher anonym im visibilitychange)');
-  ok((html.match(/raumRueckkehrPruefen\(\)/g)||[]).length >= 4,
-     '\u00a7162: er wird aus mehreren Richtungen gerufen (Definition + Hintergrund + Knopf + \u00a7163)');
+  ok((html.match(/raumRueckkehrPruefen\(\)/g)||[]).length >= 3,
+     '\u00a7162: er wird aus mehreren Richtungen gerufen (Definition + Hintergrund + \u00a7163)');
 
   // §163: eigene Verbindung.
   ok(/onValue\(ref\(db,'\.info\/connected'\)/.test(html),

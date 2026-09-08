@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=130'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=131'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -768,11 +768,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="card">
     <h2>Verbindung unterbrochen</h2>
     <p id="dc-msg">Der andere Spieler hat die Verbindung getrennt.</p>
-    <!-- §162-C (7.9.): Wiedereinstieg in den zuletzt gespielten Raum. Bis v127 war die einzige
-         Rettung, von Hand neu beizutreten — genau das macht dieser Knopf, mit dem gemerkten
-         Raumcode. Er ist versteckt, solange es keinen Raum zum Zurückkehren gibt. -->
-    <button class="big-btn primary hidden" id="dc-reconnect" onclick="wiederVerbinden()">Erneut verbinden</button>
-    <button class="big-btn" onclick="showModeMenu()">Zurück zur Auswahl</button>
+    <!-- §167 (7.9.): HIER STAND „Erneut verbinden" (§162-C, v128–v130) — AUSGEBAUT.
+         Der Knopf war für den Fall gedacht, dass die eigene Leitung weg ist, während der Raum
+         weiterlebt. Genau dieser Fall führt seit §163 aber nicht mehr auf diese Tafel: die
+         eigene Unterbrechung wird jetzt als solche angezeigt, ohne Abbruch. Übrig blieben nur
+         Wege, auf denen der Raum TOT ist (gelöscht, abgebrochen, Gast weg, selbst abgebrochen)
+         — dort konnte der Knopf nie wirken. Walters Livetest zu v130 (Gegenprobe 4) hat genau
+         das gezeigt. Ein Bedienelement, das nur dort erscheint, wo es nicht hilft, ist
+         schlimmer als keines. Wer es zurückholt, braucht zuerst einen Weg hierher, auf dem
+         der Raum noch lebt. -->
+    <button class="big-btn primary" onclick="showModeMenu()">Zurück zur Auswahl</button>
   </div>
 </div>
 
@@ -899,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=130" charset="utf-8"></script>
+<script src="gembel_rules.js?v=131" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -911,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=130" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=131" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1198,7 +1203,7 @@ async function finalizeOppAbort(msg, reason){
     // zurückkehrende Host den Abbruch erkennt; der Host-seitige Cleanup/Lazy-Cleanup räumt später.
     try{ await update(wasRoom,{'meta/aborted':true}); }catch(e){}
   }
-  handleDisconnect(msg||'Mitspieler offline — Spiel abgebrochen.', false); // §164: wir haben abgebrochen
+  handleDisconnect(msg||'Mitspieler offline — Spiel abgebrochen.');
 }
 
 // §75-W3-A: schlanker Abbruch-Datensatz für die Stabilitätsanalyse (Testphase). Bewusst nach
@@ -1248,8 +1253,7 @@ window.abortToLobbyNow=function(){
 // Button dort ist „Zurück zur Auswahl" → showModeMenu, Fix 5c). handleDisconnect räumt lokal auf
 // (cleanup(false)); ein remove() ist unnötig, weil der Host den Raum bereits gelöscht hat.
 function handleAbortReturn(msg){
-  // §164: der Raum ist aufgelöst — es gibt nichts, wohin man zurückkehren könnte.
-  handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.', false);
+  handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
 }
 
 // ── Game Logic ───────────────────────────────────────────────────
@@ -1574,7 +1578,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v130';
+const BUILD_MARKER='· Build v131';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1891,7 +1895,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=130'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=131'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -3249,19 +3253,17 @@ function updateStatusUI(){
 // rematch handled via showNeuMenu flow
 
 // ── Disconnect handling ──────────────────────────────────────────
-// §164 (7.9., Walters Livebefund): `wiederkehr=false`, wenn WIR den Raum selbst abgebrochen
-// haben oder er aufgelöst wurde. Dann ist „Erneut verbinden" sinnlos — es führte bei Walter
-// zu einem blauen Knopf, der nichts tat (der Rückkehr-Pfad findet `meta/aborted` und schickt
-// sofort wieder auf dieselbe Tafel). Ein Knopf, der nicht wirkt, ist schlimmer als keiner.
-function handleDisconnect(msg, wiederkehr=true){
+// §167 (7.9.): Der Parameter `wiederkehr` ist mit dem Knopf entfallen — es gibt nichts mehr
+// zu unterscheiden. Was BLEIBT, ist der letzte Blick in den Raum (§162-B): steht dort ein
+// beendetes Spiel, tritt das Ergebnis an die Stelle der Abbruchmeldung. Genau das hat in
+// Walters Test funktioniert und soll erhalten bleiben.
+function handleDisconnect(msg){
   // §162 (7.9.): Vor dem Aufräumen merken, WO wir waren. cleanup() nullt roomRef, roomCode,
   // myRole und myPlayer — danach ist beides nicht mehr zu haben.
   const wasRoom=roomRef, wasCode=roomCode, wasRole=myRole, wasPlayer=myPlayer;
   cleanup(false);
   document.getElementById('dc-msg').textContent=msg||'Verbindung unterbrochen.';
   showOverlay('dc-overlay');
-  if(wiederkehr) merkeRaumFuerWiederkehr(wasCode, wasRole, wasPlayer);   // §162-C
-  else           merkeRaumFuerWiederkehr(null, null, null);              // §164
   letzterBlickAufDenRaum(wasRoom, wasPlayer);             // §162-B
 }
 
@@ -3295,39 +3297,6 @@ function ergebnisSatz(st, wasPlayer){
   return (st.winner===wasPlayer) ? 'Du hast gewonnen' : 'Mitspieler hat gewonnen';
 }
 
-// §162-C: den Raum für einen Wiedereinstieg merken. Nur Code, Rolle und Spielernummer —
-// alles andere kommt beim Zurückkommen frisch aus dem Raum.
-let wiederRaum=null;
-function merkeRaumFuerWiederkehr(code, role, player){
-  wiederRaum = (code && role) ? {code:code, role:role, player:player} : null;
-  const btn=document.getElementById('dc-reconnect');
-  if(btn) btn.classList.toggle('hidden', !wiederRaum);
-}
-
-window.wiederVerbinden=async function(){
-  if(!wiederRaum) return;
-  const w=wiederRaum;
-  const el=document.getElementById('dc-msg');
-  roomCode=w.code; myRole=w.role; myPlayer=w.player; roomRef=ref(db,`rooms/${w.code}`);
-  try{
-    const snap=await get(roomRef);
-    if(!snap.exists()){
-      roomRef=null; roomCode=null; myRole=null; myPlayer=null;
-      if(el) el.textContent='Der Raum ist nicht mehr vorhanden.';
-      merkeRaumFuerWiederkehr(null,null,null);
-      return;
-    }
-  }catch(e){
-    roomRef=null; roomCode=null; myRole=null; myPlayer=null;
-    if(el) el.textContent='Keine Verbindung — bitte gleich noch einmal versuchen.';
-    return;
-  }
-  // Präsenz-Flag wieder scharf stellen (wie in createRoom/joinRoom), sonst fehlt es nach
-  // einem echten Abriss. raumRueckkehrPruefen() erledigt den Rest: Zustand, Zuhörer, Herzschlag.
-  onDisconnect(roomRef).update(w.role==='host' ? {host:'offline'} : {guest:'offline'});
-  document.getElementById('dc-overlay').classList.add('hidden');
-  await raumRueckkehrPruefen();
-};
 
 function cleanup(removeRoom=true){
   stopHeartbeat();      // §72c/§72e: eigenen Herzschlag + Präsenz-Monitor beenden
