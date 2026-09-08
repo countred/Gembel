@@ -360,6 +360,56 @@ console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr
      'die Datenschutzerkl\u00e4rung tr\u00e4gt ein Datum in lesbarer Form');
 }
 
+console.log('\u00a7164/\u00a7165 \u2014 Remis-Annahme geht nicht mehr verloren:');
+{
+  // Walters Livetest (7.9.) und der Raum Q65KV beweisen den Hergang: `state/lastMove/drawReason`
+  // = "beide einverstanden" UND `state/phase` = "playing" — aus DERSELBEN Schreibung. Zwischen
+  // `phase='finished'` und `pushState` lag ein `await`; darin hat der eigene Listener
+  // `phase` aus dem alten Raumzustand zurueckgesetzt.
+  const ad = html.match(/window\.answerDraw=async function\(yes\)\{[\s\S]*?\n\};/)[0];
+  const iPhase = ad.indexOf("phase='finished';");
+  const iPush  = ad.indexOf('await pushState(null);');
+  const iFlag  = ad.indexOf("'meta/drawAcceptedBy':myRole");
+  ok(iPhase > -1 && iPush > iPhase && iFlag > iPush,
+     '\u00a7164: erst phase, dann pushState, DANN das Signal \u2014 kein await im Fenster dazwischen');
+  ok(!/phase='finished';[\s\S]{0,400}?await update\([\s\S]{0,80}?\)[\s\S]{0,80}?await pushState/.test(ad),
+     '\u00a7164: zwischen phase und pushState steht kein await mehr');
+
+  // Kein Rueckwaertsgang — und der Waechter muss VOR dem Generations-Guard stehen, weil der
+  // mvmGameGen hochsetzt.
+  const ars = html.match(/function applyRemoteState\(state\)\{[\s\S]*?\u00a772k GENERATIONS-GUARD/)[0];
+  ok(/phase==='finished' && state\.phase!=='finished'/.test(ars),
+     '\u00a7164: eine beendete Partie wird von einem Schnappschuss nicht wieder er\u00f6ffnet');
+  ok(/state\.gameGen>mvmGameGen\)\)\{/.test(ars),
+     '\u00a7164: ein Nochmal mit h\u00f6herer Generation darf es weiterhin (sonst h\u00e4ngt das Rematch)');
+
+  // Host-autoritative Annahme, Signal erst danach loeschen.
+  const acc = html.match(/if\(data\.meta && data\.meta\.drawAcceptedBy\)\{[\s\S]*?\n    \}/)[0];
+  const iEnde = acc.indexOf('await pushState(null);');
+  const iClear= acc.indexOf("'meta/drawAcceptedBy':null");
+  ok(/myRole==='host' && \(phase==='playing'\|\|phase==='bonus'\)/.test(acc) && iEnde > -1,
+     '\u00a7164: der HOST beendet die Partie selbst, wenn sie noch l\u00e4uft (wie bei drawClaim)');
+  ok(iEnde > -1 && iClear > iEnde,
+     '\u00a7164: das Signal wird ERST NACH dem Schreiben gel\u00f6scht \u2014 sonst ist es verbraucht');
+
+  // pushState nicht mehr stumm.
+  const ps = html.match(/async function pushState\(winner=null\)\{[\s\S]*?\n\}/)[0];
+  ok(/try\{[\s\S]*?await update\(roomRef,\{state\}\);[\s\S]*?\}catch\(e\)\{[\s\S]*?console\.error/.test(ps),
+     '\u00a7164: eine gescheiterte Zustands-Schreibung verschwindet nicht mehr spurlos');
+
+  // Kein Wiedereinstiegs-Knopf nach eigenem Abbruch.
+  ok(/function handleDisconnect\(msg, wiederkehr=true\)\{/.test(html) &&
+     /if\(wiederkehr\) merkeRaumFuerWiederkehr\(wasCode, wasRole, wasPlayer\);/.test(html),
+     '\u00a7164: der Wiedereinstieg ist abschaltbar, wenn es nichts zur\u00fcckzukehren gibt');
+  ok(/handleDisconnect\(msg\|\|'Mitspieler offline \u2014 Spiel abgebrochen\.', false\)/.test(html) &&
+     /handleDisconnect\(msg \|\| 'Verbindung zu lange unterbrochen[^)]*, false\)/.test(html),
+     '\u00a7164: nach eigenem Abbruch und bei aufgel\u00f6stem Raum bleibt der Knopf weg');
+
+  // §165: die Querformat-Sperre darf den Rechner nicht mehr treffen.
+  ok(/@media \(orientation:landscape\) and \(max-height:520px\) and \(pointer:coarse\)\{/.test(html),
+     '\u00a7165: die Querformat-Tafel gilt nur f\u00fcr Ber\u00fchrungsger\u00e4te (Konsole am Rechner st\u00f6rt nicht mehr)');
+}
+
 console.log('\u00a7162/\u00a7163 \u2014 Verbindungsabbruch: Ergebnis geht nicht mehr verloren:');
 {
   // Walters Befund (7.9.): bricht die Verbindung waehrend eines Remisangebots ab, sieht der
@@ -368,7 +418,9 @@ console.log('\u00a7162/\u00a7163 \u2014 Verbindungsabbruch: Ergebnis geht nicht 
   // Geprueft wird die MECHANIK, nicht der Wortlaut der Meldungen.
 
   // §162-B: der letzte Blick muss die Bezeichner sichern, BEVOR cleanup() sie nullt.
-  const hd = html.match(/function handleDisconnect\(msg\)\{[\s\S]*?\n\}/)[0];
+  // ⚠️ Signatur bewusst offen (msg[^)]*): §164 hat den Parameter `wiederkehr` ergänzt, und die
+  // festgenagelte Fassung ließ die Suite mit einem TypeError abstürzen statt mit einem Fehlschlag.
+  const hd = html.match(/function handleDisconnect\(msg[^)]*\)\{[\s\S]*?\n\}/)[0];
   ok(hd.indexOf('const wasRoom=roomRef') > -1 &&
      hd.indexOf('const wasRoom=roomRef') < hd.indexOf('cleanup(false)'),
      'handleDisconnect sichert Raum, Rolle und Spielernummer VOR dem Aufr\u00e4umen');

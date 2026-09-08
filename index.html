@@ -319,7 +319,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .card-row{display:flex;gap:8px;width:100%;flex-wrap:wrap;}
 /* §95: Querformat-Hinweis. Standardmäßig aus; nur bei schmalem Querformat sichtbar. */
 #rotate-hint{display:none;}
-@media (orientation:landscape) and (max-height:520px){
+/* §165 (7.9., Walter): `pointer:coarse` ergänzt. Ein aufgeklapptes Entwicklerfenster drückt
+   die Fensterhöhe unter 520px — der Rechner hielt sich dann für ein quer gedrehtes Handy, und
+   Testen mit offener Konsole war unmöglich. Berührungsgeräte (Handy, Tablet) haben `coarse`,
+   Maus/Trackpad haben `fine`: am Handy also unverändert, am Rechner nie. */
+@media (orientation:landscape) and (max-height:520px) and (pointer:coarse){
   #rotate-hint{
     display:flex;position:fixed;inset:0;z-index:9999;
     align-items:center;justify-content:center;
@@ -467,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=128'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=129'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -895,7 +899,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=128" charset="utf-8"></script>
+<script src="gembel_rules.js?v=129" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -907,7 +911,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=128" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=129" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1172,7 +1176,7 @@ async function finalizeOppAbort(msg, reason){
     // zurückkehrende Host den Abbruch erkennt; der Host-seitige Cleanup/Lazy-Cleanup räumt später.
     try{ await update(wasRoom,{'meta/aborted':true}); }catch(e){}
   }
-  handleDisconnect(msg||'Mitspieler offline — Spiel abgebrochen.');
+  handleDisconnect(msg||'Mitspieler offline — Spiel abgebrochen.', false); // §164: wir haben abgebrochen
 }
 
 // §75-W3-A: schlanker Abbruch-Datensatz für die Stabilitätsanalyse (Testphase). Bewusst nach
@@ -1222,7 +1226,8 @@ window.abortToLobbyNow=function(){
 // Button dort ist „Zurück zur Auswahl" → showModeMenu, Fix 5c). handleDisconnect räumt lokal auf
 // (cleanup(false)); ein remove() ist unnötig, weil der Host den Raum bereits gelöscht hat.
 function handleAbortReturn(msg){
-  handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
+  // §164: der Raum ist aufgelöst — es gibt nichts, wohin man zurückkehren könnte.
+  handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.', false);
 }
 
 // ── Game Logic ───────────────────────────────────────────────────
@@ -1547,7 +1552,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v128';
+const BUILD_MARKER='· Build v129';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1864,7 +1869,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=128'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=129'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2202,8 +2207,16 @@ window.answerDraw=async function(yes){
     // §92 (Walter): Der ANNEHMENDE sieht „Remis — beide einverstanden"; dem ANBIETER meldet
     // applyRemoteState „Mitspieler ist mit Remis einverstanden" (drawAcceptedBy, s. dort).
     pendingLastMove={player:null, drawReason:'beide einverstanden'}; // §73: Grund an beide Seiten
-    await update(roomRef,{'meta/drawAcceptedBy':myRole}).catch(()=>{});
+    // §164 (7.9., Walters Livetest): HIER STAND EIN `await` DAZWISCHEN — und darin lag der Fehler.
+    // Zwischen `phase='finished'` und `pushState` wurde `meta/drawAcceptedBy` geschrieben. In
+    // dieser Wartezeit feuert der EIGENE Listener, applyRemoteState setzt `phase=state.phase`
+    // aus dem noch alten Raumzustand, und pushState schrieb danach die Remis-Begruendung
+    // ZUSAMMEN MIT `phase:'playing'`. Genau so lag es in Raum Q65KV: drawReason gesetzt,
+    // phase 'playing'. Beides aus derselben Schreibung — anders nicht erklaerbar.
+    // JETZT: erst der Zustand, dann das Signal. Zwischen dem Setzen von `phase` und dem
+    // Schreiben liegt kein await mehr, also auch kein Fenster fuer den Listener.
     await pushState(null);
+    await update(roomRef,{'meta/drawAcceptedBy':myRole}).catch(()=>{});
   } else {
     // §73 (Walter-Befund): der Ablehnende sah die Meldung, der ANBIETER nicht. Nach dem Muster von
     // rematchDeclined ein Signal setzen, das der Anbieter im Listener aufgreift.
@@ -2515,6 +2528,19 @@ function attachHostListener(){
       if((accepter==='guest' && myRole==='host') ||
          (accepter==='host' && myRole==='guest')){
         setLog('<span class="msg signal">Mitspieler ist mit Remis einverstanden</span>');
+        // §164 (7.9.): Bis v128 stand hier NUR die Meldung und das Loeschen des Signals. Dass die
+        // Partie endet, hing allein daran, dass der annehmende Gast einen beendeten Zustand
+        // geschrieben hatte — die einzige Spielende-Art, die NICHT host-autoritativ lief. Der
+        // Remis-ANSPRUCH (drawClaim, weiter unten) macht es seit §53g richtig; die ANNAHME nicht.
+        // JETZT nach demselben Muster: laeuft die Partie hier noch, beendet der HOST sie selbst.
+        // ⚠️ Das Signal wird ERST DANACH geloescht — sonst waere die Annahme wieder verbraucht,
+        // ohne gewirkt zu haben (genau das ist Walter am 7.9. passiert).
+        if(myRole==='host' && (phase==='playing'||phase==='bonus')){
+          phase='finished';
+          pendingLastMove={player:null, drawReason:'beide einverstanden'};
+          await pushState(null);
+          render();
+        }
         await update(roomRef,{'meta/drawAcceptedBy':null}).catch(()=>{});
       }
     }
@@ -2844,11 +2870,31 @@ async function pushState(winner=null){
     playerMap:{ host:hostPlayer, guest:hostPlayer===1?2:1 }
   };
   pendingLastMove=null;
-  await update(roomRef,{state});
+  // §164: die einzige Schreibstelle ohne catch — eine abgelehnte oder gescheiterte Schreibung
+  // verschwand spurlos. Bewusst NUR in die Konsole: ohne Netz scheitert jeder Zug, eine
+  // Bildschirmmeldung waere dann Dauerlaerm. Nach §132: nicht mehr stumm, aber auch nicht laut.
+  try{
+    await update(roomRef,{state});
+  }catch(e){
+    console.error('§164 pushState: Zustand NICHT geschrieben —', (e && e.message) ? e.message : e);
+  }
 }
 
 // ── Apply state received from Firebase ──────────────────────────
 function applyRemoteState(state){
+  // §164 (7.9.): KEIN RUECKWAERTSGANG. Eine beendete Partie darf durch einen Schnappschuss
+  // NICHT wieder eroeffnet werden — weder durch einen veralteten Zwischenspeicher (ein `get()`
+  // im Moment der Wiederverbindung kann noch den lokalen Stand liefern) noch durch den eigenen
+  // Listener waehrend einer Schreibung. Ausnahme: ein NOCHMAL, das eine hoehere Generation
+  // traegt — dort ist der Wechsel von 'finished' nach 'playing' gewollt.
+  // ⚠️ Muss VOR dem Generations-Guard stehen: der setzt mvmGameGen hoch, und danach waere
+  // die Bedingung nicht mehr zu pruefen.
+  if(phase==='finished' && state.phase!=='finished' &&
+     !(typeof state.gameGen==='number' && state.gameGen>mvmGameGen)){
+    console.warn('§164: Schnappschuss wollte eine beendete Partie wieder eroeffnen — ignoriert',
+                 '(eingehend:', state.phase, 'Gen', state.gameGen, '· lokal: finished Gen', mvmGameGen + ')');
+    return;
+  }
   // §72k GENERATIONS-GUARD + autoritative Parität. Snapshots einer ÄLTEREN Partie komplett
   // verwerfen (Firebase garantiert keine Callback-Reihenfolge). Die Parität ist menschgebunden
   // (§72k) und wird vom HOST autoritativ abgeleitet und als state.parityP1 geschrieben — der Gast
@@ -3171,14 +3217,19 @@ function updateStatusUI(){
 // rematch handled via showNeuMenu flow
 
 // ── Disconnect handling ──────────────────────────────────────────
-function handleDisconnect(msg){
+// §164 (7.9., Walters Livebefund): `wiederkehr=false`, wenn WIR den Raum selbst abgebrochen
+// haben oder er aufgelöst wurde. Dann ist „Erneut verbinden" sinnlos — es führte bei Walter
+// zu einem blauen Knopf, der nichts tat (der Rückkehr-Pfad findet `meta/aborted` und schickt
+// sofort wieder auf dieselbe Tafel). Ein Knopf, der nicht wirkt, ist schlimmer als keiner.
+function handleDisconnect(msg, wiederkehr=true){
   // §162 (7.9.): Vor dem Aufräumen merken, WO wir waren. cleanup() nullt roomRef, roomCode,
   // myRole und myPlayer — danach ist beides nicht mehr zu haben.
   const wasRoom=roomRef, wasCode=roomCode, wasRole=myRole, wasPlayer=myPlayer;
   cleanup(false);
   document.getElementById('dc-msg').textContent=msg||'Verbindung unterbrochen.';
   showOverlay('dc-overlay');
-  merkeRaumFuerWiederkehr(wasCode, wasRole, wasPlayer);   // §162-C
+  if(wiederkehr) merkeRaumFuerWiederkehr(wasCode, wasRole, wasPlayer);   // §162-C
+  else           merkeRaumFuerWiederkehr(null, null, null);              // §164
   letzterBlickAufDenRaum(wasRoom, wasPlayer);             // §162-B
 }
 
@@ -3309,6 +3360,10 @@ async function raumRueckkehrPruefen(){
         return;
       }
       const data=snap.val();
+      // §164: nach §132-Muster — die nächste Fehlersuche soll fünf Sekunden dauern.
+      console.log('§162 Rückkehr: phase =', (data.state ? data.state.phase : '(kein state)'),
+                  '· gameGen =', (data.state ? data.state.gameGen : '—'),
+                  '· meta =', (data.meta || '(keine)'));
       // §75-W3-A: Abbruch-Flag erkennen (Race-Fenster: Gegner hat aborted gesetzt, remove() aber
       // noch nicht durchgelaufen — oder Gast-Abbruch, der nur das Flag setzt). Gleiche Behandlung.
       if(data.meta && data.meta.aborted){
