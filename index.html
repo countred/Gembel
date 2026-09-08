@@ -467,7 +467,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=127'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=128'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -764,7 +764,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="card">
     <h2>Verbindung unterbrochen</h2>
     <p id="dc-msg">Der andere Spieler hat die Verbindung getrennt.</p>
-    <button class="big-btn primary" onclick="showModeMenu()">Zurück zur Auswahl</button>
+    <!-- §162-C (7.9.): Wiedereinstieg in den zuletzt gespielten Raum. Bis v127 war die einzige
+         Rettung, von Hand neu beizutreten — genau das macht dieser Knopf, mit dem gemerkten
+         Raumcode. Er ist versteckt, solange es keinen Raum zum Zurückkehren gibt. -->
+    <button class="big-btn primary hidden" id="dc-reconnect" onclick="wiederVerbinden()">Erneut verbinden</button>
+    <button class="big-btn" onclick="showModeMenu()">Zurück zur Auswahl</button>
   </div>
 </div>
 
@@ -891,7 +895,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=127" charset="utf-8"></script>
+<script src="gembel_rules.js?v=128" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -903,7 +907,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=127" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=128" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -962,6 +966,16 @@ function serverNow(){ return Date.now()+serverTimeOffset; }
 // sind ENTKOPPELT — Erkennung schnell, Kulanz zum Zurückkommen lang.
 const PRESENCE_HEARTBEAT_MS = 4000;  // alle 4 s eigenen Herzschlag schreiben (war 10 s)
 const PRESENCE_STALE_MS     = 12000; // 12 s ohne Herzschlag → offline ERKENNEN (≈3× Intervall)
+// ── §163 (7.9.): EIGENE VERBINDUNG ÜBERWACHEN ───────────────────────────────────────
+// ⚠️ RÜCKZIEHER: EIGENE_PRAESENZ_AN auf false setzen schaltet §163 vollständig aus — der
+// .info/connected-Zuhörer wird dann nicht aufgesetzt und presenceTick verhält sich wie in
+// v127. Das war Walters Auflage beim Bau: das Paket muss in einer Zeile abschaltbar bleiben.
+// GRUND: Bis v127 mass der Client NUR die Frische des Gegner-Herzschlags. Bricht die EIGENE
+// Leitung ab, kommen dessen Herzschläge ebenfalls nicht mehr an — das Gerät schloss daraus
+// „Mitspieler offline", zeigte den 45-s-Countdown und warf am Ende eine Partie weg, die in
+// Wahrheit weiterlief oder längst entschieden war (Walters Remis-Befund, 7.9.).
+const EIGENE_PRAESENZ_AN = true;
+let selbstOffline = false;   // true = die EIGENE Verbindung ist gerade weg
 const OPP_ABORT_GRACE_MS    = 45000; // 45 s Countdown bis Auto-Abbruch (Kulanz zum Zurückkommen)
 const OPP_ABORT_MINWAIT_MS  = 5000;  // „sofort abbrechen" erst nach 5 s klickbar (Anti-Panik)
 let heartbeatTimer=null;      // setInterval-Handle für den eigenen Herzschlag
@@ -1041,6 +1055,11 @@ function stopPresenceMonitor(){
 function presenceTick(){
   const inGame = (phase==='playing' || phase==='bonus');
   if(!inGame){ if(oppOfflineSince!==null) clearOppOffline(); return; }
+  // §163: Solange die EIGENE Verbindung weg ist, sagt ein fehlender Herzschlag NICHTS über den
+  // Gegner — er kommt bloß nicht bei uns an. Also: kein Countdown, kein Abbruch, und eine
+  // Meldung, die in die richtige Richtung zeigt. Die Frist läuft erst weiter, wenn wir wieder
+  // hören können (der .info/connected-Zuhörer setzt sie beim Zurückkommen frisch auf).
+  if(EIGENE_PRAESENZ_AN && selbstOffline){ zeigeEigenenAusfall(); return; }
   const stale = presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS);
   if(stale && oppOfflineSince===null){
     // Übergang online→offline: EINMAL Countdown aufsetzen.
@@ -1081,6 +1100,18 @@ function evaluateOpponentPresence(data){
     const forcedOld = serverNow() - PRESENCE_STALE_MS - 1;
     if(oppLastSeen===null || oppLastSeen>forcedOld) oppLastSeen=forcedOld;
   }
+}
+
+// §163: eigene Leitung weg — dieselbe Tafel, aber ehrlicher Text und OHNE Countdown.
+// Der Abbruch-Knopf bleibt bedienbar: wer nicht warten will, soll gehen können.
+function zeigeEigenenAusfall(){
+  const msgEl=document.getElementById('opp-offline-msg');
+  if(msgEl) msgEl.textContent = 'Deine Verbindung ist unterbrochen. Das Spiel läuft weiter, sobald sie zurück ist.';
+  const cnt=document.getElementById('opp-offline-count');
+  if(cnt) cnt.textContent='';
+  document.getElementById('opp-offline-overlay').classList.remove('hidden');
+  const btn=document.getElementById('opp-offline-abort');
+  if(btn) btn.disabled=false;
 }
 
 function showOppOfflineOverlay(){
@@ -1516,7 +1547,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v127';
+const BUILD_MARKER='· Build v128';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1833,7 +1864,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=127'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=128'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -3141,10 +3172,79 @@ function updateStatusUI(){
 
 // ── Disconnect handling ──────────────────────────────────────────
 function handleDisconnect(msg){
+  // §162 (7.9.): Vor dem Aufräumen merken, WO wir waren. cleanup() nullt roomRef, roomCode,
+  // myRole und myPlayer — danach ist beides nicht mehr zu haben.
+  const wasRoom=roomRef, wasCode=roomCode, wasRole=myRole, wasPlayer=myPlayer;
   cleanup(false);
   document.getElementById('dc-msg').textContent=msg||'Verbindung unterbrochen.';
   showOverlay('dc-overlay');
+  merkeRaumFuerWiederkehr(wasCode, wasRole, wasPlayer);   // §162-C
+  letzterBlickAufDenRaum(wasRoom, wasPlayer);             // §162-B
 }
+
+// ── §162 (7.9.): Walters Befund — Verbindungsabbruch während eines Remisangebots ──────
+// Der Anbieter sah nicht, dass der Mitspieler angenommen hatte. URSACHE: cleanup() hängt den
+// Raum-Zuhörer ab (`roomListener()`) und nullt roomRef. Ab da kann keine Aktualisierung mehr
+// ankommen, auch wenn das Netz eine Sekunde später zurück ist — nur ein neuer Beitritt liest
+// den Raum frisch. Das galt für JEDES Spielende während einer Unterbrechung, nicht nur Remis.
+//
+// §162-B: EIN LETZTER BLICK. Nach dem Aufräumen einmal lesen. Steht dort ein beendetes Spiel,
+// wird die Abbruchmeldung durch das ERGEBNIS ersetzt. Schlägt das Lesen fehl (wirklich kein
+// Netz), bleibt es bei der bisherigen Meldung — die Tafel steht ja schon.
+async function letzterBlickAufDenRaum(wasRoom, wasPlayer){
+  if(!wasRoom) return;
+  try{
+    const snap=await get(wasRoom);
+    if(!snap.exists()) return;
+    const st=snap.val().state;
+    if(!st || st.phase!=='finished') return;
+    const el=document.getElementById('dc-msg');
+    if(el) el.textContent='Die Partie ist beendet: '+ergebnisSatz(st, wasPlayer)+
+                          '. Die Meldung hat dich wegen der Unterbrechung nicht mehr erreicht.';
+  }catch(e){ /* kein Netz: die bisherige Meldung bleibt stehen */ }
+}
+
+function ergebnisSatz(st, wasPlayer){
+  if(st.winner==null){
+    const grund=(st.lastMove && st.lastMove.drawReason) ? ' ('+st.lastMove.drawReason+')' : '';
+    return 'Unentschieden'+grund;
+  }
+  return (st.winner===wasPlayer) ? 'Du hast gewonnen' : 'Mitspieler hat gewonnen';
+}
+
+// §162-C: den Raum für einen Wiedereinstieg merken. Nur Code, Rolle und Spielernummer —
+// alles andere kommt beim Zurückkommen frisch aus dem Raum.
+let wiederRaum=null;
+function merkeRaumFuerWiederkehr(code, role, player){
+  wiederRaum = (code && role) ? {code:code, role:role, player:player} : null;
+  const btn=document.getElementById('dc-reconnect');
+  if(btn) btn.classList.toggle('hidden', !wiederRaum);
+}
+
+window.wiederVerbinden=async function(){
+  if(!wiederRaum) return;
+  const w=wiederRaum;
+  const el=document.getElementById('dc-msg');
+  roomCode=w.code; myRole=w.role; myPlayer=w.player; roomRef=ref(db,`rooms/${w.code}`);
+  try{
+    const snap=await get(roomRef);
+    if(!snap.exists()){
+      roomRef=null; roomCode=null; myRole=null; myPlayer=null;
+      if(el) el.textContent='Der Raum ist nicht mehr vorhanden.';
+      merkeRaumFuerWiederkehr(null,null,null);
+      return;
+    }
+  }catch(e){
+    roomRef=null; roomCode=null; myRole=null; myPlayer=null;
+    if(el) el.textContent='Keine Verbindung — bitte gleich noch einmal versuchen.';
+    return;
+  }
+  // Präsenz-Flag wieder scharf stellen (wie in createRoom/joinRoom), sonst fehlt es nach
+  // einem echten Abriss. raumRueckkehrPruefen() erledigt den Rest: Zustand, Zuhörer, Herzschlag.
+  onDisconnect(roomRef).update(w.role==='host' ? {host:'offline'} : {guest:'offline'});
+  document.getElementById('dc-overlay').classList.add('hidden');
+  await raumRueckkehrPruefen();
+};
 
 function cleanup(removeRoom=true){
   stopHeartbeat();      // §72c/§72e: eigenen Herzschlag + Präsenz-Monitor beenden
@@ -3187,7 +3287,18 @@ document.addEventListener('visibilitychange',async()=>{
     // Präsenz-Hinweis ist und beim Zurückkehren durch den nächsten Herzschlag überschrieben wird.
     stopHeartbeat();
   } else {
-    // Returning to foreground
+    raumRueckkehrPruefen();   // §162: derselbe Pfad wie nach einer Wiederverbindung
+  }
+});
+
+// §162 (7.9.): AUSGELAGERT, Inhalt unverändert aus dem visibilitychange-Handler.
+// Diese Routine ist der einzige Ort, an dem ein Client seinen Raum wieder aufnimmt: Raum
+// da? abgebrochen? Gegner gegangen? eigene Präsenz zurückschreiben, Herzschlag starten,
+// Zuhörer wieder anbinden, Zustand anwenden. Sie wird jetzt aus DREI Richtungen gerufen —
+// Rückkehr aus dem Hintergrund (wie bisher), „Erneut verbinden" (§162-C) und die eigene
+// Wiederverbindung (§163). Vorher hing sie in einer anonymen Funktion und war damit für
+// die anderen beiden Wege unerreichbar.
+async function raumRueckkehrPruefen(){
     if(!roomRef || !myRole) return; // not in a room, nothing to do
     try{
       const snap=await get(roomRef);
@@ -3240,8 +3351,7 @@ document.addEventListener('visibilitychange',async()=>{
       // Network unreachable — show reconnect message but don't disconnect yet
       setLog('<span class="msg wait">⏳ Verbindung wird wiederhergestellt…</span>');
     }
-  }
-});
+}
 
 // ── Regelschicht: KANONISCH aus gembel_rules.js (§38b Zusammenführung) ──
 // Die frühere Online-EIGENKOPIE aller Regelfunktionen (canLift/canDrop/canStack/
@@ -4419,6 +4529,37 @@ try{
 // SPAETER. Sie greift aber weiterhin — schlaegt das Flag an, legt sich die Wartungstafel
 // ueber das Menue, und showOverlay() blendet alles andere aus. Ein Spiel beginnt erst auf
 // Klick; die Antwort ist lange vorher da.
+// ═══════════════════════════════════════════════════════════════════
+// §163 (7.9.): DIE EIGENE VERBINDUNG ÜBERWACHEN
+// ═══════════════════════════════════════════════════════════════════
+// Bis v127 kam `.info/connected` in dieser Datei NULL Mal vor — der Client merkte nie, dass
+// er weg war, und erst recht nicht, dass er wieder da ist. Firebase liefert diesen Zustand
+// gratis (lokaler Spezialpfad, keine Abfrage ans Netz).
+// ⚠️ RÜCKZIEHER: EIGENE_PRAESENZ_AN oben auf false — dann wird dieser Zuhörer nicht
+// aufgesetzt, und presenceTick verhält sich wieder wie in v127.
+if(EIGENE_PRAESENZ_AN){
+  onValue(ref(db,'.info/connected'), snap=>{
+    const verbunden = snap.val()===true;
+    if(!verbunden){
+      if(selbstOffline) return;
+      selbstOffline=true;
+      console.log('§163 eigene Verbindung: WEG');
+      return;
+    }
+    if(!selbstOffline) return;      // erster Aufruf beim Start: nichts nachzuholen
+    selbstOffline=false;
+    console.log('§163 eigene Verbindung: ZURÜCK — Raum wird frisch gelesen');
+    // Kulanz: der Gegner bekommt eine FRISCHE Frist. Sein Herzschlag konnte uns während
+    // unseres eigenen Ausfalls nicht erreichen; ihn dafür in einen laufenden Countdown zu
+    // stellen, wäre genau das Fehlurteil, das §163 abstellen soll.
+    if(oppOfflineSince!==null){
+      oppOfflineSince=serverNow();
+      oppAbortDeadline=oppOfflineSince+OPP_ABORT_GRACE_MS;
+    }
+    raumRueckkehrPruefen();
+  });
+}
+
 showOverlay('mode-overlay');
 render();
 (async()=>{

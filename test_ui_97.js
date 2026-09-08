@@ -360,6 +360,64 @@ console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr
      'die Datenschutzerkl\u00e4rung tr\u00e4gt ein Datum in lesbarer Form');
 }
 
+console.log('\u00a7162/\u00a7163 \u2014 Verbindungsabbruch: Ergebnis geht nicht mehr verloren:');
+{
+  // Walters Befund (7.9.): bricht die Verbindung waehrend eines Remisangebots ab, sieht der
+  // ANBIETER nicht, dass angenommen wurde — nur Verlassen und neu Beitreten half. Ursache:
+  // cleanup() haengt den Raum-Zuhoerer ab und nullt roomRef; danach kommt nichts mehr an.
+  // Geprueft wird die MECHANIK, nicht der Wortlaut der Meldungen.
+
+  // §162-B: der letzte Blick muss die Bezeichner sichern, BEVOR cleanup() sie nullt.
+  const hd = html.match(/function handleDisconnect\(msg\)\{[\s\S]*?\n\}/)[0];
+  ok(hd.indexOf('const wasRoom=roomRef') > -1 &&
+     hd.indexOf('const wasRoom=roomRef') < hd.indexOf('cleanup(false)'),
+     'handleDisconnect sichert Raum, Rolle und Spielernummer VOR dem Aufr\u00e4umen');
+  ok(/letzterBlickAufDenRaum\(wasRoom, wasPlayer\)/.test(hd) && /merkeRaumFuerWiederkehr\(wasCode, wasRole, wasPlayer\)/.test(hd),
+     '\u00a7162: letzter Blick auf den Raum und Merken f\u00fcr den Wiedereinstieg sind angeh\u00e4ngt');
+  ok(/st\.phase!=='finished'\) return;/.test(html) && /Die Partie ist beendet: /.test(html),
+     '\u00a7162-B: ein beendetes Spiel ersetzt die Abbruchmeldung durch das Ergebnis');
+
+  // Das Ergebnis-Wort als VERHALTEN pruefen (reine Funktion, wie bei istWartung in §132).
+  const teil = html.match(/function ergebnisSatz\(st, wasPlayer\)\{[\s\S]*?\n\}/)[0];
+  const c = {}; require('vm').createContext(c);
+  require('vm').runInContext(teil + '\n;__e=ergebnisSatz;', c);
+  const e = c.__e;
+  ok(/^Unentschieden \(beide einverstanden\)$/.test(e({winner:null,lastMove:{drawReason:'beide einverstanden'}},1)) &&
+     e({winner:null},1) === 'Unentschieden' &&
+     e({winner:1},1) === 'Du hast gewonnen' &&
+     e({winner:2},1) === 'Mitspieler hat gewonnen',
+     'ergebnisSatz benennt Remis mit Grund, eigenen Sieg und fremden Sieg richtig');
+
+  // §162-C: der Wiedereinstiegs-Knopf ist da und startet versteckt.
+  ok(/<button class="big-btn primary hidden" id="dc-reconnect" onclick="wiederVerbinden\(\)"/.test(html),
+     '\u00a7162-C: „Erneut verbinden\" liegt auf der Abbruchtafel und ist zun\u00e4chst versteckt');
+  ok(/window\.wiederVerbinden=async function\(\)\{[\s\S]*?raumRueckkehrPruefen\(\)/.test(html),
+     '\u00a7162-C: der Knopf nimmt denselben R\u00fcckkehr-Pfad wie die R\u00fcckkehr aus dem Hintergrund');
+
+  // §162: der Rueckkehr-Pfad ist benannt und wird aus DREI Richtungen gerufen.
+  ok(/async function raumRueckkehrPruefen\(\)\{/.test(html),
+     '\u00a7162: der R\u00fcckkehr-Pfad ist eine benannte Funktion (vorher anonym im visibilitychange)');
+  ok((html.match(/raumRueckkehrPruefen\(\)/g)||[]).length >= 4,
+     '\u00a7162: er wird aus mehreren Richtungen gerufen (Definition + Hintergrund + Knopf + \u00a7163)');
+
+  // §163: eigene Verbindung.
+  ok(/onValue\(ref\(db,'\.info\/connected'\)/.test(html),
+     '\u00a7163: die EIGENE Verbindung wird \u00fcberwacht (.info/connected)');
+  // ⚠️ Der Schalter darf AUF BEIDEN Stellungen gruen sein: der Rueckzieher ist eine
+  // vorgesehene Bedienung (Walters Auflage), kein Fehler. Geprueft wird, dass es ihn gibt
+  // und dass der Zuhoerer wirklich daran haengt — der STAND steht im Meldungstext.
+  const schalter = html.match(/const EIGENE_PRAESENZ_AN = (true|false);/);
+  ok(!!schalter && /if\(EIGENE_PRAESENZ_AN\)\{\s*\n\s*onValue\(ref\(db,'\.info\/connected'\)/.test(html),
+     '\u00a7163 h\u00e4ngt an einem Schalter — ein R\u00fcckzieher ist eine Zeile (steht auf ' +
+     (schalter ? schalter[1] : '?') + ')');
+  const pt = html.match(/function presenceTick\(\)\{[\s\S]*?\n\}/)[0];
+  ok(pt.indexOf('selbstOffline){ zeigeEigenenAusfall(); return;') > -1 &&
+     pt.indexOf('selbstOffline){ zeigeEigenenAusfall(); return;') < pt.indexOf('presenceIsStale('),
+     '\u00a7163: ohne eigene Leitung wird der Gegner NICHT beurteilt (kein Countdown, kein Abbruch)');
+  ok(/oppOfflineSince=serverNow\(\);\s*\n\s*oppAbortDeadline=oppOfflineSince\+OPP_ABORT_GRACE_MS;/.test(html),
+     '\u00a7163: nach eigener R\u00fcckkehr bekommt der Gegner eine frische Frist');
+}
+
 console.log('\u00a7161 \u2014 Startbildschirm haengt nicht am Netz:');
 {
   // \u00a7161 (7.9.): Bis v126 stand `showOverlay('mode-overlay'); render();` HINTER
