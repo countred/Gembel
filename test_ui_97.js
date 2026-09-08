@@ -360,6 +360,37 @@ console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr
      'die Datenschutzerkl\u00e4rung tr\u00e4gt ein Datum in lesbarer Form');
 }
 
+console.log('\u00a7161 \u2014 Startbildschirm haengt nicht am Netz:');
+{
+  // \u00a7161 (7.9.): Bis v126 stand `showOverlay('mode-overlay'); render();` HINTER
+  // `await get(ref(db,'config'))`. Der Startbildschirm wartete damit auf einen Netz-Umlauf
+  // zur Datenbank — sichtbar als aufblitzende Brettmaske aus dem statischen HTML.
+  // Geprueft wird die REIHENFOLGE, nicht der Wortlaut: das Menue muss VOR dem Lesen stehen.
+  // ⚠️ Die Anker muessen CODE treffen, nicht Prosa: der §161-Kommentar darueber zitiert
+  // `await get(ref(db,'config'))` im Fliesstext, und eine Suche danach findet zuerst den
+  // KOMMENTAR — die Pruefung fiel damit, obwohl der Code stimmte (§157-Klasse, hier im
+  // eigenen Wachhund). Deshalb Anker mit Code-Umgebung, die in Prosa nicht vorkommt.
+  const iMenue = html.indexOf("\nshowOverlay('mode-overlay');\nrender();\n(async()=>{");
+  const iLesen = html.indexOf("const snap = await get(ref(db,'config'));");
+  ok(iMenue > -1 && iLesen > -1 && iMenue < iLesen,
+     'das Men\u00fc wird gezeigt, BEVOR das Wartungsflag gelesen wird');
+  // Die Sperre muss trotzdem greifen: die Wartungstafel wird weiterhin gezeigt, und
+  // showOverlay() blendet dabei alles andere aus — auch ein bereits offenes Men\u00fc.
+  ok(/istWartung\(wert\)\)\{[\s\S]*?showOverlay\('maintenance-overlay'\)/.test(html),
+     '\u00a7132 greift weiterhin \u2014 das Wartungsflag legt die Tafel \u00fcber das Men\u00fc');
+  ok(/'maintenance-overlay'/.test(html.match(/function showOverlay\(id\)\{[\s\S]*?\}/)[0]),
+     'showOverlay blendet beim Wechsel auch das Men\u00fc aus (maintenance-overlay in der Liste)');
+  // Vorverbindungen: die Adressen muessen zu dem passen, was wirklich geladen wird.
+  const hosts = ['https://www.gstatic.com',
+                 'https://gembel-multiplayer-default-rtdb.europe-west1.firebasedatabase.app'];
+  for(const h of hosts)
+    ok(new RegExp('<link rel="preconnect" href="' + h.replace(/[.\/]/g,'\\$&') + '"').test(html),
+       'preconnect auf ' + h.replace('https://','') );
+  ok(/import \{ initializeApp \} from "https:\/\/www\.gstatic\.com\//.test(html) &&
+     /databaseURL: "https:\/\/gembel-multiplayer-default-rtdb\.europe-west1\.firebasedatabase\.app"/.test(html),
+     'die vorverbundenen Adressen sind auch die, die geladen werden (sonst ist preconnect wirkungslos)');
+}
+
 console.log('\u00a7132 \u2014 Wartungsflag:');
 {
   ok(/get\(ref\(db,'config'\)\)/.test(html),

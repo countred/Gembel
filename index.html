@@ -9,6 +9,16 @@
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
 <title>Gembel · Count Red</title>
+<!-- §161 (7.9.): VORVERBINDEN. Der Startbildschirm hing an zwei Netzverbindungen zu zwei
+     fremden Servern: das Firebase-SDK von gstatic.com und die Datenbank selbst. Ohne
+     preconnect beginnen DNS und TLS erst, wenn der Modul-Block gelesen ist — also nach dem
+     ersten Bild. Diese vier Zeilen ziehen beides vor, waehrend der Browser noch HTML liest.
+     Sie aendern KEIN Verhalten: faellt eine Vorverbindung aus, laeuft alles wie zuvor.
+     ⚠️ Die Adressen muessen zu den Importen unten und zu databaseURL passen. -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://gembel-multiplayer-default-rtdb.europe-west1.firebasedatabase.app" crossorigin>
+<link rel="dns-prefetch" href="https://gembel-multiplayer-default-rtdb.europe-west1.firebasedatabase.app">
 <!-- §126 (3.8.): GOOGLE ANALYTICS ENTFERNT.
      Grund: GA4 misst Seitenaufrufe und Verweildauer — fuer die Fragen dieses Projekts blind.
      Was wirklich gebraucht wird (welcher Zug, welche Tiefe, welcher Rang, wer gewinnt), steht
@@ -457,7 +467,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=126'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=127'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -881,7 +891,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=126" charset="utf-8"></script>
+<script src="gembel_rules.js?v=127" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -893,7 +903,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=126" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=127" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1506,7 +1516,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v126';
+const BUILD_MARKER='· Build v127';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1823,7 +1833,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=126'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=127'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -4398,6 +4408,19 @@ try{
 // Als wahr gelten: true, "true", 1, "1", "on", "yes", "ja", "offline", "wartung".
 // ⚠️ Ein Tippfehler im Wert darf NICHT dazu fuehren, dass das Spiel gesperrt bleibt —
 // deshalb wird nur diese Liste akzeptiert, nicht „alles ausser false".
+//
+// §161 (7.9.): DAS MENUE WARTET NICHT MEHR AUF DIE DATENBANK.
+// Bis v126 stand `showOverlay('mode-overlay'); render();` AM ENDE dieser async-Funktion,
+// also HINTER `await get(ref(db,'config'))`. Der Startbildschirm hing damit an einem
+// Netz-Umlauf, dessen Antwort in aller Regel „kein Wartungsflag" lautet — bei schlechtem
+// Empfang sah der Nutzer solange die nackte Brettmaske aus dem statischen HTML.
+// JETZT: Menue sofort, Abfrage nebenher.
+// ⚠️ BEWUSSTE ABWAEGUNG (Entscheid Walter, 7.9.): die Sperre greift dadurch einen Moment
+// SPAETER. Sie greift aber weiterhin — schlaegt das Flag an, legt sich die Wartungstafel
+// ueber das Menue, und showOverlay() blendet alles andere aus. Ein Spiel beginnt erst auf
+// Klick; die Antwort ist lange vorher da.
+showOverlay('mode-overlay');
+render();
 (async()=>{
   const WARTUNG_WAHR = [true, 'true', 1, '1', 'on', 'yes', 'ja', 'offline', 'wartung'];
   const istWartung = v => WARTUNG_WAHR.some(w =>
@@ -4424,8 +4447,8 @@ try{
     // „Flag steht auf false" — das hat die Fehlersuche unmoeglich gemacht.
     console.warn('§132 Wartungsflag NICHT lesbar (Spiel startet trotzdem):', e && e.message ? e.message : e);
   }
-  showOverlay('mode-overlay');
-  render();
+  // §161: hier stand bis v126 der Start des Menues. Er ist nach oben gewandert, VOR die
+  // Abfrage — deshalb steht hier nichts mehr. Wer ihn zurueckholt, macht §161 rueckgaengig.
 })();
 </script>
 </body>
