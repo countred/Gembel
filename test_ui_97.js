@@ -389,6 +389,30 @@ console.log('\u00a7168 \u2014 kein Bedienweg wartet auf das Netz:');
      '\u00a7168: bei EIGENER Unterbrechung sagt die Meldung das auch');
 }
 
+console.log('\u00a7169 \u2014 kein Zombie-Brett, keine Herzschl\u00e4ge ohne Leitung:');
+{
+  // Walters Befund (9.9.): der Mac zeigte „Remis angeboten — warte auf Mitspieler…" ueber einer
+  // Stellung, deren Raum der Client laengst verloren hatte (Konsole: „kein Raum mehr"). cleanup()
+  // raeumte den inneren Zustand, aber nichts auf dem Bildschirm.
+  const cl = html.match(/function cleanup\(removeRoom=true\)\{[\s\S]*?\n\}/)[0];
+  ok(/phase='waiting';\s*\n\s*entwerteAnzeige\(\);/.test(cl),
+     '\u00a7169: cleanup entwertet auch die ANZEIGE, nicht nur den inneren Zustand');
+  const ea = html.match(/function entwerteAnzeige\(\)\{[\s\S]*?\n\}/)[0];
+  ok(/setLog\(''\);/.test(ea) && /render\(\)/.test(ea),
+     '\u00a7169: Statuszeile leeren und neu zeichnen');
+  ok(!/board\s*=\s*initBoard\(\)/.test(ea) && !/innerHTML\s*=\s*''/.test(ea),
+     '\u00a7169: die Stellung bleibt stehen — geleert wird sie NICHT (Entscheid Walter)');
+  ok(/try\{ render\(\)/.test(ea),
+     '\u00a7169: ein Fehler beim Zeichnen darf das Aufr\u00e4umen nicht abbrechen');
+
+  // Herzschlaege: nicht schreiben, solange die eigene Leitung weg ist.
+  const hb = html.match(/function startHeartbeat\(\)\{[\s\S]*?\n\}/)[0];
+  const iGuard = hb.indexOf('if(EIGENE_PRAESENZ_AN && selbstOffline) return;');
+  const iWrite = hb.indexOf('update(roomRef,{[field]:serverTimestamp()})');
+  ok(iGuard > -1 && iWrite > iGuard,
+     '\u00a7169: ohne eigene Leitung wird kein Herzschlag geschrieben (keine Salve beim Wiederverbinden)');
+}
+
 console.log('\u00a7166 \u2014 R\u00fcckkehr des Hosts nach dem Remis:');
 {
   // Walters Livetest zu v129: B (Gast) nimmt an und geht ins Men\u00fc; A (Host) kommt aus dem
