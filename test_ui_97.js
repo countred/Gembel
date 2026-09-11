@@ -57,8 +57,15 @@ ok(/onclick="showNeuMenu\(\)">☰ Optionen<\/button>/.test(html) && !/>☰ Men\u
 // die entfernte Zeile weiterhin im Kommentar (Wiedereinbau-Schutz).
 ok(!/>oder \u21ba Neu f\u00fcr weitere Optionen/.test(html) && !/>oder ☰ Optionen/.test(html),
    'Schlussbild ohne Zusatzzeile „oder \u2630 Optionen \u2026" (in BEIDEN Modi entfernt)');
-ok((html.match(/winArea\.innerHTML = bannerHtml \+ rematchBtn;/g)||[]).length === 2,
-   'Schlussbild besteht in beiden Modi nur noch aus Banner + „Nochmal"-Button');
+// §172 (9.9.) hat diese Pruefung ANGEPASST (Entscheid Walter): das MvM-Schlussbild traegt jetzt
+// zusaetzlich `wegHinweis`. Die §97b-Absicht bleibt gewahrt — verboten ist eine DAUERHAFTE
+// Zusatzzeile; der Hinweis ist bedingt und verschwindet, sobald ein Nochmal moeglich ist.
+ok((html.match(/winArea\.innerHTML = bannerHtml \+ rematchBtn;/g)||[]).length === 1,
+   'MvKI-Schlussbild besteht weiterhin nur aus Banner + \u201eNochmal\u201c-Button');
+ok(/winArea\.innerHTML = bannerHtml \+ rematchBtn \+ wegHinweis;/.test(html) &&
+   /const wegHinweis = mitspielerWeg/.test(html) && /\n\s*: '';/.test(html),
+   'MvM-Schlussbild: der \u00a7172-Hinweis ist BEDINGT (leer, sobald ein Nochmal m\u00f6glich ist)')
+;
 ok(/\u21ba Neu \(anderer Modus\/Stufe\)/.test(html),
    '„\u21ba Neu (anderer Modus/Stufe)" im Men\u00fc bleibt \u2014 das startet wirklich etwas Neues');
 
@@ -417,6 +424,52 @@ console.log('\u00a7170 \u2014 Angebotsrecht und ehrliche Abbruchmeldung:');
      '\u00a7170: keine Aufrufstelle nagelt den alten Einheitstext mehr fest');
   ok((html.match(/handleAbortReturn\(abbruchText\(data\)\)/g)||[]).length >= 3,
      '\u00a7170: alle R\u00fcckkehr- und Listener-Wege nutzen denselben Text-Entscheider');
+}
+
+console.log('\u00a7173 \u2014 der Anziehende wird aus dem Raum bestimmt:');
+{
+  // Walters Regel: beim Nochmal beginnt der VERLIERER. Der Tausch wird nur vom HOST gerechnet,
+  // und er las bis v136 die LOKALE Variable `lastKnownWinner`. Hatte ausgerechnet der Host das
+  // Ende der Vorpartie nicht gesehen (Neuladen, Unterbrechung), stand dort `undefined`, und der
+  // Zweig „Draw or unknown: swap" griff — dann konnte der SIEGER beginnen.
+  const hs = html.match(/window\.hostStartNew=async function\(\)\{[\s\S]*?\n\};/)[0];
+  ok(/let lastWinner=lastKnownWinner;/.test(hs) && /const vorSnap=await get\(roomRef\);/.test(hs),
+     '\u00a7173: der Sieger wird aus dem Raum gelesen, die lokale Variable ist nur noch R\u00fcckfall');
+  ok(/vorSt\.phase==='finished' && Number\(vorSt\.gameGen\)===mvmGameGen/.test(hs),
+     '\u00a7173: gelesen wird NUR die eben beendete Partie (Phase und Generation m\u00fcssen passen)');
+  ok(/vorSt\.winner===undefined \|\| vorSt\.winner===null\) \? null :/.test(hs),
+     '\u00a7173: ein FEHLENDES winner-Feld gilt als Remis (Firebase speichert keine null-Werte)');
+  ok(/catch\(e\)\{[\s\S]{0,200}?\u00a7173: Sieger nicht aus dem Raum lesbar/.test(hs),
+     '\u00a7173: schl\u00e4gt das Lesen fehl, gilt der lokale Stand \u2014 kein Abbruch des Nochmal');
+  // §164-Regel: zwischen dem Setzen des Zustands und dem Schreiben darf kein await liegen.
+  const iAwait = hs.lastIndexOf('await get(roomRef)');
+  const iSetzen = hs.indexOf("phase='playing';");
+  ok(iAwait > -1 && iSetzen > iAwait,
+     '\u00a7173: das Lesen steht VOR jeder Zustands\u00e4nderung (\u00a7164-Regel eingehalten)');
+}
+
+console.log('\u00a7172 \u2014 die Absage steht vor dem Tipp:');
+{
+  // Walters Screenshots (9.9., 10:34/10:35): „Nochmal" stand voll eingefaerbt da, obwohl die App
+  // schon wusste, dass der Mitspieler weg ist — der Tipp brachte nur die Absage.
+  ok(/const mitspielerWeg = presenceIsStale\(serverNow\(\), oppLastSeen, PRESENCE_STALE_MS\);/.test(html),
+     '\u00a7172: das Schlussbild pr\u00fcft die Pr\u00e4senz des Mitspielers');
+  // ⚠️ DASSELBE Kriterium wie die Sperre in requestRematch — sonst laufen Anzeige und Sperre
+  // auseinander und der Hinweis luegt in die eine oder andere Richtung.
+  const rr = html.match(/window\.requestRematch=async function\(\)\{[\s\S]*?\n\};/)[0];
+  ok(/presenceIsStale\(serverNow\(\), oppLastSeen, PRESENCE_STALE_MS\)/.test(rr),
+     '\u00a7172: Anzeige und Sperre benutzen dasselbe Kriterium');
+  ok(/winArea\.innerHTML = bannerHtml \+ rematchBtn \+ wegHinweis;/.test(html),
+     '\u00a7172: der Hinweis steht im Schlussbild, nicht erst als Antwort');
+  // Kleine Loesung: der Knopf bleibt tippbar (kein disabled, kein Ausgrauen).
+  const rb = html.match(/const rematchBtn = `[\s\S]*?`;/)[0];
+  ok(!/disabled/.test(rb) && /onclick="requestRematch\(\)"/.test(rb),
+     '\u00a7172: der Knopf bleibt tippbar \u2014 kein Dauergrau nach R\u00fcckkehr des Mitspielers');
+  // Keine gestapelten Anfragen.
+  ok(/if\(rematchWaitTimer\)\{[\s\S]{0,200}?Anfrage l\u00e4uft bereits/.test(rr),
+     '\u00a7172: eine laufende Anfrage wird nicht durch weitere Tipps verl\u00e4ngert');
+  ok(rr.indexOf('if(rematchWaitTimer)') < rr.indexOf("update(roomRef,{'meta/rematchFrom':myRole})"),
+     '\u00a7172: der Riegel steht VOR dem Schreiben');
 }
 
 console.log('\u00a7171 \u2014 abgebrochene R\u00e4ume bleiben nicht liegen:');

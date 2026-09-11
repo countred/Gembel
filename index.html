@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=135'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=137'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -904,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=135" charset="utf-8"></script>
+<script src="gembel_rules.js?v=137" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=135" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=137" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1620,7 +1620,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v135';
+const BUILD_MARKER='· Build v137';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1937,7 +1937,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=135'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=137'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2218,6 +2218,14 @@ function startRematchWaitTimeout(){
 
 window.requestRematch=async function(){
   if(!roomRef||!myRole) return;
+  // §172: Eine Anfrage läuft bereits. Jeder weitere Tipp schrieb bisher `meta/rematchFrom` neu
+  // und setzte die 15-Sekunden-Frist zurück — die Wartemeldung blieb dadurch beliebig lange
+  // stehen, und das sah aus, als hinge das Gerät (Walters Eindruck, 9.9.). Timer stapelten sich
+  // nicht (startRematchWaitTimeout räumt vorher auf), die Frist begann aber immer von vorn.
+  if(rematchWaitTimer){
+    setLog('<span class="msg wait">⏳ Anfrage läuft bereits – warte auf Mitspieler…</span>');
+    return;
+  }
   // §78 (a): Präsenz VOR dem Anfragen prüfen. Ist der letzte Gegner-Herzschlag bereits abgestanden,
   // gar nicht erst in den (nach Spielende unbewachten) Wartezustand gehen, sondern sofort melden.
   if(presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS)){
@@ -2340,7 +2348,31 @@ window.hostStartNew=async function(){
   // Swap: loser starts next game (gets player 1 / ungerade).
   // If draw or unknown: also swap for fairness.
   // lastWinner is stored in state.winner from the previous game's applyRemoteState.
-  const lastWinner=lastKnownWinner; // tracked below
+  // §173 (9.9., Walters Frage nach dem Anziehenden): DER SIEGER STEHT IM RAUM, NICHT NUR IM KOPF.
+  // `lastKnownWinner` ist eine LOKALE Variable und wird nur gesetzt, wenn dieser Client das Ende
+  // der Vorpartie gesehen hat. Nur der HOST rechnet den Beginner-Tausch aus — hat ausgerechnet er
+  // das Ende verpasst (Seite neu geladen, Unterbrechung), stand dort `undefined`, und der Zweig
+  // „Draw or unknown: swap" griff. Dann begann möglicherweise der SIEGER, obwohl Walters Regel
+  // lautet: der VERLIERER beginnt, als Ausgleich. Das ist eine inhaltliche Regel, keine bloße
+  // Symmetrie — deshalb wird der Sieger jetzt aus dem Raum gelesen.
+  // ⚠️ Nur wenn der gelesene Zustand WIRKLICH die eben beendete Partie ist: `phase==='finished'`
+  // UND dieselbe Generation. Sonst gilt weiter der lokale Stand.
+  // ⚠️ Ein fehlendes `winner`-Feld ist ein REMIS: Firebase speichert keine null-Werte, ein
+  // Unentschieden hinterlässt dort also gar kein Feld.
+  // ⚠️ Das `await` steht VOR jeder Zustandsänderung — nach §164 darf zwischen dem Setzen des
+  // Zustands und seinem Schreiben kein Wartepunkt liegen. Hier wird nur GELESEN.
+  let lastWinner=lastKnownWinner;
+  try{
+    const vorSnap=await get(roomRef);
+    const vorSt=vorSnap.exists() ? vorSnap.val().state : null;
+    if(vorSt && vorSt.phase==='finished' && Number(vorSt.gameGen)===mvmGameGen){
+      lastWinner = (vorSt.winner===undefined || vorSt.winner===null) ? null : Number(vorSt.winner);
+      console.log('§173 Beginner: Sieger aus dem Raum =', lastWinner, '· Gen', vorSt.gameGen,
+                  '· lokal war:', lastKnownWinner);
+    }
+  }catch(e){
+    console.warn('§173: Sieger nicht aus dem Raum lesbar — lokaler Stand gilt:', (e&&e.message)||e);
+  }
   let nextHostPlayer;
   if(lastWinner===null||lastWinner===undefined){
     // Draw or unknown: swap
@@ -3221,7 +3253,20 @@ function applyRemoteState(state){
     const rematchBtn = `<button onclick="requestRematch()" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;">🔄 Nochmal</button>`;
     // §97b (Walter): Zusatzzeile „oder ☰ Optionen …" entfernt — die Werkzeugleiste steht
     // ohnehin sichtbar darunter, der Hinweis war reine Wiederholung.
-    winArea.innerHTML = bannerHtml + rematchBtn;
+    // §172 (9.9., Walters Screenshots 10:34/10:35): DIE ABSAGE GEHÖRT VOR DEN TIPP.
+    // Bis v135 stand „Nochmal" voll eingefärbt da, auch wenn der Mitspieler nachweislich weg war
+    // — der Knopf lud zum Tippen ein und antwortete dann mit „neue Runde nicht möglich". Dieselbe
+    // Irreführung wie beim ausgebauten Wiedereinstiegs-Knopf (§167).
+    // ⚠️ KLEINE LÖSUNG (Entscheid Walter): der Knopf bleibt tippbar und wird NICHT ausgegraut.
+    // Grund: nach Spielende läuft der Präsenz-Tick nicht mehr (`inGame` ist falsch), ein grauer
+    // Knopf bliebe also grau, auch wenn der Mitspieler zurückkommt — das wäre schlechter als
+    // heute. Gezeigt wird nur der Hinweis; das Kriterium ist DASSELBE wie in requestRematch
+    // (§78a), damit Anzeige und Sperre nie auseinanderlaufen können.
+    const mitspielerWeg = presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS);
+    const wegHinweis = mitspielerWeg
+      ? '<div class="msg info" style="margin-top:8px;">Mitspieler ist nicht mehr verbunden — eine neue Runde ist gerade nicht möglich.</div>'
+      : '';
+    winArea.innerHTML = bannerHtml + rematchBtn + wegHinweis;
   } else {
     winArea.innerHTML='';
   }
