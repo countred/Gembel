@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=137'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=138'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -904,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=137" charset="utf-8"></script>
+<script src="gembel_rules.js?v=138" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=137" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=138" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1620,7 +1620,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v137';
+const BUILD_MARKER='· Build v138';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1937,7 +1937,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=137'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=138'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2203,15 +2203,40 @@ window.showRegeln=function(){
 // §78 (Walter-Befund): Rematch-Warte-Timeout. Startet beim Anfragen; wird gestoppt, sobald der
 // Neustart eintrifft (applyRemoteState-Übergang, §78 oben), der Gegner ablehnt, oder der Client den
 // Raum verlässt. Feuert er, ist binnen 15 s keine Reaktion gekommen (Gegner vermutlich offline).
+// §174 (9.9., Walters Befund): DER RÜCKLÄUFER WARTETE AUF DAS NETZ UND WURDE DABEI UNKÜNDBAR.
+// Bis v137 stand im Rückläufer ein `await update(...)`. Ohne Leitung löst das NICHT auf — die
+// Schreibung wird zurückgestellt, der Rückläufer hängt darin fest. Und weil `rematchWaitTimer`
+// eine Zeile vorher schon auf `null` gesetzt war, konnte `stopRematchWaitTimeout()` ihn nicht
+// mehr abräumen: der Zeitgeber war unkündbar geworden. Kam die Verbindung zurück, ging die
+// Schreibung raus, das `await` löste auf — und „Keine Antwort" erschien mitten in der
+// inzwischen bestätigten neuen Partie. Dieselbe Klasse wie §168: kein Ablauf darf auf das Netz
+// warten. Drei Riegel:
+//   1. KEIN await mehr — die Rücknahme geht fire-and-forget hinaus.
+//   2. Eine EPOCHE entwertet späte Rückläufer. `stopRematchWaitTimeout()` zählt sie hoch; ein
+//      Rückläufer, dessen Epoche nicht mehr gilt, schweigt. Das wirkt auch dann, wenn der
+//      Zeitgeber selbst nicht mehr abräumbar ist.
+//   3. Die Meldung wird nur gesetzt, wenn die Partie noch beendet ist. Läuft schon eine neue,
+//      hat sich die Frage erledigt.
+let rematchWaitEpoch=0;
 function stopRematchWaitTimeout(){
+  rematchWaitEpoch++;   // §174: alles, was noch unterwegs ist, gilt ab jetzt nicht mehr
   if(rematchWaitTimer){ clearTimeout(rematchWaitTimer); rematchWaitTimer=null; }
 }
 function startRematchWaitTimeout(){
   stopRematchWaitTimeout();
-  rematchWaitTimer=setTimeout(async ()=>{
+  const meineEpoche=rematchWaitEpoch;
+  rematchWaitTimer=setTimeout(()=>{
     rematchWaitTimer=null;
+    if(meineEpoche!==rematchWaitEpoch) return;   // §174: inzwischen abgeräumt
     // Anfrage zurücknehmen (das gesetzte Flag wieder löschen, damit kein Zombie-rematchFrom bleibt)
-    if(roomRef) await update(roomRef,{'meta/rematchFrom':null}).catch(()=>{});
+    if(roomRef) update(roomRef,{'meta/rematchFrom':null}).catch(()=>{});
+    if(phase!=='finished') return;               // §174: die neue Partie läuft bereits
+    // §174: ohne eigene Leitung ist „der andere antwortet nicht" schlicht falsch — die Anfrage
+    // hat ihn nie erreicht. Dann sagen, was wirklich los ist.
+    if(EIGENE_PRAESENZ_AN && selbstOffline){
+      setLog('<span class="msg info">Deine Verbindung ist unterbrochen — die Anfrage konnte nicht zugestellt werden.</span>');
+      return;
+    }
     setLog('<span class="msg info">Keine Antwort — Mitspieler ist vermutlich nicht mehr verbunden.</span>');
   }, REMATCH_WAIT_TIMEOUT_MS);
 }

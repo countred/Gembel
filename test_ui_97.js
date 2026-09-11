@@ -426,6 +426,28 @@ console.log('\u00a7170 \u2014 Angebotsrecht und ehrliche Abbruchmeldung:');
      '\u00a7170: alle R\u00fcckkehr- und Listener-Wege nutzen denselben Text-Entscheider');
 }
 
+console.log('\u00a7174 \u2014 der Rueckl\u00e4ufer wartet nicht mehr auf das Netz:');
+{
+  // Walters Befund (9.9.): „Keine Antwort" blieb stehen, nachdem die Verbindung zurueck war und
+  // das Nochmal bestaetigt wurde. Ursache: `await update(...)` im Rueckl\u00e4ufer loest ohne Leitung
+  // nicht auf, und `rematchWaitTimer` war schon genullt — der Zeitgeber wurde unk\u00fcndbar.
+  const sw = html.match(/function startRematchWaitTimeout\(\)\{[\s\S]*?\n\}/)[0];
+  ok(!/await/.test(sw),
+     '\u00a7174: im R\u00fcckl\u00e4ufer steht KEIN await mehr (\u00a7168-Regel: nichts wartet auf das Netz)');
+  ok(/const meineEpoche=rematchWaitEpoch;/.test(sw) &&
+     /if\(meineEpoche!==rematchWaitEpoch\) return;/.test(sw),
+     '\u00a7174: eine Epoche entwertet sp\u00e4te R\u00fcckl\u00e4ufer \u2014 auch unk\u00fcndbare');
+  const st = html.match(/function stopRematchWaitTimeout\(\)\{[\s\S]*?\n\}/)[0];
+  ok(/rematchWaitEpoch\+\+;/.test(st),
+     '\u00a7174: das Abr\u00e4umen z\u00e4hlt die Epoche hoch');
+  ok(/if\(phase!=='finished'\) return;/.test(sw),
+     '\u00a7174: keine Absage in eine bereits laufende neue Partie hinein');
+  ok(sw.indexOf("if(phase!=='finished') return;") < sw.indexOf('Keine Antwort'),
+     '\u00a7174: der Riegel steht VOR der Meldung');
+  ok(/selbstOffline\)\{[\s\S]{0,220}?Deine Verbindung ist unterbrochen \u2014 die Anfrage konnte nicht zugestellt werden/.test(sw),
+     '\u00a7174: ohne eigene Leitung sagt die Meldung die Wahrheit, statt den Mitspieler zu beschuldigen');
+}
+
 console.log('\u00a7173 \u2014 der Anziehende wird aus dem Raum bestimmt:');
 {
   // Walters Regel: beim Nochmal beginnt der VERLIERER. Der Tausch wird nur vom HOST gerechnet,
