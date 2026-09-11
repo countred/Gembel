@@ -374,12 +374,14 @@ console.log('\u00a7168 \u2014 kein Bedienweg wartet auf das Netz:');
      '\u00a7168: im Abbruchweg steht KEIN await mehr (' + ((fo.match(/await /g)||[]).length) + ' gefunden)');
   const iLog   = fo.indexOf('logMvmAbort(');
   const iLokal = fo.indexOf('handleDisconnect(');
-  const iSchreib = fo.indexOf("update(wasRoom,{'meta/aborted':true})");
+  const iSchreib = fo.indexOf("update(wasRoom,{'meta/aborted':true");
   ok(iLog > -1 && iLokal > iLog,
      '\u00a7168: der Forensik-Datensatz wird VOR dem Aufr\u00e4umen gebaut (cleanup nullt roomCode und myRole)');
   ok(iLokal > -1 && iSchreib > iLokal,
      '\u00a7168: erst lokal abschlie\u00dfen, dann schreiben \u2014 nicht umgekehrt');
-  ok(/update\(wasRoom,\{'meta\/aborted':true\}\)\.catch\(\(\)=>\{\}\);/.test(fo) &&
+  // ⚠️ Anker offen gefasst: §170 hat `meta/abortedBy` ergaenzt — die woertliche Fassung haette
+  // hier einen Fehlschlag erzeugt, obwohl die Absicht (best effort, kein await) erfuellt ist.
+  ok(/update\(wasRoom,\{'meta\/aborted':true[^}]*\}\)\.catch\(\(\)=>\{\}\);/.test(fo) &&
      /remove\(wasRoom\)\.catch\(\(\)=>\{\}\);/.test(fo),
      '\u00a7168: die Schreibungen laufen best effort und halten niemanden auf');
   ok(/if\(wasRole==='host'\) remove\(wasRoom\)/.test(fo),
@@ -389,13 +391,67 @@ console.log('\u00a7168 \u2014 kein Bedienweg wartet auf das Netz:');
      '\u00a7168: bei EIGENER Unterbrechung sagt die Meldung das auch');
 }
 
+console.log('\u00a7170 \u2014 Angebotsrecht und ehrliche Abbruchmeldung:');
+{
+  // Walters Screenshot (9.9.): B war Gast, hatte im ALTEN Raum Remis angeboten, trat einem NEUEN
+  // Raum bei — und fand dort vor dem ersten Zug den ausgegrauten Knopf „Remis angeboten (warte
+  // auf deinen Zug)". Ursache: `mvmOfferedThisTurn` wurde nur in den beiden HOST-Startroutinen
+  // zurueckgesetzt; der Gast durchlaeuft die nie.
+  const cl = html.match(/function cleanup\(removeRoom=true\)\{[\s\S]*?\n\}/)[0];
+  ok(/mvmOfferedThisTurn=false;/.test(cl),
+     '\u00a7170: cleanup setzt das Angebotsrecht zur\u00fcck (gilt auch f\u00fcr den Gast)');
+  const ars = html.match(/function applyRemoteState\(state\)\{[\s\S]*?\u00a772g/)[0];
+  ok(/if\(state\.gameGen > mvmGameGen\)\{[\s\S]{0,400}?mvmOfferedThisTurn=false;/.test(ars),
+     '\u00a7170: eine neue Partie im selben Raum (Nochmal) setzt es beim Gast ebenfalls zur\u00fcck');
+  // Die beiden Startroutinen des Hosts duerfen es weiterhin selbst tun.
+  ok((html.match(/mvmOfferedThisTurn=false;/g)||[]).length >= 4,
+     '\u00a7170: die bisherigen R\u00fccksetzstellen bleiben erhalten');
+
+  // Ehrliche Abbruchmeldung.
+  ok(/'meta\/abortedBy':wasRole\|\|null/.test(html),
+     '\u00a7170: beim Abbruch wird festgehalten, WER abgebrochen hat');
+  const at = html.match(/function abbruchText\(data\)\{[\s\S]*?\n\}/)[0];
+  ok(/wer!==myRole/.test(at) && /Mitspieler hat die Partie beendet/.test(at),
+     '\u00a7170: war es der Mitspieler, sagt die Meldung das auch');
+  ok(!/handleAbortReturn\('Verbindung zu lange unterbrochen \u2014 der Raum wurde aufgel\u00f6st\.'\)/.test(html),
+     '\u00a7170: keine Aufrufstelle nagelt den alten Einheitstext mehr fest');
+  ok((html.match(/handleAbortReturn\(abbruchText\(data\)\)/g)||[]).length >= 3,
+     '\u00a7170: alle R\u00fcckkehr- und Listener-Wege nutzen denselben Text-Entscheider');
+}
+
+console.log('\u00a7171 \u2014 abgebrochene R\u00e4ume bleiben nicht liegen:');
+{
+  // Walters Befund (9.9.): Raum 63SYG stand mit `meta/aborted:true` UND `phase:"playing"` in der
+  // Datenbank. Loeschen ist Host-Recht — bricht der GAST ab, setzt er nur das Flag, und der Raum
+  // liegt bis zum Lazy-Cleanup (zwei Stunden) herum.
+  const har = html.match(/function handleAbortReturn\(msg\)\{[\s\S]*?\n\}/)[0];
+  ok(/if\(roomRef && myRole==='host'\)\{ remove\(roomRef\)\.catch/.test(har),
+     '\u00a7171: der Host l\u00f6scht den abgebrochenen Raum, sobald er das Flag liest');
+  ok(har.indexOf('remove(roomRef)') < har.indexOf('handleDisconnect('),
+     '\u00a7171: das L\u00f6schen steht VOR handleDisconnect \u2014 danach ist roomRef genullt');
+  ok(/remove\(roomRef\)\.catch\(\(\)=>\{\}\)/.test(har),
+     '\u00a7171: fire-and-forget \u2014 ohne Netz bleibt es beim Lazy-Cleanup');
+
+  // Beitritt in einen toten Raum verhindern.
+  const jr = html.match(/window\.joinRoom=async function\(\)\{[\s\S]*?\n\};/)[0];
+  const iAbort = jr.indexOf("rv.meta && rv.meta.aborted===true");
+  const iGuest = jr.indexOf('const guestAlive');
+  ok(iAbort > -1 && iGuest > iAbort,
+     '\u00a7171: ein abgebrochener Raum wird beim Beitreten abgewiesen (vor der Voll-Pr\u00fcfung)');
+  ok(/Dieser Raum wurde abgebrochen\./.test(jr),
+     '\u00a7171: die Abweisung sagt, WARUM \u2014 nicht nur „nicht gefunden\"');
+}
+
 console.log('\u00a7169 \u2014 kein Zombie-Brett, keine Herzschl\u00e4ge ohne Leitung:');
 {
   // Walters Befund (9.9.): der Mac zeigte „Remis angeboten — warte auf Mitspieler…" ueber einer
   // Stellung, deren Raum der Client laengst verloren hatte (Konsole: „kein Raum mehr"). cleanup()
   // raeumte den inneren Zustand, aber nichts auf dem Bildschirm.
   const cl = html.match(/function cleanup\(removeRoom=true\)\{[\s\S]*?\n\}/)[0];
-  ok(/phase='waiting';\s*\n\s*entwerteAnzeige\(\);/.test(cl),
+  // ⚠️ Anker offen: §170 hat zwischen `phase='waiting'` und `entwerteAnzeige()` das Zuruecksetzen
+  // des Angebotsrechts eingefuegt. Geprueft wird die ABSICHT — cleanup entwertet die Anzeige —,
+  // nicht die Nachbarschaft zweier Zeilen.
+  ok(/phase='waiting';/.test(cl) && /entwerteAnzeige\(\);/.test(cl),
      '\u00a7169: cleanup entwertet auch die ANZEIGE, nicht nur den inneren Zustand');
   const ea = html.match(/function entwerteAnzeige\(\)\{[\s\S]*?\n\}/)[0];
   ok(/setLog\(''\);/.test(ea) && /render\(\)/.test(ea),

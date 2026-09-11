@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=133'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=135'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -904,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=133" charset="utf-8"></script>
+<script src="gembel_rules.js?v=135" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=133" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=135" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1218,7 +1218,10 @@ function finalizeOppAbort(msg, reason){
   // (3) Schreibungen best effort, ohne Wartezeit. Gast darf nicht löschen (Host-Recht),
   // setzt aber das Flag, damit der zurückkehrende Host den Abbruch erkennt.
   if(wasRoom){
-    update(wasRoom,{'meta/aborted':true}).catch(()=>{});
+    // §170: WER abgebrochen hat, gehört dazu. Der andere bekam bisher immer „Verbindung zu
+    // lange unterbrochen — der Raum wurde aufgelöst", auch wenn in Wahrheit der Mitspieler
+    // gegangen ist. Zwei verschiedene Sachverhalte, eine Meldung — das führt in die Irre.
+    update(wasRoom,{'meta/aborted':true, 'meta/abortedBy':wasRole||null}).catch(()=>{});
     if(wasRole==='host') remove(wasRoom).catch(()=>{});   // §75-W3-A: saubere Löschung
   }
 }
@@ -1274,7 +1277,24 @@ window.abortToLobbyNow=function(){
 // (Standby > 12s+45s). Zeigt die klare Meldung und routet über das dc-overlay ins Modus-Menü (der
 // Button dort ist „Zurück zur Auswahl" → showModeMenu, Fix 5c). handleDisconnect räumt lokal auf
 // (cleanup(false)); ein remove() ist unnötig, weil der Host den Raum bereits gelöscht hat.
+// §170: aus dem Raum ablesen, WER abgebrochen hat, und es benennen.
+function abbruchText(data){
+  const wer = (data && data.meta) ? data.meta.abortedBy : null;
+  if(wer && myRole && wer!==myRole)
+    return 'Mitspieler hat die Partie beendet — die Verbindung war zu lange unterbrochen.';
+  return 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.';
+}
+
+// §171 (9.9., Walters Befund: Raum 63SYG lag mit `meta/aborted:true` UND `phase:"playing"` in
+// der Datenbank): WER DAS FLAG FINDET UND LÖSCHEN DARF, RÄUMT AUCH AUF.
+// Löschen ist Host-Recht (§75-W3-A). Bricht der GAST ab, setzt er nur `meta/aborted` — der Raum
+// bleibt danach liegen, bis der Lazy-Cleanup ihn nach ZWEI STUNDEN ohne Lebenszeichen nimmt.
+// Bis dahin steht ein toter Raum mit `phase:"playing"` in der Datenbank. Kommt der Host zurück
+// und liest das Flag, ist er der Einzige, der es sofort erledigen kann.
+// ⚠️ VOR handleDisconnect: cleanup() nullt roomRef, danach ist nichts mehr zu löschen.
+// Fire-and-forget — ohne Netz scheitert es, dann bleibt es beim Lazy-Cleanup wie bisher.
 function handleAbortReturn(msg){
+  if(roomRef && myRole==='host'){ remove(roomRef).catch(()=>{}); }
   handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
 }
 
@@ -1600,7 +1620,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v133';
+const BUILD_MARKER='· Build v135';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1917,7 +1937,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=133'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=135'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2532,7 +2552,7 @@ function attachHostListener(){
     if(!data){handleDisconnect('Raum nicht mehr vorhanden.');return;}
     // §75-W3-A: Abbruch-Flag (vom wartenden Gegner gesetzt, bevor der Raum gelöscht wird). Klare
     // Meldung + Modus-Menü statt generischem „Raum nicht mehr vorhanden".
-    if(data.meta && data.meta.aborted){ handleAbortReturn('Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.'); return; }
+    if(data.meta && data.meta.aborted){ handleAbortReturn(abbruchText(data)); return; }
     // Host: start game as soon as guest joins (only once)
     if(myRole==='host' && data.guest==='online' && !hostGameStarted){
       hostGameStarted=true;
@@ -2700,6 +2720,15 @@ window.joinRoom=async function(){
     }
     // Nur ein LEBENDER Gast blockiert. Ein offline/stale-Gast-Eintrag (Ghost) darf überschrieben
     // werden — sonst bliebe ein Raum nach Gast-Absturz für immer „voll".
+    // §171: Ein abgebrochener Raum ist tot, auch wenn der Host zufällig noch online-geflaggt ist
+    // (sein Herzschlag läuft weiter, bis er das Flag selbst liest). Ohne diese Prüfung konnte man
+    // mit dem Code in eine Partie beitreten, die es nicht mehr gibt — und säße in einem Raum, den
+    // der Host beim nächsten Blick löscht.
+    if(rv.meta && rv.meta.aborted===true){
+      errEl.textContent='Dieser Raum wurde abgebrochen.';
+      btn.disabled=false;
+      return;
+    }
     const guestAlive = rv.guest==='online' && !presenceIsStale(serverNow(), rv.guestSeen, PRESENCE_STALE_MS);
     if(guestAlive){
       errEl.textContent='Raum bereits voll.';
@@ -2736,7 +2765,7 @@ function attachGuestListener(){
     const data=snap.val();
     if(!data){handleDisconnect('Raum nicht mehr vorhanden.');return;}
     // §75-W3-A: Abbruch-Flag erkennen (Gegenstück zum Host-Listener; deckt Host-seitigen Abbruch ab).
-    if(data.meta && data.meta.aborted){ handleAbortReturn('Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.'); return; }
+    if(data.meta && data.meta.aborted){ handleAbortReturn(abbruchText(data)); return; }
     // §86: Skelett-Raum (Host-Seite fehlt komplett) = Raum wurde gelöscht und von einem eigenen
     // Schreiber neu angelegt → wie „Raum nicht mehr vorhanden" behandeln + Skelett wegräumen.
     if(roomLooksHostless(data)){ remove(roomRef).catch(()=>{}); handleDisconnect('Raum nicht mehr vorhanden.'); return; }
@@ -2964,7 +2993,12 @@ function applyRemoteState(state){
   if(typeof state.gameGen==='number' && state.gameGen>=1){
     if(state.gameGen < mvmGameGen){ return; }        // veraltete Partie → komplett ignorieren
     if(state.gameGen >= mvmGameGen){                  // aktuelle/neue Partie → Parität autoritativ übernehmen
-      if(state.gameGen > mvmGameGen) mvmGameGen=state.gameGen;
+      if(state.gameGen > mvmGameGen){
+        mvmGameGen=state.gameGen;
+        // §170: NEUE Partie im selben Raum (Nochmal). Der Gast läuft durch keine Startroutine,
+        // also hier: Angebotsrecht zurück. Sonst nimmt er den Riegel in die neue Runde mit.
+        mvmOfferedThisTurn=false;
+      }
       if(typeof state.hostParityGen1==='string') mvmHostParityGen1=state.hostParityGen1;
       if(state.parityP1==='odd'||state.parityP1==='even'){
         window.PARITY_P1=state.parityP1; mvmP1Parity=state.parityP1;
@@ -3345,6 +3379,12 @@ function cleanup(removeRoom=true){
   }
   roomRef=null; roomCode=null; myRole=null; myPlayer=null; isMyTurn=false;
   phase='waiting';
+  // §170 (9.9., Walters Screenshot): DAS ANGEBOTSRECHT GEHÖRT ZUR PARTIE, NICHT ZUM GERÄT.
+  // `mvmOfferedThisTurn` wurde nur in den beiden HOST-Startroutinen zurückgesetzt. Der GAST
+  // durchläuft die nie — er bekommt seinen Zustand über applyRemoteState. Ergebnis: wer als
+  // Gast Remis angeboten hatte, trug das Flag in den NÄCHSTEN Raum mit und fand dort vor dem
+  // ersten Zug einen ausgegrauten Knopf „Remis angeboten (warte auf deinen Zug)".
+  mvmOfferedThisTurn=false;
   entwerteAnzeige();   // §169
 }
 
@@ -3399,7 +3439,7 @@ async function raumRueckkehrPruefen(){
         console.log('§162 Rückkehr: der Raum existiert nicht mehr');
         // §75-W3-A: Raum weg = der wartende Gegner hat nach 12s+45s sauber abgebrochen und den
         // Raum gelöscht (finalizeOppAbort). Klare Meldung + zurück zur Modus-Auswahl (wie Fix 5).
-        handleAbortReturn('Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
+        handleAbortReturn(abbruchText(data));
         return;
       }
       const data=snap.val();
@@ -3410,8 +3450,8 @@ async function raumRueckkehrPruefen(){
       // §75-W3-A: Abbruch-Flag erkennen (Race-Fenster: Gegner hat aborted gesetzt, remove() aber
       // noch nicht durchgelaufen — oder Gast-Abbruch, der nur das Flag setzt). Gleiche Behandlung.
       if(data.meta && data.meta.aborted){
-        console.log('§162 Rückkehr: meta/aborted steht — der Raum wurde abgebrochen');
-        handleAbortReturn('Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
+        console.log('§162 Rückkehr: meta/aborted steht — abgebrochen von', (data.meta.abortedBy||'unbekannt'));
+        handleAbortReturn(abbruchText(data));
         return;
       }
       // §86: War dieser Client HIDDEN, als der Gegner absichtlich ging, hat der Listener das
