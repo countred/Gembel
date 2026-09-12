@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=138'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=139'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -904,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=138" charset="utf-8"></script>
+<script src="gembel_rules.js?v=139" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=138" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=139" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1328,6 +1328,47 @@ let isMyTurn=false;
 // Partie-/Rundenstart zurückgesetzt.
 let mvmOfferedThisTurn=false;
 
+// §177 (11.9., Walters Befunde nach v138): DREI ZUSTÄNDE, DIE AUS DEM RAUM KOMMEN, NICHT AUS DEM KOPF.
+// Remis-Angebot, „Mitspieler ist gegangen" und der Grund für einen verschwundenen Raum wurden bis
+// v138 nur als einmalige Statuszeile gezeigt oder gar nicht gemerkt. Die nächste Meldung
+// („Mitspieler wieder verbunden.", ein Zug) überschrieb sie — der Anbieter sah sein eigenes
+// Angebot nicht mehr, obwohl es im Raum weiter stand und angenommen werden konnte.
+let eigenesRemisOffen=false;   // eigenes Angebot steht im Raum und die Partie läuft
+let mitspielerGegangen=false;  // Mitspieler hat den Raum verlassen / aufgelöst → kein Nochmal
+let raumEndeText=null;         // Tafeltext, wenn der Raum nach einem Verlassen verschwindet
+// §177: Wer als Host eine laufende Partie auflöst, schreibt erst die Aufgabe und löscht den Raum
+// ETWAS SPÄTER. Sofort gelöscht, sähe der Gast nur „Raum nicht mehr vorhanden" — das Ergebnis
+// käme gar nicht bei ihm an. Die Wartezeit hält niemanden auf: der Host ist dann schon im Menü.
+const RAUM_AUFLOESEN_VERZUG_MS=4000;
+
+// §177: EIN REMIS-ANGEBOT GILT NUR IN EINER LAUFENDEN PARTIE. Bis v138 erlosch es nie — weder
+// durch einen Zug noch durch das Partieende. Nachgestellt: bot A an, zog dann und gewann mit
+// einem Vierer, sah B über seiner Niederlage „Mitspieler bietet Remis an"; ein Tipp auf
+// „Einverstanden" schrieb `winner:null` — aus dem Sieg wurde ein Remis. Der RAUM entscheidet
+// (wie §166), die lokale phase muss zusätzlich laufen (§164-Wächter kann sie festhalten).
+function remisAngebotGilt(data){
+  const st = data && data.state;
+  const raumLaeuft = !!st && (st.phase==='playing' || st.phase==='bonus');
+  return raumLaeuft && (phase==='playing' || phase==='bonus');
+}
+
+// §177: EIN Entscheider für „geht eine neue Runde?" — Anzeige im Schlussbild und Sperre in
+// requestRematch lesen beide HIER (Grundsatz aus §172: Anzeige und Sperre dürfen nie
+// auseinanderlaufen). Leerer Text = Nochmal möglich.
+function neueRundeUnmoeglich(){
+  if(mitspielerGegangen) return 'Mitspieler hat den Raum verlassen — eine neue Runde ist nicht möglich.';
+  if(presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS))
+    return 'Mitspieler ist nicht mehr verbunden — eine neue Runde ist gerade nicht möglich.';
+  return '';
+}
+
+// §177: Anzeige des EIGENEN offenen Angebots nachführen — nur bei einem Wechsel neu zeichnen.
+function eigenesRemisSetzen(offen){
+  if(eigenesRemisOffen===offen) return;
+  eigenesRemisOffen=offen;
+  try{ updateStatusUI(); }catch(e){}
+}
+
 // ── MvKI-State (§43d Etappe 2b, Weg A: gemeinsame Loop mit gameMode-Verzweigung) ──
 let gameMode='mvm';   // 'mvm' = Mensch vs Mensch (Firebase) | 'mvki' = Mensch vs KI (lokal)
 let aiPlayer=null;    // im MvKI: welche Spielernummer (1|2) die KI spielt (Mensch = der andere)
@@ -1620,7 +1661,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v138';
+const BUILD_MARKER='· Build v139';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1937,7 +1978,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=138'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=139'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2161,6 +2202,9 @@ window.showNeuMenu=function(){
     let drawBtn;
     if(canClaim){
       drawBtn=`<button class="big-btn" style="width:100%;border-color:var(--online-bd);color:var(--online-text)" onclick="closeNeuMenu();claimDrawMvm()">🤝 Remis einfordern (3× Wiederholung)</button>`;
+    } else if(eigenesRemisOffen){
+      // §177: das eigene Angebot steht noch im Raum — egal, wer gerade am Zug ist.
+      drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Dein Angebot steht noch">🤝 Remis angeboten — wartet auf Antwort</button>`;
     } else if(canOffer){
       drawBtn=`<button class="big-btn" style="width:100%" onclick="closeNeuMenu();offerDraw()">🤝 Remis anbieten</button>`;
     } else if(phase==='playing' && isMyTurn && mvmOfferedThisTurn){
@@ -2179,8 +2223,12 @@ window.showNeuMenu=function(){
       ${atTurn
         ? `<button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvm()">🏳️ Aufgeben</button>`
         : `<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Nur wenn du am Zug bist">🏳️ Aufgeben (nur wenn du am Zug bist)</button>`}
-      <button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()">🔄 Neu anfragen</button>
-      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();leaveRoom()">${myRole==='host'?'Raum auflösen':'Verlassen'}</button>`;
+      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="verlassenFragen()">${myRole==='host'?'Raum auflösen':'Verlassen'}</button>`;
+    // §177 (Entscheid Walter, 11.9.): „Neu anfragen" gibt es in der LAUFENDEN Partie nicht mehr.
+    // Es war ein Abbruch mit Neustart, bei dem der Mitspieler nur „Ja, nochmal" oder „Nein,
+    // verlassen" hatte — wer weiterspielen wollte, konnte nicht einfach ablehnen. Wer neu anfangen
+    // will, bietet Remis an; nach dem Ende steht „Nochmal" wie bisher im Schlussbild.
+    // „Verlassen"/„Raum auflösen" fragt jetzt nach (verlassenFragen): es zählt als Aufgabe.
   } else {
     showLobby(); return;
   }
@@ -2243,6 +2291,9 @@ function startRematchWaitTimeout(){
 
 window.requestRematch=async function(){
   if(!roomRef||!myRole) return;
+  // §177: eine neue Runde gibt es nur nach dem Ende. Der Knopf im laufenden Menü ist entfallen;
+  // dieser Riegel hält die Regel auch dann, wenn ein Weg dorthin übersehen wurde.
+  if(phase!=='finished') return;
   // §172: Eine Anfrage läuft bereits. Jeder weitere Tipp schrieb bisher `meta/rematchFrom` neu
   // und setzte die 15-Sekunden-Frist zurück — die Wartemeldung blieb dadurch beliebig lange
   // stehen, und das sah aus, als hinge das Gerät (Walters Eindruck, 9.9.). Timer stapelten sich
@@ -2253,8 +2304,11 @@ window.requestRematch=async function(){
   }
   // §78 (a): Präsenz VOR dem Anfragen prüfen. Ist der letzte Gegner-Herzschlag bereits abgestanden,
   // gar nicht erst in den (nach Spielende unbewachten) Wartezustand gehen, sondern sofort melden.
-  if(presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS)){
-    setLog('<span class="msg info">Mitspieler ist nicht mehr verbunden — neue Runde nicht möglich.</span>');
+  // §177: dasselbe Kriterium wie der Hinweis im Schlussbild — jetzt aus EINER Funktion, dazu
+  // „Mitspieler hat den Raum verlassen" (bis v138 war der Knopf dann noch bis zu 12 s tippbar).
+  const grund = neueRundeUnmoeglich();
+  if(grund){
+    setLog('<span class="msg info">'+grund+'</span>');
     return;
   }
   await update(roomRef,{'meta/rematchFrom':myRole}).catch(()=>{});
@@ -2289,14 +2343,26 @@ window.offerDraw=async function(){
   // Betrifft NUR das freiwillige Angebot; das 3×-Einfordern (claimDrawMvm) bleibt unberührt.
   // §75-W2-6: Nur EIN Angebot pro Zug-Fenster. mvmOfferedThisTurn wird beim eigenen Zug und bei
   // Partiestart zurückgesetzt; bis dahin ist ein zweites Angebot gesperrt (kein Draw-Spam).
-  if(!roomRef||!myRole||phase!=='playing'||!isMyTurn||mvmOfferedThisTurn) return;
+  if(!roomRef||!myRole||phase!=='playing'||!isMyTurn||mvmOfferedThisTurn||eigenesRemisOffen) return;
   mvmOfferedThisTurn=true;
-  await update(roomRef,{'meta/drawOffer':myRole}).catch(()=>{});
+  // §177: erst lokal sichtbar machen, dann schreiben — ohne Wartezeit (Regel aus §168/§174:
+  // kein Ablauf wartet auf das Netz). Die Statusanzeige führt der Raum danach weiter.
   setLog('<span class="msg wait">🤝 Remis angeboten — warte auf Mitspieler…</span>');
+  eigenesRemisSetzen(true);
+  update(roomRef,{'meta/drawOffer':myRole}).catch(()=>{});
 };
 
 window.answerDraw=async function(yes){
   document.getElementById('draw-offer-overlay').classList.add('hidden');
+  // §177: NACH DEM PARTIEENDE GIBT ES NICHTS MEHR ANZUNEHMEN. Bis v138 fehlte dieser Riegel —
+  // eine Annahme nach einem Vierer schrieb `winner:null` über den Sieg (im vm nachgestellt).
+  // Das Overlay erscheint dann gar nicht mehr (remisAngebotGilt); dieser Riegel hält auch, wenn
+  // es aus einem älteren Zustand noch offen stand. Nur das Angebot räumen, sonst nichts.
+  if(phase!=='playing' && phase!=='bonus'){
+    if(roomRef) update(roomRef,{'meta/drawOffer':null}).catch(()=>{});
+    console.log('§177: Remis-Antwort nach Partieende verworfen (phase =', phase + ')');
+    return;
+  }
   await update(roomRef,{'meta/drawOffer':null}).catch(()=>{});
   if(yes){
     // Both agree: end game as draw
@@ -2423,6 +2489,7 @@ window.hostStartNew=async function(){
   selected=null;validTargets=[];winCells=[];lastMover=null;moveIndex=0;
   lastFailCell=null;   // §95
   mvmOfferedThisTurn=false; // §75-W2-6: Angebotsrecht bei Partiestart zurücksetzen
+  mitspielerGegangen=false; raumEndeText=null; // §177: eine neue Runde läuft = beide da
   mvmSeenPositions=[boardHash(board,currentPlayer)]; // §53g: MvM-Historie pro Partie neu
   mvmHalfmovesSinceTriple=0;
   mvmMoveSeq=0; mvmLastCountedSeq=-1; // §53g: Dedup-Zähler pro Partie neu
@@ -2436,27 +2503,80 @@ window.hostStartNew=async function(){
 };
 
 // Clean leave — notify other player
-window.leaveRoom=async function(){
-  if(roomRef){
-    await update(roomRef,{
+// §177 (11.9.): DER WEG HINAUS WARTET NICHT MEHR AUF DAS NETZ. Bis v138 stand hier `await` vor drei
+// Schreibungen — ohne Leitung löste keine davon auf: das Menü schloss sich, und sonst geschah
+// nichts, die Partie schien weiterzulaufen. Dieselbe Klasse wie §168 (Abbruch) und §174
+// (Nochmal-Frist). Jetzt: Bezüge sichern, lokal aufräumen, ins Menü — DANACH die Schreibungen
+// ohne Wartezeit; die Firebase-Bibliothek stellt sie zurück und schickt sie nach.
+window.leaveRoom=function(){
+  const wasRoom=roomRef, wasRole=myRole;
+  // §74-W2-5: Nach dem Verlassen EINE Ebene höher — zur Modus-Auswahl (MvKI/MvM), nicht direkt in
+  // die Raum-Lobby. cleanup() explizit, weil showModeMenu() (anders als showLobby()) NICHT selbst
+  // aufräumt; sonst blieben Heartbeat/Listener scharf. removeRoom=false, da der Raum unten
+  // rollen-korrekt abgeräumt wird (Host: remove, Gast: guest:null).
+  cleanup(false);
+  showModeMenu();
+  if(wasRoom){
+    update(wasRoom,{
       'meta/rematchFrom': null,
       'meta/rematchConfirmed': false,
       'meta/drawOffer': null
     }).catch(()=>{});
-    if(myRole==='host'){
-      await remove(roomRef).catch(()=>{});
+    if(wasRole==='host'){
+      remove(wasRoom).catch(()=>{});
     } else {
       // §86: guestSeen MIT löschen — der verwaiste Herzschlag-Zeitstempel war die zweite
       // Zutat des Loops (er ließ das Verlassen wie einen alternden Netzabriss aussehen).
-      await update(roomRef,{guest:null, guestSeen:null}).catch(()=>{});
+      update(wasRoom,{guest:null, guestSeen:null}).catch(()=>{});
     }
   }
-  // §74-W2-5: Nach dem Verlassen EINE Ebene höher — zur Modus-Auswahl (MvKI/MvM), nicht direkt in
-  // die Raum-Lobby. cleanup() explizit, weil showModeMenu() (anders als showLobby()) NICHT selbst
-  // aufräumt; sonst blieben Heartbeat/Listener scharf. removeRoom=false, da der Raum oben schon
-  // rollen-korrekt abgeräumt wurde (Host: remove, Gast: guest:null).
+};
+
+// §177 (Entscheid Walter, 11.9.): VERLASSEN WÄHREND DER PARTIE ZÄHLT ALS AUFGABE.
+// Walters Unterscheidung: AUFGEBEN ist eine Antwort auf den letzten Zug — nur am Zug (§74-W2-1
+// bleibt). VERLASSEN ist losgelöst vom Spielgeschehen — wer genervt ist oder weg muss, kann
+// jederzeit gehen, verliert damit aber die Partie UND den Raum. Nach dem Ende ist Verlassen
+// einfach Verlassen (ohne Rückfrage, Menü „Spiel beendet").
+// Die Rückfrage steht im selben Menü-Overlay (kein weiteres Overlay in der Liste nötig).
+window.verlassenFragen=function(){
+  const titleEl=document.getElementById('neu-title');
+  const descEl=document.getElementById('neu-desc');
+  const btnsEl=document.getElementById('neu-buttons');
+  const host = (myRole==='host');
+  titleEl.textContent = host ? 'Raum auflösen?' : 'Partie verlassen?';
+  descEl.textContent  = host ? 'Das zählt als Aufgabe — die Partie endet für beide.'
+                             : 'Das zählt als Aufgabe — dein Mitspieler gewinnt.';
+  // §79: der harmlose Rückweg ist blau, die Handlung, die den anderen trifft, nicht.
+  btnsEl.innerHTML=`
+      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">↩ Zurück zum Brett</button>
+      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();verlassenAlsAufgabe()">${host?'Raum auflösen':'Verlassen'}</button>`;
+  showOverlay('neu-overlay');
+};
+
+// §177: Ausführung. ⚠️ Zwischen Rückfrage und Tipp kann die Partie geendet haben (der andere
+// hat gewonnen) — dann wäre „zählt als Aufgabe" falsch. Deshalb hier erneut prüfen.
+// WER SCHREIBT DAS ERGEBNIS? Immer der HOST — so wie seit §164 bei der Remis-Annahme. Schriebe
+// der Gast selbst, könnte sein Aufgabe-Zustand im selben Moment wie ein Zug des Hosts ankommen,
+// und die zuletzt ankommende Schreibung gewönne.
+//   • Gast verlässt: er meldet sich ab (guest:null) wie bisher; der Host erkennt das in
+//     handleGuestDeparture und schreibt dort die Aufgabe — auch wenn er erst später zurückkommt.
+//   • Host löst auf: er schreibt die Aufgabe selbst und löscht den Raum RAUM_AUFLOESEN_VERZUG_MS
+//     später, damit das Ergebnis den Gast noch erreicht.
+// Nichts davon wartet auf das Netz (§168/§174/§177).
+window.verlassenAlsAufgabe=function(){
+  if(!roomRef || !myRole){ showModeMenu(); return; }
+  const laeuft = (phase==='playing' || phase==='bonus');
+  if(!laeuft || myRole!=='host'){ leaveRoom(); return; }
+  const wasRoom = roomRef;
+  const gegner = (myPlayer===1) ? 2 : 1;
+  phase='finished';
+  pendingLastMove={player:null, drawReason:null, resignedBy:myPlayer, verlassen:'host'};
+  pushState(gegner);   // ohne await — der Zustand ist beim Aufruf schon gebaut
+  console.log('§177: Host löst die laufende Partie auf — als Aufgabe gewertet, Raum folgt in',
+              RAUM_AUFLOESEN_VERZUG_MS, 'ms');
   cleanup(false);
   showModeMenu();
+  setTimeout(()=>{ remove(wasRoom).catch(()=>{}); }, RAUM_AUFLOESEN_VERZUG_MS);
 };
 
 // ── Old room cleanup (rooms older than 2h) ───────────────────────
@@ -2572,6 +2692,7 @@ async function handleGuestDeparture(data){
   // handleDisconnect. Der beendete Zustand zwei Zeilen weiter wurde nie erreicht, und das
   // Remis war für den Host unsichtbar — genau der Befund vom 7.9.
   const fertig = (data.state && data.state.phase==='finished') || phase==='finished';
+  mitspielerGegangen=true;   // §177: ab hier ist kein Nochmal mehr möglich — sofort, nicht erst nach 12 s
   document.getElementById('rematch-req-overlay').classList.add('hidden');
   document.getElementById('draw-offer-overlay').classList.add('hidden');
   clearOppOffline(); // falls gerade ein Countdown lief: absichtliches Verlassen hat Vorrang
@@ -2586,9 +2707,26 @@ async function handleGuestDeparture(data){
     // §166: den beendeten Zustand noch anwenden, bevor nur eine Meldung stehenbleibt — sonst
     // zeigt das Brett weiter die Stellung von vorhin.
     if(data.state && data.state.board) applyRemoteState(data.state);
-    setLog('<span class="msg info">Mitspieler hat den Raum verlassen.</span>');
+    // §177: war es ein Verlassen MITTEN in der Partie, sagt die Aufgabe-Meldung schon alles —
+    // nicht mit dem allgemeinen Satz überschreiben.
+    const lmG = data.state && data.state.lastMove;
+    if(!(lmG && lmG.verlassen==='guest'))
+      setLog('<span class="msg info">Mitspieler hat den Raum verlassen.</span>');
   } else {
-    handleDisconnect('Mitspieler hat den Raum verlassen.');
+    // §177 (Entscheid Walter, 11.9.): VERLASSEN ZÄHLT ALS AUFGABE. Bis v138 endete hier die
+    // Sitzung des Hosts mit der Abbruchtafel — ohne Ergebnis. Jetzt schreibt der HOST die
+    // Aufgabe des Gastes: er ist der einzige Schreiber, ein gleichzeitiger Zug kann sie nicht
+    // überholen. Erst den Raum übernehmen (§166: der Raum entscheidet) — sonst schriebe ein
+    // zurückkehrender Host seine veraltete Stellung über den letzten Zug des Gastes.
+    if(data.state && data.state.board) applyRemoteState(data.state);
+    if(phase==='playing' || phase==='bonus'){
+      const gastSpieler = (myPlayer===1) ? 2 : 1;
+      phase='finished';
+      pendingLastMove={player:null, drawReason:null, resignedBy:gastSpieler, verlassen:'guest'};
+      pushState(myPlayer);   // ohne await; die eigene Anzeige kommt über den Zuhörer
+      console.log('§177: Gast hat die laufende Partie verlassen — als Aufgabe gewertet');
+      render();
+    }
   }
   return true;
 }
@@ -2623,6 +2761,8 @@ function attachHostListener(){
     // §72c: Gegner-Präsenz per Herzschlag prüfen (Netzabriss → Countdown-Overlay, kein Einfrieren).
     // Läuft VOR der Leave-Detection, aber greift nur bei guest==='offline'/veraltetem guestSeen.
     evaluateOpponentPresence(data);
+    // §177: steht wieder ein Gast im Raum (auch 'offline' = Netzabriss, nicht gegangen), ist er nicht weg.
+    if(data.guest!=null) mitspielerGegangen=false;
     // Detect opponent DELIBERATELY leaving after game started.
     // §72c-Absicht: NUR absichtliches Verlassen (leaveRoom/cancelJoin) zählt hier; ein
     // Netzabriss setzt guest:'offline' → Countdown via evaluateOpponentPresence, kein
@@ -2635,15 +2775,21 @@ function attachHostListener(){
       applyRemoteState(data.state);
     }
     // Draw offer: show overlay to the OTHER player
-    if(data.meta && data.meta.drawOffer){
+    // §177: nur solange die Partie läuft (remisAngebotGilt) — nach dem Ende erlischt das Angebot.
+    // Und der Anbieter sieht sein eigenes offenes Angebot, abgeleitet aus dem Raum.
+    const angebotH = !!(data.meta && data.meta.drawOffer) && remisAngebotGilt(data);
+    if(angebotH){
       const offerer=data.meta.drawOffer;
       if((offerer==='host' && myRole==='guest')||
          (offerer==='guest' && myRole==='host')){
         document.getElementById('draw-offer-overlay').classList.remove('hidden');
+      } else {
+        document.getElementById('draw-offer-overlay').classList.add('hidden');
       }
     } else {
       document.getElementById('draw-offer-overlay').classList.add('hidden');
     }
+    eigenesRemisSetzen(angebotH && data.meta.drawOffer===myRole);
     // §73 (Walter-Befund): Remis abgelehnt → Meldung an den ANBIETER (der die Ablehnung sonst nicht
     // sah). Nach dem Muster von rematchDeclined: der Ablehnende setzt meta/drawDeclined, der andere
     // (= der Anbieter) zeigt die Meldung und räumt das Signal ab.
@@ -2680,7 +2826,9 @@ function attachHostListener(){
       }
     }
     // Symmetric rematch: show confirmation overlay to the OTHER player
-    if(data.meta && data.meta.rematchFrom){
+    // §177: eine Nochmal-Anfrage gibt es nur nach dem Ende. Kommt sie aus einem älteren Build
+    // mitten in der Partie, erscheint sie nicht — ihre eigene 15-s-Frist nimmt sie wieder zurück.
+    if(data.meta && data.meta.rematchFrom && data.state && data.state.phase==='finished'){
       const requester=data.meta.rematchFrom;
       if((requester==='host' && myRole==='guest') ||
          (requester==='guest' && myRole==='host')){
@@ -2820,7 +2968,8 @@ window.joinRoom=async function(){
 function attachGuestListener(){
   roomListener=onValue(roomRef,async snap=>{
     const data=snap.val();
-    if(!data){handleDisconnect('Raum nicht mehr vorhanden.');return;}
+    // §177: löst der Host eine laufende Partie auf, kennt der Gast den Grund schon (raumEndeText).
+    if(!data){handleDisconnect(raumEndeText || 'Raum nicht mehr vorhanden.');return;}
     // §75-W3-A: Abbruch-Flag erkennen (Gegenstück zum Host-Listener; deckt Host-seitigen Abbruch ab).
     if(data.meta && data.meta.aborted){ handleAbortReturn(abbruchText(data)); return; }
     // §86: Skelett-Raum (Host-Seite fehlt komplett) = Raum wurde gelöscht und von einem eigenen
@@ -2842,11 +2991,14 @@ function attachGuestListener(){
       applyRemoteState(data.state);
     }
     // Draw offer
-    if(data.meta && data.meta.drawOffer){
-      if(data.meta.drawOffer==='host') document.getElementById('draw-offer-overlay').classList.remove('hidden');
+    // §177: nur in laufender Partie (s. Host-Listener); das eigene Angebot aus dem Raum ableiten.
+    const angebotG = !!(data.meta && data.meta.drawOffer) && remisAngebotGilt(data);
+    if(angebotG && data.meta.drawOffer==='host'){
+      document.getElementById('draw-offer-overlay').classList.remove('hidden');
     } else {
       document.getElementById('draw-offer-overlay').classList.add('hidden');
     }
+    eigenesRemisSetzen(angebotG && data.meta.drawOffer===myRole);
     // §73 (Walter-Befund): Remis abgelehnt → Meldung an den Gast, wenn ER der Anbieter war und der
     // Host abgelehnt hat (Gegenstück zum Host-Listener, damit BEIDE Rollen die Ablehnung sehen).
     if(data.meta && data.meta.drawDeclined){
@@ -2856,7 +3008,8 @@ function attachGuestListener(){
       }
     }
     // Rematch request
-    if(data.meta && data.meta.rematchFrom){
+    // §177: nur nach dem Ende (s. Host-Listener).
+    if(data.meta && data.meta.rematchFrom && data.state && data.state.phase==='finished'){
       if(data.meta.rematchFrom==='host') document.getElementById('rematch-req-overlay').classList.remove('hidden');
     } else {
       document.getElementById('rematch-req-overlay').classList.add('hidden');
@@ -3014,6 +3167,10 @@ async function pushState(winner=null){
     playerMap:{ host:hostPlayer, guest:hostPlayer===1?2:1 }
   };
   pendingLastMove=null;
+  // §177: JEDES Partieende räumt ein offenes Remis-Angebot — Vierer, Aufgabe, Verlassen,
+  // Zwangsremis. Wer das Ende schreibt, räumt. VOR der Zustandsschreibung: dann verschwindet
+  // beim Mitspieler zuerst das Angebot, danach kommt das Ergebnis. Ohne Wartezeit.
+  if(phase==='finished') update(roomRef,{'meta/drawOffer':null}).catch(()=>{});
   // §164: die einzige Schreibstelle ohne catch — eine abgelehnte oder gescheiterte Schreibung
   // verschwand spurlos. Bewusst NUR in die Konsole: ohne Netz scheitert jeder Zug, eine
   // Bildschirmmeldung waere dann Dauerlaerm. Nach §132: nicht mehr stumm, aber auch nicht laut.
@@ -3055,6 +3212,7 @@ function applyRemoteState(state){
         // §170: NEUE Partie im selben Raum (Nochmal). Der Gast läuft durch keine Startroutine,
         // also hier: Angebotsrecht zurück. Sonst nimmt er den Riegel in die neue Runde mit.
         mvmOfferedThisTurn=false;
+        mitspielerGegangen=false; raumEndeText=null;   // §177: eine neue Runde läuft = beide da
       }
       if(typeof state.hostParityGen1==='string') mvmHostParityGen1=state.hostParityGen1;
       if(state.parityP1==='odd'||state.parityP1==='even'){
@@ -3207,7 +3365,19 @@ function applyRemoteState(state){
     // §61c-2/§65c: Aufgabe — eigener Meldungszweig. Vorher fiel resignedBy durch alle Zweige
     // (player=null, drawReason=null) → der Gegner sah gar keinen Grund, nur das (falsche) Banner.
     const iResigned=(state.lastMove.resignedBy===myPlayer);
-    setLog(`<span class="msg signal">🏳️ ${iResigned?'Du hast aufgegeben':'Mitspieler hat aufgegeben'}</span>`);  // §95: Sieger folgt im Banner darunter
+    // §177: Verlassen während der Partie zählt als Aufgabe — und soll auch so heißen. Wer
+    // gegangen ist, sieht diese Zeile nicht mehr; sie gilt dem, der bleibt.
+    const weg = state.lastMove.verlassen;
+    let satz = iResigned ? 'Du hast aufgegeben' : 'Mitspieler hat aufgegeben';
+    if(!iResigned && weg==='guest') satz='Mitspieler hat die Partie verlassen — das zählt als Aufgabe';
+    if(!iResigned && weg==='host'){
+      satz='Mitspieler hat aufgegeben und den Raum aufgelöst';
+      mitspielerGegangen=true;
+      // Der Raum verschwindet gleich (RAUM_AUFLOESEN_VERZUG_MS). Die Tafel soll dann den Grund
+      // nennen statt „Raum nicht mehr vorhanden".
+      raumEndeText='Mitspieler hat aufgegeben und den Raum aufgelöst — du hast gewonnen.';
+    }
+    setLog(`<span class="msg signal">🏳️ ${satz}</span>`);  // §95: Sieger folgt im Banner darunter
   } else if(state.lastMove && state.lastMove.drawReason){
     // §73 (Welle 1, Walter-Befund): Remis-Erklärung mittig, OHNE Symbol. WICHTIG: bei einem
     // Wiederholungs-/Halbzug-Remis wird das durch einen ZUG ausgelöst — der Gegner sah bisher NUR
@@ -3287,9 +3457,10 @@ function applyRemoteState(state){
     // Knopf bliebe also grau, auch wenn der Mitspieler zurückkommt — das wäre schlechter als
     // heute. Gezeigt wird nur der Hinweis; das Kriterium ist DASSELBE wie in requestRematch
     // (§78a), damit Anzeige und Sperre nie auseinanderlaufen können.
-    const mitspielerWeg = presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS);
+    // §177: Text UND Kriterium kommen aus neueRundeUnmoeglich() — dieselbe Quelle wie die Sperre.
+    const mitspielerWeg = neueRundeUnmoeglich();
     const wegHinweis = mitspielerWeg
-      ? '<div class="msg info" style="margin-top:8px;">Mitspieler ist nicht mehr verbunden — eine neue Runde ist gerade nicht möglich.</div>'
+      ? '<div class="msg info" style="margin-top:8px;">'+mitspielerWeg+'</div>'
       : '';
     winArea.innerHTML = bannerHtml + rematchBtn + wegHinweis;
   } else {
@@ -3371,8 +3542,12 @@ function updateStatusUI(){
     s.innerHTML=`Bonuszug!<br>${who}<br>(${parity})`;
     return;
   }
-  if(isMyTurn) s.innerHTML=`Du bist dran<br>(${myParity})`;
-  else s.innerHTML=`${oppName} ist dran<br>(${opParity})`;
+  // §177: das EIGENE offene Angebot als dritte Zeile — sie steht, bis der Raum es nicht mehr
+  // trägt (Antwort, Partieende). Bis v138 war es eine einmalige Statuszeile, die die nächste
+  // Meldung überschrieb. Im Bonuszug nicht: dort sind die drei Zeilen schon belegt.
+  const angebotZeile = (gameMode==='mvm' && eigenesRemisOffen) ? '<br>🤝 Remis angeboten' : '';
+  if(isMyTurn) s.innerHTML=`Du bist dran<br>(${myParity})${angebotZeile}`;
+  else s.innerHTML=`${oppName} ist dran<br>(${opParity})${angebotZeile}`;
 }
 
 // ── Rematch ──────────────────────────────────────────────────────
@@ -3455,6 +3630,8 @@ function cleanup(removeRoom=true){
   // Gast Remis angeboten hatte, trug das Flag in den NÄCHSTEN Raum mit und fand dort vor dem
   // ersten Zug einen ausgegrauten Knopf „Remis angeboten (warte auf deinen Zug)".
   mvmOfferedThisTurn=false;
+  // §177: auch diese drei gehören zur Sitzung, nicht zum Gerät (Lehre aus §170).
+  eigenesRemisOffen=false; mitspielerGegangen=false; raumEndeText=null;
   entwerteAnzeige();   // §169
 }
 
@@ -3509,7 +3686,14 @@ async function raumRueckkehrPruefen(){
         console.log('§162 Rückkehr: der Raum existiert nicht mehr');
         // §75-W3-A: Raum weg = der wartende Gegner hat nach 12s+45s sauber abgebrochen und den
         // Raum gelöscht (finalizeOppAbort). Klare Meldung + zurück zur Modus-Auswahl (wie Fix 5).
-        handleAbortReturn(abbruchText(data));
+        // §177: HIER STAND `abbruchText(data)` — aber `data` wird erst weiter unten mit `const`
+        // angelegt. Zugriff davor ist ein ReferenceError (temporal dead zone); der Pfad fiel in
+        // den catch-Zweig und zeigte dauerhaft „⏳ Verbindung wird wiederhergestellt…" statt der
+        // Tafel. Seit §170 (v134) so, am 11.9. im node nachgestellt. Ein Raum, der nicht mehr
+        // existiert, trägt keinen Grund mehr: er kann nach einem Abbruch verschwunden sein ODER
+        // (seit §177) weil der Host die Partie aufgelöst hat. Also die neutrale Fassung — oder
+        // den Grund, den dieser Client vorher schon gesehen hat.
+        handleAbortReturn(raumEndeText || 'Der Raum wurde inzwischen aufgelöst — die Partie ist beendet.');
         return;
       }
       const data=snap.val();

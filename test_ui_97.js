@@ -43,6 +43,9 @@ function px(text){
 }
 
 let pass = 0, fail = 0;
+// §177: einige Verhaltensproben laufen asynchron (die echten async-Funktionen im vm). Ihre
+// Prüfungen werden hier gesammelt; die Summenzeile steht erst, wenn alle abgeschlossen sind.
+const SPAET = [];
 function ok(cond, name){
   if(cond){ pass++; console.log('  \u2713 ' + name); }
   else    { fail++; console.log('  \u2717 FAIL: ' + name); }
@@ -474,12 +477,16 @@ console.log('\u00a7172 \u2014 die Absage steht vor dem Tipp:');
 {
   // Walters Screenshots (9.9., 10:34/10:35): „Nochmal" stand voll eingefaerbt da, obwohl die App
   // schon wusste, dass der Mitspieler weg ist — der Tipp brachte nur die Absage.
-  ok(/const mitspielerWeg = presenceIsStale\(serverNow\(\), oppLastSeen, PRESENCE_STALE_MS\);/.test(html),
+  // §177 hat das Kriterium in EINE Funktion gelegt (neueRundeUnmoeglich) — die Absicht von §172
+  // bleibt: das Schlussbild prüft die Präsenz, und zwar mit demselben Kriterium wie die Sperre.
+  const nru = (html.match(/function neueRundeUnmoeglich\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  ok(/const mitspielerWeg = neueRundeUnmoeglich\(\);/.test(html) &&
+     /presenceIsStale\(serverNow\(\), oppLastSeen, PRESENCE_STALE_MS\)/.test(nru),
      '\u00a7172: das Schlussbild pr\u00fcft die Pr\u00e4senz des Mitspielers');
   // ⚠️ DASSELBE Kriterium wie die Sperre in requestRematch — sonst laufen Anzeige und Sperre
   // auseinander und der Hinweis luegt in die eine oder andere Richtung.
   const rr = html.match(/window\.requestRematch=async function\(\)\{[\s\S]*?\n\};/)[0];
-  ok(/presenceIsStale\(serverNow\(\), oppLastSeen, PRESENCE_STALE_MS\)/.test(rr),
+  ok(/const grund = neueRundeUnmoeglich\(\);/.test(rr),
      '\u00a7172: Anzeige und Sperre benutzen dasselbe Kriterium');
   ok(/winArea\.innerHTML = bannerHtml \+ rematchBtn \+ wegHinweis;/.test(html),
      '\u00a7172: der Hinweis steht im Schlussbild, nicht erst als Antwort');
@@ -1169,6 +1176,199 @@ console.log('\u00a7147 \u2014 Typo-Skala (Boden 12px, keine Sondergr\u00f6\u00df
   }
 }
 
+console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten auf das Netz:');
+{
+  const vm = require('vm');
+  const fn = (re, name) => { const m = html.match(re); if(!m){ ok(false, '\u00a7177: '+name+' nicht gefunden'); return ''; } return m[0]; };
+
+  // ── A. Das Remis-Angebot gilt nur in einer laufenden Partie ─────────────────────────
+  // Walters Befund (11.9.) und der Nachbau dazu: A bietet an, zieht, gewinnt mit einem Vierer —
+  // B sah das Angebot über seiner Niederlage, „Einverstanden\" schrieb winner:null.
+  const rag = fn(/function remisAngebotGilt\(data\)\{[\s\S]*?\n\}/, 'remisAngebotGilt');
+  if(rag){
+    const t = (raum, lokal) => { const c = { phase: lokal }; vm.createContext(c);
+      vm.runInContext(rag + '\n;__r=remisAngebotGilt(' + JSON.stringify(raum===null?{}:{state:{phase:raum}}) + ');', c); return c.__r; };
+    ok(t('playing','playing')===true && t('bonus','bonus')===true && t('playing','bonus')===true,
+       '\u00a7177: in einer laufenden Partie gilt das Angebot (auch im Bonuszug)');
+    ok(t('finished','playing')===false && t('finished','finished')===false,
+       '\u00a7177: steht im RAUM ein Ende, gilt es nicht mehr \u2014 auch wenn die lokale phase noch l\u00e4uft');
+    ok(t('playing','finished')===false, '\u00a7177: h\u00e4lt der \u00a7164-W\u00e4chter lokal \u201efinished\u201c, gilt es auch nicht');
+    ok(t(null,'playing')===false, '\u00a7177: ohne Spielzustand im Raum kein Angebot');
+  }
+  const ovH = (html.match(/!!\(data\.meta && data\.meta\.drawOffer\) && remisAngebotGilt\(data\)/g)||[]).length;
+  ok(ovH === 2, '\u00a7177: BEIDE Zuh\u00f6rer zeigen das Remis-Overlay nur, solange das Angebot gilt (' + ovH + ' Stellen)');
+  const ownSet = (html.match(/eigenesRemisSetzen\(angebot[HG] && data\.meta\.drawOffer===myRole\);/g)||[]).length;
+  ok(ownSet === 2, '\u00a7177: beide Zuh\u00f6rer leiten das EIGENE offene Angebot aus dem Raum ab');
+
+  // answerDraw: der Riegel steht VOR dem Setzen des Endes und schreibt keinen Zustand.
+  const ad = fn(/window\.answerDraw=async function\(yes\)\{[\s\S]*?\n\};/, 'answerDraw');
+  const iRiegel = ad.indexOf("if(phase!=='playing' && phase!=='bonus'){");
+  ok(iRiegel > -1 && iRiegel < ad.indexOf("phase='finished';"),
+     '\u00a7177: answerDraw pr\u00fcft die Phase, BEVOR es ein Ende setzt');
+  const riegelTeil = iRiegel > -1 ? ad.slice(iRiegel, ad.indexOf('return;', iRiegel)) : '';
+  ok(riegelTeil && !/pushState/.test(riegelTeil) && !/drawAcceptedBy|drawDeclined/.test(riegelTeil),
+     '\u00a7177: der Riegel schreibt weder Zustand noch Signal \u2014 er r\u00e4umt nur das Angebot');
+
+  // VERHALTEN: die echte answerDraw- und pushState-Fassung aus der Auslieferung im vm.
+  const ps = fn(/async function pushState\(winner=null\)\{[\s\S]*?\n\}/, 'pushState');
+  const lauf = async (phaseVorher) => {
+    const writes = [];
+    const c = { window:{}, console:{log(){},warn(){},error(){}}, roomRef:{}, myRole:'guest', myPlayer:2,
+      mvmMoveSeq:5, mvmGameGen:1, mvmHostParityGen1:'odd', PARITY_P1:'odd', board:[[{}]], currentPlayer:2,
+      phase:phaseVorher, winCells:[[0,0],[1,1],[2,2],[3,3]], pendingLastMove:null,
+      boardToFirebase:()=>'B', update:async(r,o)=>{ writes.push(JSON.parse(JSON.stringify(o))); },
+      setLog(){}, document:{ getElementById:()=>({ classList:{ add(){}, remove(){} } }) } };
+    vm.createContext(c);
+    vm.runInContext(ps + '\n' + ad.replace('window.answerDraw=', 'answerDraw=') + '\n;this.__a=answerDraw;', c);
+    await c.__a(true);
+    return writes;
+  };
+  if(ad && ps){
+    SPAET.push(lauf('finished').then(w => {
+      ok(!w.some(x => x.state), '\u00a7177 VERHALTEN: Annahme eines stehengebliebenen Angebots nach einem Sieg schreibt KEINEN Zustand (bis v138: winner:null)');
+    }));
+    SPAET.push(lauf('playing').then(w => {
+      const st = (w.find(x => x.state)||{}).state;
+      ok(!!st && st.phase==='finished' && st.winner===null && st.lastMove && st.lastMove.drawReason==='beide einverstanden',
+         '\u00a7177 VERHALTEN: in laufender Partie wirkt die Annahme weiterhin (Remis, beide einverstanden)');
+    }));
+  }
+
+  // Jedes Partieende nimmt ein offenes Angebot mit — VOR der Zustandsschreibung, ohne Wartezeit.
+  const iClr = ps.indexOf("if(phase==='finished') update(roomRef,{'meta/drawOffer':null}).catch(()=>{});");
+  ok(iClr > -1 && iClr < ps.indexOf('await update(roomRef,{state});'),
+     '\u00a7177: pushState r\u00e4umt bei jedem Ende das Angebot, und zwar vor dem Ergebnis');
+
+  // Der Anbieter sieht sein Angebot dauerhaft; das Anbieten wartet nicht auf das Netz.
+  const od = fn(/window\.offerDraw=async function\(\)\{[\s\S]*?\n\};/, 'offerDraw');
+  ok(od && !/await/.test(od.replace(/\/\/.*$/gm,'')) && od.indexOf('eigenesRemisSetzen(true);') > -1 &&
+     od.indexOf('eigenesRemisSetzen(true);') < od.indexOf("update(roomRef,{'meta/drawOffer':myRole})"),
+     '\u00a7177: Anbieten zeigt sofort und schreibt danach \u2014 kein await');
+  const su = fn(/function updateStatusUI\(\)\{[\s\S]*?\n\}/, 'updateStatusUI');
+  ok(/eigenesRemisOffen\) \? '<br>🤝 Remis angeboten'/.test(su) && (su.match(/\$\{angebotZeile\}/g)||[]).length === 2,
+     '\u00a7177: die Statusanzeige tr\u00e4gt das offene Angebot als eigene Zeile (am Zug und nicht am Zug)');
+  ok(/\} else if\(eigenesRemisOffen\)\{[\s\S]{0,300}?disabled[\s\S]{0,120}?Remis angeboten \u2014 wartet auf Antwort/.test(html),
+     '\u00a7177: im Men\u00fc ist \u201eRemis anbieten\u201c gesperrt, solange das eigene Angebot steht');
+
+  // ── B. Neue Runde nur nach dem Ende ────────────────────────────────────────────────
+  const imSpiel = (html.match(/\} else if\(inGame\)\{[\s\S]*?\n  \} else \{\n    showLobby\(\); return;/)||[''])[0];
+  ok(imSpiel && !/requestRematch\(\)/.test(imSpiel) && !/Neu anfragen</.test(imSpiel),
+     '\u00a7177: das Men\u00fc der LAUFENDEN Partie hat kein \u201eNeu anfragen\u201c mehr');
+  const rr = fn(/window\.requestRematch=async function\(\)\{[\s\S]*?\n\};/, 'requestRematch');
+  ok(rr.indexOf("if(phase!=='finished') return;") > -1 &&
+     rr.indexOf("if(phase!=='finished') return;") < rr.indexOf("update(roomRef,{'meta/rematchFrom':myRole})"),
+     '\u00a7177: requestRematch schreibt nur nach dem Ende (Riegel vor dem Schreiben)');
+  ok((html.match(/data\.meta\.rematchFrom && data\.state && data\.state\.phase==='finished'\)\{/g)||[]).length === 2,
+     '\u00a7177: beide Zuh\u00f6rer zeigen eine Nochmal-Anfrage nur nach dem Ende');
+
+  // ── C. Verlassen während der Partie zählt als Aufgabe ──────────────────────────────
+  ok(/onclick="verlassenFragen\(\)">\$\{myRole==='host'\?'Raum aufl\u00f6sen':'Verlassen'\}<\/button>/.test(imSpiel),
+     '\u00a7177: \u201eVerlassen\u201c/\u201eRaum aufl\u00f6sen\u201c in der laufenden Partie fragt erst nach');
+  ok(/if\(isFinished\)\{[\s\S]{0,700}?onclick="leaveRoom\(\)">Raum verlassen</.test(html),
+     '\u00a7177: nach dem Ende ist Verlassen einfach Verlassen (ohne R\u00fcckfrage)');
+  const vf = fn(/window\.verlassenFragen=function\(\)\{[\s\S]*?\n\};/, 'verlassenFragen');
+  ok(vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 die Partie endet f\u00fcr beide.'") > -1 &&
+     vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 dein Mitspieler gewinnt.'") > -1 &&
+     vf.indexOf("'Raum aufl\u00f6sen?'") > -1 && vf.indexOf("'Partie verlassen?'") > -1,
+     '\u00a7177: Wortlaut der R\u00fcckfrage wie vereinbart (Host und Gast)');
+  ok(/big-btn primary[^>]*onclick="closeNeuMenu\(\)">\u21a9 Zur\u00fcck zum Brett/.test(vf) &&
+     !/primary[^>]*verlassenAlsAufgabe/.test(vf),
+     '\u00a7177 (\u00a779): blau ist der harmlose R\u00fcckweg, nicht das Verlassen');
+  ok(/^window\.verlassenFragen=/m.test(html) && /^window\.verlassenAlsAufgabe=/m.test(html),
+     '\u00a7177 (\u00a7127): beide Funktionen h\u00e4ngen an window \u2014 inline-onclick findet sie im Modul');
+
+  const va = fn(/window\.verlassenAlsAufgabe=function\(\)\{[\s\S]*?\n\};/, 'verlassenAlsAufgabe');
+  ok(va.indexOf("const laeuft = (phase==='playing' || phase==='bonus');") > -1 &&
+     va.indexOf('leaveRoom()') > -1 && va.indexOf("myRole!=='host'") > -1,
+     '\u00a7177: beim Tipp wird die Phase erneut gepr\u00fcft; der Gast meldet sich nur ab (der Host schreibt)');
+  ok(!/await/.test(va.replace(/\/\/.*$/gm,'')) && va.indexOf('cleanup(false);') > -1 &&
+     va.indexOf('cleanup(false);') < va.indexOf('setTimeout(') && /RAUM_AUFLOESEN_VERZUG_MS\)/.test(va),
+     '\u00a7177: Aufl\u00f6sen wartet nicht auf das Netz; der Raum wird verz\u00f6gert gel\u00f6scht');
+
+  // VERHALTEN: Host löst eine laufende Partie auf.
+  if(va && ps){
+    const writes = [], ablauf = []; let timer = null;
+    const c = { window:{}, console:{log(){},warn(){},error(){}}, roomRef:{id:'R'}, myRole:'host', myPlayer:1,
+      mvmMoveSeq:3, mvmGameGen:1, mvmHostParityGen1:'odd', PARITY_P1:'odd', board:[[{}]], currentPlayer:2,
+      phase:'playing', winCells:[], pendingLastMove:null, RAUM_AUFLOESEN_VERZUG_MS:4000,
+      boardToFirebase:()=>'B',
+      update:(r,o)=>{ writes.push(JSON.parse(JSON.stringify(o))); ablauf.push('write'); return Promise.resolve(); },
+      remove:(r)=>{ ablauf.push('remove:'+r.id); return Promise.resolve(); },
+      cleanup(){ ablauf.push('cleanup'); c.roomRef=null; c.myRole=null; c.phase='waiting'; },
+      showModeMenu(){ ablauf.push('menu'); }, leaveRoom(){ ablauf.push('leaveRoom'); },
+      setTimeout:(f,ms)=>{ timer={f,ms}; ablauf.push('timer:'+ms); } };
+    vm.createContext(c);
+    vm.runInContext(ps + '\n' + va.replace('window.verlassenAlsAufgabe=', 'verlassenAlsAufgabe=') + '\n;verlassenAlsAufgabe();', c);
+    const st = (writes.find(x => x.state)||{}).state;
+    ok(!!st && st.phase==='finished' && st.winner===2 && st.lastMove.resignedBy===1 && st.lastMove.verlassen==='host',
+       '\u00a7177 VERHALTEN: der Host schreibt seine Aufgabe (Gast gewinnt, verlassen:host)');
+    ok(writes.length && writes[0]['meta/drawOffer']===null, '\u00a7177 VERHALTEN: ein offenes Angebot wird zuerst ger\u00e4umt');
+    ok(ablauf.indexOf('menu') > -1 && ablauf.indexOf('menu') < ablauf.indexOf('timer:4000') && !ablauf.some(x=>x.startsWith('remove')),
+       '\u00a7177 VERHALTEN: der Host ist sofort im Men\u00fc, gel\u00f6scht wird erst nach der Frist');
+    if(timer) timer.f();
+    ok(ablauf.includes('remove:R'), '\u00a7177 VERHALTEN: nach der Frist wird der ALTE Raum gel\u00f6scht (gesicherter Bezug)');
+  }
+
+  // leaveRoom: kein await, lokal zuerst, Schreibungen über den gesicherten Bezug.
+  const lr = fn(/window\.leaveRoom=function\(\)\{[\s\S]*?\n\};/, 'leaveRoom (nicht mehr async)');
+  ok(lr && !/await/.test(lr.replace(/\/\/.*$/gm,'')) && lr.indexOf('cleanup(false);') < lr.indexOf('update(wasRoom,') &&
+     /remove\(wasRoom\)/.test(lr) && /update\(wasRoom,\{guest:null, guestSeen:null\}\)/.test(lr),
+     '\u00a7177: Verlassen r\u00e4umt lokal auf und schreibt DANACH ohne Wartezeit');
+  ok(!/window\.leaveRoom=async/.test(html), '\u00a7177: leaveRoom ist nicht mehr async');
+
+  // Der Host wertet den Weggang des Gastes in laufender Partie als Aufgabe.
+  const gd = fn(/async function handleGuestDeparture\(data\)\{[\s\S]*?\n\}/, 'handleGuestDeparture');
+  const sonst = gd.slice(gd.lastIndexOf('} else {'));
+  ok(!/handleDisconnect\(/.test(sonst), '\u00a7177: der Weggang in laufender Partie f\u00fchrt nicht mehr auf die Abbruchtafel');
+  ok(sonst.indexOf('applyRemoteState(data.state)') > -1 && sonst.indexOf('applyRemoteState(data.state)') < sonst.indexOf("phase='finished';"),
+     '\u00a7177 (\u00a7166): erst den Raum \u00fcbernehmen, dann das Ende setzen \u2014 kein Altstand \u00fcber dem letzten Zug');
+  if(gd && ps){
+    const writes = [];
+    const c = { window:{}, console:{log(){},warn(){},error(){}}, roomRef:{}, myRole:'host', myPlayer:1,
+      hostGameStarted:true, mitspielerGegangen:false, mvmMoveSeq:3, mvmGameGen:1, mvmHostParityGen1:'odd',
+      PARITY_P1:'odd', board:'ALT', currentPlayer:1, phase:'playing', winCells:[], pendingLastMove:null,
+      boardToFirebase:b=>b, update:(r,o)=>{ writes.push(JSON.parse(JSON.stringify(o))); return Promise.resolve(); },
+      applyRemoteState(st){ c.board=st.board; c.phase=st.phase; c.currentPlayer=st.currentPlayer; },
+      handleDisconnect(){ c.abbruch=true; }, clearOppOffline(){}, stopRematchWaitTimeout(){}, setLog(){}, render(){},
+      document:{ getElementById:()=>({ classList:{ add(){}, remove(){} } }) } };
+    vm.createContext(c);
+    vm.runInContext(ps + '\n' + gd + '\n;this.__g=handleGuestDeparture;', c);
+    SPAET.push(c.__g({ guest:null, meta:{}, state:{ board:'NEU', phase:'playing', currentPlayer:1 } }).then(() => {
+      const st = (writes.find(x => x.state)||{}).state;
+      ok(!c.abbruch && !!st && st.winner===1 && st.lastMove.resignedBy===2 && st.lastMove.verlassen==='guest',
+         '\u00a7177 VERHALTEN: Gast verl\u00e4sst \u2192 der Host schreibt die Aufgabe des Gastes, keine Abbruchtafel');
+      ok(!!st && st.board==='NEU', '\u00a7177 VERHALTEN: geschrieben wird die Stellung AUS DEM RAUM, nicht der Altstand');
+      ok(c.mitspielerGegangen===true, '\u00a7177 VERHALTEN: danach gilt der Mitspieler als gegangen (kein Nochmal)');
+    }));
+  }
+
+  // Meldungen und Tafeltext für den, der bleibt.
+  ok(/weg==='guest'\) satz='Mitspieler hat die Partie verlassen \u2014 das z\u00e4hlt als Aufgabe'/.test(html) &&
+     /satz='Mitspieler hat aufgegeben und den Raum aufgel\u00f6st'/.test(html),
+     '\u00a7177: die Aufgabe-Meldung nennt das Verlassen (Gast) bzw. das Aufl\u00f6sen (Host)');
+  ok(/if\(!data\)\{handleDisconnect\(raumEndeText \|\| 'Raum nicht mehr vorhanden\.'\);return;\}/.test(html),
+     '\u00a7177: verschwindet der Raum danach, nennt die Tafel des Gastes den Grund');
+
+  // Ein Entscheider für „neue Runde möglich?\" — mit dem Weggang als erstem Grund.
+  const nr = fn(/function neueRundeUnmoeglich\(\)\{[\s\S]*?\n\}/, 'neueRundeUnmoeglich');
+  if(nr){
+    const t = (weg, lastSeen) => { const c = { mitspielerGegangen:weg, oppLastSeen:lastSeen, PRESENCE_STALE_MS:12000,
+      serverNow:()=>100000, presenceIsStale:(now,ls,ms)=> ls===null || now-ls>ms }; vm.createContext(c);
+      vm.runInContext(nr + '\n;__n=neueRundeUnmoeglich();', c); return c.__n; };
+    ok(/verlassen/.test(t(true, 99999)), '\u00a7177 VERHALTEN: Mitspieler gegangen \u2192 sofort \u201ekeine neue Runde\u201c (nicht erst nach 12 s)');
+    ok(t(false, 99999) === '', '\u00a7177 VERHALTEN: Mitspieler da und frisch \u2192 Nochmal m\u00f6glich');
+    ok(/nicht mehr verbunden/.test(t(false, 50000)), '\u00a7177 VERHALTEN: Herzschlag abgestanden \u2192 wie bisher der Verbindungshinweis');
+  }
+  ok(/eigenesRemisOffen=false; mitspielerGegangen=false; raumEndeText=null;/.test(html),
+     '\u00a7177 (\u00a7170-Lehre): cleanup setzt alle drei Zust\u00e4nde zur\u00fcck \u2014 sie wandern nicht in den n\u00e4chsten Raum');
+
+  // ── D. Eigener Fehler aus §170: Rückkehr in einen verschwundenen Raum ───────────────
+  const rp = fn(/async function raumRueckkehrPruefen\(\)\{[\s\S]*?\n\}/, 'raumRueckkehrPruefen');
+  const vorDecl = rp.slice(rp.indexOf('if(!snap.exists()){'), rp.indexOf('const data=snap.val();'));
+  ok(vorDecl.length > 0 && !/\bdata\b/.test(vorDecl.replace(/\/\/.*$/gm,'')),
+     '\u00a7177: vor `const data` wird `data` nicht mehr benutzt (bis v138 ReferenceError \u2192 Dauer-\u201eVerbindung wird wiederhergestellt\u201c)');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
@@ -1192,6 +1392,8 @@ console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
   }
 }
 
-console.log('');
-console.log(pass + '/' + (pass+fail) + ' Tests bestanden' + (fail ? ' \u2014 ' + fail + ' FEHLGESCHLAGEN' : ''));
-process.exit(fail ? 1 : 0);
+Promise.all(SPAET).then(() => {
+  console.log('');
+  console.log(pass + '/' + (pass+fail) + ' Tests bestanden' + (fail ? ' \u2014 ' + fail + ' FEHLGESCHLAGEN' : ''));
+  process.exit(fail ? 1 : 0);
+}, e => { console.log('  \u2717 FAIL: sp\u00e4te Pr\u00fcfung abgest\u00fcrzt \u2014 ' + (e && e.message)); process.exit(1); });
