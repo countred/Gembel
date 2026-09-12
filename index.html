@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=139'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=140'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -904,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=139" charset="utf-8"></script>
+<script src="gembel_rules.js?v=140" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=139" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=140" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1354,12 +1354,18 @@ function remisAngebotGilt(data){
 
 // §177: EIN Entscheider für „geht eine neue Runde?" — Anzeige im Schlussbild und Sperre in
 // requestRematch lesen beide HIER (Grundsatz aus §172: Anzeige und Sperre dürfen nie
-// auseinanderlaufen). Leerer Text = Nochmal möglich.
+// auseinanderlaufen). `null` = Nochmal möglich.
+// §179 (Walters Screenshots 10:01): der Rückgabewert unterscheidet jetzt ENDGÜLTIG von
+// VORLÄUFIG. Wer den Raum verlassen hat, kommt nicht zurück — dort verschwindet der Knopf
+// (der Hinweis allein hat nicht gereicht, s. §179). Ein abgestandener Herzschlag kann sich
+// dagegen erholen; dort bleibt der Knopf tippbar wie seit §172 entschieden.
+// Der Text nennt den GRUND NICHT mehr: bei einem Weggang steht er schon als Meldung über dem
+// Schlussbild, und zweimal dasselbe in zwei Farben las sich wie zwei verschiedene Aussagen.
 function neueRundeUnmoeglich(){
-  if(mitspielerGegangen) return 'Mitspieler hat den Raum verlassen — eine neue Runde ist nicht möglich.';
+  if(mitspielerGegangen) return {endgueltig:true,  text:'Eine neue Runde ist nicht möglich.'};
   if(presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS))
-    return 'Mitspieler ist nicht mehr verbunden — eine neue Runde ist gerade nicht möglich.';
-  return '';
+    return {endgueltig:false, text:'Mitspieler ist nicht mehr verbunden — eine neue Runde ist gerade nicht möglich.'};
+  return null;
 }
 
 // §177: Anzeige des EIGENEN offenen Angebots nachführen — nur bei einem Wechsel neu zeichnen.
@@ -1661,7 +1667,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v139';
+const BUILD_MARKER='· Build v140';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1978,7 +1984,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=139'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=140'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2306,9 +2312,11 @@ window.requestRematch=async function(){
   // gar nicht erst in den (nach Spielende unbewachten) Wartezustand gehen, sondern sofort melden.
   // §177: dasselbe Kriterium wie der Hinweis im Schlussbild — jetzt aus EINER Funktion, dazu
   // „Mitspieler hat den Raum verlassen" (bis v138 war der Knopf dann noch bis zu 12 s tippbar).
-  const grund = neueRundeUnmoeglich();
-  if(grund){
-    setLog('<span class="msg info">'+grund+'</span>');
+  const hindernis = neueRundeUnmoeglich();
+  if(hindernis){
+    // §179: im endgültigen Fall gibt es den Knopf nicht mehr — dieser Riegel ist dann nur noch
+    // die Absicherung eines Wegs, den die Oberfläche nicht anbietet.
+    setLog('<span class="msg info">'+hindernis.text+'</span>');
     return;
   }
   await update(roomRef,{'meta/rematchFrom':myRole}).catch(()=>{});
@@ -2709,6 +2717,8 @@ async function handleGuestDeparture(data){
     if(data.state && data.state.board) applyRemoteState(data.state);
     // §177: war es ein Verlassen MITTEN in der Partie, sagt die Aufgabe-Meldung schon alles —
     // nicht mit dem allgemeinen Satz überschreiben.
+    // §179: bei `verlassen==='guest'` trägt die Aufgabe-Meldung (applyRemoteState) seit dem
+    // 12.9. denselben Wortlaut — deshalb hier nichts, sonst stünde er zweimal.
     const lmG = data.state && data.state.lastMove;
     if(!(lmG && lmG.verlassen==='guest'))
       setLog('<span class="msg info">Mitspieler hat den Raum verlassen.</span>');
@@ -3367,15 +3377,20 @@ function applyRemoteState(state){
     const iResigned=(state.lastMove.resignedBy===myPlayer);
     // §177: Verlassen während der Partie zählt als Aufgabe — und soll auch so heißen. Wer
     // gegangen ist, sieht diese Zeile nicht mehr; sie gilt dem, der bleibt.
+    // §179 (Entscheid Walter, 12.9.): EIN Wortlaut für beide Rollen — „Mitspieler hat den Raum
+    // verlassen". Ob Host oder Gast gegangen ist, ändert für den, der bleibt, nichts; und dass
+    // es als Aufgabe zählt, sagt das Siegbanner direkt darunter deutlicher als ein Nachsatz.
+    // Die frühere Fassung („hat die Partie verlassen — das zählt als Aufgabe", „hat aufgegeben
+    // und den Raum aufgelöst") lief über zwei Zeilen und stand fast wörtlich noch einmal unter
+    // dem Nochmal-Knopf.
     const weg = state.lastMove.verlassen;
     let satz = iResigned ? 'Du hast aufgegeben' : 'Mitspieler hat aufgegeben';
-    if(!iResigned && weg==='guest') satz='Mitspieler hat die Partie verlassen — das zählt als Aufgabe';
+    if(!iResigned && weg) satz='Mitspieler hat den Raum verlassen';
     if(!iResigned && weg==='host'){
-      satz='Mitspieler hat aufgegeben und den Raum aufgelöst';
       mitspielerGegangen=true;
       // Der Raum verschwindet gleich (RAUM_AUFLOESEN_VERZUG_MS). Die Tafel soll dann den Grund
       // nennen statt „Raum nicht mehr vorhanden".
-      raumEndeText='Mitspieler hat aufgegeben und den Raum aufgelöst — du hast gewonnen.';
+      raumEndeText='Mitspieler hat den Raum verlassen — du hast gewonnen.';
     }
     setLog(`<span class="msg signal">🏳️ ${satz}</span>`);  // §95: Sieger folgt im Banner darunter
   } else if(state.lastMove && state.lastMove.drawReason){
@@ -3458,11 +3473,14 @@ function applyRemoteState(state){
     // heute. Gezeigt wird nur der Hinweis; das Kriterium ist DASSELBE wie in requestRematch
     // (§78a), damit Anzeige und Sperre nie auseinanderlaufen können.
     // §177: Text UND Kriterium kommen aus neueRundeUnmoeglich() — dieselbe Quelle wie die Sperre.
-    const mitspielerWeg = neueRundeUnmoeglich();
-    const wegHinweis = mitspielerWeg
-      ? '<div class="msg info" style="margin-top:8px;">'+mitspielerWeg+'</div>'
+    // §179: bei einem ENDGÜLTIGEN Hindernis (Mitspieler hat den Raum verlassen) fällt der Knopf
+    // ganz weg. Die kleine Lösung aus §172 (Knopf bleibt, Hinweis darunter) war für den
+    // VORLÄUFIGEN Fall gedacht — dort gilt sie unverändert weiter.
+    const hindernis = neueRundeUnmoeglich();
+    const wegHinweis = hindernis
+      ? '<div class="msg info" style="margin-top:8px;">'+hindernis.text+'</div>'
       : '';
-    winArea.innerHTML = bannerHtml + rematchBtn + wegHinweis;
+    winArea.innerHTML = bannerHtml + ((hindernis && hindernis.endgueltig) ? '' : rematchBtn) + wegHinweis;
   } else {
     winArea.innerHTML='';
   }

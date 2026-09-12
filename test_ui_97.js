@@ -65,8 +65,8 @@ ok(!/>oder \u21ba Neu f\u00fcr weitere Optionen/.test(html) && !/>oder ☰ Optio
 // Zusatzzeile; der Hinweis ist bedingt und verschwindet, sobald ein Nochmal moeglich ist.
 ok((html.match(/winArea\.innerHTML = bannerHtml \+ rematchBtn;/g)||[]).length === 1,
    'MvKI-Schlussbild besteht weiterhin nur aus Banner + \u201eNochmal\u201c-Button');
-ok(/winArea\.innerHTML = bannerHtml \+ rematchBtn \+ wegHinweis;/.test(html) &&
-   /const wegHinweis = mitspielerWeg/.test(html) && /\n\s*: '';/.test(html),
+ok(/winArea\.innerHTML = bannerHtml \+ \(\(hindernis && hindernis\.endgueltig\) \? '' : rematchBtn\) \+ wegHinweis;/.test(html) &&
+   /const wegHinweis = hindernis/.test(html) && /\n\s*: '';/.test(html),
    'MvM-Schlussbild: der \u00a7172-Hinweis ist BEDINGT (leer, sobald ein Nochmal m\u00f6glich ist)')
 ;
 ok(/\u21ba Neu \(anderer Modus\/Stufe\)/.test(html),
@@ -480,17 +480,19 @@ console.log('\u00a7172 \u2014 die Absage steht vor dem Tipp:');
   // §177 hat das Kriterium in EINE Funktion gelegt (neueRundeUnmoeglich) — die Absicht von §172
   // bleibt: das Schlussbild prüft die Präsenz, und zwar mit demselben Kriterium wie die Sperre.
   const nru = (html.match(/function neueRundeUnmoeglich\(\)\{[\s\S]*?\n\}/)||[''])[0];
-  ok(/const mitspielerWeg = neueRundeUnmoeglich\(\);/.test(html) &&
+  ok(/const hindernis = neueRundeUnmoeglich\(\);/.test(html) &&
      /presenceIsStale\(serverNow\(\), oppLastSeen, PRESENCE_STALE_MS\)/.test(nru),
      '\u00a7172: das Schlussbild pr\u00fcft die Pr\u00e4senz des Mitspielers');
   // ⚠️ DASSELBE Kriterium wie die Sperre in requestRematch — sonst laufen Anzeige und Sperre
   // auseinander und der Hinweis luegt in die eine oder andere Richtung.
   const rr = html.match(/window\.requestRematch=async function\(\)\{[\s\S]*?\n\};/)[0];
-  ok(/const grund = neueRundeUnmoeglich\(\);/.test(rr),
+  ok(/const hindernis = neueRundeUnmoeglich\(\);/.test(rr),
      '\u00a7172: Anzeige und Sperre benutzen dasselbe Kriterium');
-  ok(/winArea\.innerHTML = bannerHtml \+ rematchBtn \+ wegHinweis;/.test(html),
+  ok(/winArea\.innerHTML = bannerHtml \+ \(\(hindernis && hindernis\.endgueltig\) \? '' : rematchBtn\)/.test(html),
      '\u00a7172: der Hinweis steht im Schlussbild, nicht erst als Antwort');
-  // Kleine Loesung: der Knopf bleibt tippbar (kein disabled, kein Ausgrauen).
+  // §172-Kleinlösung, seit §179 nur noch für den VORLÄUFIGEN Fall: dort bleibt der Knopf tippbar
+  // (kein disabled, kein Dauergrau, wenn der Mitspieler zurückkommt). Im endgültigen Fall ist er
+  // ganz weg — geprüft in der §179-Gruppe.
   const rb = html.match(/const rematchBtn = `[\s\S]*?`;/)[0];
   ok(!/disabled/.test(rb) && /onclick="requestRematch\(\)"/.test(rb),
      '\u00a7172: der Knopf bleibt tippbar \u2014 kein Dauergrau nach R\u00fcckkehr des Mitspielers');
@@ -1343,9 +1345,9 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
   }
 
   // Meldungen und Tafeltext für den, der bleibt.
-  ok(/weg==='guest'\) satz='Mitspieler hat die Partie verlassen \u2014 das z\u00e4hlt als Aufgabe'/.test(html) &&
-     /satz='Mitspieler hat aufgegeben und den Raum aufgel\u00f6st'/.test(html),
-     '\u00a7177: die Aufgabe-Meldung nennt das Verlassen (Gast) bzw. das Aufl\u00f6sen (Host)');
+  ok(/if\(!iResigned && weg\) satz='Mitspieler hat den Raum verlassen';/.test(html) &&
+     !/das z\u00e4hlt als Aufgabe'/.test(html) && !/aufgegeben und den Raum aufgel\u00f6st/.test(html),
+     '\u00a7179: EIN Wortlaut f\u00fcr beide Rollen \u2014 \u201eMitspieler hat den Raum verlassen\u201c');
   ok(/if\(!data\)\{handleDisconnect\(raumEndeText \|\| 'Raum nicht mehr vorhanden\.'\);return;\}/.test(html),
      '\u00a7177: verschwindet der Raum danach, nennt die Tafel des Gastes den Grund');
 
@@ -1355,9 +1357,14 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
     const t = (weg, lastSeen) => { const c = { mitspielerGegangen:weg, oppLastSeen:lastSeen, PRESENCE_STALE_MS:12000,
       serverNow:()=>100000, presenceIsStale:(now,ls,ms)=> ls===null || now-ls>ms }; vm.createContext(c);
       vm.runInContext(nr + '\n;__n=neueRundeUnmoeglich();', c); return c.__n; };
-    ok(/verlassen/.test(t(true, 99999)), '\u00a7177 VERHALTEN: Mitspieler gegangen \u2192 sofort \u201ekeine neue Runde\u201c (nicht erst nach 12 s)');
-    ok(t(false, 99999) === '', '\u00a7177 VERHALTEN: Mitspieler da und frisch \u2192 Nochmal m\u00f6glich');
-    ok(/nicht mehr verbunden/.test(t(false, 50000)), '\u00a7177 VERHALTEN: Herzschlag abgestanden \u2192 wie bisher der Verbindungshinweis');
+    const rWeg = t(true, 99999), rFrisch = t(false, 99999), rAlt = t(false, 50000);
+    ok(!!rWeg && rWeg.endgueltig === true && /nicht m\u00f6glich/.test(rWeg.text),
+       '\u00a7177 VERHALTEN: Mitspieler gegangen \u2192 sofort \u201ekeine neue Runde\u201c (nicht erst nach 12 s), und ENDG\u00dcLTIG');
+    ok(rFrisch === null, '\u00a7177 VERHALTEN: Mitspieler da und frisch \u2192 Nochmal m\u00f6glich');
+    ok(!!rAlt && rAlt.endgueltig === false && /nicht mehr verbunden/.test(rAlt.text),
+       '\u00a7177 VERHALTEN: Herzschlag abgestanden \u2192 Verbindungshinweis, aber VORL\u00c4UFIG (Knopf bleibt)');
+    ok(!/verlassen|verbunden/.test(rWeg.text),
+       '\u00a7179: der endg\u00fcltige Hinweis nennt den Grund NICHT \u2014 er steht schon als Meldung dar\u00fcber');
   }
   ok(/eigenesRemisOffen=false; mitspielerGegangen=false; raumEndeText=null;/.test(html),
      '\u00a7177 (\u00a7170-Lehre): cleanup setzt alle drei Zust\u00e4nde zur\u00fcck \u2014 sie wandern nicht in den n\u00e4chsten Raum');
@@ -1367,6 +1374,52 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
   const vorDecl = rp.slice(rp.indexOf('if(!snap.exists()){'), rp.indexOf('const data=snap.val();'));
   ok(vorDecl.length > 0 && !/\bdata\b/.test(vorDecl.replace(/\/\/.*$/gm,'')),
      '\u00a7177: vor `const data` wird `data` nicht mehr benutzt (bis v138 ReferenceError \u2192 Dauer-\u201eVerbindung wird wiederhergestellt\u201c)');
+}
+
+
+console.log('\u00a7179 \u2014 ein Wortlaut, und der Nochmal-Knopf verschwindet, wenn er nichts mehr kann:');
+{
+  const vm = require('vm');
+  // Walters Screenshots (12.9., 10:01): der Gast hatte die laufende Partie verlassen. Der Host sah
+  // „Mitspieler hat die Partie verlassen — das zählt als Aufgabe“, darunter „Nochmal“ und
+  // darunter fast denselben Satz noch einmal. Ein Tipp auf den Knopf schrieb den Satz ZUSÄTZLICH
+  // in die Meldungszeile — dieselbe Aussage dreimal auf einem Bildschirm.
+  const wa = (html.match(/winArea\.innerHTML = bannerHtml \+[^;]*;/)||[''])[0];
+  ok(/\(hindernis && hindernis\.endgueltig\) \? '' : rematchBtn/.test(wa),
+     '\u00a7179: bei einem endg\u00fcltigen Hindernis steht KEIN Nochmal-Knopf im Schlussbild');
+
+  // VERHALTEN: das Schlussbild einmal mit dem echten Ausdruck aus der Auslieferung bauen.
+  const bauen = (hindernis) => {
+    const c = { bannerHtml:'[BANNER]', rematchBtn:'[KNOPF]', hindernis:hindernis,
+                winArea:{innerHTML:''} };
+    vm.createContext(c);
+    vm.runInContext("const wegHinweis = hindernis ? '[HINWEIS:'+hindernis.text+']' : '';\n" + wa, c);
+    return c.winArea.innerHTML;
+  };
+  const endg = bauen({endgueltig:true,  text:'Eine neue Runde ist nicht m\u00f6glich.'});
+  const vorl = bauen({endgueltig:false, text:'Mitspieler ist nicht mehr verbunden \u2014 eine neue Runde ist gerade nicht m\u00f6glich.'});
+  const frei = bauen(null);
+  ok(endg.indexOf('[KNOPF]') === -1 && endg.indexOf('[HINWEIS:') > -1,
+     '\u00a7179 VERHALTEN: Mitspieler hat den Raum verlassen \u2192 nur Banner und Hinweis');
+  ok(vorl.indexOf('[KNOPF]') > -1 && vorl.indexOf('[HINWEIS:') > -1,
+     '\u00a7179 VERHALTEN: nur der Herzschlag fehlt \u2192 Knopf UND Hinweis (\u00a7172-Kleinl\u00f6sung bleibt)');
+  ok(frei.indexOf('[KNOPF]') > -1 && frei.indexOf('[HINWEIS:') === -1,
+     '\u00a7179 VERHALTEN: nichts im Weg \u2192 nur Banner und Knopf');
+
+  // Der Wortlaut steht genau EINMAL im Code, und der Hinweis wiederholt ihn nicht.
+  // Nur die ausgelieferten Zeichenketten zaehlen, nicht die Kommentare, die den Wortlaut nennen.
+  const satzStellen = (html.replace(/\/\/.*$/gm,'').match(/Mitspieler hat den Raum verlassen/g)||[]).length;
+  ok(satzStellen === 3,
+     '\u00a7179: der Satz steht an genau drei Stellen (Aufgabe-Meldung, Weggang-Meldung, Tafeltext) \u2014 gefunden: ' + satzStellen);
+  const nru2 = (html.match(/function neueRundeUnmoeglich\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  ok(/endgueltig:true,\s*text:'Eine neue Runde ist nicht m\u00f6glich\.'/.test(nru2),
+     '\u00a7179: der endg\u00fcltige Hinweis ist EIN kurzer Satz ohne Begr\u00fcndung');
+  ok(/raumEndeText='Mitspieler hat den Raum verlassen \u2014 du hast gewonnen\.';/.test(html),
+     '\u00a7179: die Tafel nach dem Aufl\u00f6sen tr\u00e4gt denselben Wortlaut');
+  // Die Weggang-Meldung des Hosts darf nicht zusätzlich zur Aufgabe-Meldung stehen (§177-Riegel).
+  const gd2 = (html.match(/async function handleGuestDeparture\(data\)\{[\s\S]*?\n\}/)||[''])[0];
+  ok(/if\(!\(lmG && lmG\.verlassen==='guest'\)\)/.test(gd2),
+     '\u00a7179: bei \u201eGast verlassen\u201c steht der Satz nur einmal (kein zweiter setLog)');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
