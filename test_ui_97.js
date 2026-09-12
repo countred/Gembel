@@ -630,8 +630,10 @@ console.log('\u00a7164/\u00a7165 \u2014 Remis-Annahme geht nicht mehr verloren:'
   ok(/try\{[\s\S]*?await update\(roomRef,\{state\}\);[\s\S]*?\}catch\(e\)\{[\s\S]*?console\.error/.test(ps),
      '\u00a7164: eine gescheiterte Zustands-Schreibung verschwindet nicht mehr spurlos');
 
-  // §167: die Signatur ist wieder einstellig — es gibt nichts mehr zu unterscheiden.
-  ok(/function handleDisconnect\(msg\)\{/.test(html),
+  // §167: der WIEDERKEHR-Schalter ist weg — es gibt nichts mehr zu unterscheiden. §182 hat einen
+  // Parameter für die ÜBERSCHRIFT ergänzt; das ist reine Anzeige und kein Verhaltensschalter.
+  ok(/function handleDisconnect\(msg, titel\)\{/.test(html) &&
+     !/function handleDisconnect\([^)]*(retry|reconnect|wiederkehr|canRetry)/i.test(html),
      '\u00a7167: handleDisconnect braucht keinen Wiederkehr-Schalter mehr');
   ok(/letzterBlickAufDenRaum\(wasRoom, wasPlayer\)/.test(html),
      '\u00a7162-B bleibt: der letzte Blick in den Raum ist unber\u00fchrt');
@@ -1361,7 +1363,7 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
   ok(/if\(!iResigned && weg\) satz='Mitspieler hat den Raum verlassen';/.test(html) &&
      !/das z\u00e4hlt als Aufgabe'/.test(html) && !/aufgegeben und den Raum aufgel\u00f6st/.test(html),
      '\u00a7179: EIN Wortlaut f\u00fcr beide Rollen \u2014 \u201eMitspieler hat den Raum verlassen\u201c');
-  ok(/if\(!data\)\{handleDisconnect\(raumEndeText \|\| 'Raum nicht mehr vorhanden\.'\);return;\}/.test(html),
+  ok(/if\(!data\)\{handleDisconnect\(raumEndeText \|\| 'Raum nicht mehr vorhanden\.', 'Partie beendet'\);return;\}/.test(html),
      '\u00a7177: verschwindet der Raum danach, nennt die Tafel des Gastes den Grund');
 
   // Ein Entscheider für „neue Runde möglich?\" — mit dem Weggang als erstem Grund.
@@ -1422,8 +1424,8 @@ console.log('\u00a7179 \u2014 ein Wortlaut, und der Nochmal-Knopf verschwindet, 
   // Der Wortlaut steht genau EINMAL im Code, und der Hinweis wiederholt ihn nicht.
   // Nur die ausgelieferten Zeichenketten zaehlen, nicht die Kommentare, die den Wortlaut nennen.
   const satzStellen = (html.replace(/\/\/.*$/gm,'').match(/Mitspieler hat den Raum verlassen/g)||[]).length;
-  ok(satzStellen === 4,
-     '\u00a7179: der Satz steht an genau vier Stellen (Aufgabe-Meldung, Weggang-Meldung, Tafeltext, \u00a7181-Abbruchtext) \u2014 gefunden: ' + satzStellen);
+  ok(satzStellen === 6,
+     '\u00a7179: der Satz steht an genau sechs Stellen (Aufgabe- und Weggang-Meldung, Tafeltext, \u00a7181-Abbruchtext in zwei Rollen, \u00a7182-Abschlusstafel) \u2014 gefunden: ' + satzStellen);
   const nru2 = (html.match(/function neueRundeUnmoeglich\(\)\{[\s\S]*?\n\}/)||[''])[0];
   ok(/endgueltig:true,\s*text:'Eine neue Runde ist nicht m\u00f6glich\.'/.test(nru2),
      '\u00a7179: der endg\u00fcltige Hinweis ist EIN kurzer Satz ohne Begr\u00fcndung');
@@ -1541,6 +1543,53 @@ console.log('\u00a7181 \u2014 der Abwesende erf\u00e4hrt den Grund, und das Bret
      '\u00a7181: aufgedeckt wird erst, NACHDEM der frische Zustand angewandt ist');
   ok(/standWirdGeprueft=false;   \/\/ \u00a7181: ohne Raum gibt es nichts zu pr\u00fcfen/.test(html),
      '\u00a7181 (\u00a7170-Lehre): cleanup setzt den Merker mit zur\u00fcck');
+}
+
+
+console.log('\u00a7182 \u2014 die Abschlusstafel nennt den Grund und tr\u00e4gt die richtige \u00dcberschrift:');
+{
+  const vm = require('vm');
+  // Walters Befund (12.9.): über „Mitspieler hat den Raum verlassen. Du hast gewonnen." stand
+  // weiter „Verbindung unterbrochen" — und der letzte Blick (§162-B) überschrieb den Grund mit
+  // dem allgemeinen „Die Partie ist beendet: … wegen der Unterbrechung …".
+  ok(/<h2 id="dc-title">/.test(html) &&
+     /function setzeAbschlussTafel\(titel, text\)\{[\s\S]{0,400}?dc-title[\s\S]{0,200}?dc-msg/.test(html),
+     '\u00a7182: \u00dcberschrift und Text der Tafel kommen aus EINER Funktion');
+
+  // VERHALTEN: der echte letzte Blick gegen einen Raum mit und ohne Grund.
+  const lb = (html.match(/async function letzterBlickAufDenRaum\(wasRoom, wasPlayer\)\{[\s\S]*?\n\}/)||[''])[0];
+  const es = (html.match(/function ergebnisSatz\(st, wasPlayer\)\{[\s\S]*?\n\}/)||[''])[0];
+  const blick = async (meta) => {
+    const tafel = {titel:'Verbindung unterbrochen', text:'Mitspieler hat den Raum verlassen \u2014 die Partie ist beendet.'};
+    const c = { console:{log(){},warn(){}}, tafel,
+      setzeAbschlussTafel:(t,x)=>{ tafel.titel=t; tafel.text=x; },
+      get:async()=>({exists:()=>true, val:()=>({meta:meta, state:{phase:'finished', winner:2}})}) };
+    vm.createContext(c);
+    vm.runInContext(es + '\n' + lb + '\n;this.__b=letzterBlickAufDenRaum;', c);
+    await c.__b({}, 2);
+    return tafel;
+  };
+  SPAET.push(blick({aborted:true, abortedBy:'host', abortReason:'verlassen'}).then(t => {
+    ok(t.titel === 'Partie beendet',
+       '\u00a7182 VERHALTEN: die \u00dcberschrift lautet \u201ePartie beendet\u201c, nicht \u201eVerbindung unterbrochen\u201c');
+    ok(/^Mitspieler hat den Raum verlassen\. Du hast gewonnen\.$/.test(t.text),
+       '\u00a7182 VERHALTEN: der GRUND steht vorn, das Ergebnis dahinter \u2014 und kein Wort \u00fcber die Leitung');
+  }));
+  SPAET.push(blick({}).then(t => {
+    ok(/Die Partie ist beendet: Du hast gewonnen/.test(t.text) && /Unterbrechung/.test(t.text),
+       '\u00a7182 VERHALTEN: ist der Grund NICHT bekannt, bleibt der bisherige Satz (\u00a7162-B unber\u00fchrt)');
+    ok(t.titel === 'Partie beendet',
+       '\u00a7182 VERHALTEN: auch dann geht es um das Ende der Partie, nicht um die Leitung');
+  }));
+
+  // Die Wege, auf denen das Ende feststeht, setzen die Überschrift mit.
+  const har = (html.match(/function handleAbortReturn\(msg\)\{[\s\S]*?\n\}/)||[''])[0];
+  ok(/'Partie beendet'\);/.test(har),
+     '\u00a7182: die Abbruch-R\u00fcckkehr tr\u00e4gt die \u00dcberschrift \u201ePartie beendet\u201c');
+  // Und die Voreinstellung bleibt, wo die Leitung wirklich das Thema ist.
+  const hd = (html.match(/function handleDisconnect\(msg, titel\)\{[\s\S]*?\n\}/)||[''])[0];
+  ok(/titel\|\|'Verbindung unterbrochen'/.test(hd),
+     '\u00a7182: ohne Angabe bleibt es bei \u201eVerbindung unterbrochen\u201c (alle \u00fcbrigen Wege unver\u00e4ndert)');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');

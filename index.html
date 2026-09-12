@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=142'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=143'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -766,7 +766,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- Disconnected Overlay -->
 <div class="overlay hidden" id="dc-overlay">
   <div class="card">
-    <h2>Verbindung unterbrochen</h2>
+    <!-- §182 (12.9., Walters Befund): die Überschrift war fest „Verbindung unterbrochen" und
+         stand damit über JEDER Endtafel — auch über „Mitspieler hat den Raum verlassen. Du hast
+         gewonnen.", wo die Verbindung längst zurück und gar nicht die Ursache war. Sie hat jetzt
+         eine Kennung und wird vom Aufrufer gesetzt (Voreinstellung unverändert). -->
+    <h2 id="dc-title">Verbindung unterbrochen</h2>
     <p id="dc-msg">Der andere Spieler hat die Verbindung getrennt.</p>
     <!-- §167 (7.9.): HIER STAND „Erneut verbinden" (§162-C, v128–v130) — AUSGEBAUT.
          Der Knopf war für den Fall gedacht, dass die eigene Leitung weg ist, während der Raum
@@ -904,7 +908,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=142" charset="utf-8"></script>
+<script src="gembel_rules.js?v=143" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +920,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=142" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=143" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1326,7 +1330,9 @@ function abbruchText(data){
 // Fire-and-forget — ohne Netz scheitert es, dann bleibt es beim Lazy-Cleanup wie bisher.
 function handleAbortReturn(msg){
   if(roomRef && myRole==='host'){ remove(roomRef).catch(()=>{}); }
-  handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
+  // §182: hier ist die Partie zu Ende — das ist die Aussage, nicht der Zustand der Leitung.
+  handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.',
+                   'Partie beendet');
 }
 
 // ── Game Logic ───────────────────────────────────────────────────
@@ -1706,7 +1712,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v142';
+const BUILD_MARKER='· Build v143';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2023,7 +2029,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=142'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=143'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -3037,7 +3043,7 @@ function attachGuestListener(){
   roomListener=onValue(roomRef,async snap=>{
     const data=snap.val();
     // §177: löst der Host eine laufende Partie auf, kennt der Gast den Grund schon (raumEndeText).
-    if(!data){handleDisconnect(raumEndeText || 'Raum nicht mehr vorhanden.');return;}
+    if(!data){handleDisconnect(raumEndeText || 'Raum nicht mehr vorhanden.', 'Partie beendet');return;}
     // §75-W3-A: Abbruch-Flag erkennen (Gegenstück zum Host-Listener; deckt Host-seitigen Abbruch ab).
     if(data.meta && data.meta.aborted){ handleAbortReturn(abbruchText(data)); return; }
     // §86: Skelett-Raum (Host-Seite fehlt komplett) = Raum wurde gelöscht und von einem eigenen
@@ -3634,14 +3640,25 @@ function updateStatusUI(){
 // zu unterscheiden. Was BLEIBT, ist der letzte Blick in den Raum (§162-B): steht dort ein
 // beendetes Spiel, tritt das Ergebnis an die Stelle der Abbruchmeldung. Genau das hat in
 // Walters Test funktioniert und soll erhalten bleiben.
-function handleDisconnect(msg){
+// §182: `titel` ist optional. Ohne Angabe bleibt es bei „Verbindung unterbrochen" — richtig für
+// jeden Weg, auf dem wirklich die Leitung das Thema ist. Steht das Ende fest (Partie beendet,
+// Raum aufgelöst), gehört eine andere Überschrift darüber.
+function handleDisconnect(msg, titel){
   // §162 (7.9.): Vor dem Aufräumen merken, WO wir waren. cleanup() nullt roomRef, roomCode,
   // myRole und myPlayer — danach ist beides nicht mehr zu haben.
   const wasRoom=roomRef, wasCode=roomCode, wasRole=myRole, wasPlayer=myPlayer;
   cleanup(false);
-  document.getElementById('dc-msg').textContent=msg||'Verbindung unterbrochen.';
+  setzeAbschlussTafel(titel||'Verbindung unterbrochen', msg||'Verbindung unterbrochen.');
   showOverlay('dc-overlay');
   letzterBlickAufDenRaum(wasRoom, wasPlayer);             // §162-B
+}
+
+// §182: EINE Stelle, die Überschrift und Text der Abschlusstafel setzt. `letzterBlickAufDenRaum`
+// schreibt später noch einmal darüber — beide benutzen diese Funktion, damit die Überschrift
+// nicht zum Text von vorhin stehen bleibt.
+function setzeAbschlussTafel(titel, text){
+  const t=document.getElementById('dc-title'); if(t) t.textContent=titel;
+  const m=document.getElementById('dc-msg');   if(m) m.textContent=text;
 }
 
 // ── §162 (7.9.): Walters Befund — Verbindungsabbruch während eines Remisangebots ──────
@@ -3658,11 +3675,23 @@ async function letzterBlickAufDenRaum(wasRoom, wasPlayer){
   try{
     const snap=await get(wasRoom);
     if(!snap.exists()) return;
-    const st=snap.val().state;
+    const data=snap.val();
+    const st=data.state;
     if(!st || st.phase!=='finished') return;
-    const el=document.getElementById('dc-msg');
-    if(el) el.textContent='Die Partie ist beendet: '+ergebnisSatz(st, wasPlayer)+
-                          '. Die Meldung hat dich wegen der Unterbrechung nicht mehr erreicht.';
+    // §182 (Walters Befund 12.9.): DER GRUND DARF NICHT VERLOREN GEHEN. §181 setzte „Mitspieler
+    // hat den Raum verlassen — die Partie ist beendet." als Tafeltext; dieser letzte Blick
+    // überschrieb ihn eine Sekunde später mit dem allgemeinen „Die Partie ist beendet: Du hast
+    // gewonnen. Die Meldung hat dich wegen der Unterbrechung nicht mehr erreicht." — richtig,
+    // aber ohne Ursache, und der Nachsatz schob es auf die Leitung. Jetzt steht der Grund VORN
+    // und das Ergebnis dahinter; der Nachsatz bleibt dem Fall, in dem wir den Grund NICHT kennen.
+    const verlassen = !!(data.meta && data.meta.abortReason==='verlassen');
+    if(verlassen)
+      setzeAbschlussTafel('Partie beendet',
+        'Mitspieler hat den Raum verlassen. '+ergebnisSatz(st, wasPlayer)+'.');
+    else
+      setzeAbschlussTafel('Partie beendet',
+        'Die Partie ist beendet: '+ergebnisSatz(st, wasPlayer)+
+        '. Die Meldung hat dich wegen der Unterbrechung nicht mehr erreicht.');
   }catch(e){ /* kein Netz: die bisherige Meldung bleibt stehen */ }
 }
 
