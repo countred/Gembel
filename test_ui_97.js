@@ -567,7 +567,10 @@ console.log('\u00a7166 \u2014 R\u00fcckkehr des Hosts nach dem Remis:');
   ok(/if\(eigenerAusfallSichtbar\) clearEigenenAusfall\(\);\s*\/\/ \u00a7166: auch die eigene Tafel/.test(pt) &&
      /if\(eigenerAusfallSichtbar\) clearEigenenAusfall\(\);\s*\/\/ \u00a7166: eigene Leitung ist zur\u00fcck/.test(pt),
      '\u00a7166: sie wird in BEIDEN Richtungen ger\u00e4umt (Partie vorbei / Leitung zur\u00fcck)');
-  ok(/selbstOffline=false;\s*\n\s*clearEigenenAusfall\(\);/.test(html),
+  // §181 hat die Sofort-Räumung ERSETZT: die Tafel bleibt stehen (nur mit anderem Text), bis der
+  // Stand bekannt ist — sonst lag das alte Brett einen Netz-Umlauf lang offen. Die §166-Absicht
+  // bleibt: im Rückkehr-Zweig wird die Tafel SOFORT angefasst, nicht dem nächsten Tick überlassen.
+  ok(/selbstOffline=false;[\s\S]{0,900}?if\(roomRef && myRole\) zeigeStandWirdGeprueft\(\);\s*\n\s*else clearEigenenAusfall\(\);/.test(html),
      '\u00a7166: beim Zur\u00fcckkommen sofort, nicht erst beim n\u00e4chsten Tick');
   const ce = html.match(/function clearEigenenAusfall\(\)\{[\s\S]*?\n\}/)[0];
   ok(/if\(oppOfflineSince===null\)\{/.test(ce),
@@ -1313,7 +1316,12 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
     ok(ablauf.indexOf('menu') > -1 && ablauf.indexOf('menu') < ablauf.indexOf('timer:4000') && !ablauf.some(x=>x.startsWith('remove')),
        '\u00a7177 VERHALTEN: der Host ist sofort im Men\u00fc, gel\u00f6scht wird erst nach der Frist');
     if(timer) timer.f();
-    ok(ablauf.includes('remove:R'), '\u00a7177 VERHALTEN: nach der Frist wird der ALTE Raum gel\u00f6scht (gesicherter Bezug)');
+    // §181: nach der Frist wird NICHT mehr gelöscht, sondern als beendet markiert — sonst
+    // erfährt ein abwesender Gast nie, was geschehen ist. Der Bezug ist weiter der gesicherte.
+    const marker = writes.find(w => w['meta/aborted']===true);
+    ok(!!marker && marker['meta/abortedBy']==='host' && marker['meta/abortReason']==='verlassen' &&
+       !ablauf.some(x=>x.startsWith('remove')),
+       '\u00a7181 VERHALTEN: nach der Frist tr\u00e4gt der ALTE Raum das Abbruch-Flag \u2014 und wird NICHT gel\u00f6scht');
   }
 
   // leaveRoom: kein await, lokal zuerst, Schreibungen über den gesicherten Bezug.
@@ -1414,8 +1422,8 @@ console.log('\u00a7179 \u2014 ein Wortlaut, und der Nochmal-Knopf verschwindet, 
   // Der Wortlaut steht genau EINMAL im Code, und der Hinweis wiederholt ihn nicht.
   // Nur die ausgelieferten Zeichenketten zaehlen, nicht die Kommentare, die den Wortlaut nennen.
   const satzStellen = (html.replace(/\/\/.*$/gm,'').match(/Mitspieler hat den Raum verlassen/g)||[]).length;
-  ok(satzStellen === 3,
-     '\u00a7179: der Satz steht an genau drei Stellen (Aufgabe-Meldung, Weggang-Meldung, Tafeltext) \u2014 gefunden: ' + satzStellen);
+  ok(satzStellen === 4,
+     '\u00a7179: der Satz steht an genau vier Stellen (Aufgabe-Meldung, Weggang-Meldung, Tafeltext, \u00a7181-Abbruchtext) \u2014 gefunden: ' + satzStellen);
   const nru2 = (html.match(/function neueRundeUnmoeglich\(\)\{[\s\S]*?\n\}/)||[''])[0];
   ok(/endgueltig:true,\s*text:'Eine neue Runde ist nicht m\u00f6glich\.'/.test(nru2),
      '\u00a7179: der endg\u00fcltige Hinweis ist EIN kurzer Satz ohne Begr\u00fcndung');
@@ -1477,6 +1485,62 @@ console.log('\u00a7180 \u2014 das Men\u00fc wei\u00df dasselbe wie das Schlussbi
                       .replace(/\/\/.*$/gm,'');
   ok(riegel.length > 0 && !/setLog/.test(riegel) && /console\.log/.test(riegel),
      '\u00a7180: die Nochmal-Sperre schreibt keine Meldung mehr \u2014 der Hinweis steht im Schlussbild');
+}
+
+
+console.log('\u00a7181 \u2014 der Abwesende erf\u00e4hrt den Grund, und das Brett blitzt nicht auf:');
+{
+  const vm = require('vm');
+  // Walters zweiter Versuch (12.9.): Gast im Flugmodus, während der Host die laufende Partie
+  // auflöst. Beim Zurückkommen: „Verbindung unterbrochen / Raum nicht mehr vorhanden" — ohne
+  // Grund und ohne Ergebnis, und davor blitzte kurz das alte Brett auf.
+
+  // (A) Der Raum wird markiert, nicht gelöscht — sonst ist der Grund unauffindbar.
+  const va181 = (html.match(/window\.verlassenAlsAufgabe=function\(\)\{[\s\S]*?\n\};/)||[''])[0];
+  ok(/'meta\/aborted':true,'meta\/abortedBy':'host','meta\/abortReason':'verlassen'/.test(va181) &&
+     !/remove\(wasRoom\)/.test(va181),
+     '\u00a7181: der Host markiert den Raum als beendet, statt ihn zu l\u00f6schen');
+
+  // (B) abbruchText unterscheidet Verlassen von abgelaufener Frist — VERHALTEN, beide Rollen.
+  const at = (html.match(/function abbruchText\(data\)\{[\s\S]*?\n\}/)||[''])[0];
+  const t181 = (meta, rolle) => {
+    const c = { myRole: rolle }; vm.createContext(c);
+    vm.runInContext(at + '\n;__t=abbruchText(' + JSON.stringify({meta:meta}) + ');', c);
+    return c.__t;
+  };
+  ok(/verlassen/.test(t181({aborted:true,abortedBy:'host',abortReason:'verlassen'}, 'guest')) &&
+     !/unterbrochen/.test(t181({aborted:true,abortedBy:'host',abortReason:'verlassen'}, 'guest')),
+     '\u00a7181 VERHALTEN: Gast liest \u201eMitspieler hat den Raum verlassen\u201c \u2014 keine erfundene Unterbrechung');
+  ok(/^Du hast/.test(t181({aborted:true,abortedBy:'host',abortReason:'verlassen'}, 'host')),
+     '\u00a7181 VERHALTEN: wer selbst gegangen ist, liest es in der eigenen Form');
+  ok(/unterbrochen/.test(t181({aborted:true,abortedBy:'host'}, 'guest')) &&
+     /unterbrochen/.test(t181({aborted:true}, 'guest')),
+     '\u00a7181 VERHALTEN: ein echter Frist-Abbruch beh\u00e4lt seinen Text (\u00a775-W3-A unber\u00fchrt)');
+
+  // (C) Das Brett bleibt verdeckt, bis der Stand bekannt ist.
+  ok(/function zeigeStandWirdGeprueft\(\)\{[\s\S]{0,400}?standWirdGeprueft=true;/.test(html) &&
+     /Der Stand wird gepr\u00fcft/.test(html),
+     '\u00a7181: es gibt einen Zwischenzustand \u201eStand wird gepr\u00fcft\u201c auf derselben Tafel');
+  const pt181 = (html.match(/function presenceTick\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  const iGuard = pt181.indexOf('if(standWirdGeprueft) return;');
+  const iClear = pt181.indexOf('if(eigenerAusfallSichtbar) clearEigenenAusfall();     //');
+  const iSelbst = pt181.indexOf('if(EIGENE_PRAESENZ_AN && selbstOffline){ zeigeEigenenAusfall(); return; }');
+  ok(iGuard > -1 && iGuard < iClear,
+     '\u00a7181: der Pr\u00e4senz-Tick r\u00e4umt die Tafel im Pr\u00fcf-Fenster NICHT weg (sonst blitzt das Brett nach 1 s)');
+  ok(iSelbst > -1 && iSelbst < iGuard,
+     '\u00a7181: f\u00e4llt die Leitung im Pr\u00fcf-Fenster wieder aus, gewinnt die eigene Ausfalltafel');
+  // Kein Hängen: die Räumung setzt den Merker zurück, und jeder Ausgang räumt.
+  ok(/function clearEigenenAusfall\(\)\{[\s\S]{0,300}?standWirdGeprueft=false;/.test(html),
+     '\u00a7181: clearEigenenAusfall setzt den Merker zur\u00fcck \u2014 EIN Ausgang f\u00fcr beide Zust\u00e4nde');
+  const rp181 = (html.match(/async function raumRueckkehrPruefen\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  ok((rp181.match(/clearEigenenAusfall\(\);/g)||[]).length === 2 &&
+     /\}catch\(e\)\{[\s\S]*?clearEigenenAusfall\(\);/.test(rp181),
+     '\u00a7181: ger\u00e4umt wird im Erfolgsfall UND im catch \u2014 niemand bleibt in \u201ewird gepr\u00fcft\u201c h\u00e4ngen');
+  const iWeiter = rp181.indexOf('clearEigenenAusfall();');
+  ok(iWeiter > rp181.indexOf('applyRemoteState(data.state);'),
+     '\u00a7181: aufgedeckt wird erst, NACHDEM der frische Zustand angewandt ist');
+  ok(/standWirdGeprueft=false;   \/\/ \u00a7181: ohne Raum gibt es nichts zu pr\u00fcfen/.test(html),
+     '\u00a7181 (\u00a7170-Lehre): cleanup setzt den Merker mit zur\u00fcck');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');

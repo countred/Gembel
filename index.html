@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=141'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=142'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -904,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=141" charset="utf-8"></script>
+<script src="gembel_rules.js?v=142" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=141" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=142" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -991,6 +991,10 @@ let selbstOffline = false;   // true = die EIGENE Verbindung ist gerade weg
 // wenn die eigene Leitung längst zurück war oder die Partie darunter beendet war (Walters
 // Livebefund zu v129). Zwei Zustände, zwei Merker: das Mitbenutzen war der Fehler.
 let eigenerAusfallSichtbar = false;
+// §181: true = wir sind wieder online, wissen aber noch nicht, ob die Partie noch läuft. In
+// diesem Fenster darf der Präsenz-Tick die Tafel NICHT wegräumen — sonst läge das alte Brett
+// für bis zu einer Sekunde offen da (Walters „das Brett blitzt auf").
+let standWirdGeprueft = false;
 const OPP_ABORT_GRACE_MS    = 45000; // 45 s Countdown bis Auto-Abbruch (Kulanz zum Zurückkommen)
 const OPP_ABORT_MINWAIT_MS  = 5000;  // „sofort abbrechen" erst nach 5 s klickbar (Anti-Panik)
 let heartbeatTimer=null;      // setInterval-Handle für den eigenen Herzschlag
@@ -1087,6 +1091,9 @@ function presenceTick(){
   // Meldung, die in die richtige Richtung zeigt. Die Frist läuft erst weiter, wenn wir wieder
   // hören können (der .info/connected-Zuhörer setzt sie beim Zurückkommen frisch auf).
   if(EIGENE_PRAESENZ_AN && selbstOffline){ zeigeEigenenAusfall(); return; }
+  // §181: Rückkehr läuft — nichts aufdecken, bis raumRueckkehrPruefen entschieden hat. Fällt die
+  // Leitung in diesem Fenster wieder aus, greift die Zeile darüber und gewinnt (richtig so).
+  if(standWirdGeprueft) return;
   if(eigenerAusfallSichtbar) clearEigenenAusfall();     // §166: eigene Leitung ist zurück
   const stale = presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS);
   if(stale && oppOfflineSince===null){
@@ -1134,6 +1141,7 @@ function evaluateOpponentPresence(data){
 // Der Abbruch-Knopf bleibt bedienbar: wer nicht warten will, soll gehen können.
 function clearEigenenAusfall(){
   eigenerAusfallSichtbar=false;
+  standWirdGeprueft=false;   // §181: EIN Ausgang für beide Zustände — hier kann keiner hängen bleiben
   // ⚠️ NICHT ausblenden, wenn gerade ein echter Gegner-Countdown läuft — der hat dieselbe
   // Tafel und sein eigenes Recht darauf.
   if(oppOfflineSince===null){
@@ -1151,6 +1159,20 @@ function zeigeEigenenAusfall(){
   document.getElementById('opp-offline-overlay').classList.remove('hidden');
   const btn=document.getElementById('opp-offline-abort');
   if(btn) btn.disabled=false;
+}
+
+// §181: Zwischenzustand nach der Rückkehr — dieselbe Tafel, anderer Text. Sie verdeckt das
+// Brett weiter, bis entweder das Spiel weiterläuft oder die Abbruchtafel kommt.
+function zeigeStandWirdGeprueft(){
+  eigenerAusfallSichtbar=true;
+  standWirdGeprueft=true;
+  const msgEl=document.getElementById('opp-offline-msg');
+  if(msgEl) msgEl.textContent = 'Verbindung wiederhergestellt. Der Stand wird geprüft…';
+  const cnt=document.getElementById('opp-offline-count');
+  if(cnt) cnt.textContent='';
+  document.getElementById('opp-offline-overlay').classList.remove('hidden');
+  const btn=document.getElementById('opp-offline-abort');
+  if(btn) btn.disabled=true;   // in diesem Moment gibt es nichts abzubrechen
 }
 
 function showOppOfflineOverlay(){
@@ -1280,6 +1302,15 @@ window.abortToLobbyNow=function(){
 // §170: aus dem Raum ablesen, WER abgebrochen hat, und es benennen.
 function abbruchText(data){
   const wer = (data && data.meta) ? data.meta.abortedBy : null;
+  // §181: seit dem Verlassen-als-Aufgabe (§177) kann das Abbruch-Flag ZWEI Ursachen haben. Der
+  // alte Text behauptete in beiden Fällen eine zu lange Unterbrechung — beim absichtlichen
+  // Verlassen war das falsch, und zwar gegenüber dem, der nichts dafür konnte.
+  const grund = (data && data.meta) ? data.meta.abortReason : null;
+  if(grund==='verlassen'){
+    return (wer && myRole && wer===myRole)
+      ? 'Du hast den Raum verlassen.'
+      : 'Mitspieler hat den Raum verlassen — die Partie ist beendet.';
+  }
   if(wer && myRole && wer!==myRole)
     return 'Mitspieler hat die Partie beendet — die Verbindung war zu lange unterbrochen.';
   return 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.';
@@ -1336,9 +1367,17 @@ let mvmOfferedThisTurn=false;
 let eigenesRemisOffen=false;   // eigenes Angebot steht im Raum und die Partie läuft
 let mitspielerGegangen=false;  // Mitspieler hat den Raum verlassen / aufgelöst → kein Nochmal
 let raumEndeText=null;         // Tafeltext, wenn der Raum nach einem Verlassen verschwindet
-// §177: Wer als Host eine laufende Partie auflöst, schreibt erst die Aufgabe und löscht den Raum
-// ETWAS SPÄTER. Sofort gelöscht, sähe der Gast nur „Raum nicht mehr vorhanden" — das Ergebnis
-// käme gar nicht bei ihm an. Die Wartezeit hält niemanden auf: der Host ist dann schon im Menü.
+// §177: Wer als Host eine laufende Partie auflöst, schreibt erst die Aufgabe und schließt den
+// Raum ETWAS SPÄTER. Sofort geschlossen, sähe der Gast nur „Raum nicht mehr vorhanden" — das
+// Ergebnis käme gar nicht bei ihm an. Die Wartezeit hält niemanden auf: der Host ist dann schon
+// im Menü.
+// §181 (12.9., Walters zweiter Versuch): „SCHLIESSEN" HEISST MARKIEREN, NICHT LÖSCHEN. Bis v141
+// löschte der Host den Raum. War der Gast in diesem Moment offline, fand er beim Zurückkommen
+// nichts mehr vor — „Raum nicht mehr vorhanden", ohne Grund und ohne Ergebnis. Vier Sekunden
+// helfen nur dem, der gerade zusieht. Jetzt bleibt der Raum mit `meta/aborted` stehen, so wie
+// bei jedem anderen Abbruch (§75-W3-A): der zurückkehrende Gast liest Grund UND Ergebnis aus
+// dem Raum. Weggeräumt wird er wie ein abgebrochener Raum — vom Lazy-Cleanup nach zwei Stunden
+// ohne Lebenszeichen (§171).
 const RAUM_AUFLOESEN_VERZUG_MS=4000;
 
 // §177: EIN REMIS-ANGEBOT GILT NUR IN EINER LAUFENDEN PARTIE. Bis v138 erlosch es nie — weder
@@ -1667,7 +1706,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v141';
+const BUILD_MARKER='· Build v142';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1984,7 +2023,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=141'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=142'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2593,11 +2632,17 @@ window.verlassenAlsAufgabe=function(){
   phase='finished';
   pendingLastMove={player:null, drawReason:null, resignedBy:myPlayer, verlassen:'host'};
   pushState(gegner);   // ohne await — der Zustand ist beim Aufruf schon gebaut
-  console.log('§177: Host löst die laufende Partie auf — als Aufgabe gewertet, Raum folgt in',
+  console.log('§177: Host löst die laufende Partie auf — als Aufgabe gewertet, Abschluss in',
               RAUM_AUFLOESEN_VERZUG_MS, 'ms');
   cleanup(false);
   showModeMenu();
-  setTimeout(()=>{ remove(wasRoom).catch(()=>{}); }, RAUM_AUFLOESEN_VERZUG_MS);
+  // §181: NICHT löschen, sondern als beendet markieren — sonst erfährt ein gerade abwesender
+  // Gast nie, was geschehen ist. `abortedBy` trägt die Rolle (für `abbruchText`), `abortReason`
+  // unterscheidet das absichtliche Verlassen von einem Abbruch nach abgelaufener Frist.
+  setTimeout(()=>{
+    update(wasRoom,{'meta/aborted':true,'meta/abortedBy':'host','meta/abortReason':'verlassen'})
+      .catch(()=>{});
+  }, RAUM_AUFLOESEN_VERZUG_MS);
 };
 
 // ── Old room cleanup (rooms older than 2h) ───────────────────────
@@ -3663,6 +3708,7 @@ function cleanup(removeRoom=true){
   mvmOfferedThisTurn=false;
   // §177: auch diese drei gehören zur Sitzung, nicht zum Gerät (Lehre aus §170).
   eigenesRemisOffen=false; mitspielerGegangen=false; raumEndeText=null;
+  standWirdGeprueft=false;   // §181: ohne Raum gibt es nichts zu prüfen
   entwerteAnzeige();   // §169
 }
 
@@ -3771,10 +3817,18 @@ async function raumRueckkehrPruefen(){
         // Listener still active — just refresh state
         if(data.state && data.state.board) applyRemoteState(data.state);
       }
+      // §181: erst HIER ist klar, dass es weitergeht — jetzt darf das Brett wieder frei liegen.
+      // Alle Wege, die vorher aussteigen, zeigen ihre eigene Tafel.
+      clearEigenenAusfall();
+      console.log('§162 Rückkehr: Stand übernommen — weiter geht es');
     }catch(e){
       // Network unreachable — show reconnect message but don't disconnect yet
       console.warn('§162 Rückkehr: Lesen fehlgeschlagen —', (e && e.message) ? e.message : e);
       setLog('<span class="msg wait">⏳ Verbindung wird wiederhergestellt…</span>');
+      // §181: das Lesen ist gescheitert, der Stand bleibt unbekannt — die Tafel muss weg,
+      // sonst hängt der Spieler in „Der Stand wird geprüft…" fest. Der Präsenz-Monitor
+      // übernimmt wieder: fehlt die Leitung weiter, zeigt er die eigene Ausfalltafel.
+      clearEigenenAusfall();
     }
 }
 
@@ -4973,7 +5027,14 @@ if(EIGENE_PRAESENZ_AN){
     }
     if(!selbstOffline) return;      // erster Aufruf beim Start: nichts nachzuholen
     selbstOffline=false;
-    clearEigenenAusfall();   // §166: nicht auf den nächsten Tick warten
+    // §181 (Walters Befund 12.9.: „davor blitzt kurz das Brett auf"): DIE TAFEL BLEIBT STEHEN,
+    // BIS DER STAND BEKANNT IST. Bis v141 räumte `clearEigenenAusfall()` sie sofort weg (§166:
+    // nicht auf den nächsten Tick warten) — danach lag für die Dauer eines Netz-Umlaufs das alte
+    // Brett offen da, obwohl die Partie längst beendet war. Jetzt wird nur der TEXT
+    // ausgetauscht; geräumt wird sie erst, wenn die Partie wirklich weitergeht
+    // (raumRueckkehrPruefen), und bei einem Ende legt sich die Abbruchtafel darüber.
+    if(roomRef && myRole) zeigeStandWirdGeprueft();
+    else clearEigenenAusfall();
     console.log('§163 eigene Verbindung: ZURÜCK — Raum wird frisch gelesen');
     // Kulanz: der Gegner bekommt eine FRISCHE Frist. Sein Herzschlag konnte uns während
     // unseres eigenen Ausfalls nicht erreichen; ihn dafür in einen laufenden Countdown zu
