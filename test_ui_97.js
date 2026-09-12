@@ -1266,7 +1266,12 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
   // ── C. Verlassen während der Partie zählt als Aufgabe ──────────────────────────────
   ok(/onclick="verlassenFragen\(\)">\$\{myRole==='host'\?'Raum aufl\u00f6sen':'Verlassen'\}<\/button>/.test(imSpiel),
      '\u00a7177: \u201eVerlassen\u201c/\u201eRaum aufl\u00f6sen\u201c in der laufenden Partie fragt erst nach');
-  ok(/if\(isFinished\)\{[\s\S]{0,700}?onclick="leaveRoom\(\)">Raum verlassen</.test(html),
+  // §180 hat den isFinished-Block laenger gemacht (Hindernis-Abfrage) — die Absicht bleibt:
+  // nach dem Ende fuehrt „Raum verlassen" direkt in leaveRoom, ohne die Aufgabe-Rueckfrage.
+  // ⚠️ ANKER: `if(isFinished){` steht ZWEIMAL in der Datei (MvKI-Menü als `} else if(...)`).
+  // Der MvM-Block ist der am Zeilenanfang eingerueckte — sonst spannt der Treffer ueber beide.
+  const fin = (html.match(/\n  if\(isFinished\)\{[\s\S]*?\n  \} else if\(inGame\)\{/)||[''])[0];
+  ok(/onclick="leaveRoom\(\)">Raum verlassen</.test(fin) && !/verlassenFragen/.test(fin),
      '\u00a7177: nach dem Ende ist Verlassen einfach Verlassen (ohne R\u00fcckfrage)');
   const vf = fn(/window\.verlassenFragen=function\(\)\{[\s\S]*?\n\};/, 'verlassenFragen');
   ok(vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 die Partie endet f\u00fcr beide.'") > -1 &&
@@ -1420,6 +1425,58 @@ console.log('\u00a7179 \u2014 ein Wortlaut, und der Nochmal-Knopf verschwindet, 
   const gd2 = (html.match(/async function handleGuestDeparture\(data\)\{[\s\S]*?\n\}/)||[''])[0];
   ok(/if\(!\(lmG && lmG\.verlassen==='guest'\)\)/.test(gd2),
      '\u00a7179: bei \u201eGast verlassen\u201c steht der Satz nur einmal (kein zweiter setLog)');
+}
+
+
+console.log('\u00a7180 \u2014 das Men\u00fc wei\u00df dasselbe wie das Schlussbild, und die Absage steht einmal:');
+{
+  const vm = require('vm');
+  // Walters Screenshots (12.9., 10:43 und 10:50): §179 hatte den Nochmal-Knopf nur im SCHLUSSBILD
+  // entfernt. Im Menü „Spiel beendet" stand „Nochmal anfragen" weiter; der Tipp schrieb die
+  // Absage zusätzlich in die Meldungszeile — derselbe Satz zweimal auf einem Bildschirm.
+  const fin2 = (html.match(/\n  if\(isFinished\)\{[\s\S]*?\n  \} else if\(inGame\)\{/)||[''])[0];
+  ok(/const hindernisM = neueRundeUnmoeglich\(\);/.test(fin2) &&
+     /const endgueltigM = !!\(hindernisM && hindernisM\.endgueltig\);/.test(fin2),
+     '\u00a7180: das Men\u00fc \u201eSpiel beendet\u201c liest denselben Entscheider wie Schlussbild und Sperre');
+
+  // VERHALTEN: den echten Ausdruck aus der Auslieferung dreimal bauen.
+  const tmpl = (fin2.match(/btnsEl\.innerHTML=`[\s\S]*?`;/)||[''])[0];
+  const bauen = (hind) => {
+    const c = { btnsEl:{innerHTML:''}, neueRundeUnmoeglich:()=>hind };
+    vm.createContext(c);
+    vm.runInContext(fin2.slice(fin2.indexOf('const hindernisM')).split('btnsEl.innerHTML=')[0] + tmpl, c);
+    return c.btnsEl.innerHTML;
+  };
+  const mEnd = bauen({endgueltig:true,  text:'Eine neue Runde ist nicht m\u00f6glich.'});
+  const mVor = bauen({endgueltig:false, text:'Mitspieler ist nicht mehr verbunden \u2014 eine neue Runde ist gerade nicht m\u00f6glich.'});
+  const mFrei = bauen(null);
+  ok(mEnd.indexOf('Nochmal anfragen') === -1,
+     '\u00a7180 VERHALTEN: Mitspieler hat den Raum verlassen \u2192 kein \u201eNochmal anfragen\u201c im Men\u00fc');
+  ok(mVor.indexOf('Nochmal anfragen') > -1 && mFrei.indexOf('Nochmal anfragen') > -1,
+     '\u00a7180 VERHALTEN: vorl\u00e4ufiges Hindernis oder keines \u2192 \u201eNochmal anfragen\u201c bleibt');
+  // Walters Vorgabe: dann trägt „Raum verlassen" die Betonung — der Weg ins Obermenü.
+  const primaerVor = (t) => {
+    const m = t.match(/<button class="big-btn primary"[^>]*>([^<]*)</);
+    return m ? m[1].replace(/\s+/g,' ').trim() : null;
+  };
+  ok(primaerVor(mEnd) === 'Raum verlassen',
+     '\u00a7180 VERHALTEN: im endg\u00fcltigen Fall ist \u201eRaum verlassen\u201c der blaue Knopf');
+  ok(primaerVor(mVor) === 'Weiterschauen' && primaerVor(mFrei) === 'Weiterschauen',
+     '\u00a7180 VERHALTEN: sonst bleibt \u201eWeiterschauen\u201c blau (Zustand wie vor \u00a7180)');
+  ok((mEnd.match(/class="big-btn primary"/g)||[]).length === 1 &&
+     (mVor.match(/class="big-btn primary"/g)||[]).length === 1,
+     '\u00a7180 VERHALTEN: immer genau EIN blauer Knopf \u2014 keine zwei Betonungen (\u00a7134)');
+  ok(mEnd.indexOf('Weiterschauen') > -1 && mEnd.indexOf('Raum verlassen') > -1,
+     '\u00a7180 VERHALTEN: \u201eWeiterschauen\u201c bleibt erreichbar (Endbrett ansehen)');
+
+  // Die Sperre schweigt: der Satz steht schon unter dem Banner.
+  const rr180 = (html.match(/window\.requestRematch=async function\(\)\{[\s\S]*?\n\};/)||[''])[0];
+  // ⚠️ Kommentare abziehen: der Kommentar NENNT `setLog` (was früher dort stand) — ohne das
+  // würde die Pruefung am eigenen Erklaertext scheitern statt am Code (dieselbe Falle wie §179).
+  const riegel = rr180.slice(rr180.indexOf('if(hindernis){'), rr180.indexOf('return;', rr180.indexOf('if(hindernis){')))
+                      .replace(/\/\/.*$/gm,'');
+  ok(riegel.length > 0 && !/setLog/.test(riegel) && /console\.log/.test(riegel),
+     '\u00a7180: die Nochmal-Sperre schreibt keine Meldung mehr \u2014 der Hinweis steht im Schlussbild');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');

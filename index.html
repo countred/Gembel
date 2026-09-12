@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=140'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=141'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -904,7 +904,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=140" charset="utf-8"></script>
+<script src="gembel_rules.js?v=141" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -916,7 +916,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=140" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=141" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1667,7 +1667,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v140';
+const BUILD_MARKER='· Build v141';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1984,7 +1984,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=140'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=141'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2189,10 +2189,20 @@ window.showNeuMenu=function(){
   if(isFinished){
     titleEl.textContent='Spiel beendet';
     descEl.textContent='';
+    // §180 (Walters Screenshots 10:43/10:50): DAS MENÜ MUSS DASSELBE WISSEN WIE DAS SCHLUSSBILD.
+    // §179 hatte den Nochmal-Knopf nur im Schlussbild entfernt — im Menü stand „Nochmal
+    // anfragen" weiter, und ein Tipp darauf schrieb die Absage ZUSÄTZLICH in die Meldungszeile,
+    // wo sie neben dem Hinweis im Schlussbild ein zweites Mal stand. Also: EIN Entscheider
+    // (neueRundeUnmoeglich), drei Leser — Schlussbild, dieses Menü und die Sperre.
+    const hindernisM = neueRundeUnmoeglich();
+    const endgueltigM = !!(hindernisM && hindernisM.endgueltig);
+    // Walters Vorgabe: ist keine neue Runde mehr möglich, trägt „Raum verlassen" die Betonung —
+    // der Weg zurück ins Obermenü ist dann das Einzige, was noch Sinn hat. „Weiterschauen"
+    // bleibt (das Endbrett ansehen), verliert aber das Blau.
     btnsEl.innerHTML=`
-      <button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()">🔄 Nochmal anfragen</button>
-      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">Weiterschauen</button>
-      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="leaveRoom()">Raum verlassen</button>`;
+      ${endgueltigM ? '' : `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()">🔄 Nochmal anfragen</button>`}
+      <button class="big-btn${endgueltigM ? '' : ' primary'}" style="width:100%" onclick="closeNeuMenu()">Weiterschauen</button>
+      <button class="big-btn${endgueltigM ? ' primary' : ''}" style="width:100%;${endgueltigM ? '' : 'border-color:#ef4444;color:#ef4444'}" onclick="leaveRoom()">Raum verlassen</button>`;
   } else if(inGame){
     titleEl.textContent='Spiel läuft';
     descEl.textContent='';
@@ -2316,7 +2326,10 @@ window.requestRematch=async function(){
   if(hindernis){
     // §179: im endgültigen Fall gibt es den Knopf nicht mehr — dieser Riegel ist dann nur noch
     // die Absicherung eines Wegs, den die Oberfläche nicht anbietet.
-    setLog('<span class="msg info">'+hindernis.text+'</span>');
+    // §180: UND ER SCHWEIGT. Das Schlussbild trägt denselben Satz bereits unter dem Banner
+    // (wegHinweis); ein setLog schrieb ihn ein zweites Mal darüber — zweimal dasselbe auf einem
+    // Bildschirm (Walters 10:50). Die Absage ist ohnehin schon zu sehen, bevor getippt wird.
+    console.log('§180: Nochmal abgelehnt —', hindernis.text);
     return;
   }
   await update(roomRef,{'meta/rematchFrom':myRole}).catch(()=>{});
