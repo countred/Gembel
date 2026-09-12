@@ -306,6 +306,92 @@ console.log('\u00a7157 \u2014 Datenschutz: Pflichtangaben nach Art. 13:');
      'der Rechentest ist beim Namen genannt, solange perfMs geschrieben wird (perfMs geloggt: '+perfGeloggt2+')');
 }
 
+// \u00a7184b (12.9.) \u2014 DER ZWEI-PERSONEN-MODUS KOMMT IM TEXT VOR, und zwar gekoppelt an den
+// Code, nicht an den Wortlaut. Bis v143 beschrieb der Text nur den Weg gegen Max Michu; dass
+// beim Spiel zu zweit ein RAUM auf dem Server entsteht und JEDER mit dem Code mitlesen kann
+// (Regeln v109: `rooms`/`games_mp` auf `.read: true`), stand nirgends.
+console.log('\u00a7184b \u2014 Datenschutz: Zwei-Personen-Modus:');
+{
+  const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen<\/button>/) || [''])[0];
+  const mvm = (ds.match(/Zwei Personen \u00fcber einen Code[\s\S]*?<\/div>/) || [''])[0];
+  ok(mvm.length > 300, 'der Absatz zum Zwei-Personen-Modus steht im Overlay (' + mvm.length + ' Zeichen)');
+  ok(/Wer den Code\s*<\/strong>?[\s\S]{0,40}kennt, kann den Raum mitlesen/.test(mvm.replace(/<[^>]+>/g,' ').replace(/\s+/g,' '))
+     || /kennt, kann den Raum mitlesen/.test(mvm),
+     'die Mitlesbarkeit \u00fcber den Raumcode ist ausgesprochen, nicht umschrieben');
+
+  // TEXT GEGEN CODE, beide Fristen. Wer die Konstanten aendert, wird hier rot — genau die
+  // Klasse Pruefung, die \u00a7126 fuer die Cookie-Zusage und \u00a7156 fuer die Kennung macht.
+  const zweiStunden = /const maxIdle = 2\*60\*60\*1000;/.test(html);
+  ok(!zweiStunden || /zwei Stunden ohne Lebenszeichen/.test(mvm),
+     'die Zwei-Stunden-Frist im Text deckt sich mit cleanupOldRooms (maxIdle gefunden: '+zweiStunden+')');
+  const dreissigTage = /serverNow\(\) - 30\*24\*60\*60\*1000/.test(html);
+  ok(!dreissigTage || /nach 30 Tagen/.test(mvm),
+     'die 30-Tage-Frist im Text deckt sich mit cleanupOldGames (cutoff gefunden: '+dreissigTage+')');
+  // Die Fristen sind BEWUSST als Aufraeumarbeit beschrieben, nicht als Zusage: beide Laeufe
+  // sind fire-and-forget mit stummem catch. Ein Text, der Loeschung VERSPRICHT, waere mehr,
+  // als der Code haelt — dieselbe Klasse Fehler wie \u00a7136 und \u00a7156.
+  ok(/einen st\u00e4ndig laufenden L\u00f6schdienst auf dem\s+Server gibt es bisher nicht/.test(mvm),
+     'der Text verspricht keinen Loeschdienst, den es nicht gibt (ToDo 33)');
+
+  // Die Zusage „keine Kennung in diesen Partien" MUSS am Code haengen. PLAYER_KEY darf nur
+  // in die drei nicht lesbaren games_countred*-Knoten geschrieben werden — steht er je in
+  // einem rooms/games_mp-Aufruf, ist der Satz falsch und diese Pruefung faellt.
+  const schreibstellen = html.match(/(?:set|update|remove|push)\(ref\(db,[^;]*?\{[^;]*?playerKey/g) || [];
+  const heikel = (html.match(/(?:set|update)\(ref\(db,\s*`(rooms|games_mp)\/[\s\S]{0,600}?\)/g) || [])
+                   .filter(b => /playerKey|PLAYER_KEY/.test(b));
+  ok(heikel.length === 0,
+     'kein PLAYER_KEY in einem rooms/games_mp-Schreibaufruf (' + schreibstellen.length +
+     ' Kennungs-Schreibstellen gepr\u00fcft, heikel: ' + heikel.length + ')');
+  ok(/keine Kennung wird dabei nicht gespeichert|Eine Kennung wird dabei nicht gespeichert/.test(mvm),
+     'der Text sagt genau das, was der Code h\u00e4lt: in diesen Partien keine Kennung');
+}
+
+// \u00a7184a (12.9.) \u2014 RECHTSFUSSZEILE IN anleitung.html. Die Anleitung ist eine EIGENE Seite
+// unter countred.com/anleitung.html; \u00a7 5 DDG verlangt das Impressum "staendig verfuegbar",
+// also je Seite. Bis Fassung 54 fuehrte von dort kein Weg dorthin — am 12.9. am Live-Stand
+// geprueft (Suche nach "Impressum" fand nur einen Kommentar).
+// ⚠️ Diese Gruppe prueft die ANLEITUNG, liegt aber in dieser Suite, weil hier der ganze
+//    Rechtsteil steht und die Drift-Pruefung BEIDE Dateien gegeneinander braucht.
+console.log('\u00a7184a \u2014 Rechtsfu\u00dfzeile auch in der Anleitung:');
+{
+  const anlPath = __dirname + '/anleitung.html';
+  ok(fs.existsSync(anlPath), 'anleitung.html liegt im Ordner');
+  const anl = fs.existsSync(anlPath) ? fs.readFileSync(anlPath, 'utf8') : '';
+  const foot = (anl.match(/<div id="legal-footer">[\s\S]*?<\/div>/) || [''])[0];
+  ok(foot.length > 0, 'anleitung.html tr\u00e4gt eine Fu\u00dfzeile #legal-footer');
+  ok(/>Impressum<\/a>/.test(foot) && />Datenschutz<\/a>/.test(foot),
+     'beide Beschriftungen stehen darin');
+  ok((foot.match(/<a href="index\.html">/g) || []).length === 2,
+     'beide sind echte Verweise auf index.html \u2014 dort liegen die Texte');
+  // DRIFT-SCHUTZ, der eigentliche Grund fuer die Verweis-Loesung: eine zweite Kopie der
+  // Rechtstexte in der Anleitung liefe zwangsläufig auseinander (Erkenntnis L8/N), und ein
+  // veraltetes Impressum ist schlimmer als eines, das einen Klick weiter liegt.
+  // ⚠️ GEGEN DEN SICHTBAREN STAND, nicht gegen die Datei: die Begruendung im Stylesheet nennt
+  // „\u00a7 5 DDG" und „?legal=" selbst — beim ersten Lauf faerbten genau diese beiden
+  // Pruefungen deshalb ROT, an meinen eigenen Kommentaren. Dieselbe Falle wie \u00a7157, nur
+  // von der anderen Seite: dort war ein Kommentar zu Unrecht GRUEN, hier zu Unrecht ROT.
+  const anlSicht = anl.replace(/<!--[\s\S]*?-->/g, ' ')
+                      .replace(/\/\*[\s\S]*?\*\//g, ' ')
+                      .replace(/^\s*\/\/.*$/gm, ' ');
+  ok(!/\u00a7 5 DDG/.test(anlSicht) && !/Guldeinstr/.test(anlSicht) &&
+     !/Landesamt f\u00fcr Datenschutzaufsicht/.test(anlSicht) && !/Art\. 6 Abs\. 1 lit\. f/.test(anlSicht),
+     'KEINE zweite Kopie der Rechtstexte in der Anleitung (Drift-Schutz)');
+  // Kein `?legal=`-Parameter: index.html wertet location.search/hash NIRGENDS aus, und das
+  // ist eine gemessene Eigenschaft der Angriffsflaeche (Pruefung 6.8.), keine Zufaelligkeit.
+  ok(!/location\.search/.test(html) && !/location\.hash/.test(html) && !/\?legal=/.test(anlSicht),
+     'der Weg l\u00e4uft ohne Adress-Parameter \u2014 index.html wertet search/hash weiter nirgends aus');
+  // Die Fusszeile muss den AUSFALL ueberleben: bail() blendet lesson, board-area, nav und bar
+  // aus. Stuende legal-footer in dieser Liste, waere das Impressum genau dann weg, wenn die
+  // Seite kaputt ist.
+  const bail = (anl.match(/\['lesson','board-area','nav','bar'\]/) || [''])[0];
+  ok(bail.length > 0 && !/legal-footer/.test(bail),
+     'die Fu\u00dfzeile bleibt sichtbar, wenn die Anleitung ausf\u00e4llt (bail blendet sie nicht aus)');
+  // Sie darf das Brett nicht rechnerisch verschieben: #board-area ist das wachsende Element,
+  // groesse() MISST dessen clientHeight. Die Fusszeile ist deshalb flex:0 0 auto.
+  ok(/#legal-footer\{flex:0 0 auto/.test(anl) && /const h=area\.clientHeight/.test(anl),
+     'flex:0 0 auto, und die Brettgr\u00f6\u00dfe wird weiter gemessen statt gerechnet');
+}
+
 console.log('\u00a7159 \u2014 Urheberrechtsvermerk:');
 {
   // \u00a7159 (7.9.): Bis v125 stand in KEINER ausgelieferten Datei ein Rechtevermerk — nur

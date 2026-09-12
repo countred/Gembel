@@ -176,6 +176,23 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
 #bar > i{display:block;height:100%;background:var(--sel-bd);width:0;transition:width .25s;}
 #fassung{flex:0 0 auto;font-size:var(--fs-xs);color:var(--text3);margin-top:-3px;}
 
+/* §184a (12.9.): RECHTLICHE FUSSZEILE. Diese Datei ist eine EIGENE Seite unter
+   countred.com/anleitung.html — und § 5 DDG verlangt das Impressum "staendig verfuegbar",
+   also je Seite, nicht je Projekt. Bis Fassung 54 fuehrte von hier kein Weg dorthin.
+   BEWUSST NUR VERWEISE auf index.html, KEINE zweite Kopie der Rechtstexte: eine zweite
+   Kopie driftet zwangsläufig (Erkenntnis L8/N), und ein veraltetes Impressum ist schlimmer
+   als eines, das einen Klick weiter liegt. Ebenfalls bewusst KEIN `?legal=`-Parameter, der
+   das Overlay direkt oeffnet — index.html wertet location.search/hash NIRGENDS aus, und das
+   ist eine gemessene Eigenschaft der Angriffsflaeche (Pruefung 6.8.), keine Zufaelligkeit.
+   flex:0 0 auto und eine Zeile Hoehe: #board-area ist das wachsende Element, groesse()
+   MISST dessen clientHeight — das Brett wird also einfach ein paar Pixel kleiner, es gibt
+   keine feste Hoehe, die hier nachgerechnet werden muesste. */
+#legal-footer{flex:0 0 auto;display:flex;justify-content:center;align-items:baseline;gap:7px;
+  padding-top:2px;font-size:var(--fs-xs);}
+#legal-footer a{color:var(--text3);text-decoration:underline;text-underline-offset:3px;}
+#legal-footer a:hover{opacity:.7;}
+#legal-footer .legal-sep{color:var(--text3);}
+
 /* DER Kasten: einer, oberhalb des Bretts, FESTE Hoehe — damit das Brett
    zwischen den Teilschritten nicht springt. Laengeres scrollt im Kasten. */
 #lesson,#lessonProbe{background:var(--bg3);border:1px solid var(--border);
@@ -323,6 +340,15 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
     <button class="btn" id="btn-back">Zurück</button>
     <button class="btn primary" id="btn-next">Weiter</button>
   </div>
+
+  <!-- §184a: siehe Begruendung im Stylesheet. Echte <a href> — diese Datei hat keinen
+       Modul-Scope-Fallstrick wie index.html (§127), und ein Verweis auf eine andere Seite
+       IST ein Link, kein Knopf. Beide zeigen auf index.html; dort liegen die Texte. -->
+  <div id="legal-footer">
+    <a href="index.html">Impressum</a>
+    <span class="legal-sep" aria-hidden="true">·</span>
+    <a href="index.html">Datenschutz</a>
+  </div>
 </div>
 
 <script>
@@ -403,7 +429,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=143" charset="utf-8"></script>
+<script src="gembel_rules.js?v=144" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -412,7 +438,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 54 · 12.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 55 · 12.09.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit

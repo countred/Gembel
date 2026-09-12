@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=143'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=144'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -559,7 +559,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
            EIGENER Verantwortlicher — nicht unser Auftragsverarbeiter. Die pauschale
            Rollenzuweisung war an dieser Stelle falsch.
      ⚠️ Der Rechentest (perfMs, §99) wird jetzt beim Namen genannt. Ausbauen ginge nur mit
-     einer Kernaenderung — deviceBenchMs() liegt im eingefrorenen Kern (§155-Entscheid). -->
+     einer Kernaenderung — deviceBenchMs() liegt im eingefrorenen Kern (§155-Entscheid).
+     §184b (12.9.): ABSATZ ZUM ZWEI-PERSONEN-MODUS. Der Text beschrieb bis v143 nur den Weg
+     gegen Max Michu („gewaehlte Spielstaerke" ist MvKI-Wortlaut). Dass beim Spiel zu zweit ein
+     RAUM auf dem Server entsteht, stand nirgends — und dass `rooms`/`games_mp` nach Regeln v109
+     auf `.read: true` stehen, also JEDER mit dem Code mitlesen kann, schon gar nicht. Das ist
+     keine Pflichtangabe zu Empfaengern nach Art. 13 (in beiden Knoten steht KEIN playerKey, am
+     Code geprueft: die Kennung geht nur nach games_countred, _moves/_meta und _marks), sondern
+     Transparenz ueber etwas, das ein Spieler vernuenftigerweise anders erwarten wuerde.
+     ⚠️ WER DIE REGELN AENDERT, muss diesen Absatz mitziehen — er nennt die Leserechte, die
+     Zwei-Stunden-Frist (cleanupOldRooms) und die 30 Tage (cleanupOldGames) beim Namen. Und die
+     Fristen sind BEWUSST als Aufraeumarbeit der Seite beschrieben, nicht als Zusage: beide
+     Laeufe sind fire-and-forget mit stummem catch (ToDo 33). -->
 <div class="overlay hidden" id="datenschutz-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <h2 style="text-align:center;font-size:var(--fs-xl);">Datenschutz</h2>
@@ -578,6 +589,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Dazu gehört eine zufällige Kennung, die dein Browser einmalig erzeugt und die dazu
         dient, mehrere Partien aus demselben Browser zusammenzuführen. Sie enthält weder
         deinen Namen noch eine Kennung deines Geräts.</div>
+      <div><strong style="color:var(--text);">Zwei Personen über einen Code</strong><br>
+        Spielst du zu zweit, legt die Seite auf dem Server einen Raum unter dem fünfstelligen Code
+        an. Darin liegen während der Partie der Spielstand, die Züge beider Seiten und ein
+        Lebenszeichen, damit ein Verbindungsabbruch erkannt wird; nach dem Ende kommen Zugprotokoll
+        und Ergebnis in einen getrennten Bereich. Eine Kennung wird dabei nicht gespeichert — diese
+        Partien sind keiner Person zugeordnet. <strong style="color:var(--text);">Wer den Code
+        kennt, kann den Raum mitlesen</strong>; gib ihn deshalb nur der Person, mit der du spielen
+        willst. Verwaiste Räume werden aufgelöst, sobald sie zwei Stunden ohne Lebenszeichen sind,
+        Zugprotokolle beendeter Partien nach 30 Tagen. Diese Aufräumarbeit erledigt die Seite
+        selbst, wenn wieder jemand einen Raum öffnet; einen ständig laufenden Löschdienst auf dem
+        Server gibt es bisher nicht.</div>
       <div><strong style="color:var(--text);">Was nur in deinem Browser bleibt</strong><br>
         Für die Freischaltung des Zwei-Personen-Modus merkt sich dein Browser, wie viele
         Punkte du gesammelt hast und ob der Modus offen ist. Diese Angaben werden nicht
@@ -630,7 +652,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Art. 11 DSGVO auch nicht verpflichtet, zusätzliche Daten zu erheben, nur um dich
         identifizieren zu können.</div>
       <div style="font-size:var(--fs-sm);color:var(--text3);">
-        Verantwortlich ist die im Impressum genannte Person. Stand: 2. September 2026</div>
+        Verantwortlich ist die im Impressum genannte Person. Stand: 12. September 2026</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('datenschutz-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
@@ -908,7 +930,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=143" charset="utf-8"></script>
+<script src="gembel_rules.js?v=144" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -920,7 +942,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=143" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=144" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1712,7 +1734,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v143';
+const BUILD_MARKER='· Build v144';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2029,7 +2051,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=143'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=144'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
