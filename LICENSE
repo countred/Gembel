@@ -28,3 +28,25 @@ Die Namen "Count Red" und "Gembel" werden als Kennzeichen dieses Projekts
 verwendet.
 
 Anfragen: info@countred.com
+
+─────────────────────────────────────────────────────────────────────
+Short version in English (the German text above is authoritative)
+
+© 1998–2026 Walter Rehm. All rights reserved. This repository is NOT
+open source and grants no licence.
+
+Permitted without asking: playing the game at countred.com, reading the
+source and learning from it, and viewing or forking it within GitHub as
+far as GitHub's Terms of Service provide for public repositories.
+
+Not permitted without written consent: copying, modifying, distributing
+or publishing the code or the texts, in whole or in part, including in
+modified form; running your own version under a different name or
+address; any commercial use.
+
+Game rules as such are not protected by copyright, and this notice does
+not claim them. It covers the implementation: the program code, the
+texts and the design. "Count Red" and "Gembel" are used as the marks of
+this project.
+
+Enquiries: info@countred.com
