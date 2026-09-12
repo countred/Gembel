@@ -471,7 +471,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=144'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=145'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -498,6 +498,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   </div>
 </div>
 
+<!-- §185 (12.9.): URHEBERRECHT PRAEZISIERT. Bis v144 stand hier „Programmcode, Texte und
+     Gestaltung" und in der LICENSE „Spielregeln als solche sind nicht geschuetzt". Beides war
+     richtig, aber missverstaendlich: ein Nachahmer liest „Regeln nicht geschuetzt" und haelt die
+     INTERAKTIVE ANLEITUNG fuer frei — und die ist das Gegenteil eines Gebrauchstexts (neun
+     Schritte, eigene Prosa, jede Stellung nachgerechnet), also der Kandidat mit der besten
+     Aussicht auf Schutzhoehe im ganzen Projekt. Die Rechtslage ist dreigeteilt: Spielidee und
+     Spielsystem als solche sind nicht schutzfaehig (BGH „Zahlenlotto", 1961), der
+     niedergeschriebene Regeltext KANN es sein, wenn er ueber den Gebrauchstext hinausgeht
+     (LG Mannheim 2008/2009, Linie umstritten), Code und Gestaltung sind es.
+     ⚠️ DERSELBE SATZ STEHT IN DER `LICENSE` — wer einen der beiden aendert, aendert beide;
+     test_ui_97 haelt sie gegeneinander. Weniger beanspruchen als moeglich waere ein
+     Auslegungsargument fuer die Gegenseite, mehr beanspruchen als traegt schwaecht im Streit. -->
 <!-- §133 (4.8.): Impressum AUSGEFUELLT. Die Angaben stammen von Walter selbst.
      ⚠️ Wer hier etwas aendert, muss die Datenschutzerklaerung mitziehen — dort steht
      „Verantwortlich ist die im Impressum genannte Person". -->
@@ -525,8 +537,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div><strong style="color:var(--text);">Verantwortlich für den Inhalt</strong><br>
         Walter Rehm, Anschrift wie oben</div>
       <div><strong style="color:var(--text);">Urheberrecht</strong><br>
-        Programmcode, Texte und Gestaltung dieser Seite: © 1998–2026 Walter Rehm.
-        Alle Rechte vorbehalten.</div>
+        © 1998–2026 Walter Rehm. Alle Rechte vorbehalten.
+        Nicht beansprucht werden die Spielidee und das Spielsystem als solche.
+        Beansprucht werden der Programmcode, der Wortlaut der Spielregeln und der
+        interaktiven Anleitung sowie Gestaltung und Bildschirmaufbau.</div>
       <div style="font-size:var(--fs-sm);color:var(--text3);">
         Count Red ist ein privates, nicht kommerzielles Projekt. Das Spiel erschien 1998
         erstmals als Brettspiel unter dem Namen Gembel.</div>
@@ -930,7 +944,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=144" charset="utf-8"></script>
+<script src="gembel_rules.js?v=145" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -942,7 +956,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=144" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=145" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1734,7 +1748,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v144';
+const BUILD_MARKER='· Build v145';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2051,7 +2065,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=144'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=145'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

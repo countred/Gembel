@@ -411,8 +411,24 @@ console.log('\u00a7159 \u2014 Urheberrechtsvermerk:');
   // staerker: Spielregeln und Spielideen sind urheberrechtlich frei. Der Absatz nennt
   // deshalb Code, Texte und Gestaltung — und darf die Regeln NICHT beanspruchen.
   const absatz = (imp.match(/<strong[^>]*>Urheberrecht<\/strong>[\s\S]*?<\/div>/)||[''])[0];
-  ok(absatz.length > 0 && !/Spielidee|Spielregel/.test(absatz),
-     'der Vermerk beansprucht die Spielregeln nicht (nur Code, Texte, Gestaltung)');
+  // \u00a7185 (12.9.): bis v144 verbot diese Pruefung die Woerter „Spielidee" und „Spielregel"
+  // im Absatz \u2014 als Schutz gegen einen ueberdehnten Vermerk. Der neue Wortlaut BRAUCHT sie
+  // aber, weil er beide Richtungen benennt. Gepruefert wird deshalb nicht mehr auf Abwesenheit,
+  // sondern auf die richtige SEITE: die Spielidee steht im nicht-beanspruchten Teil, Code und
+  // Wortlaut im beanspruchten. Ein Absatz, der die Spielidee beansprucht, faellt weiter.
+  ok(absatz.length > 0, 'der Urheberrechts-Absatz ist isoliert (' + absatz.length + ' Zeichen)');
+  {
+    const t = absatz.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
+    const i = t.indexOf('Nicht beansprucht'), j = t.indexOf('Beansprucht werden der');
+    ok(i > -1 && j > i, 'beide Richtungen stehen darin, in dieser Reihenfolge');
+    const ohne = t.slice(i, j), mit = t.slice(j);
+    ok(/Spielidee/.test(ohne) && /Spielsystem als solche/.test(ohne) &&
+       !/Spielidee|Spielsystem/.test(mit),
+       'Spielidee und Spielsystem stehen NUR im nicht beanspruchten Teil');
+    ok(/Programmcode/.test(mit) && /Wortlaut der Spielregeln/.test(mit) &&
+       /interaktiven Anleitung/.test(mit) && /Bildschirmaufbau/.test(mit),
+       'beansprucht sind Code, Regelwortlaut, Anleitung und Gestaltung \u2014 die Anleitung ausdr\u00fccklich');
+  }
 
   const VERMERK = /Count Red \u00b7 \u00a9 1998\u20132026 Walter Rehm \u00b7 Alle Rechte vorbehalten/;
   ok(VERMERK.test(html.split('\n').slice(0,4).join('\n')),
@@ -433,6 +449,21 @@ console.log('\u00a7159 \u2014 Urheberrechtsvermerk:');
     const L = fs.readFileSync(lic,'utf8');
     ok(/Walter Rehm/.test(L) && /Alle Rechte vorbehalten/.test(L) && /KEINER\s+Open-Source-Lizenz/.test(L),
        'LICENSE nennt den Rechteinhaber und stellt klar, dass keine Open-Source-Lizenz gilt');
+    // \u00a7185: DRIFT-SCHUTZ zwischen zwei Dateien. Derselbe Satz steht im Impressum und in der
+    // LICENSE; laufen sie auseinander, zitiert eine Gegenseite die schwaechere Fassung. Dieselbe
+    // Klasse Absicherung wie \u00a7184a, nur zwischen Auslieferung und Repository-Beiwerk.
+    const satz = 'Nicht beansprucht werden die Spielidee und das Spielsystem als solche.';
+    ok(L.includes(satz), 'LICENSE tr\u00e4gt den Satz zur Spielidee w\u00f6rtlich');
+    ok(html.replace(/\s+/g,' ').includes(satz),
+       'derselbe Satz steht w\u00f6rtlich im Impressum \u2014 die beiden k\u00f6nnen nicht auseinanderlaufen');
+    ok(/der Wortlaut der Spielregeln und der\s+interaktiven Anleitung/.test(L),
+       'LICENSE beansprucht den Regelwortlaut UND die interaktive Anleitung');
+    // Die englische Kurzfassung ist kein Rechtsgrund, sondern nimmt dem Nachahmer die Ausrede,
+    // den deutschen Text nicht verstanden zu haben (und hilft bei einem DMCA-Takedown).
+    ok(/the German text above is authoritative/.test(L) &&
+       /Not claimed: the game idea and the game system as such/.test(L) &&
+       /interactive guide/.test(L),
+       'englische Kurzfassung vorhanden, mit Vorrang des deutschen Textes und derselben Grenze');
   }
 }
 
