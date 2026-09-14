@@ -1709,6 +1709,41 @@ console.log('\u00a7182 \u2014 die Abschlusstafel nennt den Grund und tr\u00e4gt 
      '\u00a7182: ohne Angabe bleibt es bei \u201eVerbindung unterbrochen\u201c (alle \u00fcbrigen Wege unver\u00e4ndert)');
 }
 
+// §186 (14.9.): DIE WORTMARKE IST EINE ENTSCHEIDUNG, KEINE KOSMETIK — deshalb steht sie hier.
+// Sie lag bis v145 als vierfache Inline-Kopie in index.html und ein fünftes Mal in
+// anleitung.html; fünf Kopien driften, und niemand merkt es, weil jede für sich richtig
+// aussieht. Jetzt gibt es EINE CSS-Regel je Datei, und diese Prüfungen halten drei Dinge fest:
+//   1. dass die Marke überall UND NUR über diese Regel entsteht (Anzahl der Fundstellen),
+//   2. dass der TRENNER nicht zurückkommt — er war der ganze Anlass (countred.com hat keinen),
+//   3. dass Gewicht UND Farbe die Teilung tragen. Das ist der Kern: in jeder Schwarzweiß-
+//      Ausgabe (Ausdruck, Kopie, Hochkontrastmodus) fällt die Farbe weg. Eine reine Farbmarke
+//      wäre dort EIN graues Wort. Wer später `font-weight` gleichzieht, bricht genau das —
+//      und sieht es auf dem Bildschirm nicht.
+// Die Druckregeln stehen mit LITERALEN Grauwerten da, nicht mit Variablen: `@media print`
+// darf den Dunkelmodus nicht erben, sonst druckt Safari helle Schrift auf weißes Papier.
+console.log('\u00a7186 Wortmarke \u2014 eine Regel, f\u00fcnf Stellen, schwarzwei\u00dftauglich:');
+{
+  const anl186  = fs.existsSync(__dirname + '/anleitung.html')
+                ? fs.readFileSync(__dirname + '/anleitung.html', 'utf8') : '';
+  const MARKE   = '<span class="wm-count">Count</span><span class="wm-red">Red</span>';
+  const ohneKom = t => t.replace(/<!--[\s\S]*?-->/g, '');
+  const n186    = html.split(MARKE).length - 1;
+  ok(n186 === 4, 'index.html zeigt die Wortmarke an genau vier Stellen (Spielkopf, Startmen\u00fc, '
+                 + 'Stufenwahl, Lobby) \u2014 gefunden: ' + n186);
+  ok((anl186.split(MARKE).length - 1) === 1, 'anleitung.html zeigt sie genau einmal (Kopfzeile)');
+  ok(!/COUNT\s*[\u00b7.\-]\s*RED/i.test(ohneKom(html)),
+     'index.html: keine getrennte Schreibweise mehr (Punkt, Bindestrich)');
+  ok(!/COUNT\s*[\u00b7.\-]\s*RED/i.test(ohneKom(anl186)), 'anleitung.html: dasselbe');
+  ok(!/class="[^"]*\b(ll2-word|logo-dot)\b/.test(html) && !/\.logo-dot\s*\{/.test(html),
+     'der Trennpunkt ist samt seinem CSS entfallen (.logo-dot / .ll2-word)');
+  const REGEL = /\.wortmarke \.wm-count\{font-weight:400;color:var\(--red-fig-bg\);\}\s*\.wortmarke \.wm-red\{font-weight:700;color:var\(--text\);\}/;
+  ok(REGEL.test(html),   'index.html: Gewicht UND Farbe, als EINE Quelle im Kopf');
+  ok(REGEL.test(anl186), 'anleitung.html tr\u00e4gt dieselbe Regel wortgleich');
+  const DRUCK = /@media print\{\s*html,body\{background:#fff;color:#2c2c2a;\}\s*\.wortmarke \.wm-count\{color:#5f5e5a;\}\s*\.wortmarke \.wm-red\{color:#2c2c2a;\}\s*\}/;
+  ok(DRUCK.test(html),   'index.html: Druckregeln da, Grauwerte als Literale (kein var, kein Dunkelmodus)');
+  ok(DRUCK.test(anl186), 'anleitung.html: dieselben Druckregeln');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];

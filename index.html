@@ -119,9 +119,35 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 /* ── Logo ── */
 #logo{display:flex;flex-direction:column;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border);gap:2px;}
 .logo-line1{font-size:var(--fs-xxl);font-weight:300;letter-spacing:12px;padding-left:12px;color:var(--text);text-transform:uppercase;line-height:1.1;}
-.logo-line2{font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;color:var(--red-fig-bg);display:flex;align-items:center;justify-content:center;letter-spacing:4px;}
-.ll2-word{letter-spacing:4px;padding-left:4px;}
-.logo-dot{width:5px;height:5px;border-radius:50%;background:var(--red-fig-bg);display:inline-block;margin:0 9px 1px;flex-shrink:0;}
+/* §185 (14.9.): WORTMARKE — EINE Quelle für alle Stellen (Spielkopf, Startmenue,
+   Stufenwahl, Lobby; anleitung.html trägt dieselben drei Regeln in ihrem eigenen Kopf).
+   KEIN optischer Trenner mehr zwischen den beiden Wörtern, weil die Adresse
+   countred.com auch keinen hat. Die Teilung trägt jetzt GEWICHT plus FARBE:
+   „Count“ im normalen Schnitt und in --red-fig-bg, „Red“ fett und in --text.
+   WARUM beides und nicht nur die Farbe: in jeder Schwarzweiß-Ausgabe (Ausdruck, Kopie,
+   Hochkontrastmodus, Vorlesemodus) fällt die Farbe weg. Das Gewicht bleibt und trägt
+   die Teilung allein — eine reine Farbmarke wäre dort EIN graues Wort.
+   .logo-dot und .ll2-word sind ersatzlos entfallen: der Punkt WAR der Trenner.
+   ⚠️ Wer hier etwas ändert, ändert es an allen Stellen gleichzeitig — das ist der Zweck. */
+.wortmarke{font-size:var(--fs-xxl);letter-spacing:-.2px;line-height:1.2;}
+.wortmarke .wm-count{font-weight:400;color:var(--red-fig-bg);}
+.wortmarke .wm-red{font-weight:700;color:var(--text);}
+.logo-line2.wortmarke{font-size:var(--fs-sm);display:flex;align-items:center;justify-content:center;}
+/* §185 DRUCK und jede Schwarzweiß-Ausgabe. Zwei Dinge gehen sonst schief:
+   1. Browser drucken Hintergrundfarben nicht — die graue Seitenfläche und die
+      Knopffüllung --bg2 verschwinden ohnehin, die Umrisse bleiben. Das ist gewollt.
+   2. Steht das SYSTEM auf Dunkelmodus, druckt Safari die hellen Textfarben mit; das
+      Blatt ist dann fast leer. Deshalb setzt dieser Block Grund und Text ausdrücklich.
+   Die beiden Grauwerte sind LITERALE, keine Variablen: @media print darf den Dunkelmodus
+   nicht erben. Es sind exakt die Hellmodus-Werte von --text2 und --text.
+   #5f5e5a statt des aus dem Rot umgerechneten #767676 — eine Spur dunkler, damit die
+   Marke Kopie und Tonersparmodus übersteht.
+   ⚠️ Keine Suite prüft das: jsdom hat keine Druckausgabe. Nur am Papier zu sehen. */
+@media print{
+  html,body{background:#fff;color:#2c2c2a;}
+  .wortmarke .wm-count{color:#5f5e5a;}
+  .wortmarke .wm-red{color:#2c2c2a;}
+}
 /* §126/§127: rechtliche Fusszeile im Startmenue.
    ⚠️ ZWEI FEHLER AUS §126, BITTE NICHT WIEDERHOLEN:
    1. Die Links riefen showOverlay per inline-Attribut auf. Der Hauptblock ist ein
@@ -170,8 +196,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
    unberuehrt und gewinnt bei gedrehtem Geraet, weil sie spaeter im Stylesheet steht.
    ⚠️ Wer hier Werte aendert: auf einem SCHMALEN Desktop-Fenster gegenpruefen. */
 @media (max-width:520px){
-  .logo-line2{font-size:var(--fs-xl);font-weight:700;letter-spacing:5px;}   /* §125: mobil groesser als auf dem Rechner (dort --fs-xs) */
-  .logo-dot{width:7px;height:7px;margin:0 11px 2px;}                /* mit dem Titel mitgewachsen */
+  .logo-line2.wortmarke{font-size:var(--fs-xl);}   /* §125: mobil groesser als auf dem Rechner (dort --fs-sm) */
   #logo{padding-bottom:12px;}
   /* §147: die Groesse steht hier NICHT mehr. Mobil war sie 10px, auf dem Rechner 9px —
      seit dem Boden von 12px waeren beide gleich, und eine Regel, die den geerbten Wert
@@ -388,14 +413,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="rotate-inner">
     <div class="rotate-icon">📱</div>
     <div class="rotate-title">Bitte Gerät drehen</div>
-    <div class="rotate-text">Count · Red ist für das Hochformat gebaut.</div>
+    <div class="rotate-text">CountRed ist für das Hochformat gebaut.</div>
   </div>
 </div>
 
 <div id="app">
   <div id="logo">
-    <div class="logo-line2">
-      <span class="ll2-word">COUNT</span><span class="logo-dot"></span><span class="ll2-word">RED</span>
+    <div class="logo-line2 wortmarke">
+      <span class="wm-count">Count</span><span class="wm-red">Red</span>
     </div>
   </div>
   <div id="testlabel">Testversion</div>
@@ -437,7 +462,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="mode-overlay">
   <div class="card">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="font-size:var(--fs-sm);font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
+      <div class="wortmarke"><span class="wm-count">Count</span><span class="wm-red">Red</span></div>
       <div style="font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
     </div>
     <p>Wie möchtest du spielen?</p>
@@ -471,7 +496,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=145'">📖 Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=146'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
@@ -723,7 +748,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="ai-setup-overlay">
   <div class="card">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="font-size:var(--fs-sm);font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
+      <div class="wortmarke"><span class="wm-count">Count</span><span class="wm-red">Red</span></div>
     </div>
     <p>Gegen Max Michu — wähle die Spielstärke:</p>
     <!-- §95 (Walter): drei Stufen gleich groß UNTEREINANDER. card-row ist eine Flex-ZEILE mit
@@ -741,7 +766,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="lobby-overlay">
   <div class="card">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="font-size:var(--fs-sm);font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
+      <div class="wortmarke"><span class="wm-count">Count</span><span class="wm-red">Red</span></div>
       <div style="font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
     </div>
     <p>Spiele mit Code gegen jemanden aus deinem Freundeskreis.</p>
@@ -944,7 +969,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=145" charset="utf-8"></script>
+<script src="gembel_rules.js?v=146" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -956,7 +981,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=145" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=146" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1748,7 +1773,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v145';
+const BUILD_MARKER='· Build v146';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2065,7 +2090,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=145'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=146'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
