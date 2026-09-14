@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- Count Red · © 1998–2026 Walter Rehm · Alle Rechte vorbehalten · countred.com -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -8,6 +9,16 @@
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
 <title>Gembel · Count Red</title>
+<!-- §161 (7.9.): VORVERBINDEN. Der Startbildschirm hing an zwei Netzverbindungen zu zwei
+     fremden Servern: das Firebase-SDK von gstatic.com und die Datenbank selbst. Ohne
+     preconnect beginnen DNS und TLS erst, wenn der Modul-Block gelesen ist — also nach dem
+     ersten Bild. Diese vier Zeilen ziehen beides vor, waehrend der Browser noch HTML liest.
+     Sie aendern KEIN Verhalten: faellt eine Vorverbindung aus, laeuft alles wie zuvor.
+     ⚠️ Die Adressen muessen zu den Importen unten und zu databaseURL passen. -->
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+<link rel="dns-prefetch" href="https://www.gstatic.com">
+<link rel="preconnect" href="https://gembel-multiplayer-default-rtdb.europe-west1.firebasedatabase.app" crossorigin>
+<link rel="dns-prefetch" href="https://gembel-multiplayer-default-rtdb.europe-west1.firebasedatabase.app">
 <!-- §126 (3.8.): GOOGLE ANALYTICS ENTFERNT.
      Grund: GA4 misst Seitenaufrufe und Verweildauer — fuer die Fragen dieses Projekts blind.
      Was wirklich gebraucht wird (welcher Zug, welche Tiefe, welcher Rang, wer gewinnt), steht
@@ -18,6 +29,49 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 :root{
+/* ═══ §147 TYPO-SKALA (27.8.) ═══════════════════════════════════════
+   VORHER: 20 verschiedene Schriftgroessen in 72 Deklarationen (9 · 10 · 10,5 · 11 · 11,5 ·
+   12 · 12,5 · 13 · 13,5 · 14 · 15 · 16 · 17 · 18 · 20 · 24 · 28 · 32 · 36 · 40). Der
+   Unterschied zwischen 12 und 12,5 px sieht niemand, kostete aber jedes Mal eine
+   Entscheidung — und „alles einen Tick groesser" waeren 72 Einzelaenderungen gewesen.
+   JETZT: sechs benannte Stufen. Eine Groessenaenderung ist ab hier EINE Zeile.
+
+   ⚠️ SCHRITT 1 VON 2. Diese Fassung hebt NUR DEN BODEN. Alles, was unter 12 px lag
+   (9 · 10 · 10,5 · 11 · 11,5 px — Stempel, Beschriftungen, Rechtszeile, Testkennung),
+   steht jetzt auf 12 px; das ist die Norm-Untergrenze und war fuer Testpersonen ueber
+   fuenfzig praktisch nicht lesbar. Alle uebrigen Stufen behalten ihren bisherigen Wert,
+   damit sich am Umbruch nichts aendert, was niemand geprueft hat.
+   SCHRITT 2 (offen, Walters Entscheidung): --fs-md auf 16px, --fs-lg auf 18px. Das ist
+   die uebliche Fliesstextgroesse (Browser-Standard 16px, Apple 17pt, Material 16sp).
+   Es kostet Platz und MUSS auf echten Geraeten geprueft werden — siehe unten.
+
+   ⚠️ WAS DIE SUITEN NICHT KOENNEN: jsdom hat keine Layout-Engine. Die Suiten halten fest,
+   DASS die Skala eingehalten wird und dass keine Groesse darunter faellt — ob eine Seite
+   dadurch scrollt, sagt nur ein echtes Geraet. Fuer index.html gilt Walters Auflage
+   „kein Scrollen auf dem normalen Bildschirm"; die Anleitung rechnet ihre Kastenhoehe aus
+   dem LAENGSTEN Text aller neun Seiten, groessere Schrift verkleinert dort also das Brett
+   auf ALLEN Seiten. Beides nach jeder Aenderung am Geraet ansehen.
+
+   KEINE neuen Zwischenwerte einfuehren. Wer eine siebte Groesse braucht, braucht in
+   Wirklichkeit eine der sechs. Titelgroessen (24/28/32/36/40) bleiben bewusst Literale —
+   sie sind Schmuck, kein Lesetext, und folgen keiner Leserlichkeitsnorm. */
+--fs-xs: 12px;    /* Untergrenze — Stempel, Beschriftungen, Rechtszeile */
+--fs-sm: 13px;    /* Hilfstexte, Zaehler */
+--fs-md: 14px;    /* Fliesstext */
+--fs-lg: 15px;    /* hervorgehobener Text, Knopfbeschriftungen */
+--fs-xl: 18px;    /* Ueberschriften in Karten */
+--fs-xxl: 20px;   /* groesste abgeleitete Stufe */
+/* §149 (27.8.): eigene Stufe fuer LESETEXT — laengere Absaetze, die man wirklich liest:
+   der Anleitungstext und die drei Textkarten (Regeln, Impressum, Datenschutz) plus der
+   Erklaertext zur Freischaltung. Bedienelemente, Beschriftungen und Statuszeilen bleiben
+   bewusst draussen; dort gab es kein Leseproblem, und dort kostet jede Vergroesserung
+   sofort Flaeche.
+   WARUM eine eigene Stufe und nicht --fs-md anheben: --fs-md haengt an Knoepfen, Zaehlern
+   und Schildern rund ums Brett. Lesetext und Bedienflaeche haben verschiedene Aufgaben und
+   vertragen verschiedene Groessen.
+   16px ist der Browser-Standard fuer Fliesstext (Apple 17pt, Material 16sp). */
+--fs-read: 16px;  /* Lesetext — Anleitung, Regeln, Rechtstexte */
+
   --bg:#f5f4ef;--bg2:#ebe9e2;--bg3:#fff;
   --text:#2c2c2a;--text2:#5f5e5a;--text3:#888780;
   --border:#d3d1c7;--border2:#b4b2a9;
@@ -35,6 +89,11 @@
   --signal-bg:#fcebeb;--signal-bd:#e24b4a;--signal-text:#a32d2d;
   --red-fig-bg:#D94F3D;
 }
+/* §151 (Walter, 27.8.): mobil darf der Lesetext noch eine Spur groesser sein. Auf dem
+   Rechner sitzt man weiter weg vom Schirm, aber naeher an einer grossen Flaeche; auf dem
+   Telefon ist die Spalte schmal und der Text wird bei gleicher px-Zahl kleiner
+   wahrgenommen. Beide Dateien tragen dieselbe Regel — die Suite prueft das. */
+@media (max-width:520px){:root{ --fs-read: 17.5px; }}
 @media(prefers-color-scheme:dark){:root{
   --bg:#1a1a18;--bg2:#252522;--bg3:#2c2c2a;
   --text:#c2c0b6;--text2:#888780;--text3:#5f5e5a;
@@ -59,8 +118,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 }
 /* ── Logo ── */
 #logo{display:flex;flex-direction:column;align-items:center;padding-bottom:8px;border-bottom:1px solid var(--border);gap:2px;}
-.logo-line1{font-size:20px;font-weight:300;letter-spacing:12px;padding-left:12px;color:var(--text);text-transform:uppercase;line-height:1.1;}
-.logo-line2{font-size:11px;font-weight:600;text-transform:uppercase;color:var(--red-fig-bg);display:flex;align-items:center;justify-content:center;letter-spacing:4px;}
+.logo-line1{font-size:var(--fs-xxl);font-weight:300;letter-spacing:12px;padding-left:12px;color:var(--text);text-transform:uppercase;line-height:1.1;}
+.logo-line2{font-size:var(--fs-xs);font-weight:600;text-transform:uppercase;color:var(--red-fig-bg);display:flex;align-items:center;justify-content:center;letter-spacing:4px;}
 .ll2-word{letter-spacing:4px;padding-left:4px;}
 .logo-dot{width:5px;height:5px;border-radius:50%;background:var(--red-fig-bg);display:inline-block;margin:0 9px 1px;flex-shrink:0;}
 /* §126/§127: rechtliche Fusszeile im Startmenue.
@@ -83,26 +142,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 #legal-footer{display:flex;justify-content:center;align-items:center;gap:10px;
   margin-top:14px;padding-top:12px;border-top:1px solid var(--border);width:100%;}
 .legal-link{background:none;border:none;padding:2px 4px;cursor:pointer;
-  font:inherit;font-size:12px;color:var(--text2);text-decoration:underline;
+  font:inherit;font-size:var(--fs-sm);color:var(--text2);text-decoration:underline;
   text-underline-offset:2px;letter-spacing:.2px;}
 .legal-link:hover{color:var(--text);}
-.legal-sep{font-size:12px;color:var(--text3);}
-@media (max-width:520px){ #legal-footer{margin-top:18px;} .legal-link{font-size:13px;} }
+.legal-sep{font-size:var(--fs-sm);color:var(--text3);}
+@media (max-width:520px){ #legal-footer{margin-top:18px;} .legal-link{font-size:var(--fs-sm);} }
 
-/* §139: Verweis auf die interaktive Anleitung. BEWUSST KEIN dritter big-btn — §134 hat das
-   Startmenue auf zwei Knoepfe gebracht, und ein dritter gleichrangiger Knopf naehme den
-   beiden Spielknoepfen genau die Betonung, die §134 ihnen ueber die REIHENFOLGE gegeben hat.
-   Diese Zeile ist leichter als ein Knopf und schwerer als die Rechtszeile — sie steht
-   zwischen beiden, direkt unter den Knoepfen, wo ein Neuling vor der ersten Partie liest. */
-#anleitung-zeile{margin-top:12px;text-align:center;width:100%;}
-.anleitung-link{background:none;border:none;padding:4px 6px;cursor:pointer;
-  font:inherit;font-size:13.5px;color:var(--sel-bd);text-decoration:underline;
-  text-underline-offset:3px;}
-.anleitung-link:hover{opacity:.75;}
-.anleitung-link .vor{color:var(--text2);text-decoration:none;}
+/* §144: die Anleitung ist seit v113 ein gleichrangiger big-btn und OBEN (s. Startmenue-
+   Kommentar). Die frueheren Stile #anleitung-zeile/.anleitung-link sind damit entfallen.
+   An ihre Stelle treten die beiden Gate-Elemente.
+   Der gesperrte Knopf bleibt ein normaler big-btn — er wird NICHT ausgegraut und NICHT
+   disabled: er muss antippbar bleiben, sonst kommt niemand an den Erklaertext. Er sieht
+   nur leiser aus und traegt ein Schloss. */
+.big-btn.locked{opacity:.62;border-style:dashed;}
+#gate-score{font-size:var(--fs-xs);color:var(--text3);text-align:center;margin-top:10px;
+  letter-spacing:0.3px;cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+#gate-score.hidden{display:none;}
 
 /* ── Testversion label ── */
-#testlabel{font-size:9px;letter-spacing:2px;color:var(--text3);text-align:center;text-transform:uppercase;margin-top:-4px;}
+#testlabel{font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-align:center;text-transform:uppercase;margin-top:-4px;}
 /* ── §125 MOBIL: Titel auffaelliger, alles darunter tiefer ──────────────────────────
    NUR in dieser Media-Query, damit der Desktop unberuehrt bleibt. Auf dem Rechner ist
    der Platz knapp und jede zusaetzliche Hoehe wuerde Scrollen erzwingen; auf dem Handy
@@ -112,10 +170,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
    unberuehrt und gewinnt bei gedrehtem Geraet, weil sie spaeter im Stylesheet steht.
    ⚠️ Wer hier Werte aendert: auf einem SCHMALEN Desktop-Fenster gegenpruefen. */
 @media (max-width:520px){
-  .logo-line2{font-size:17px;font-weight:700;letter-spacing:5px;}   /* war 11px/600/4px */
+  .logo-line2{font-size:var(--fs-xl);font-weight:700;letter-spacing:5px;}   /* §125: mobil groesser als auf dem Rechner (dort --fs-xs) */
   .logo-dot{width:7px;height:7px;margin:0 11px 2px;}                /* mit dem Titel mitgewachsen */
   #logo{padding-bottom:12px;}
-  #testlabel{font-size:10px;margin-top:-2px;margin-bottom:14px;}    /* der Abstand nach unten */
+  /* §147: die Groesse steht hier NICHT mehr. Mobil war sie 10px, auf dem Rechner 9px —
+     seit dem Boden von 12px waeren beide gleich, und eine Regel, die den geerbten Wert
+     wortgleich wiederholt, sieht wie eine Absicht aus und ist keine. Was diese Regel
+     wirklich leistet, sind die Abstaende. */
+  #testlabel{margin-top:-2px;margin-bottom:14px;}
 }
 /* §82: Header exakt über dem BRETT zentrieren (nicht über der Ziffern-Spalte links).
    Breite wird in resizeBoard() an #board-container gekoppelt; die 22px-Ziffernspalte + 6px-Gap
@@ -134,8 +196,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   background:var(--bg3);transition:all .2s;min-height:42px;
 }
 /* §80: Name (Zeile 1) + Parität (Zeile 2, dezent). .who trägt die aktiv-Farbe. */
-.player-badge .who{font-size:12.5px;font-weight:500;color:var(--text2);line-height:1.15;text-align:center;}
-.player-badge .par{font-size:10.5px;opacity:.6;line-height:1.1;}
+.player-badge .who{font-size:var(--fs-sm);font-weight:500;color:var(--text2);line-height:1.15;text-align:center;}
+.player-badge .par{font-size:var(--fs-xs);opacity:.6;line-height:1.1;}
 .player-badge.active{border-color:var(--sel-bd);background:var(--sel-bg);}
 .player-badge.active .who{color:var(--sel-bd);}
 /* §73-FIX: „me" (das eigene, immer linke Badge) darf NICHT dauerhaft blau sein — sonst sind bei
@@ -146,7 +208,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .player-badge.me.active .who{color:var(--sel-bd);}
 #status-wrap{display:flex;align-items:center;justify-content:center;min-width:88px;}
 /* §80: Am-Zug-Meldung mittig, bis zu 3 Zeilen (Bonuszug: „Bonuszug! / Du / (ungerade)"). */
-#status{font-size:12.5px;font-weight:500;color:var(--text2);line-height:1.3;text-align:center;}
+#status{font-size:var(--fs-sm);font-weight:500;color:var(--text2);line-height:1.3;text-align:center;}
 /* §80: Sondermeldungen oben (Bonuszug, Spielende) in einheitlichem Signalrot. */
 #status.signal{color:var(--signal-text);font-weight:600;}
 #board-area{display:flex;align-items:center;justify-content:center;}
@@ -155,11 +217,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   flex-shrink:0;
 }
 #row-labels{grid-column:1;grid-row:1;display:flex;flex-direction:column;gap:6px;}
-.row-label{flex:1;display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--text3);font-weight:600;}
+.row-label{flex:1;display:flex;align-items:center;justify-content:center;font-size:var(--fs-sm);color:var(--text3);font-weight:600;}
 #board-wrap{grid-column:2;grid-row:1;}
 #board{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(4,1fr);gap:6px;height:100%;}
 #col-labels{grid-column:2;grid-row:2;display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:3px;}
-.col-label{text-align:center;font-size:12px;color:var(--text3);font-weight:600;}
+.col-label{text-align:center;font-size:var(--fs-sm);color:var(--text3);font-weight:600;}
 .stripe-dots{display:flex;gap:4px;position:absolute;top:7px;left:0;right:0;justify-content:center;}
 .stripe-dot{width:5px;height:5px;border-radius:50%;background:var(--border2);opacity:0.9;}
 /* Cell: figures sit at bottom, dots always clear at top */
@@ -188,23 +250,23 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   border:1.5px solid transparent;
   display:flex;align-items:center;justify-content:center;
   flex-shrink:0;
-  font-size:12px;font-weight:700;line-height:1;
+  font-size:var(--fs-sm);font-weight:700;line-height:1;
 }
 .figure.black-fig{background:#2c2c2a;border-color:rgba(255,255,255,0.08);color:#fff;}
 .figure.red-fig{background:var(--red-fig-bg);border-color:rgba(0,0,0,0.08);color:#fff;}
 @media(prefers-color-scheme:dark){.figure.black-fig{background:#e0ddd6;border-color:rgba(0,0,0,0.08);color:#1a1a18;}}
 /* Stack: both figures 26px, overlap −8px, bottom figure number nudged down */
 .stack-wrap{display:flex;flex-direction:column;align-items:center;}
-.stack-wrap .figure{width:26px;height:26px;font-size:12px;}
+.stack-wrap .figure{width:26px;height:26px;font-size:var(--fs-sm);}
 .stack-wrap .figure:first-child{margin-bottom:-8px;z-index:1;position:relative;}
 .stack-wrap .figure:last-child{display:flex;align-items:flex-end;padding-bottom:2px;}
 #log-area{min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:0 4px;}
 /* §56/§F9: laufender Zähler Züge-ohne-Dreier — Schach-Konvention (durchgehend
    sichtbar statt einmaliger Vorwarnung), dezent, in BEIDEN Modi; blendet sich außerhalb
    einer laufenden Partie aus. */
-#draw-counter{font-size:11px;color:var(--text3);text-align:center;padding:0 4px;}
+#draw-counter{font-size:var(--fs-xs);color:var(--text3);text-align:center;padding:0 4px;}
 #draw-counter.hidden{display:none;}
-.msg{font-size:12px;color:var(--text2);text-align:center;line-height:1.4;}
+.msg{font-size:var(--fs-sm);color:var(--text2);text-align:center;line-height:1.4;}
 /* §80: 3-Farben-System für die Log-Zeile.
    ROT (signal)  = Sondersignal/Ende: Bonuszug, Dreier, Sieg/Niederlage-Text, Remis-Ende,
                    Aufgeben, 4×-Vorwarnung, KI-Selbsttest-Fehler.
@@ -213,25 +275,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
    GELB (wait)   = Warten/Verbindung.
    GRAU (plain/move) = ruhiges Nachher-Protokoll: die reine Zug-Meldung (↗ … gezogen).
    .bonus/.three/.warn sind Alt-Namen und zeigen jetzt alle die Signalfarbe (Abwärtskompatibilität). */
-.msg.move{font-size:12px;font-weight:400;color:var(--text2);}
+.msg.move{font-size:var(--fs-sm);font-weight:400;color:var(--text2);}
 /* §92 (Walter): Sondermeldungen und Info-Hinweise als reine FARBSCHRIFT — ohne Rahmen,
    ohne Hintergrund. Betrifft Spielstatus (rot: Dreier, Bonuszug, Aufgeben, Spielende) und
    Zughinweise (blau: unmögliche Züge, Remis-Flow). Nur .wait behält seine Box. */
 .msg.signal,.msg.bonus,.msg.three,.msg.warn{
-  font-size:13px;font-weight:600;color:var(--signal-text);
+  font-size:var(--fs-sm);font-weight:600;color:var(--signal-text);
   background:none;padding:2px 4px;border:0;border-radius:0;
 }
-.msg.wait{font-size:13px;font-weight:500;color:var(--wait-text);background:var(--wait-bg);padding:5px 14px;border-radius:10px;border:1px solid var(--wait-bd);}
+.msg.wait{font-size:var(--fs-sm);font-weight:500;color:var(--wait-text);background:var(--wait-bg);padding:5px 14px;border-radius:10px;border:1px solid var(--wait-bd);}
 /* §73 (Welle 1)/§80: aktive Info-/Rückmeldungen (Remis-Flow, Antipp-/Unmöglich-Meldungen) im Button-Blau. */
-.msg.info{font-size:13px;font-weight:500;color:var(--online-text);background:none;padding:2px 4px;border:0;border-radius:0;}
+.msg.info{font-size:var(--fs-sm);font-weight:500;color:var(--online-text);background:none;padding:2px 4px;border:0;border-radius:0;}
 /* §97 (Walter): Schlussbild mittig — der „Nochmal"-Button ist inline-block und hing sonst
    links am Rand, die Zeile darunter ebenso. Eine Regel deckt MvM und MvKI zugleich ab. */
 #win-area{text-align:center;}
-.win-banner{text-align:center;padding:12px 20px;background:var(--win-bg);border-radius:12px;color:var(--win-text);font-weight:600;font-size:16px;border:1px solid var(--win-bd);}
+.win-banner{text-align:center;padding:12px 20px;background:var(--win-bg);border-radius:12px;color:var(--win-text);font-weight:600;font-size:var(--fs-lg);border:1px solid var(--win-bd);}
 .rematch-row{display:flex;gap:8px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:8px;}
 #toolbar{display:flex;gap:8px;padding-bottom:2px;}
 .tool-btn{
-  flex:1;font-size:13px;font-weight:500;padding:12px 8px;
+  flex:1;font-size:var(--fs-sm);font-weight:500;padding:12px 8px;
   border-radius:12px;border:1px solid var(--border);background:var(--bg3);
   cursor:pointer;color:var(--text2);font-family:inherit;
   transition:background .12s,opacity .12s;touch-action:manipulation;line-height:1;
@@ -253,11 +315,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;
 }
 .card h2{font-size:24px;font-weight:600;letter-spacing:-.4px;}
-.card p{font-size:14px;color:var(--text2);line-height:1.5;}
+.card p{font-size:var(--fs-md);color:var(--text2);line-height:1.5;}
 .card-row{display:flex;gap:8px;width:100%;flex-wrap:wrap;}
 /* §95: Querformat-Hinweis. Standardmäßig aus; nur bei schmalem Querformat sichtbar. */
 #rotate-hint{display:none;}
-@media (orientation:landscape) and (max-height:520px){
+/* §165 (7.9., Walter): `pointer:coarse` ergänzt. Ein aufgeklapptes Entwicklerfenster drückt
+   die Fensterhöhe unter 520px — der Rechner hielt sich dann für ein quer gedrehtes Handy, und
+   Testen mit offener Konsole war unmöglich. Berührungsgeräte (Handy, Tablet) haben `coarse`,
+   Maus/Trackpad haben `fine`: am Handy also unverändert, am Rechner nie. */
+@media (orientation:landscape) and (max-height:520px) and (pointer:coarse){
   #rotate-hint{
     display:flex;position:fixed;inset:0;z-index:9999;
     align-items:center;justify-content:center;
@@ -265,21 +331,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   }
   .rotate-inner{display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;}
   .rotate-icon{font-size:40px;transform:rotate(90deg);}
-  .rotate-title{font-size:17px;font-weight:600;color:var(--text);}
-  .rotate-text{font-size:14px;color:var(--text2);line-height:1.5;}
+  .rotate-title{font-size:var(--fs-xl);font-weight:600;color:var(--text);}
+  .rotate-text{font-size:var(--fs-md);color:var(--text2);line-height:1.5;}
 }
 /* §95: Buttons gestapelt, alle gleich breit und gleich hoch (kein flex:1-Dehnen in der Zeile). */
 .card-col{display:flex;flex-direction:column;gap:8px;width:100%;}
 /* §134: Test-Kennung unter der Rechtszeile — klein, grau, monospace (der Schluessel wird
    vorgelesen oder abgetippt, da hilft eine Festbreitenschrift). */
-#test-key{font-size:11px;color:var(--text3);text-align:center;margin-top:2px;letter-spacing:0.3px;}
+#test-key{font-size:var(--fs-xs);color:var(--text3);text-align:center;margin-top:2px;letter-spacing:0.3px;}
 /* .hidden ist in dieser Datei NICHT global, sondern je Element definiert (vgl. #draw-counter). */
 #test-key.hidden{display:none;}
 #test-key span{font-family:monospace;letter-spacing:1px;}
 .card-col .big-btn{flex:none;width:100%;}
 .big-btn{
   flex:1;padding:16px 8px;border-radius:14px;border:1.5px solid var(--border);
-  background:var(--bg2);font-size:14px;font-weight:500;line-height:1.5;
+  background:var(--bg2);font-size:var(--fs-md);font-weight:500;line-height:1.5;
   cursor:pointer;font-family:inherit;color:var(--text);
   transition:all .15s;touch-action:manipulation;
 }
@@ -305,7 +371,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   background:#22c55e;animation:pulse 1.5s infinite;
 }
 @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.4;}}
-.err{font-size:13px;color:#ef4444;min-height:18px;}
+.err{font-size:var(--fs-sm);color:#ef4444;min-height:18px;}
 </style>
 </head>
 <body>
@@ -371,8 +437,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="mode-overlay">
   <div class="card">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="font-size:13px;font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
-      <div style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
+      <div style="font-size:var(--fs-sm);font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
+      <div style="font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
     </div>
     <p>Wie möchtest du spielen?</p>
     <!-- §134 (Walter, 5.8.): NUR NOCH ZWEI Knoepfe. „Markierte Partien (Analyse)" ist ein
@@ -392,19 +458,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          sondern ein Bedeutungskonflikt: blau heisst in dieser Datei „unter dem Zeiger", und
          genau so halten es alle Untermenues (Stufenauswahl: drei Knoepfe, keiner primary).
          Die Betonung traegt jetzt allein die REIHENFOLGE — „Mit Code zu zweit" steht oben. -->
+    <!-- §144 (Walter, 27.8.): DREI gleichrangige Knoepfe, neue Reihenfolge. Das kippt zwei
+         frueher ausdruecklich begruendete Entscheidungen, und zwar bewusst:
+           - §139 („bewusst KEIN dritter big-btn\"): die Anleitung war eine leichte Zeile, damit
+             sie den Spielknoepfen die Betonung nicht nimmt. Walter will sie gleichrangig und
+             OBEN — ein Neuling soll sie zuerst sehen, nicht als Fussnote unter den Knoepfen.
+           - §134 („Mit Code zu zweit\" oben, damit die Leute das Spiel weitertragen): dieser
+             Modus ist seit §144 GESPERRT (s. Gate-Block im Skript). Ein gesperrter Knopf
+             gehoert nicht an die betonte Stelle, deshalb steht er jetzt unten.
+         Unveraendert gilt: card-col (§95, gleich breite Knoepfe), KEINE Vorauswahl (§134,
+         5.8.) — blau heisst in dieser Datei ausschliesslich „unter dem Zeiger\".
+         `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
+         elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="showLobby()">👥 Mit Code zu zweit</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=145'">📖 Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()">🤖 Gegen Max Michu</button>
-    </div>
-    <!-- §139: Einstieg in die interaktive Anleitung. Die fuenf Neuling-Partien vom 2.8. gingen
-         0:5 und waren nach rund sieben eigenen Zuegen vorbei, weil niemand die Paritaetsregel
-         verstanden hatte — die Anleitung muss VOR der ersten Partie auffindbar sein, nicht
-         danach. `?v=` ist der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller elf Suiten
-         prueft ihn seit §139 mit. Kein <a href>, sondern ein Knopf wie in der Rechtszeile,
-         damit Aussehen und Verhalten zum Rest des Menues passen. -->
-    <div id="anleitung-zeile">
-      <button type="button" class="anleitung-link"
-        onclick="location.href='anleitung.html?v=112'"><span class="vor">Neu hier?</span> Spielanleitung</button>
+      <button class="big-btn" id="btn-mvm" onclick="showLobby()">👥 Mit Code zu zweit</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -420,10 +489,27 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          in jeder Partie mitgeschrieben wird — hier nur lesbar gemacht, damit ein Testspieler
          sie einmal durchgeben kann und seine Partien zuordenbar sind. Kein neues Datum, keine
          Geraetekennung. Bleibt LEER (und die Zeile unsichtbar), wenn der Speicher gesperrt ist. -->
+    <!-- §144: Punktestand fuer die Freischaltung. Steht bewusst direkt UEBER der Test-Kennung
+         (Walters Vorgabe) — beide gehoeren zu derselben Person und werden zusammen gelesen.
+         Anklickbar: das ist der einzige Weg zum Erklaertext, sobald der Modus offen ist und
+         der gesperrte Knopf nicht mehr antippbar ist. -->
+    <div id="gate-score" class="hidden" onclick="openGateInfo()"></div>
     <div id="test-key" class="hidden">Test-Kennung: <span id="test-key-val"></span></div>
   </div>
 </div>
 
+<!-- §185 (12.9.): URHEBERRECHT PRAEZISIERT. Bis v144 stand hier „Programmcode, Texte und
+     Gestaltung" und in der LICENSE „Spielregeln als solche sind nicht geschuetzt". Beides war
+     richtig, aber missverstaendlich: ein Nachahmer liest „Regeln nicht geschuetzt" und haelt die
+     INTERAKTIVE ANLEITUNG fuer frei — und die ist das Gegenteil eines Gebrauchstexts (neun
+     Schritte, eigene Prosa, jede Stellung nachgerechnet), also der Kandidat mit der besten
+     Aussicht auf Schutzhoehe im ganzen Projekt. Die Rechtslage ist dreigeteilt: Spielidee und
+     Spielsystem als solche sind nicht schutzfaehig (BGH „Zahlenlotto", 1961), der
+     niedergeschriebene Regeltext KANN es sein, wenn er ueber den Gebrauchstext hinausgeht
+     (LG Mannheim 2008/2009, Linie umstritten), Code und Gestaltung sind es.
+     ⚠️ DERSELBE SATZ STEHT IN DER `LICENSE` — wer einen der beiden aendert, aendert beide;
+     test_ui_97 haelt sie gegeneinander. Weniger beanspruchen als moeglich waere ein
+     Auslegungsargument fuer die Gegenseite, mehr beanspruchen als traegt schwaecht im Streit. -->
 <!-- §133 (4.8.): Impressum AUSGEFUELLT. Die Angaben stammen von Walter selbst.
      ⚠️ Wer hier etwas aendert, muss die Datenschutzerklaerung mitziehen — dort steht
      „Verantwortlich ist die im Impressum genannte Person". -->
@@ -442,15 +528,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      Liste, die das Skript erzeugt. -->
 <div class="overlay hidden" id="impressum-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
-    <h2 style="text-align:center;font-size:18px;">Impressum</h2>
-    <div style="font-size:15px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
+    <h2 style="text-align:center;font-size:var(--fs-xl);">Impressum</h2>
+    <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Angaben gemäß § 5 DDG</strong><br>
         Walter Rehm<br>Guldeinstr. 32 A<br>80339 München<br>Deutschland</div>
       <div><strong style="color:var(--text);">Kontakt</strong><br>
         E-Mail: <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a></div>
       <div><strong style="color:var(--text);">Verantwortlich für den Inhalt</strong><br>
         Walter Rehm, Anschrift wie oben</div>
-      <div style="font-size:12px;color:var(--text3);">
+      <div><strong style="color:var(--text);">Urheberrecht</strong><br>
+        © 1998–2026 Walter Rehm. Alle Rechte vorbehalten.
+        Nicht beansprucht werden die Spielidee und das Spielsystem als solche.
+        Beansprucht werden der Programmcode, der Wortlaut der Spielregeln und der
+        interaktiven Anleitung sowie Gestaltung und Bildschirmaufbau.</div>
+      <div style="font-size:var(--fs-sm);color:var(--text3);">
         Count Red ist ein privates, nicht kommerzielles Projekt. Das Spiel erschien 1998
         erstmals als Brettspiel unter dem Namen Gembel.</div>
     </div>
@@ -459,41 +550,162 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   </div>
 </div>
 
-<!-- §126: Datenschutz. Beschreibt den TATSAECHLICHEN Stand nach dem Entfernen von GA4:
+<!-- §126/§157: Datenschutz. Beschreibt den TATSAECHLICHEN Stand nach dem Entfernen von GA4:
      keine Cookies, kein Tracking, nur Spieldaten und eine Zufallskennung. Wer daran etwas
-     aendert (GA4 zurueck, Geraetekennung, Namen), muss diesen Text mitziehen. -->
+     aendert (GA4 zurueck, Geraetekennung, Namen), muss diesen Text mitziehen.
+     §157 (2.9.): der Text war inhaltlich richtig, aber als Pflichtinformation UNVOLLSTAENDIG.
+     Es fehlten sechs Angaben, die Art. 13 verlangt — Rechtsgrundlage, die konkreten
+     berechtigten Interessen, Speicherdauer, Widerspruchsrecht nach Art. 21, Beschwerderecht
+     bei der Aufsichtsbehoerde und die vollstaendigen Betroffenenrechte. Dazu drei Aenderungen
+     am Bestand, jede mit eigenem Grund:
+       (1) „Es findet keine Auswertung einzelner Personen statt" ist RAUS. Ausgewertet wird
+           nach playerKey, und bei einer Handvoll bekannter Testspieler ist der Browser
+           faktisch die Person — dieselbe Klasse Zusage wie der §136-Satz und die
+           §156-Kurzfassung. An seiner Stelle steht jetzt, was nachpruefbar NICHT passiert:
+           keine Werbung, keine Profilbildung, keine Weitergabe.
+       (2) „Dabei kann es zu einer Uebermittlung in Drittlaender kommen" ist RAUS. Art. 13
+           Abs. 1 lit. f verlangt die GARANTIEN. Genannt sind jetzt BEIDE — DPF-Zertifizierung
+           und ergaenzend die Standardvertragsklauseln aus den Vertraegen. Das ist Absicht und
+           keine Doppelung: der Angemessenheitsbeschluss steht unter gerichtlicher
+           Ueberpruefung, ein Text mit nur einer Garantie waere bei einem Wegfall sofort falsch.
+       (3) „technisch notwendige Verbindungsdaten" ist praeziser geworden. GitHub Pages
+           protokolliert die IP-Adresse jedes Besuchers, und fuer dieses Protokoll ist GitHub
+           EIGENER Verantwortlicher — nicht unser Auftragsverarbeiter. Die pauschale
+           Rollenzuweisung war an dieser Stelle falsch.
+     ⚠️ Der Rechentest (perfMs, §99) wird jetzt beim Namen genannt. Ausbauen ginge nur mit
+     einer Kernaenderung — deviceBenchMs() liegt im eingefrorenen Kern (§155-Entscheid).
+     §184b (12.9.): ABSATZ ZUM ZWEI-PERSONEN-MODUS. Der Text beschrieb bis v143 nur den Weg
+     gegen Max Michu („gewaehlte Spielstaerke" ist MvKI-Wortlaut). Dass beim Spiel zu zweit ein
+     RAUM auf dem Server entsteht, stand nirgends — und dass `rooms`/`games_mp` nach Regeln v109
+     auf `.read: true` stehen, also JEDER mit dem Code mitlesen kann, schon gar nicht. Das ist
+     keine Pflichtangabe zu Empfaengern nach Art. 13 (in beiden Knoten steht KEIN playerKey, am
+     Code geprueft: die Kennung geht nur nach games_countred, _moves/_meta und _marks), sondern
+     Transparenz ueber etwas, das ein Spieler vernuenftigerweise anders erwarten wuerde.
+     ⚠️ WER DIE REGELN AENDERT, muss diesen Absatz mitziehen — er nennt die Leserechte, die
+     Zwei-Stunden-Frist (cleanupOldRooms) und die 30 Tage (cleanupOldGames) beim Namen. Und die
+     Fristen sind BEWUSST als Aufraeumarbeit der Seite beschrieben, nicht als Zusage: beide
+     Laeufe sind fire-and-forget mit stummem catch (ToDo 33). -->
 <div class="overlay hidden" id="datenschutz-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
-    <h2 style="text-align:center;font-size:18px;">Datenschutz</h2>
-    <div style="font-size:15px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
+    <h2 style="text-align:center;font-size:var(--fs-xl);">Datenschutz</h2>
+    <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Kurz gesagt</strong><br>
         Diese Seite setzt keine Cookies, bindet keine Werbung ein und verwendet kein
-        Analyse-Werkzeug. Name, E-Mail-Adresse und Gerätedaten werden nicht erhoben —
-        gespeichert werden nur der Spielverlauf und eine zufällige Kennung deines Browsers.</div>
+        Analyse-Werkzeug. Name und E-Mail-Adresse werden nicht erhoben —
+        gespeichert werden nur der Spielverlauf und eine zufällige Kennung deines Browsers.
+        Dein Punktestand und die Freischaltung des Zwei-Personen-Modus bleiben allein in
+        deinem Browser.</div>
       <div><strong style="color:var(--text);">Was gespeichert wird</strong><br>
         Beim Spielen werden der Spielverlauf (Züge, Zeitpunkte, Ergebnis, gewählte Spielstärke)
-        und technische Kennzahlen zur Spielstärke-Auswertung gespeichert. Dazu gehört eine
-        zufällige Kennung, die dein Browser einmalig erzeugt und die nur dazu dient, mehrere
-        Partien derselben Person zusammenzuführen. Sie enthält keinen Namen und keine
-        Gerätedaten.</div>
-      <div><strong style="color:var(--text);">Warum</strong><br>
-        Ausschließlich zur Weiterentwicklung des Spiels, insbesondere zur Einstellung der
-        Spielstärke. Es findet keine Auswertung einzelner Personen statt und keine Weitergabe
-        an Dritte zu eigenen Zwecken.</div>
-      <div><strong style="color:var(--text);">Wo</strong><br>
-        Die Daten liegen in der Firebase Realtime Database von Google. Die Seite selbst wird
-        über GitHub Pages ausgeliefert. Dabei kann es zu einer Übermittlung in Drittländer
-        kommen. Beim Aufruf verarbeiten beide Anbieter technisch notwendige Verbindungsdaten.</div>
+        und technische Kennzahlen zur Spielstärke-Auswertung gespeichert. Zu diesen Kennzahlen
+        gehört ein kurzer Rechentest, der einmal je Sitzung misst, wie schnell dein Gerät
+        rechnet — ohne ihn lassen sich Bedenkzeiten verschiedener Geräte nicht vergleichen.
+        Dazu gehört eine zufällige Kennung, die dein Browser einmalig erzeugt und die dazu
+        dient, mehrere Partien aus demselben Browser zusammenzuführen. Sie enthält weder
+        deinen Namen noch eine Kennung deines Geräts.</div>
+      <div><strong style="color:var(--text);">Zwei Personen über einen Code</strong><br>
+        Spielst du zu zweit, legt die Seite auf dem Server einen Raum unter dem fünfstelligen Code
+        an. Darin liegen während der Partie der Spielstand, die Züge beider Seiten und ein
+        Lebenszeichen, damit ein Verbindungsabbruch erkannt wird; nach dem Ende kommen Zugprotokoll
+        und Ergebnis in einen getrennten Bereich. Eine Kennung wird dabei nicht gespeichert — diese
+        Partien sind keiner Person zugeordnet. <strong style="color:var(--text);">Wer den Code
+        kennt, kann den Raum mitlesen</strong>; gib ihn deshalb nur der Person, mit der du spielen
+        willst. Verwaiste Räume werden aufgelöst, sobald sie zwei Stunden ohne Lebenszeichen sind,
+        Zugprotokolle beendeter Partien nach 30 Tagen. Diese Aufräumarbeit erledigt die Seite
+        selbst, wenn wieder jemand einen Raum öffnet; einen ständig laufenden Löschdienst auf dem
+        Server gibt es bisher nicht.</div>
+      <div><strong style="color:var(--text);">Was nur in deinem Browser bleibt</strong><br>
+        Für die Freischaltung des Zwei-Personen-Modus merkt sich dein Browser, wie viele
+        Punkte du gesammelt hast und ob der Modus offen ist. Diese Angaben werden nicht
+        übertragen. Ohne sie gäbe es die Freischaltung nicht; sie sind für diese von dir
+        angeforderte Funktion erforderlich. Löschst du die Website-Daten, sind sie ebenso
+        weg wie die Kennung.</div>
+      <div><strong style="color:var(--text);">Wechsel auf ein anderes Gerät</strong><br>
+        Du kannst dir einen Übertragungscode anzeigen lassen und ihn auf einem zweiten Gerät
+        eingeben. Er enthält deine Kennung und deinen Punktestand, sonst nichts. Das zweite
+        Gerät behält dabei seine eigene Kennung.</div>
+      <div><strong style="color:var(--text);">Warum, und auf welcher Grundlage</strong><br>
+        Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO — unser berechtigtes Interesse. Es
+        besteht darin, das Spiel zu betreiben und weiterzuentwickeln: die Spielstärke der
+        Computergegner einzustellen, Fehler in den Spielregeln und in der Suche zu finden und
+        zu erkennen, ob eine Schwierigkeitsstufe wirklich das leistet, was sie soll. Dafür
+        müssen mehrere Partien zusammengehören; einzelne Partien ohne Zusammenhang beantworten
+        diese Fragen nicht. Es findet keine Werbung, keine Profilbildung und keine Weitergabe
+        an Dritte zu deren eigenen Zwecken statt.</div>
+      <div><strong style="color:var(--text);">Wie lange</strong><br>
+        Spielverlauf und Kennung werden gespeichert, solange sie für diese Auswertung
+        gebraucht werden. Ein festes Datum gibt es dafür nicht; die Daten werden gelöscht,
+        sobald die Auswertung abgeschlossen ist, spätestens aber auf deine Aufforderung hin.
+        Die Angaben in deinem Browser bleiben, bis du die Website-Daten löschst.</div>
+      <div><strong style="color:var(--text);">Wo, und wer die Daten sieht</strong><br>
+        Die Daten liegen in der Firebase Realtime Database von Google (Google Ireland Limited
+        und Google LLC), Region europe-west1. Die Seite selbst wird über GitHub Pages
+        ausgeliefert (GitHub, Inc.). Beide Anbieter sind insoweit Auftragsverarbeiter; es
+        bestehen die jeweiligen Auftragsverarbeitungsbedingungen. Beim Aufruf der Seite
+        protokolliert GitHub zusätzlich die IP-Adresse deines Anschlusses zu
+        Sicherheitszwecken — dafür ist GitHub selbst verantwortlich, nicht wir.</div>
+      <div><strong style="color:var(--text);">Übermittlung in Drittländer</strong><br>
+        Beide Anbieter können Daten auch in den USA verarbeiten. Google und GitHub sind unter
+        dem EU-US Data Privacy Framework zertifiziert, für das ein Angemessenheitsbeschluss
+        der Europäischen Kommission besteht. Ergänzend enthalten die Verträge beider Anbieter
+        die Standardvertragsklauseln der Europäischen Kommission nach Art. 46 Abs. 2 lit. c
+        DSGVO. Eine Kopie der Klauseln ist über die Anbieter erhältlich; auf Anfrage nennen
+        wir dir die Fundstelle.</div>
       <div><strong style="color:var(--text);">Deine Rechte</strong><br>
-        Du kannst die Zufallskennung jederzeit selbst entfernen, indem du die Website-Daten
-        in deinem Browser löschst — danach beginnt die nächste Partie unter einer neuen
-        Kennung. Für Auskunft oder Löschung genügt eine Nachricht an die im Impressum
-        genannte Adresse.</div>
-      <div style="font-size:12px;color:var(--text3);">
-        Verantwortlich ist die im Impressum genannte Person. Stand: 5. August 2026</div>
+        Du hast das Recht auf Auskunft, Berichtigung, Löschung, Einschränkung der Verarbeitung
+        und Datenübertragbarkeit. Du kannst der Verarbeitung jederzeit widersprechen
+        (Art. 21 DSGVO) — dann werden deine Daten gelöscht, sofern keine zwingenden Gründe
+        entgegenstehen. Du kannst dich außerdem bei einer Aufsichtsbehörde beschweren; für uns
+        zuständig ist das Bayerische Landesamt für Datenschutzaufsicht, Promenade 18,
+        91522 Ansbach.<br>
+        Am schnellsten geht es ohne uns: löschst du die Website-Daten in deinem Browser, ist
+        die Kennung weg und die nächste Partie beginnt unter einer neuen. Für Auskunft oder
+        Löschung der bereits gespeicherten Partien genügt eine Nachricht an die im Impressum
+        genannte Adresse. Dafür brauchen wir deine Kennung — sie steht am Anfang deines
+        Übertragungscodes. Ohne sie können wir deine Partien nicht finden und sind nach
+        Art. 11 DSGVO auch nicht verpflichtet, zusätzliche Daten zu erheben, nur um dich
+        identifizieren zu können.</div>
+      <div style="font-size:var(--fs-sm);color:var(--text3);">
+        Verantwortlich ist die im Impressum genannte Person. Stand: 12. September 2026</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('datenschutz-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
+  </div>
+</div>
+
+<!-- §144: Erklaertext zur Freischaltung des Zwei-Personen-Modus. Erreichbar ueber den
+     gesperrten Knopf UND ueber die Punktezeile (die bleibt auch nach der Freischaltung da,
+     sonst kaeme man an den Uebertragungscode nicht mehr heran).
+     ⚠️ §4.4-DAUERREGEL: hier steht KEIN innerHTML mit fremden Daten. Der Code und alle
+     Rueckmeldungen gehen per textContent hinein — die einzige Eingabe der Seite (das
+     Codefeld) darf nie als HTML interpretiert werden. -->
+<div class="overlay hidden" id="gate-overlay">
+  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
+    <h2 style="text-align:center;font-size:var(--fs-xl);">Mit Code zu zweit</h2>
+    <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
+      <div id="gate-state" style="color:var(--text);font-weight:600;"></div>
+      <div>Um jemand zum Spiel mit dir einzuladen, brauchst du 3 Punkte:</div>
+      <div style="color:var(--text);">
+        Sieg gegen Max Michu <strong>Einsteiger</strong> = 1 Punkt<br>
+        Sieg gegen Max Michu <strong>Fortgeschritten</strong> = 1,5 Punkte<br>
+        Sieg gegen Max Michu <strong>Meister</strong> = 3 Punkte</div>
+      <div>Also: dreimal gegen Einsteiger, zweimal gegen Fortgeschritten oder einmal gegen
+        Meister gewinnen. <strong>Einladen darfst du danach jeden.</strong></div>
+      <div><strong style="color:var(--text);">Anderes Gerät</strong><br>
+        Willst du deinen Punktestand auf ein anderes Gerät mitnehmen? Kopier einfach diesen
+        Übertragungscode in das Fenster auf deinem anderen Gerät:</div>
+      <div id="gate-code" style="font-family:monospace;font-size:var(--fs-sm);letter-spacing:1px;
+        color:var(--text);word-break:break-all;background:var(--bg2);padding:8px 10px;border-radius:8px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <input id="gate-input" type="text" autocomplete="off" spellcheck="false"
+          placeholder="Code eingeben" style="flex:1;min-width:180px;padding:9px 10px;border-radius:8px;
+          border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:monospace;font-size:var(--fs-sm);">
+        <button class="big-btn" style="flex:none;padding:9px 14px;" onclick="redeemGateCode()">Einlösen</button>
+      </div>
+      <div id="gate-msg" style="font-size:var(--fs-md);"></div>
+    </div>
+    <button class="big-btn primary" style="width:100%;"
+      onclick="document.getElementById('gate-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
   </div>
 </div>
 
@@ -501,8 +713,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      damit er im Replay-Werkzeug eingefügt werden kann. Gefüllt aus games_countred_marks/. -->
 <div class="overlay hidden" id="marks-overlay">
   <div class="card" style="width:min(560px,94vw);max-height:86vh;">
-    <h2 style="font-size:17px;">📌 Markierte Partien</h2>
-    <div id="marks-feedback" style="font-size:12px;color:var(--online-text);min-height:16px;text-align:center;"></div>
+    <h2 style="font-size:var(--fs-xl);">📌 Markierte Partien</h2>
+    <div id="marks-feedback" style="font-size:var(--fs-sm);color:var(--online-text);min-height:16px;text-align:center;"></div>
     <div id="marks-list" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:56vh;"></div>
     <button class="big-btn primary" style="margin-top:8px;" onclick="showModeMenu()">Zurück</button>
   </div>
@@ -511,7 +723,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="ai-setup-overlay">
   <div class="card">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="font-size:13px;font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
+      <div style="font-size:var(--fs-sm);font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
     </div>
     <p>Gegen Max Michu — wähle die Spielstärke:</p>
     <!-- §95 (Walter): drei Stufen gleich groß UNTEREINANDER. card-row ist eine Flex-ZEILE mit
@@ -529,12 +741,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="lobby-overlay">
   <div class="card">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
-      <div style="font-size:13px;font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
-      <div style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
+      <div style="font-size:var(--fs-sm);font-weight:600;letter-spacing:6px;color:var(--red-fig-bg);text-transform:uppercase;">COUNT · RED</div>
+      <div style="font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
     </div>
     <p>Spiele mit Code gegen jemanden aus deinem Freundeskreis.</p>
     <div class="card-row">
-      <button class="big-btn primary" onclick="createRoom()">🎯 Raum erstellen</button>
+      <!-- §148: HIER sitzt die Sperre, nicht an der Lobbytuer. Bis v116 lag sie auf dem
+           Startmenue-Knopf — und der ist die Tuer zu BEIDEM. Ein Eingeladener mit 0 Punkten
+           kam dadurch nicht einmal an das Feld fuer den Partie-Code, obwohl im Quelltext und
+           im Handover stand „nur das Eroeffnen ist gesperrt". Walters Befund. -->
+      <button class="big-btn primary" id="btn-create" onclick="tryCreateRoom()">🎯 Raum erstellen</button>
       <button class="big-btn" onclick="showJoinScreen()">🔗 Beitreten</button>
     </div>
     <button class="big-btn" style="margin-top:8px;" onclick="showModeMenu()">Zurück</button>
@@ -547,7 +763,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <h2>Raum erstellt</h2>
     <p>Teile diesen Code mit der Person, gegen die du spielen möchtest:</p>
     <div class="room-code" id="display-code">----</div>
-    <p id="create-status" style="font-size:13px;color:var(--wait-text);">
+    <p id="create-status" style="font-size:var(--fs-sm);color:var(--wait-text);">
       <span class="status-dot"></span>Warte auf Mitspieler…
     </p>
     <button class="big-btn" onclick="cancelCreate()">Abbrechen</button>
@@ -578,7 +794,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="card">
     <h2>Verbunden! ✓</h2>
     <p>Warte auf den Spielstart…</p>
-    <p style="font-size:13px;color:var(--text3);">Raum: <strong id="wait-code"></strong></p>
+    <p style="font-size:var(--fs-sm);color:var(--text3);">Raum: <strong id="wait-code"></strong></p>
     <button class="big-btn" onclick="cancelJoin()">Verlassen</button>
   </div>
 </div>
@@ -586,8 +802,21 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- Disconnected Overlay -->
 <div class="overlay hidden" id="dc-overlay">
   <div class="card">
-    <h2>Verbindung unterbrochen</h2>
+    <!-- §182 (12.9., Walters Befund): die Überschrift war fest „Verbindung unterbrochen" und
+         stand damit über JEDER Endtafel — auch über „Mitspieler hat den Raum verlassen. Du hast
+         gewonnen.", wo die Verbindung längst zurück und gar nicht die Ursache war. Sie hat jetzt
+         eine Kennung und wird vom Aufrufer gesetzt (Voreinstellung unverändert). -->
+    <h2 id="dc-title">Verbindung unterbrochen</h2>
     <p id="dc-msg">Der andere Spieler hat die Verbindung getrennt.</p>
+    <!-- §167 (7.9.): HIER STAND „Erneut verbinden" (§162-C, v128–v130) — AUSGEBAUT.
+         Der Knopf war für den Fall gedacht, dass die eigene Leitung weg ist, während der Raum
+         weiterlebt. Genau dieser Fall führt seit §163 aber nicht mehr auf diese Tafel: die
+         eigene Unterbrechung wird jetzt als solche angezeigt, ohne Abbruch. Übrig blieben nur
+         Wege, auf denen der Raum TOT ist (gelöscht, abgebrochen, Gast weg, selbst abgebrochen)
+         — dort konnte der Knopf nie wirken. Walters Livetest zu v130 (Gegenprobe 4) hat genau
+         das gezeigt. Ein Bedienelement, das nur dort erscheint, wo es nicht hilft, ist
+         schlimmer als keines. Wer es zurückholt, braucht zuerst einen Weg hierher, auf dem
+         der Raum noch lebt. -->
     <button class="big-btn primary" onclick="showModeMenu()">Zurück zur Auswahl</button>
   </div>
 </div>
@@ -609,7 +838,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="neu-overlay">
   <div class="card">
     <h2 id="neu-title">Menü</h2>
-    <p id="neu-desc" style="font-size:14px;color:var(--text2);"></p>
+    <p id="neu-desc" style="font-size:var(--fs-md);color:var(--text2);"></p>
     <div id="neu-buttons" style="display:flex;flex-direction:column;gap:8px;width:100%;"></div>
   </div>
 </div>
@@ -629,8 +858,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- Remis-Angebot Overlay (für den Empfänger) -->
 <div class="overlay hidden" id="draw-offer-overlay">
   <div class="card" style="text-align:center;gap:16px;width:min(300px,94vw);">
-    <h2 style="font-size:17px;">Remis-Angebot</h2>
-    <p style="font-size:14px;color:var(--text2);line-height:1.5;">Mitspieler bietet Remis an.<br>Einverstanden?</p>
+    <h2 style="font-size:var(--fs-xl);">Remis-Angebot</h2>
+    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;">Mitspieler bietet Remis an.<br>Einverstanden?</p>
     <div style="display:flex;gap:8px;width:100%;">
       <button class="big-btn" style="flex:1" onclick="answerDraw(false)">Ablehnen</button>
       <button class="big-btn primary" style="flex:1" onclick="answerDraw(true)">Einverstanden</button>
@@ -643,8 +872,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      hängt — dieses hier ist rein lokal (MvKI hat keinen Firebase-Sync des Gegners). -->
 <div class="overlay hidden" id="ai-draw-offer-overlay">
   <div class="card" style="text-align:center;gap:16px;width:min(300px,94vw);">
-    <h2 style="font-size:17px;">Remis-Angebot</h2>
-    <p style="font-size:14px;color:var(--text2);line-height:1.5;">Max Michu bietet Remis an.<br>Einverstanden?</p>
+    <h2 style="font-size:var(--fs-xl);">Remis-Angebot</h2>
+    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;">Max Michu bietet Remis an.<br>Einverstanden?</p>
     <div style="display:flex;gap:8px;width:100%;">
       <button class="big-btn" style="flex:1" onclick="answerAIDraw(false)">Ablehnen</button>
       <button class="big-btn primary" style="flex:1" onclick="answerAIDraw(true)">Einverstanden</button>
@@ -656,18 +885,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="maintenance-overlay">
   <div class="card" style="text-align:center;gap:16px;width:min(320px,94vw);">
     <div style="font-size:32px;">🔧</div>
-    <h2 style="font-size:18px;">Wartungsarbeiten</h2>
-    <p style="font-size:14px;color:var(--text2);line-height:1.5;">Das Spiel ist vorübergehend nicht verfügbar.<br>Bitte später noch einmal versuchen.</p>
+    <h2 style="font-size:var(--fs-xl);">Wartungsarbeiten</h2>
+    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;">Das Spiel ist vorübergehend nicht verfügbar.<br>Bitte später noch einmal versuchen.</p>
   </div>
 </div>
 
 <!-- Regeln Overlay -->
 <div class="overlay hidden" id="regeln-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
-    <h2 style="text-align:center;font-size:18px;">Regeln</h2>
-    <p style="font-size:11px;color:var(--text3);text-align:center;margin-top:-8px;">First published in 1998 as Gembel</p>
+    <h2 style="text-align:center;font-size:var(--fs-xl);">Regeln</h2>
+    <p style="font-size:var(--fs-xs);color:var(--text3);text-align:center;margin-top:-8px;">First published in 1998 as Gembel</p>
 
-    <div style="font-size:15px;line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
+    <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Ziel</strong><br>4 gleichfarbige Figuren in einer Spalte (A, B, C oder D). Bei einem Stapel zählt die Basis, nicht die Figur darauf.</div>
 
       <div><strong style="color:var(--text);">Brett</strong><br>4×4 Felder, Zeilen 1–4, Spalten A–D. Jedes Feld hat Punkte (oben im Feld): Zeile 1 = 3, Zeile 2 = 2, Zeile 3 = 1, Zeile 4 = 0.</div>
@@ -715,7 +944,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=112" charset="utf-8"></script>
+<script src="gembel_rules.js?v=145" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -727,7 +956,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=112" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=145" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -786,6 +1015,26 @@ function serverNow(){ return Date.now()+serverTimeOffset; }
 // sind ENTKOPPELT — Erkennung schnell, Kulanz zum Zurückkommen lang.
 const PRESENCE_HEARTBEAT_MS = 4000;  // alle 4 s eigenen Herzschlag schreiben (war 10 s)
 const PRESENCE_STALE_MS     = 12000; // 12 s ohne Herzschlag → offline ERKENNEN (≈3× Intervall)
+// ── §163 (7.9.): EIGENE VERBINDUNG ÜBERWACHEN ───────────────────────────────────────
+// ⚠️ RÜCKZIEHER: EIGENE_PRAESENZ_AN auf false setzen schaltet §163 vollständig aus — der
+// .info/connected-Zuhörer wird dann nicht aufgesetzt und presenceTick verhält sich wie in
+// v127. Das war Walters Auflage beim Bau: das Paket muss in einer Zeile abschaltbar bleiben.
+// GRUND: Bis v127 mass der Client NUR die Frische des Gegner-Herzschlags. Bricht die EIGENE
+// Leitung ab, kommen dessen Herzschläge ebenfalls nicht mehr an — das Gerät schloss daraus
+// „Mitspieler offline", zeigte den 45-s-Countdown und warf am Ende eine Partie weg, die in
+// Wahrheit weiterlief oder längst entschieden war (Walters Remis-Befund, 7.9.).
+const EIGENE_PRAESENZ_AN = true;
+let selbstOffline = false;   // true = die EIGENE Verbindung ist gerade weg
+// §166 (7.9.): EIGENER Merker für die eigene Ausfall-Tafel. In v128/v129 hing ihr Ausblenden
+// an `clearOppOffline()`, und das läuft nur beim Übergang „Gegner war offline → wieder da".
+// Bei §163 wird `oppOfflineSince` aber nie gesetzt — die Tafel blieb deshalb stehen, auch
+// wenn die eigene Leitung längst zurück war oder die Partie darunter beendet war (Walters
+// Livebefund zu v129). Zwei Zustände, zwei Merker: das Mitbenutzen war der Fehler.
+let eigenerAusfallSichtbar = false;
+// §181: true = wir sind wieder online, wissen aber noch nicht, ob die Partie noch läuft. In
+// diesem Fenster darf der Präsenz-Tick die Tafel NICHT wegräumen — sonst läge das alte Brett
+// für bis zu einer Sekunde offen da (Walters „das Brett blitzt auf").
+let standWirdGeprueft = false;
 const OPP_ABORT_GRACE_MS    = 45000; // 45 s Countdown bis Auto-Abbruch (Kulanz zum Zurückkommen)
 const OPP_ABORT_MINWAIT_MS  = 5000;  // „sofort abbrechen" erst nach 5 s klickbar (Anti-Panik)
 let heartbeatTimer=null;      // setInterval-Handle für den eigenen Herzschlag
@@ -832,7 +1081,15 @@ function startHeartbeat(){
   stopHeartbeat();
   if(!roomRef || !myRole) return;
   const field = myRole==='host' ? 'hostSeen' : 'guestSeen';
-  const write = ()=>{ if(roomRef) update(roomRef,{[field]:serverTimestamp()}).catch(()=>{}); };
+  // §169 (9.9.): NICHT SCHREIBEN, SOLANGE DIE EIGENE LEITUNG WEG IST. Die Firebase-Bibliothek
+  // stellt jede Schreibung zurück; im Flugmodus sammelten sich so dutzende Herzschläge an und
+  // gingen beim Wiederverbinden als Salve los — in Walters Protokollen als lange Reihe
+  // „update at /rooms/XXXXX failed: permission_denied" (der Raum war inzwischen gelöscht).
+  // Nutzlos waren sie ohnehin: ein Herzschlag, der Minuten später ankommt, belegt nichts.
+  const write = ()=>{
+    if(EIGENE_PRAESENZ_AN && selbstOffline) return;
+    if(roomRef) update(roomRef,{[field]:serverTimestamp()}).catch(()=>{});
+  };
   write();
   heartbeatTimer=setInterval(write, PRESENCE_HEARTBEAT_MS);
   // §72e: Gegner-Präsenz erstmal als frisch annehmen (bis ein Snapshot etwas anderes sagt),
@@ -864,7 +1121,20 @@ function stopPresenceMonitor(){
 // §72e: Der eine, stabile Tick. Entscheidet online/offline anhand des gepufferten Herzschlags.
 function presenceTick(){
   const inGame = (phase==='playing' || phase==='bonus');
-  if(!inGame){ if(oppOfflineSince!==null) clearOppOffline(); return; }
+  if(!inGame){
+    if(oppOfflineSince!==null) clearOppOffline();
+    if(eigenerAusfallSichtbar) clearEigenenAusfall();  // §166: auch die eigene Tafel geht weg
+    return;
+  }
+  // §163: Solange die EIGENE Verbindung weg ist, sagt ein fehlender Herzschlag NICHTS über den
+  // Gegner — er kommt bloß nicht bei uns an. Also: kein Countdown, kein Abbruch, und eine
+  // Meldung, die in die richtige Richtung zeigt. Die Frist läuft erst weiter, wenn wir wieder
+  // hören können (der .info/connected-Zuhörer setzt sie beim Zurückkommen frisch auf).
+  if(EIGENE_PRAESENZ_AN && selbstOffline){ zeigeEigenenAusfall(); return; }
+  // §181: Rückkehr läuft — nichts aufdecken, bis raumRueckkehrPruefen entschieden hat. Fällt die
+  // Leitung in diesem Fenster wieder aus, greift die Zeile darüber und gewinnt (richtig so).
+  if(standWirdGeprueft) return;
+  if(eigenerAusfallSichtbar) clearEigenenAusfall();     // §166: eigene Leitung ist zurück
   const stale = presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS);
   if(stale && oppOfflineSince===null){
     // Übergang online→offline: EINMAL Countdown aufsetzen.
@@ -907,6 +1177,44 @@ function evaluateOpponentPresence(data){
   }
 }
 
+// §163: eigene Leitung weg — dieselbe Tafel, aber ehrlicher Text und OHNE Countdown.
+// Der Abbruch-Knopf bleibt bedienbar: wer nicht warten will, soll gehen können.
+function clearEigenenAusfall(){
+  eigenerAusfallSichtbar=false;
+  standWirdGeprueft=false;   // §181: EIN Ausgang für beide Zustände — hier kann keiner hängen bleiben
+  // ⚠️ NICHT ausblenden, wenn gerade ein echter Gegner-Countdown läuft — der hat dieselbe
+  // Tafel und sein eigenes Recht darauf.
+  if(oppOfflineSince===null){
+    const ov=document.getElementById('opp-offline-overlay');
+    if(ov) ov.classList.add('hidden');
+  }
+}
+
+function zeigeEigenenAusfall(){
+  eigenerAusfallSichtbar=true;
+  const msgEl=document.getElementById('opp-offline-msg');
+  if(msgEl) msgEl.textContent = 'Deine Verbindung ist unterbrochen. Das Spiel läuft weiter, sobald sie zurück ist.';
+  const cnt=document.getElementById('opp-offline-count');
+  if(cnt) cnt.textContent='';
+  document.getElementById('opp-offline-overlay').classList.remove('hidden');
+  const btn=document.getElementById('opp-offline-abort');
+  if(btn) btn.disabled=false;
+}
+
+// §181: Zwischenzustand nach der Rückkehr — dieselbe Tafel, anderer Text. Sie verdeckt das
+// Brett weiter, bis entweder das Spiel weiterläuft oder die Abbruchtafel kommt.
+function zeigeStandWirdGeprueft(){
+  eigenerAusfallSichtbar=true;
+  standWirdGeprueft=true;
+  const msgEl=document.getElementById('opp-offline-msg');
+  if(msgEl) msgEl.textContent = 'Verbindung wiederhergestellt. Der Stand wird geprüft…';
+  const cnt=document.getElementById('opp-offline-count');
+  if(cnt) cnt.textContent='';
+  document.getElementById('opp-offline-overlay').classList.remove('hidden');
+  const btn=document.getElementById('opp-offline-abort');
+  if(btn) btn.disabled=true;   // in diesem Moment gibt es nichts abzubrechen
+}
+
 function showOppOfflineOverlay(){
   // §72f: identische Meldung für beide Rollen (Walter-Wunsch) — keine Rollen-Benennung.
   const msgEl=document.getElementById('opp-offline-msg');
@@ -947,25 +1255,37 @@ function updateOppOfflineCountdown(){
 // Cleanup, kollidiert nicht mit der Übergangslösung §66/§68). meta/aborted wird zusätzlich kurz
 // gesetzt, damit ein zurückkehrender Gegner den Abbruch auch dann erkennt, wenn er den Snapshot
 // noch VOR dem remove() erwischt (Race-Absicherung; der visibilitychange-Handler prüft beides).
-async function finalizeOppAbort(msg, reason){
+// §168 (7.9., Walters Livebefund zu v130): KEIN BEDIENWEG DARF AUF DAS NETZ WARTEN.
+// Bis v131 wartete diese Funktion auf DREI Schreibungen (Forensik, meta/aborted, remove),
+// bevor sie `handleDisconnect` erreichte. Ist die EIGENE Leitung weg, lösen die nie auf — der
+// Abbruch kam nie an. `clearOppOffline()` lief aber schon davor und blendete die Tafel aus:
+// das Brett blitzte auf, der nächste Präsenz-Tick holte die Tafel zurück, und es sprang hin
+// und her. Eine Sackgasse, aus der der Nutzer nicht herauskam.
+// JETZT: erst lokal (Zeitgeber aus, aufräumen, Tafel), dann die Schreibungen OHNE await. Die
+// Firebase-Bibliothek stellt sie zurück und schickt sie beim nächsten Verbindungsaufbau —
+// `meta/aborted` landet also weiterhin, nur eben später und ohne jemanden aufzuhalten.
+function finalizeOppAbort(msg, reason){
   // §75-W3-A: Offline-Dauer SICHERN, bevor clearOppOffline() oppOfflineSince auf null setzt —
   // sonst wäre offlineForMs im Forensik-Datensatz immer null (Reihenfolge-Falle, im Self-Review
   // gefunden). Danach erst aufräumen, loggen, löschen.
   const offlineForMs = (oppOfflineSince!==null) ? Math.max(0, serverNow()-oppOfflineSince) : null;
   clearOppOffline();
-  const wasRoom = roomRef;
+  const wasRoom = roomRef, wasRole = myRole;
   // (1) Forensik-Datensatz — nur der wartende Spieler schreibt (kein Doppel-Eintrag).
-  await logMvmAbort(reason||'disconnect-timeout', offlineForMs);
-  if(myRole==='host' && wasRoom){
-    // (2a) Abbruch-Flag setzen (Race-Fenster für schnell zurückkehrende Gegner), dann Raum löschen.
-    try{ await update(wasRoom,{'meta/aborted':true}); }catch(e){}
-    try{ await remove(wasRoom); }catch(e){}   // §75-W3-A: saubere Löschung (Host-Recht)
-  } else if(wasRoom){
-    // Gast wartet: kann den Raum nicht löschen (Host-Recht). meta/aborted setzen, damit der
-    // zurückkehrende Host den Abbruch erkennt; der Host-seitige Cleanup/Lazy-Cleanup räumt später.
-    try{ await update(wasRoom,{'meta/aborted':true}); }catch(e){}
-  }
+  // ⚠️ VOR handleDisconnect aufrufen, aber NICHT erwarten: logMvmAbort liest roomCode, myRole,
+  // phase und moveIndex synchron beim Bauen des Datensatzes; cleanup() nullt sie gleich danach.
+  logMvmAbort(reason||'disconnect-timeout', offlineForMs);
+  // (2) §168: lokal abschließen — ab hier hängt nichts mehr am Netz.
   handleDisconnect(msg||'Mitspieler offline — Spiel abgebrochen.');
+  // (3) Schreibungen best effort, ohne Wartezeit. Gast darf nicht löschen (Host-Recht),
+  // setzt aber das Flag, damit der zurückkehrende Host den Abbruch erkennt.
+  if(wasRoom){
+    // §170: WER abgebrochen hat, gehört dazu. Der andere bekam bisher immer „Verbindung zu
+    // lange unterbrochen — der Raum wurde aufgelöst", auch wenn in Wahrheit der Mitspieler
+    // gegangen ist. Zwei verschiedene Sachverhalte, eine Meldung — das führt in die Irre.
+    update(wasRoom,{'meta/aborted':true, 'meta/abortedBy':wasRole||null}).catch(()=>{});
+    if(wasRole==='host') remove(wasRoom).catch(()=>{});   // §75-W3-A: saubere Löschung
+  }
 }
 
 // §75-W3-A: schlanker Abbruch-Datensatz für die Stabilitätsanalyse (Testphase). Bewusst nach
@@ -1007,15 +1327,48 @@ async function logMvmAbort(reason, offlineForMs){
 
 // §72c: „Sofort abbrechen / zur Lobby" — vom wartenden Spieler geklickt (erst nach 5 s aktiv).
 window.abortToLobbyNow=function(){
-  finalizeOppAbort('Spiel abgebrochen — zurück zur Lobby.', 'manual-abort');
+  // §168: Wortlaut nach Lage. War die EIGENE Leitung weg, ist „Mitspieler offline" falsch —
+  // und „Spiel abgebrochen" allein ließ Walter rätseln, wer da eigentlich abgebrochen hat.
+  const eigene = (EIGENE_PRAESENZ_AN && selbstOffline);
+  finalizeOppAbort(eigene ? 'Partie verlassen — deine Verbindung war unterbrochen.'
+                          : 'Spiel abgebrochen — zurück zur Lobby.',
+                   eigene ? 'manual-abort-offline' : 'manual-abort');
 };
 
 // §75-W3-A: Rückkehr eines Spielers, dessen Raum in seiner Abwesenheit abgebrochen/aufgelöst wurde
 // (Standby > 12s+45s). Zeigt die klare Meldung und routet über das dc-overlay ins Modus-Menü (der
 // Button dort ist „Zurück zur Auswahl" → showModeMenu, Fix 5c). handleDisconnect räumt lokal auf
 // (cleanup(false)); ein remove() ist unnötig, weil der Host den Raum bereits gelöscht hat.
+// §170: aus dem Raum ablesen, WER abgebrochen hat, und es benennen.
+function abbruchText(data){
+  const wer = (data && data.meta) ? data.meta.abortedBy : null;
+  // §181: seit dem Verlassen-als-Aufgabe (§177) kann das Abbruch-Flag ZWEI Ursachen haben. Der
+  // alte Text behauptete in beiden Fällen eine zu lange Unterbrechung — beim absichtlichen
+  // Verlassen war das falsch, und zwar gegenüber dem, der nichts dafür konnte.
+  const grund = (data && data.meta) ? data.meta.abortReason : null;
+  if(grund==='verlassen'){
+    return (wer && myRole && wer===myRole)
+      ? 'Du hast den Raum verlassen.'
+      : 'Mitspieler hat den Raum verlassen — die Partie ist beendet.';
+  }
+  if(wer && myRole && wer!==myRole)
+    return 'Mitspieler hat die Partie beendet — die Verbindung war zu lange unterbrochen.';
+  return 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.';
+}
+
+// §171 (9.9., Walters Befund: Raum 63SYG lag mit `meta/aborted:true` UND `phase:"playing"` in
+// der Datenbank): WER DAS FLAG FINDET UND LÖSCHEN DARF, RÄUMT AUCH AUF.
+// Löschen ist Host-Recht (§75-W3-A). Bricht der GAST ab, setzt er nur `meta/aborted` — der Raum
+// bleibt danach liegen, bis der Lazy-Cleanup ihn nach ZWEI STUNDEN ohne Lebenszeichen nimmt.
+// Bis dahin steht ein toter Raum mit `phase:"playing"` in der Datenbank. Kommt der Host zurück
+// und liest das Flag, ist er der Einzige, der es sofort erledigen kann.
+// ⚠️ VOR handleDisconnect: cleanup() nullt roomRef, danach ist nichts mehr zu löschen.
+// Fire-and-forget — ohne Netz scheitert es, dann bleibt es beim Lazy-Cleanup wie bisher.
 function handleAbortReturn(msg){
-  handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
+  if(roomRef && myRole==='host'){ remove(roomRef).catch(()=>{}); }
+  // §182: hier ist die Partie zu Ende — das ist die Aussage, nicht der Zustand der Leitung.
+  handleDisconnect(msg || 'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.',
+                   'Partie beendet');
 }
 
 // ── Game Logic ───────────────────────────────────────────────────
@@ -1047,6 +1400,61 @@ let isMyTurn=false;
 // automatische Ablehnung). Flag wird beim Anbieten gesetzt, beim eigenen ausgeführten Zug und bei
 // Partie-/Rundenstart zurückgesetzt.
 let mvmOfferedThisTurn=false;
+
+// §177 (11.9., Walters Befunde nach v138): DREI ZUSTÄNDE, DIE AUS DEM RAUM KOMMEN, NICHT AUS DEM KOPF.
+// Remis-Angebot, „Mitspieler ist gegangen" und der Grund für einen verschwundenen Raum wurden bis
+// v138 nur als einmalige Statuszeile gezeigt oder gar nicht gemerkt. Die nächste Meldung
+// („Mitspieler wieder verbunden.", ein Zug) überschrieb sie — der Anbieter sah sein eigenes
+// Angebot nicht mehr, obwohl es im Raum weiter stand und angenommen werden konnte.
+let eigenesRemisOffen=false;   // eigenes Angebot steht im Raum und die Partie läuft
+let mitspielerGegangen=false;  // Mitspieler hat den Raum verlassen / aufgelöst → kein Nochmal
+let raumEndeText=null;         // Tafeltext, wenn der Raum nach einem Verlassen verschwindet
+// §177: Wer als Host eine laufende Partie auflöst, schreibt erst die Aufgabe und schließt den
+// Raum ETWAS SPÄTER. Sofort geschlossen, sähe der Gast nur „Raum nicht mehr vorhanden" — das
+// Ergebnis käme gar nicht bei ihm an. Die Wartezeit hält niemanden auf: der Host ist dann schon
+// im Menü.
+// §181 (12.9., Walters zweiter Versuch): „SCHLIESSEN" HEISST MARKIEREN, NICHT LÖSCHEN. Bis v141
+// löschte der Host den Raum. War der Gast in diesem Moment offline, fand er beim Zurückkommen
+// nichts mehr vor — „Raum nicht mehr vorhanden", ohne Grund und ohne Ergebnis. Vier Sekunden
+// helfen nur dem, der gerade zusieht. Jetzt bleibt der Raum mit `meta/aborted` stehen, so wie
+// bei jedem anderen Abbruch (§75-W3-A): der zurückkehrende Gast liest Grund UND Ergebnis aus
+// dem Raum. Weggeräumt wird er wie ein abgebrochener Raum — vom Lazy-Cleanup nach zwei Stunden
+// ohne Lebenszeichen (§171).
+const RAUM_AUFLOESEN_VERZUG_MS=4000;
+
+// §177: EIN REMIS-ANGEBOT GILT NUR IN EINER LAUFENDEN PARTIE. Bis v138 erlosch es nie — weder
+// durch einen Zug noch durch das Partieende. Nachgestellt: bot A an, zog dann und gewann mit
+// einem Vierer, sah B über seiner Niederlage „Mitspieler bietet Remis an"; ein Tipp auf
+// „Einverstanden" schrieb `winner:null` — aus dem Sieg wurde ein Remis. Der RAUM entscheidet
+// (wie §166), die lokale phase muss zusätzlich laufen (§164-Wächter kann sie festhalten).
+function remisAngebotGilt(data){
+  const st = data && data.state;
+  const raumLaeuft = !!st && (st.phase==='playing' || st.phase==='bonus');
+  return raumLaeuft && (phase==='playing' || phase==='bonus');
+}
+
+// §177: EIN Entscheider für „geht eine neue Runde?" — Anzeige im Schlussbild und Sperre in
+// requestRematch lesen beide HIER (Grundsatz aus §172: Anzeige und Sperre dürfen nie
+// auseinanderlaufen). `null` = Nochmal möglich.
+// §179 (Walters Screenshots 10:01): der Rückgabewert unterscheidet jetzt ENDGÜLTIG von
+// VORLÄUFIG. Wer den Raum verlassen hat, kommt nicht zurück — dort verschwindet der Knopf
+// (der Hinweis allein hat nicht gereicht, s. §179). Ein abgestandener Herzschlag kann sich
+// dagegen erholen; dort bleibt der Knopf tippbar wie seit §172 entschieden.
+// Der Text nennt den GRUND NICHT mehr: bei einem Weggang steht er schon als Meldung über dem
+// Schlussbild, und zweimal dasselbe in zwei Farben las sich wie zwei verschiedene Aussagen.
+function neueRundeUnmoeglich(){
+  if(mitspielerGegangen) return {endgueltig:true,  text:'Eine neue Runde ist nicht möglich.'};
+  if(presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS))
+    return {endgueltig:false, text:'Mitspieler ist nicht mehr verbunden — eine neue Runde ist gerade nicht möglich.'};
+  return null;
+}
+
+// §177: Anzeige des EIGENEN offenen Angebots nachführen — nur bei einem Wechsel neu zeichnen.
+function eigenesRemisSetzen(offen){
+  if(eigenesRemisOffen===offen) return;
+  eigenesRemisOffen=offen;
+  try{ updateStatusUI(); }catch(e){}
+}
 
 // ── MvKI-State (§43d Etappe 2b, Weg A: gemeinsame Loop mit gameMode-Verzweigung) ──
 let gameMode='mvm';   // 'mvm' = Mensch vs Mensch (Firebase) | 'mvki' = Mensch vs KI (lokal)
@@ -1149,7 +1557,198 @@ if(PLAYER_KEY){
   if(_tk && _tv){ _tv.textContent=PLAYER_KEY; _tk.classList.remove('hidden'); }
 }
 
-const BUILD_MARKER='· Build v112';
+// ═══════════════════════════════════════════════════════════════════
+// §144: FREISCHALTUNG DES ZWEI-PERSONEN-MODUS (Walter, 27.8.)
+// ═══════════════════════════════════════════════════════════════════
+// WOZU: „Mit Code zu zweit" ist zuerst ein Marketinginstrument (das Spiel soll
+//   weitergetragen werden) und zweitens eine Erfahrungsschwelle — wer mit einem Menschen
+//   spielt, soll das Spiel selbst kennen. Wer eingeladen WIRD, braucht nichts: gesperrt
+//   ist nur das Eroeffnen eines Raums, nicht das Beitreten.
+//
+// ZWEI SCHALTER, beide bewusst hier oben und beide fuer sich allein wirksam:
+//   MVM_GATE=false  → der Modus ist wieder offen wie vor v113, ohne jeden weiteren Eingriff.
+//   MARK_UI=true    → der Markierknopf ist wieder da (s. showNeuMenu).
+//   Die Suiten pruefen BEIDE Stellungen, nicht nur die ausgelieferte — sonst ist der
+//   Rueckweg beim ersten Zurueckschalten rot und niemand weiss, ob das der Schalter war.
+//
+// WAS DIE MECHANIK NICHT IST: ein Betrugsschutz. Das Spiel ist client-autoritativ, der
+//   Zaehler liegt im Browser. Wer die Entwicklerwerkzeuge oeffnet, schaltet frei — und
+//   genau das ist der Grund, warum Betrug hier nicht lohnt: Umgehen ist billiger als
+//   Faelschen, es gibt keine Bestenliste und keinen Rang zu gewinnen (Ausloeser 13 bleibt
+//   unberuehrt). Die Pruefsumme hebt die Huerde nur von „Wert aendern" auf „Verfahren
+//   verstehen". Der WIRKLICHE Nachweis liegt woanders: der Zaehler steigt ausschliesslich
+//   in finalizeMvkiGame, also genau dann, wenn eine gewonnene Partie mit playerKey und
+//   skillLevel nach games_countred geschrieben wird. Jede Freischaltung ist damit im
+//   Export nachrechenbar.
+//
+// ⚠️ NICHT aus Firebase lesen. Wuerde die Freischaltung aus der Datenbank kommen, waere
+//   das Schreiben erfundener Partien erstmals LOHNEND — `!data.exists()` schuetzt nur den
+//   Altbestand, neue Falschdaten sind jederzeit moeglich. Lokal pruefen haelt den Anreiz
+//   bei null und braucht keine Regelaenderung.
+const MVM_GATE = true;          // §144: Sperre aktiv
+const MARK_UI  = false;         // §144: Markierknopf ausgehaengt (Funktion bleibt, s.u.)
+const GATE_NEED = 3;            // Punkte fuer die Freischaltung
+// Walters Schwelle „3× Einsteiger ODER 2× Fortgeschritten ODER 1× Meister" als Punktekonto.
+// Als reines ODER gelesen bliebe jemand mit 2 Einsteiger- und 1 Fortgeschritten-Sieg gesperrt,
+// obwohl er mehr geleistet hat als der mit drei Einsteiger-Siegen — das Konto schliesst die
+// Luecke und ergibt in den drei genannten Faellen exakt Walters Zahlen.
+// `stark` ist geparkt (§122) und ueber keinen Knopf erreichbar; der Eintrag steht hier nur,
+// damit eine ueber die Konsole gestartete Partie keinen undefinierten Wert liefert.
+const GATE_WIN_POINTS = { einsteiger:1, fortgeschritten:1.5, stark:1.5, meister:3 };
+const GATE_STORE = 'countred_gate';
+const GATE_SALT  = 'countred-gate-1';
+const GATE_TIP   = 'Erst drei Punkte sammeln: 3× Einsteiger, 2× Fortgeschritten oder 1× Meister schlagen.';
+
+// Kurzer, synchroner Streuwert (FNV-1a). BEWUSST kein SubtleCrypto: das ist asynchron und
+// wuerde den ganzen Pfad umbauen, ohne etwas zu schuetzen — das Verfahren steht ohnehin im
+// Quelltext. Zweck ist ausschliesslich, dass im Speicher kein glatter Klartextwert steht.
+function gateHash(s){
+  let h = 2166136261 >>> 0;
+  for(let i=0;i<s.length;i++){ h ^= s.charCodeAt(i); h = Math.imul(h, 16777619) >>> 0; }
+  return h.toString(36).toUpperCase().padStart(7,'0').slice(-7);
+}
+function gateNum(p){ return String(p).replace('.', ','); }          // 1.5 → „1,5"
+// §148: EIN Satz fuer den Punktestand, ueberall derselbe (§140-Wortlautregel). Zwei Fassungen,
+// weil die Schwelle nur zaehlt, solange sie nicht erreicht ist — danach ist sie keine
+// Information mehr, und der Stand laeuft als Score weiter (Walters Wunsch: kein Deckel).
+function gateStandSatz(){
+  const t = gateSumme();
+  return gateOpen() ? ('Du hast ' + gateNum(t) + ' Punkte.')
+                    : ('Du hast ' + gateNum(t) + ' von ' + GATE_NEED + ' Punkten.');
+}
+function gateSig(p,von){
+  // Die Gutschriften gehen SORTIERT in die Pruefsumme — sonst haengt sie an der zufaelligen
+  // Reihenfolge der Objektschluessel und der Stand wuerde sich selbst verwerfen.
+  const teile = Object.keys(von||{}).sort().map(k => k+':'+von[k]).join(',');
+  return gateHash((PLAYER_KEY||'-')+'|'+p+'|'+teile+'|'+GATE_SALT);
+}
+
+// Beim Laden wird die Pruefsumme geprueft. Passt sie nicht (von Hand geaendert, halb
+// geschrieben, aus einem anderen Browserprofil kopiert), faellt der Stand auf null zurueck —
+// NICHT auf „freigeschaltet". Ein kaputter Speicher darf nie mehr erlauben als ein leerer.
+// §148: `p` sind die SELBST erspielten Punkte, `von` die Gutschriften aus eingeloesten Codes,
+// je ausstellender Kennung EIN Eintrag. Daraus folgt beides, was Walter wollte:
+//   - ein Code zaehlt nur EINMAL (derselbe Aussteller ueberschreibt seinen Eintrag, statt
+//     ihn zu addieren — dreimal einloesen bringt nichts mehr als einmal);
+//   - ein DRITTES Geraet traegt zur Summe bei (eigener Eintrag unter eigener Kennung).
+// KEIN Deckel: der Punktestand laeuft ueber die Schwelle hinaus weiter (Walters Wunsch nach
+// einem „heimlichen" Score). Deshalb gibt es auch kein `u`-Flag mehr — freigeschaltet ist,
+// wer die Schwelle erreicht, und das ist jederzeit aus dem Stand ablesbar. Ein zweites,
+// unabhaengig gesetztes Flag koennte davon abweichen; eine Quelle kann das nicht.
+let gateState = { p:0, von:{} };
+function gateSumme(){
+  let t = gateState.p;
+  for(const k in gateState.von) t += gateState.von[k];
+  return Math.round(t*10)/10;
+}
+function gateLoad(){
+  try{
+    const raw = localStorage.getItem(GATE_STORE);
+    if(!raw) return { p:0, von:{} };
+    const o = JSON.parse(raw);
+    const p = (typeof o.p==='number' && isFinite(o.p) && o.p>=0) ? o.p : 0;
+    const von = {};
+    if(o.von && typeof o.von==='object')
+      for(const k in o.von)
+        if(typeof o.von[k]==='number' && isFinite(o.von[k]) && o.von[k]>0) von[k]=o.von[k];
+    if(o.c !== gateSig(p,von)){ console.warn('§144: Freischalt-Stand verworfen (Pruefsumme passt nicht)'); return { p:0, von:{} }; }
+    return { p, von };
+  }catch(e){ return { p:0, von:{} }; }   // privater Modus: gesperrt, aber kein Absturz
+}
+function gateSave(){
+  try{ localStorage.setItem(GATE_STORE, JSON.stringify({ p:gateState.p, von:gateState.von, c:gateSig(gateState.p,gateState.von) })); }
+  catch(e){ /* gesperrter Speicher: der Stand haelt dann nur diese Sitzung */ }
+}
+function gateOpen(){ return !MVM_GATE || gateSumme() >= GATE_NEED; }
+
+// Wird NUR aus finalizeMvkiGame gerufen (s. dort) — kein zweiter Aufrufer, sonst zaehlt
+// irgendwann etwas mit, das keine beendete Partie ist.
+function gateAward(skill){
+  if(!MVM_GATE) return;
+  const add = GATE_WIN_POINTS[skill] || 0;
+  if(!add) return;
+  gateState.p = Math.round((gateState.p + add) * 10) / 10;   // 1,5 + 1 bleibt 2,5
+  gateSave(); gateRefresh();
+}
+
+// ── Uebertragungscode ────────────────────────────────────────────
+// Aufbau: <Kennung>-<Punkte×10>-<Streuwert>. Er traegt die Kennung des Geraets, das ihn
+// AUSGESTELLT hat — Walters Wahl („individuell gestempelt, ueberall einloesbar"): so ist
+// jeder Code unterscheidbar und Walter kann im Notfall selbst einen ausstellen, ohne eine
+// Liste zu fuehren. Eingeloest wird NUR die Freischaltung; die Kennung des Zielgeraets
+// bleibt seine eigene (Walters Entscheid: kein Zusammenwachsen, §124 bleibt intakt).
+function gateMakeCode(){
+  const t = Math.round(gateState.p * 10), k = PLAYER_KEY || '0';
+  return k + '-' + t + '-' + gateHash(k+'|'+t+'|'+GATE_SALT);
+}
+function gateReadCode(txt){
+  const m = String(txt||'').trim().match(/^([A-Za-z0-9]{1,16})-(\d{1,4})-([0-9A-Z]{7})$/);
+  if(!m) return null;
+  if(gateHash(m[1]+'|'+m[2]+'|'+GATE_SALT) !== m[3]) return null;
+  return { key:m[1], p: parseInt(m[2],10)/10 };
+}
+
+// ── Anzeige ──────────────────────────────────────────────────────
+function gateRefresh(){
+  // §148: das Schloss sitzt am ERSTELLEN-Knopf in der Lobby, nicht am Startmenue-Knopf.
+  // Die Lobby steht jedem offen — sonst kaeme ein Eingeladener nicht an das Codefeld.
+  const cr = document.getElementById('btn-create'), sc = document.getElementById('gate-score');
+  if(cr){
+    const open = gateOpen();
+    cr.classList.toggle('locked', !open);
+    cr.textContent = open ? '🎯 Raum erstellen' : '🔒 Raum erstellen';
+    cr.title = open ? '' : GATE_TIP;
+  }
+  if(sc){
+    if(!MVM_GATE){ sc.classList.add('hidden'); return; }
+    sc.classList.remove('hidden');
+    sc.textContent = gateOpen() ? ('Punkte: ' + gateNum(gateSumme()))
+                                : ('Punkte: ' + gateNum(gateSumme()) + ' von ' + GATE_NEED);
+  }
+}
+// Beitreten ist IMMER frei. Gesperrt ist nur das Eroeffnen eines Raums.
+window.tryCreateRoom = function(){ if(gateOpen()) createRoom(); else openGateInfo(); };
+window.openGateInfo = function(){
+  if(!MVM_GATE) return;
+  const st = document.getElementById('gate-state'), cd = document.getElementById('gate-code'),
+        ms = document.getElementById('gate-msg'), inp = document.getElementById('gate-input');
+  // Walters Wortlaut: „Du hast 0 von 3 Punkten." — auch im freigeschalteten Zustand bleibt
+  // der Stand sichtbar, sonst weiss niemand, was der Uebertragungscode gerade traegt.
+  if(st) st.textContent = gateStandSatz();
+  if(cd) cd.textContent = gateMakeCode();      // textContent, nie innerHTML (§4.4)
+  if(ms) ms.textContent = '';
+  if(inp) inp.value = '';
+  showOverlay('gate-overlay');
+};
+window.redeemGateCode = function(){
+  const inp = document.getElementById('gate-input'), ms = document.getElementById('gate-msg');
+  if(!inp || !ms) return;
+  const r = gateReadCode(inp.value);
+  if(!r){ ms.style.color='#ef4444'; ms.textContent='Der Code ist nicht korrekt. Bitte vollständigen Code eingeben.'; return; }
+  // Der eigene Code auf dem eigenen Geraet waere eine glatte Verdopplung.
+  if(PLAYER_KEY && r.key === PLAYER_KEY){
+    ms.style.color='var(--text2)';
+    ms.textContent = 'Das ist der Code dieses Geräts. Gib den Code deines anderen Geräts ein.';
+    return;
+  }
+  // §148: je Aussteller EIN Eintrag. Nochmal einloesen aendert nichts; ein spaeterer Code
+  // desselben Geraets mit hoeherem Stand HEBT den Eintrag AN, statt ihn zu addieren.
+  // Ein Code unterhalb der Schwelle wird jetzt angenommen — er traegt ja echte Punkte bei;
+  // bis v116 wurde er abgewiesen, was bei getrennt erspielten Punkten die Freischaltung
+  // unmoeglich machte (2 auf dem Telefon + 2 auf dem Laptop ergaben nie 3).
+  const vorher = gateSumme(), alt = gateState.von[r.key] || 0;
+  if(r.p > alt){ gateState.von[r.key] = r.p; gateSave(); gateRefresh(); }
+  const jetzt = gateSumme();
+  ms.style.color = (jetzt > vorher) ? 'var(--online-text)' : 'var(--text2)';
+  ms.textContent = (jetzt > vorher ? 'Code erfolgreich übertragen. ' : 'Dieser Code war schon eingelöst. ')
+                 + gateStandSatz();
+  const st = document.getElementById('gate-state');
+  if(st) st.textContent = gateStandSatz();
+};
+gateState = gateLoad();
+gateRefresh();
+
+const BUILD_MARKER='· Build v145';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -1466,7 +2065,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=112'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=145'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -1589,7 +2188,7 @@ function makeLogCode(){
 function showOverlay(id){
   ['mode-overlay','ai-setup-overlay','lobby-overlay','create-overlay','join-overlay','wait-overlay','dc-overlay',
    'neu-overlay','rematch-req-overlay','regeln-overlay','maintenance-overlay','draw-offer-overlay','ai-draw-offer-overlay','opp-offline-overlay','marks-overlay',
-   'impressum-overlay','datenschutz-overlay']  // §126
+   'impressum-overlay','datenschutz-overlay','gate-overlay']  // §126, §144
     .forEach(o=>document.getElementById(o).classList.toggle('hidden',o!==id));
 }
 window.showModeMenu=function(){ gameMode='mvm'; showOverlay('mode-overlay'); };
@@ -1607,6 +2206,16 @@ window.showNeuMenu=function(){
   const descEl=document.getElementById('neu-desc');
   const btnsEl=document.getElementById('neu-buttons');
 
+  // §144 (Walter, 27.8.): der Markierknopf ist AUSGEHAENGT, nicht entfernt — MARK_UI oben im
+  // Modul schaltet ihn an beiden Stellen (laufende und beendete Partie) wieder ein. Begruendung
+  // fuer das Aushaengen: fuer Testpersonen ist er ein Raetselknopf und erzeugt entweder
+  // Verunsicherung oder unnoetige Rueckfragen. Walter braucht ihn selbst weiter, deshalb
+  // bleiben markMvkiPosition(), das marks-overlay und der Firebase-Schreibweg unangetastet —
+  // dasselbe Muster wie showMarkedGames() seit §134. Auch die Regel fuer
+  // games_countred_marks bleibt unveraendert, es ist KEINE Regelarbeit noetig.
+  // ⚠️ Wer ihn zurueckholt: MARK_UI=true genuegt. Mitziehen muss dann nichts — der
+  // Datenschutztext nennt den Knopf nicht, er beschreibt nur, WAS gespeichert wird.
+  //
   // MvKI: eigenes kleines Menü (§38f/§53) statt direktem Sprung ins Modus-Menü — damit Platz
   // für "Aufgeben" (während des Spiels) bzw. einen schnellen Rematch-Shortcut (nach Spielende).
   // §47c Punkt 6: cancelAIJob() weiterhin nötig, falls der Worker gerade rechnet — sonst könnte
@@ -1634,21 +2243,21 @@ window.showNeuMenu=function(){
       }
       btnsEl.innerHTML=`
         <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">Weiterspielen</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmt was nicht</button>
+        ${MARK_UI ? `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmt was nicht</button>` : ''}
         ${drawBtn}
         <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvki()">🏳️ Aufgeben</button>
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();">↺ Neu (anderer Modus/Stufe)</button>
-        <div style="font-size:11.5px;color:var(--text3);text-align:center;">Partie <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
+        <div style="font-size:var(--fs-xs);color:var(--text3);text-align:center;">Partie <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
       showOverlay('neu-overlay');
     } else if(isFinished){
       titleEl.textContent='Spiel beendet';
       descEl.textContent='';
       btnsEl.innerHTML=`
         <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu();startAIGame('${aiSkill}')">🔄 Nochmal (${skillLabel(aiSkill)})</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmte was nicht</button>
+        ${MARK_UI ? `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()">📌 Hier stimmte was nicht</button>` : ''}
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();">↺ Neu (anderer Modus/Stufe)</button>
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu()">↩ Zurück zum Brett</button>
-        <div style="font-size:11.5px;color:var(--text3);text-align:center;">Partie <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
+        <div style="font-size:var(--fs-xs);color:var(--text3);text-align:center;">Partie <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
       showOverlay('neu-overlay');
     } else {
       cancelAIJob(); aiThinking=false; showModeMenu();
@@ -1661,10 +2270,20 @@ window.showNeuMenu=function(){
   if(isFinished){
     titleEl.textContent='Spiel beendet';
     descEl.textContent='';
+    // §180 (Walters Screenshots 10:43/10:50): DAS MENÜ MUSS DASSELBE WISSEN WIE DAS SCHLUSSBILD.
+    // §179 hatte den Nochmal-Knopf nur im Schlussbild entfernt — im Menü stand „Nochmal
+    // anfragen" weiter, und ein Tipp darauf schrieb die Absage ZUSÄTZLICH in die Meldungszeile,
+    // wo sie neben dem Hinweis im Schlussbild ein zweites Mal stand. Also: EIN Entscheider
+    // (neueRundeUnmoeglich), drei Leser — Schlussbild, dieses Menü und die Sperre.
+    const hindernisM = neueRundeUnmoeglich();
+    const endgueltigM = !!(hindernisM && hindernisM.endgueltig);
+    // Walters Vorgabe: ist keine neue Runde mehr möglich, trägt „Raum verlassen" die Betonung —
+    // der Weg zurück ins Obermenü ist dann das Einzige, was noch Sinn hat. „Weiterschauen"
+    // bleibt (das Endbrett ansehen), verliert aber das Blau.
     btnsEl.innerHTML=`
-      <button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()">🔄 Nochmal anfragen</button>
-      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">Weiterschauen</button>
-      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="leaveRoom()">Raum verlassen</button>`;
+      ${endgueltigM ? '' : `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()">🔄 Nochmal anfragen</button>`}
+      <button class="big-btn${endgueltigM ? '' : ' primary'}" style="width:100%" onclick="closeNeuMenu()">Weiterschauen</button>
+      <button class="big-btn${endgueltigM ? ' primary' : ''}" style="width:100%;${endgueltigM ? '' : 'border-color:#ef4444;color:#ef4444'}" onclick="leaveRoom()">Raum verlassen</button>`;
   } else if(inGame){
     titleEl.textContent='Spiel läuft';
     descEl.textContent='';
@@ -1680,6 +2299,9 @@ window.showNeuMenu=function(){
     let drawBtn;
     if(canClaim){
       drawBtn=`<button class="big-btn" style="width:100%;border-color:var(--online-bd);color:var(--online-text)" onclick="closeNeuMenu();claimDrawMvm()">🤝 Remis einfordern (3× Wiederholung)</button>`;
+    } else if(eigenesRemisOffen){
+      // §177: das eigene Angebot steht noch im Raum — egal, wer gerade am Zug ist.
+      drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Dein Angebot steht noch">🤝 Remis angeboten — wartet auf Antwort</button>`;
     } else if(canOffer){
       drawBtn=`<button class="big-btn" style="width:100%" onclick="closeNeuMenu();offerDraw()">🤝 Remis anbieten</button>`;
     } else if(phase==='playing' && isMyTurn && mvmOfferedThisTurn){
@@ -1698,8 +2320,12 @@ window.showNeuMenu=function(){
       ${atTurn
         ? `<button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvm()">🏳️ Aufgeben</button>`
         : `<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Nur wenn du am Zug bist">🏳️ Aufgeben (nur wenn du am Zug bist)</button>`}
-      <button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()">🔄 Neu anfragen</button>
-      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();leaveRoom()">${myRole==='host'?'Raum auflösen':'Verlassen'}</button>`;
+      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="verlassenFragen()">${myRole==='host'?'Raum auflösen':'Verlassen'}</button>`;
+    // §177 (Entscheid Walter, 11.9.): „Neu anfragen" gibt es in der LAUFENDEN Partie nicht mehr.
+    // Es war ein Abbruch mit Neustart, bei dem der Mitspieler nur „Ja, nochmal" oder „Nein,
+    // verlassen" hatte — wer weiterspielen wollte, konnte nicht einfach ablehnen. Wer neu anfangen
+    // will, bietet Remis an; nach dem Ende steht „Nochmal" wie bisher im Schlussbild.
+    // „Verlassen"/„Raum auflösen" fragt jetzt nach (verlassenFragen): es zählt als Aufgabe.
   } else {
     showLobby(); return;
   }
@@ -1722,25 +2348,69 @@ window.showRegeln=function(){
 // §78 (Walter-Befund): Rematch-Warte-Timeout. Startet beim Anfragen; wird gestoppt, sobald der
 // Neustart eintrifft (applyRemoteState-Übergang, §78 oben), der Gegner ablehnt, oder der Client den
 // Raum verlässt. Feuert er, ist binnen 15 s keine Reaktion gekommen (Gegner vermutlich offline).
+// §174 (9.9., Walters Befund): DER RÜCKLÄUFER WARTETE AUF DAS NETZ UND WURDE DABEI UNKÜNDBAR.
+// Bis v137 stand im Rückläufer ein `await update(...)`. Ohne Leitung löst das NICHT auf — die
+// Schreibung wird zurückgestellt, der Rückläufer hängt darin fest. Und weil `rematchWaitTimer`
+// eine Zeile vorher schon auf `null` gesetzt war, konnte `stopRematchWaitTimeout()` ihn nicht
+// mehr abräumen: der Zeitgeber war unkündbar geworden. Kam die Verbindung zurück, ging die
+// Schreibung raus, das `await` löste auf — und „Keine Antwort" erschien mitten in der
+// inzwischen bestätigten neuen Partie. Dieselbe Klasse wie §168: kein Ablauf darf auf das Netz
+// warten. Drei Riegel:
+//   1. KEIN await mehr — die Rücknahme geht fire-and-forget hinaus.
+//   2. Eine EPOCHE entwertet späte Rückläufer. `stopRematchWaitTimeout()` zählt sie hoch; ein
+//      Rückläufer, dessen Epoche nicht mehr gilt, schweigt. Das wirkt auch dann, wenn der
+//      Zeitgeber selbst nicht mehr abräumbar ist.
+//   3. Die Meldung wird nur gesetzt, wenn die Partie noch beendet ist. Läuft schon eine neue,
+//      hat sich die Frage erledigt.
+let rematchWaitEpoch=0;
 function stopRematchWaitTimeout(){
+  rematchWaitEpoch++;   // §174: alles, was noch unterwegs ist, gilt ab jetzt nicht mehr
   if(rematchWaitTimer){ clearTimeout(rematchWaitTimer); rematchWaitTimer=null; }
 }
 function startRematchWaitTimeout(){
   stopRematchWaitTimeout();
-  rematchWaitTimer=setTimeout(async ()=>{
+  const meineEpoche=rematchWaitEpoch;
+  rematchWaitTimer=setTimeout(()=>{
     rematchWaitTimer=null;
+    if(meineEpoche!==rematchWaitEpoch) return;   // §174: inzwischen abgeräumt
     // Anfrage zurücknehmen (das gesetzte Flag wieder löschen, damit kein Zombie-rematchFrom bleibt)
-    if(roomRef) await update(roomRef,{'meta/rematchFrom':null}).catch(()=>{});
+    if(roomRef) update(roomRef,{'meta/rematchFrom':null}).catch(()=>{});
+    if(phase!=='finished') return;               // §174: die neue Partie läuft bereits
+    // §174: ohne eigene Leitung ist „der andere antwortet nicht" schlicht falsch — die Anfrage
+    // hat ihn nie erreicht. Dann sagen, was wirklich los ist.
+    if(EIGENE_PRAESENZ_AN && selbstOffline){
+      setLog('<span class="msg info">Deine Verbindung ist unterbrochen — die Anfrage konnte nicht zugestellt werden.</span>');
+      return;
+    }
     setLog('<span class="msg info">Keine Antwort — Mitspieler ist vermutlich nicht mehr verbunden.</span>');
   }, REMATCH_WAIT_TIMEOUT_MS);
 }
 
 window.requestRematch=async function(){
   if(!roomRef||!myRole) return;
+  // §177: eine neue Runde gibt es nur nach dem Ende. Der Knopf im laufenden Menü ist entfallen;
+  // dieser Riegel hält die Regel auch dann, wenn ein Weg dorthin übersehen wurde.
+  if(phase!=='finished') return;
+  // §172: Eine Anfrage läuft bereits. Jeder weitere Tipp schrieb bisher `meta/rematchFrom` neu
+  // und setzte die 15-Sekunden-Frist zurück — die Wartemeldung blieb dadurch beliebig lange
+  // stehen, und das sah aus, als hinge das Gerät (Walters Eindruck, 9.9.). Timer stapelten sich
+  // nicht (startRematchWaitTimeout räumt vorher auf), die Frist begann aber immer von vorn.
+  if(rematchWaitTimer){
+    setLog('<span class="msg wait">⏳ Anfrage läuft bereits – warte auf Mitspieler…</span>');
+    return;
+  }
   // §78 (a): Präsenz VOR dem Anfragen prüfen. Ist der letzte Gegner-Herzschlag bereits abgestanden,
   // gar nicht erst in den (nach Spielende unbewachten) Wartezustand gehen, sondern sofort melden.
-  if(presenceIsStale(serverNow(), oppLastSeen, PRESENCE_STALE_MS)){
-    setLog('<span class="msg info">Mitspieler ist nicht mehr verbunden — neue Runde nicht möglich.</span>');
+  // §177: dasselbe Kriterium wie der Hinweis im Schlussbild — jetzt aus EINER Funktion, dazu
+  // „Mitspieler hat den Raum verlassen" (bis v138 war der Knopf dann noch bis zu 12 s tippbar).
+  const hindernis = neueRundeUnmoeglich();
+  if(hindernis){
+    // §179: im endgültigen Fall gibt es den Knopf nicht mehr — dieser Riegel ist dann nur noch
+    // die Absicherung eines Wegs, den die Oberfläche nicht anbietet.
+    // §180: UND ER SCHWEIGT. Das Schlussbild trägt denselben Satz bereits unter dem Banner
+    // (wegHinweis); ein setLog schrieb ihn ein zweites Mal darüber — zweimal dasselbe auf einem
+    // Bildschirm (Walters 10:50). Die Absage ist ohnehin schon zu sehen, bevor getippt wird.
+    console.log('§180: Nochmal abgelehnt —', hindernis.text);
     return;
   }
   await update(roomRef,{'meta/rematchFrom':myRole}).catch(()=>{});
@@ -1775,14 +2445,26 @@ window.offerDraw=async function(){
   // Betrifft NUR das freiwillige Angebot; das 3×-Einfordern (claimDrawMvm) bleibt unberührt.
   // §75-W2-6: Nur EIN Angebot pro Zug-Fenster. mvmOfferedThisTurn wird beim eigenen Zug und bei
   // Partiestart zurückgesetzt; bis dahin ist ein zweites Angebot gesperrt (kein Draw-Spam).
-  if(!roomRef||!myRole||phase!=='playing'||!isMyTurn||mvmOfferedThisTurn) return;
+  if(!roomRef||!myRole||phase!=='playing'||!isMyTurn||mvmOfferedThisTurn||eigenesRemisOffen) return;
   mvmOfferedThisTurn=true;
-  await update(roomRef,{'meta/drawOffer':myRole}).catch(()=>{});
+  // §177: erst lokal sichtbar machen, dann schreiben — ohne Wartezeit (Regel aus §168/§174:
+  // kein Ablauf wartet auf das Netz). Die Statusanzeige führt der Raum danach weiter.
   setLog('<span class="msg wait">🤝 Remis angeboten — warte auf Mitspieler…</span>');
+  eigenesRemisSetzen(true);
+  update(roomRef,{'meta/drawOffer':myRole}).catch(()=>{});
 };
 
 window.answerDraw=async function(yes){
   document.getElementById('draw-offer-overlay').classList.add('hidden');
+  // §177: NACH DEM PARTIEENDE GIBT ES NICHTS MEHR ANZUNEHMEN. Bis v138 fehlte dieser Riegel —
+  // eine Annahme nach einem Vierer schrieb `winner:null` über den Sieg (im vm nachgestellt).
+  // Das Overlay erscheint dann gar nicht mehr (remisAngebotGilt); dieser Riegel hält auch, wenn
+  // es aus einem älteren Zustand noch offen stand. Nur das Angebot räumen, sonst nichts.
+  if(phase!=='playing' && phase!=='bonus'){
+    if(roomRef) update(roomRef,{'meta/drawOffer':null}).catch(()=>{});
+    console.log('§177: Remis-Antwort nach Partieende verworfen (phase =', phase + ')');
+    return;
+  }
   await update(roomRef,{'meta/drawOffer':null}).catch(()=>{});
   if(yes){
     // Both agree: end game as draw
@@ -1794,8 +2476,16 @@ window.answerDraw=async function(yes){
     // §92 (Walter): Der ANNEHMENDE sieht „Remis — beide einverstanden"; dem ANBIETER meldet
     // applyRemoteState „Mitspieler ist mit Remis einverstanden" (drawAcceptedBy, s. dort).
     pendingLastMove={player:null, drawReason:'beide einverstanden'}; // §73: Grund an beide Seiten
-    await update(roomRef,{'meta/drawAcceptedBy':myRole}).catch(()=>{});
+    // §164 (7.9., Walters Livetest): HIER STAND EIN `await` DAZWISCHEN — und darin lag der Fehler.
+    // Zwischen `phase='finished'` und `pushState` wurde `meta/drawAcceptedBy` geschrieben. In
+    // dieser Wartezeit feuert der EIGENE Listener, applyRemoteState setzt `phase=state.phase`
+    // aus dem noch alten Raumzustand, und pushState schrieb danach die Remis-Begruendung
+    // ZUSAMMEN MIT `phase:'playing'`. Genau so lag es in Raum Q65KV: drawReason gesetzt,
+    // phase 'playing'. Beides aus derselben Schreibung — anders nicht erklaerbar.
+    // JETZT: erst der Zustand, dann das Signal. Zwischen dem Setzen von `phase` und dem
+    // Schreiben liegt kein await mehr, also auch kein Fenster fuer den Listener.
     await pushState(null);
+    await update(roomRef,{'meta/drawAcceptedBy':myRole}).catch(()=>{});
   } else {
     // §73 (Walter-Befund): der Ablehnende sah die Meldung, der ANBIETER nicht. Nach dem Muster von
     // rematchDeclined ein Signal setzen, das der Anbieter im Listener aufgreift.
@@ -1851,7 +2541,31 @@ window.hostStartNew=async function(){
   // Swap: loser starts next game (gets player 1 / ungerade).
   // If draw or unknown: also swap for fairness.
   // lastWinner is stored in state.winner from the previous game's applyRemoteState.
-  const lastWinner=lastKnownWinner; // tracked below
+  // §173 (9.9., Walters Frage nach dem Anziehenden): DER SIEGER STEHT IM RAUM, NICHT NUR IM KOPF.
+  // `lastKnownWinner` ist eine LOKALE Variable und wird nur gesetzt, wenn dieser Client das Ende
+  // der Vorpartie gesehen hat. Nur der HOST rechnet den Beginner-Tausch aus — hat ausgerechnet er
+  // das Ende verpasst (Seite neu geladen, Unterbrechung), stand dort `undefined`, und der Zweig
+  // „Draw or unknown: swap" griff. Dann begann möglicherweise der SIEGER, obwohl Walters Regel
+  // lautet: der VERLIERER beginnt, als Ausgleich. Das ist eine inhaltliche Regel, keine bloße
+  // Symmetrie — deshalb wird der Sieger jetzt aus dem Raum gelesen.
+  // ⚠️ Nur wenn der gelesene Zustand WIRKLICH die eben beendete Partie ist: `phase==='finished'`
+  // UND dieselbe Generation. Sonst gilt weiter der lokale Stand.
+  // ⚠️ Ein fehlendes `winner`-Feld ist ein REMIS: Firebase speichert keine null-Werte, ein
+  // Unentschieden hinterlässt dort also gar kein Feld.
+  // ⚠️ Das `await` steht VOR jeder Zustandsänderung — nach §164 darf zwischen dem Setzen des
+  // Zustands und seinem Schreiben kein Wartepunkt liegen. Hier wird nur GELESEN.
+  let lastWinner=lastKnownWinner;
+  try{
+    const vorSnap=await get(roomRef);
+    const vorSt=vorSnap.exists() ? vorSnap.val().state : null;
+    if(vorSt && vorSt.phase==='finished' && Number(vorSt.gameGen)===mvmGameGen){
+      lastWinner = (vorSt.winner===undefined || vorSt.winner===null) ? null : Number(vorSt.winner);
+      console.log('§173 Beginner: Sieger aus dem Raum =', lastWinner, '· Gen', vorSt.gameGen,
+                  '· lokal war:', lastKnownWinner);
+    }
+  }catch(e){
+    console.warn('§173: Sieger nicht aus dem Raum lesbar — lokaler Stand gilt:', (e&&e.message)||e);
+  }
   let nextHostPlayer;
   if(lastWinner===null||lastWinner===undefined){
     // Draw or unknown: swap
@@ -1877,6 +2591,7 @@ window.hostStartNew=async function(){
   selected=null;validTargets=[];winCells=[];lastMover=null;moveIndex=0;
   lastFailCell=null;   // §95
   mvmOfferedThisTurn=false; // §75-W2-6: Angebotsrecht bei Partiestart zurücksetzen
+  mitspielerGegangen=false; raumEndeText=null; // §177: eine neue Runde läuft = beide da
   mvmSeenPositions=[boardHash(board,currentPlayer)]; // §53g: MvM-Historie pro Partie neu
   mvmHalfmovesSinceTriple=0;
   mvmMoveSeq=0; mvmLastCountedSeq=-1; // §53g: Dedup-Zähler pro Partie neu
@@ -1890,27 +2605,86 @@ window.hostStartNew=async function(){
 };
 
 // Clean leave — notify other player
-window.leaveRoom=async function(){
-  if(roomRef){
-    await update(roomRef,{
+// §177 (11.9.): DER WEG HINAUS WARTET NICHT MEHR AUF DAS NETZ. Bis v138 stand hier `await` vor drei
+// Schreibungen — ohne Leitung löste keine davon auf: das Menü schloss sich, und sonst geschah
+// nichts, die Partie schien weiterzulaufen. Dieselbe Klasse wie §168 (Abbruch) und §174
+// (Nochmal-Frist). Jetzt: Bezüge sichern, lokal aufräumen, ins Menü — DANACH die Schreibungen
+// ohne Wartezeit; die Firebase-Bibliothek stellt sie zurück und schickt sie nach.
+window.leaveRoom=function(){
+  const wasRoom=roomRef, wasRole=myRole;
+  // §74-W2-5: Nach dem Verlassen EINE Ebene höher — zur Modus-Auswahl (MvKI/MvM), nicht direkt in
+  // die Raum-Lobby. cleanup() explizit, weil showModeMenu() (anders als showLobby()) NICHT selbst
+  // aufräumt; sonst blieben Heartbeat/Listener scharf. removeRoom=false, da der Raum unten
+  // rollen-korrekt abgeräumt wird (Host: remove, Gast: guest:null).
+  cleanup(false);
+  showModeMenu();
+  if(wasRoom){
+    update(wasRoom,{
       'meta/rematchFrom': null,
       'meta/rematchConfirmed': false,
       'meta/drawOffer': null
     }).catch(()=>{});
-    if(myRole==='host'){
-      await remove(roomRef).catch(()=>{});
+    if(wasRole==='host'){
+      remove(wasRoom).catch(()=>{});
     } else {
       // §86: guestSeen MIT löschen — der verwaiste Herzschlag-Zeitstempel war die zweite
       // Zutat des Loops (er ließ das Verlassen wie einen alternden Netzabriss aussehen).
-      await update(roomRef,{guest:null, guestSeen:null}).catch(()=>{});
+      update(wasRoom,{guest:null, guestSeen:null}).catch(()=>{});
     }
   }
-  // §74-W2-5: Nach dem Verlassen EINE Ebene höher — zur Modus-Auswahl (MvKI/MvM), nicht direkt in
-  // die Raum-Lobby. cleanup() explizit, weil showModeMenu() (anders als showLobby()) NICHT selbst
-  // aufräumt; sonst blieben Heartbeat/Listener scharf. removeRoom=false, da der Raum oben schon
-  // rollen-korrekt abgeräumt wurde (Host: remove, Gast: guest:null).
+};
+
+// §177 (Entscheid Walter, 11.9.): VERLASSEN WÄHREND DER PARTIE ZÄHLT ALS AUFGABE.
+// Walters Unterscheidung: AUFGEBEN ist eine Antwort auf den letzten Zug — nur am Zug (§74-W2-1
+// bleibt). VERLASSEN ist losgelöst vom Spielgeschehen — wer genervt ist oder weg muss, kann
+// jederzeit gehen, verliert damit aber die Partie UND den Raum. Nach dem Ende ist Verlassen
+// einfach Verlassen (ohne Rückfrage, Menü „Spiel beendet").
+// Die Rückfrage steht im selben Menü-Overlay (kein weiteres Overlay in der Liste nötig).
+window.verlassenFragen=function(){
+  const titleEl=document.getElementById('neu-title');
+  const descEl=document.getElementById('neu-desc');
+  const btnsEl=document.getElementById('neu-buttons');
+  const host = (myRole==='host');
+  titleEl.textContent = host ? 'Raum auflösen?' : 'Partie verlassen?';
+  descEl.textContent  = host ? 'Das zählt als Aufgabe — die Partie endet für beide.'
+                             : 'Das zählt als Aufgabe — dein Mitspieler gewinnt.';
+  // §79: der harmlose Rückweg ist blau, die Handlung, die den anderen trifft, nicht.
+  btnsEl.innerHTML=`
+      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">↩ Zurück zum Brett</button>
+      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();verlassenAlsAufgabe()">${host?'Raum auflösen':'Verlassen'}</button>`;
+  showOverlay('neu-overlay');
+};
+
+// §177: Ausführung. ⚠️ Zwischen Rückfrage und Tipp kann die Partie geendet haben (der andere
+// hat gewonnen) — dann wäre „zählt als Aufgabe" falsch. Deshalb hier erneut prüfen.
+// WER SCHREIBT DAS ERGEBNIS? Immer der HOST — so wie seit §164 bei der Remis-Annahme. Schriebe
+// der Gast selbst, könnte sein Aufgabe-Zustand im selben Moment wie ein Zug des Hosts ankommen,
+// und die zuletzt ankommende Schreibung gewönne.
+//   • Gast verlässt: er meldet sich ab (guest:null) wie bisher; der Host erkennt das in
+//     handleGuestDeparture und schreibt dort die Aufgabe — auch wenn er erst später zurückkommt.
+//   • Host löst auf: er schreibt die Aufgabe selbst und löscht den Raum RAUM_AUFLOESEN_VERZUG_MS
+//     später, damit das Ergebnis den Gast noch erreicht.
+// Nichts davon wartet auf das Netz (§168/§174/§177).
+window.verlassenAlsAufgabe=function(){
+  if(!roomRef || !myRole){ showModeMenu(); return; }
+  const laeuft = (phase==='playing' || phase==='bonus');
+  if(!laeuft || myRole!=='host'){ leaveRoom(); return; }
+  const wasRoom = roomRef;
+  const gegner = (myPlayer===1) ? 2 : 1;
+  phase='finished';
+  pendingLastMove={player:null, drawReason:null, resignedBy:myPlayer, verlassen:'host'};
+  pushState(gegner);   // ohne await — der Zustand ist beim Aufruf schon gebaut
+  console.log('§177: Host löst die laufende Partie auf — als Aufgabe gewertet, Abschluss in',
+              RAUM_AUFLOESEN_VERZUG_MS, 'ms');
   cleanup(false);
   showModeMenu();
+  // §181: NICHT löschen, sondern als beendet markieren — sonst erfährt ein gerade abwesender
+  // Gast nie, was geschehen ist. `abortedBy` trägt die Rolle (für `abbruchText`), `abortReason`
+  // unterscheidet das absichtliche Verlassen von einem Abbruch nach abgelaufener Frist.
+  setTimeout(()=>{
+    update(wasRoom,{'meta/aborted':true,'meta/abortedBy':'host','meta/abortReason':'verlassen'})
+      .catch(()=>{});
+  }, RAUM_AUFLOESEN_VERZUG_MS);
 };
 
 // ── Old room cleanup (rooms older than 2h) ───────────────────────
@@ -2019,6 +2793,14 @@ window.createRoom=async function(){
 // null, lässt 'offline'/'online' unberührt — 'offline'==null ist false).
 async function handleGuestDeparture(data){
   if(!(hostGameStarted && myRole==='host' && data.guest==null && phase!=='waiting')) return false;
+  // §166 (7.9., Walters Livebefund zu v129): DER RAUM ENTSCHEIDET, NICHT DER EIGENE ALTSTAND.
+  // Im Rückkehr-Pfad läuft diese Prüfung VOR `applyRemoteState` — die lokale `phase` ist dort
+  // noch der Stand von vor der Unterbrechung. Nach einem Remis, das der Gast angenommen hat und
+  // nach dem er ins Menü zurückgegangen ist, sah der Host also: Gast weg + lokal „playing" →
+  // handleDisconnect. Der beendete Zustand zwei Zeilen weiter wurde nie erreicht, und das
+  // Remis war für den Host unsichtbar — genau der Befund vom 7.9.
+  const fertig = (data.state && data.state.phase==='finished') || phase==='finished';
+  mitspielerGegangen=true;   // §177: ab hier ist kein Nochmal mehr möglich — sofort, nicht erst nach 12 s
   document.getElementById('rematch-req-overlay').classList.add('hidden');
   document.getElementById('draw-offer-overlay').classList.add('hidden');
   clearOppOffline(); // falls gerade ein Countdown lief: absichtliches Verlassen hat Vorrang
@@ -2029,10 +2811,32 @@ async function handleGuestDeparture(data){
     await update(roomRef,{'meta/rematchDeclined':null}).catch(()=>{});
     return true;
   }
-  if(phase==='finished'){
-    setLog('<span class="msg info">Mitspieler hat den Raum verlassen.</span>');
+  if(fertig){
+    // §166: den beendeten Zustand noch anwenden, bevor nur eine Meldung stehenbleibt — sonst
+    // zeigt das Brett weiter die Stellung von vorhin.
+    if(data.state && data.state.board) applyRemoteState(data.state);
+    // §177: war es ein Verlassen MITTEN in der Partie, sagt die Aufgabe-Meldung schon alles —
+    // nicht mit dem allgemeinen Satz überschreiben.
+    // §179: bei `verlassen==='guest'` trägt die Aufgabe-Meldung (applyRemoteState) seit dem
+    // 12.9. denselben Wortlaut — deshalb hier nichts, sonst stünde er zweimal.
+    const lmG = data.state && data.state.lastMove;
+    if(!(lmG && lmG.verlassen==='guest'))
+      setLog('<span class="msg info">Mitspieler hat den Raum verlassen.</span>');
   } else {
-    handleDisconnect('Mitspieler hat den Raum verlassen.');
+    // §177 (Entscheid Walter, 11.9.): VERLASSEN ZÄHLT ALS AUFGABE. Bis v138 endete hier die
+    // Sitzung des Hosts mit der Abbruchtafel — ohne Ergebnis. Jetzt schreibt der HOST die
+    // Aufgabe des Gastes: er ist der einzige Schreiber, ein gleichzeitiger Zug kann sie nicht
+    // überholen. Erst den Raum übernehmen (§166: der Raum entscheidet) — sonst schriebe ein
+    // zurückkehrender Host seine veraltete Stellung über den letzten Zug des Gastes.
+    if(data.state && data.state.board) applyRemoteState(data.state);
+    if(phase==='playing' || phase==='bonus'){
+      const gastSpieler = (myPlayer===1) ? 2 : 1;
+      phase='finished';
+      pendingLastMove={player:null, drawReason:null, resignedBy:gastSpieler, verlassen:'guest'};
+      pushState(myPlayer);   // ohne await; die eigene Anzeige kommt über den Zuhörer
+      console.log('§177: Gast hat die laufende Partie verlassen — als Aufgabe gewertet');
+      render();
+    }
   }
   return true;
 }
@@ -2053,7 +2857,7 @@ function attachHostListener(){
     if(!data){handleDisconnect('Raum nicht mehr vorhanden.');return;}
     // §75-W3-A: Abbruch-Flag (vom wartenden Gegner gesetzt, bevor der Raum gelöscht wird). Klare
     // Meldung + Modus-Menü statt generischem „Raum nicht mehr vorhanden".
-    if(data.meta && data.meta.aborted){ handleAbortReturn('Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.'); return; }
+    if(data.meta && data.meta.aborted){ handleAbortReturn(abbruchText(data)); return; }
     // Host: start game as soon as guest joins (only once)
     if(myRole==='host' && data.guest==='online' && !hostGameStarted){
       hostGameStarted=true;
@@ -2067,6 +2871,8 @@ function attachHostListener(){
     // §72c: Gegner-Präsenz per Herzschlag prüfen (Netzabriss → Countdown-Overlay, kein Einfrieren).
     // Läuft VOR der Leave-Detection, aber greift nur bei guest==='offline'/veraltetem guestSeen.
     evaluateOpponentPresence(data);
+    // §177: steht wieder ein Gast im Raum (auch 'offline' = Netzabriss, nicht gegangen), ist er nicht weg.
+    if(data.guest!=null) mitspielerGegangen=false;
     // Detect opponent DELIBERATELY leaving after game started.
     // §72c-Absicht: NUR absichtliches Verlassen (leaveRoom/cancelJoin) zählt hier; ein
     // Netzabriss setzt guest:'offline' → Countdown via evaluateOpponentPresence, kein
@@ -2079,15 +2885,21 @@ function attachHostListener(){
       applyRemoteState(data.state);
     }
     // Draw offer: show overlay to the OTHER player
-    if(data.meta && data.meta.drawOffer){
+    // §177: nur solange die Partie läuft (remisAngebotGilt) — nach dem Ende erlischt das Angebot.
+    // Und der Anbieter sieht sein eigenes offenes Angebot, abgeleitet aus dem Raum.
+    const angebotH = !!(data.meta && data.meta.drawOffer) && remisAngebotGilt(data);
+    if(angebotH){
       const offerer=data.meta.drawOffer;
       if((offerer==='host' && myRole==='guest')||
          (offerer==='guest' && myRole==='host')){
         document.getElementById('draw-offer-overlay').classList.remove('hidden');
+      } else {
+        document.getElementById('draw-offer-overlay').classList.add('hidden');
       }
     } else {
       document.getElementById('draw-offer-overlay').classList.add('hidden');
     }
+    eigenesRemisSetzen(angebotH && data.meta.drawOffer===myRole);
     // §73 (Walter-Befund): Remis abgelehnt → Meldung an den ANBIETER (der die Ablehnung sonst nicht
     // sah). Nach dem Muster von rematchDeclined: der Ablehnende setzt meta/drawDeclined, der andere
     // (= der Anbieter) zeigt die Meldung und räumt das Signal ab.
@@ -2107,11 +2919,26 @@ function attachHostListener(){
       if((accepter==='guest' && myRole==='host') ||
          (accepter==='host' && myRole==='guest')){
         setLog('<span class="msg signal">Mitspieler ist mit Remis einverstanden</span>');
+        // §164 (7.9.): Bis v128 stand hier NUR die Meldung und das Loeschen des Signals. Dass die
+        // Partie endet, hing allein daran, dass der annehmende Gast einen beendeten Zustand
+        // geschrieben hatte — die einzige Spielende-Art, die NICHT host-autoritativ lief. Der
+        // Remis-ANSPRUCH (drawClaim, weiter unten) macht es seit §53g richtig; die ANNAHME nicht.
+        // JETZT nach demselben Muster: laeuft die Partie hier noch, beendet der HOST sie selbst.
+        // ⚠️ Das Signal wird ERST DANACH geloescht — sonst waere die Annahme wieder verbraucht,
+        // ohne gewirkt zu haben (genau das ist Walter am 7.9. passiert).
+        if(myRole==='host' && (phase==='playing'||phase==='bonus')){
+          phase='finished';
+          pendingLastMove={player:null, drawReason:'beide einverstanden'};
+          await pushState(null);
+          render();
+        }
         await update(roomRef,{'meta/drawAcceptedBy':null}).catch(()=>{});
       }
     }
     // Symmetric rematch: show confirmation overlay to the OTHER player
-    if(data.meta && data.meta.rematchFrom){
+    // §177: eine Nochmal-Anfrage gibt es nur nach dem Ende. Kommt sie aus einem älteren Build
+    // mitten in der Partie, erscheint sie nicht — ihre eigene 15-s-Frist nimmt sie wieder zurück.
+    if(data.meta && data.meta.rematchFrom && data.state && data.state.phase==='finished'){
       const requester=data.meta.rematchFrom;
       if((requester==='host' && myRole==='guest') ||
          (requester==='guest' && myRole==='host')){
@@ -2208,6 +3035,15 @@ window.joinRoom=async function(){
     }
     // Nur ein LEBENDER Gast blockiert. Ein offline/stale-Gast-Eintrag (Ghost) darf überschrieben
     // werden — sonst bliebe ein Raum nach Gast-Absturz für immer „voll".
+    // §171: Ein abgebrochener Raum ist tot, auch wenn der Host zufällig noch online-geflaggt ist
+    // (sein Herzschlag läuft weiter, bis er das Flag selbst liest). Ohne diese Prüfung konnte man
+    // mit dem Code in eine Partie beitreten, die es nicht mehr gibt — und säße in einem Raum, den
+    // der Host beim nächsten Blick löscht.
+    if(rv.meta && rv.meta.aborted===true){
+      errEl.textContent='Dieser Raum wurde abgebrochen.';
+      btn.disabled=false;
+      return;
+    }
     const guestAlive = rv.guest==='online' && !presenceIsStale(serverNow(), rv.guestSeen, PRESENCE_STALE_MS);
     if(guestAlive){
       errEl.textContent='Raum bereits voll.';
@@ -2242,9 +3078,10 @@ window.joinRoom=async function(){
 function attachGuestListener(){
   roomListener=onValue(roomRef,async snap=>{
     const data=snap.val();
-    if(!data){handleDisconnect('Raum nicht mehr vorhanden.');return;}
+    // §177: löst der Host eine laufende Partie auf, kennt der Gast den Grund schon (raumEndeText).
+    if(!data){handleDisconnect(raumEndeText || 'Raum nicht mehr vorhanden.', 'Partie beendet');return;}
     // §75-W3-A: Abbruch-Flag erkennen (Gegenstück zum Host-Listener; deckt Host-seitigen Abbruch ab).
-    if(data.meta && data.meta.aborted){ handleAbortReturn('Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.'); return; }
+    if(data.meta && data.meta.aborted){ handleAbortReturn(abbruchText(data)); return; }
     // §86: Skelett-Raum (Host-Seite fehlt komplett) = Raum wurde gelöscht und von einem eigenen
     // Schreiber neu angelegt → wie „Raum nicht mehr vorhanden" behandeln + Skelett wegräumen.
     if(roomLooksHostless(data)){ remove(roomRef).catch(()=>{}); handleDisconnect('Raum nicht mehr vorhanden.'); return; }
@@ -2264,11 +3101,14 @@ function attachGuestListener(){
       applyRemoteState(data.state);
     }
     // Draw offer
-    if(data.meta && data.meta.drawOffer){
-      if(data.meta.drawOffer==='host') document.getElementById('draw-offer-overlay').classList.remove('hidden');
+    // §177: nur in laufender Partie (s. Host-Listener); das eigene Angebot aus dem Raum ableiten.
+    const angebotG = !!(data.meta && data.meta.drawOffer) && remisAngebotGilt(data);
+    if(angebotG && data.meta.drawOffer==='host'){
+      document.getElementById('draw-offer-overlay').classList.remove('hidden');
     } else {
       document.getElementById('draw-offer-overlay').classList.add('hidden');
     }
+    eigenesRemisSetzen(angebotG && data.meta.drawOffer===myRole);
     // §73 (Walter-Befund): Remis abgelehnt → Meldung an den Gast, wenn ER der Anbieter war und der
     // Host abgelehnt hat (Gegenstück zum Host-Listener, damit BEIDE Rollen die Ablehnung sehen).
     if(data.meta && data.meta.drawDeclined){
@@ -2278,7 +3118,8 @@ function attachGuestListener(){
       }
     }
     // Rematch request
-    if(data.meta && data.meta.rematchFrom){
+    // §177: nur nach dem Ende (s. Host-Listener).
+    if(data.meta && data.meta.rematchFrom && data.state && data.state.phase==='finished'){
       if(data.meta.rematchFrom==='host') document.getElementById('rematch-req-overlay').classList.remove('hidden');
     } else {
       document.getElementById('rematch-req-overlay').classList.add('hidden');
@@ -2436,11 +3277,35 @@ async function pushState(winner=null){
     playerMap:{ host:hostPlayer, guest:hostPlayer===1?2:1 }
   };
   pendingLastMove=null;
-  await update(roomRef,{state});
+  // §177: JEDES Partieende räumt ein offenes Remis-Angebot — Vierer, Aufgabe, Verlassen,
+  // Zwangsremis. Wer das Ende schreibt, räumt. VOR der Zustandsschreibung: dann verschwindet
+  // beim Mitspieler zuerst das Angebot, danach kommt das Ergebnis. Ohne Wartezeit.
+  if(phase==='finished') update(roomRef,{'meta/drawOffer':null}).catch(()=>{});
+  // §164: die einzige Schreibstelle ohne catch — eine abgelehnte oder gescheiterte Schreibung
+  // verschwand spurlos. Bewusst NUR in die Konsole: ohne Netz scheitert jeder Zug, eine
+  // Bildschirmmeldung waere dann Dauerlaerm. Nach §132: nicht mehr stumm, aber auch nicht laut.
+  try{
+    await update(roomRef,{state});
+  }catch(e){
+    console.error('§164 pushState: Zustand NICHT geschrieben —', (e && e.message) ? e.message : e);
+  }
 }
 
 // ── Apply state received from Firebase ──────────────────────────
 function applyRemoteState(state){
+  // §164 (7.9.): KEIN RUECKWAERTSGANG. Eine beendete Partie darf durch einen Schnappschuss
+  // NICHT wieder eroeffnet werden — weder durch einen veralteten Zwischenspeicher (ein `get()`
+  // im Moment der Wiederverbindung kann noch den lokalen Stand liefern) noch durch den eigenen
+  // Listener waehrend einer Schreibung. Ausnahme: ein NOCHMAL, das eine hoehere Generation
+  // traegt — dort ist der Wechsel von 'finished' nach 'playing' gewollt.
+  // ⚠️ Muss VOR dem Generations-Guard stehen: der setzt mvmGameGen hoch, und danach waere
+  // die Bedingung nicht mehr zu pruefen.
+  if(phase==='finished' && state.phase!=='finished' &&
+     !(typeof state.gameGen==='number' && state.gameGen>mvmGameGen)){
+    console.warn('§164: Schnappschuss wollte eine beendete Partie wieder eroeffnen — ignoriert',
+                 '(eingehend:', state.phase, 'Gen', state.gameGen, '· lokal: finished Gen', mvmGameGen + ')');
+    return;
+  }
   // §72k GENERATIONS-GUARD + autoritative Parität. Snapshots einer ÄLTEREN Partie komplett
   // verwerfen (Firebase garantiert keine Callback-Reihenfolge). Die Parität ist menschgebunden
   // (§72k) und wird vom HOST autoritativ abgeleitet und als state.parityP1 geschrieben — der Gast
@@ -2452,7 +3317,13 @@ function applyRemoteState(state){
   if(typeof state.gameGen==='number' && state.gameGen>=1){
     if(state.gameGen < mvmGameGen){ return; }        // veraltete Partie → komplett ignorieren
     if(state.gameGen >= mvmGameGen){                  // aktuelle/neue Partie → Parität autoritativ übernehmen
-      if(state.gameGen > mvmGameGen) mvmGameGen=state.gameGen;
+      if(state.gameGen > mvmGameGen){
+        mvmGameGen=state.gameGen;
+        // §170: NEUE Partie im selben Raum (Nochmal). Der Gast läuft durch keine Startroutine,
+        // also hier: Angebotsrecht zurück. Sonst nimmt er den Riegel in die neue Runde mit.
+        mvmOfferedThisTurn=false;
+        mitspielerGegangen=false; raumEndeText=null;   // §177: eine neue Runde läuft = beide da
+      }
       if(typeof state.hostParityGen1==='string') mvmHostParityGen1=state.hostParityGen1;
       if(state.parityP1==='odd'||state.parityP1==='even'){
         window.PARITY_P1=state.parityP1; mvmP1Parity=state.parityP1;
@@ -2604,7 +3475,24 @@ function applyRemoteState(state){
     // §61c-2/§65c: Aufgabe — eigener Meldungszweig. Vorher fiel resignedBy durch alle Zweige
     // (player=null, drawReason=null) → der Gegner sah gar keinen Grund, nur das (falsche) Banner.
     const iResigned=(state.lastMove.resignedBy===myPlayer);
-    setLog(`<span class="msg signal">🏳️ ${iResigned?'Du hast aufgegeben':'Mitspieler hat aufgegeben'}</span>`);  // §95: Sieger folgt im Banner darunter
+    // §177: Verlassen während der Partie zählt als Aufgabe — und soll auch so heißen. Wer
+    // gegangen ist, sieht diese Zeile nicht mehr; sie gilt dem, der bleibt.
+    // §179 (Entscheid Walter, 12.9.): EIN Wortlaut für beide Rollen — „Mitspieler hat den Raum
+    // verlassen". Ob Host oder Gast gegangen ist, ändert für den, der bleibt, nichts; und dass
+    // es als Aufgabe zählt, sagt das Siegbanner direkt darunter deutlicher als ein Nachsatz.
+    // Die frühere Fassung („hat die Partie verlassen — das zählt als Aufgabe", „hat aufgegeben
+    // und den Raum aufgelöst") lief über zwei Zeilen und stand fast wörtlich noch einmal unter
+    // dem Nochmal-Knopf.
+    const weg = state.lastMove.verlassen;
+    let satz = iResigned ? 'Du hast aufgegeben' : 'Mitspieler hat aufgegeben';
+    if(!iResigned && weg) satz='Mitspieler hat den Raum verlassen';
+    if(!iResigned && weg==='host'){
+      mitspielerGegangen=true;
+      // Der Raum verschwindet gleich (RAUM_AUFLOESEN_VERZUG_MS). Die Tafel soll dann den Grund
+      // nennen statt „Raum nicht mehr vorhanden".
+      raumEndeText='Mitspieler hat den Raum verlassen — du hast gewonnen.';
+    }
+    setLog(`<span class="msg signal">🏳️ ${satz}</span>`);  // §95: Sieger folgt im Banner darunter
   } else if(state.lastMove && state.lastMove.drawReason){
     // §73 (Welle 1, Walter-Befund): Remis-Erklärung mittig, OHNE Symbol. WICHTIG: bei einem
     // Wiederholungs-/Halbzug-Remis wird das durch einen ZUG ausgelöst — der Gegner sah bisher NUR
@@ -2672,10 +3560,27 @@ function applyRemoteState(state){
     // §95 (Walter): „Nochmal"-Button auch im MvM-Schlussbild. Hier ist es eine Rematch-ANFRAGE
     // (requestRematch) — der Klick führt sofort zum Warte-auf-Mitspieler-Bildschirm, deshalb reicht
     // „Nochmal" ohne den Zusatz „anfragen" (Walter). Toolbar bleibt unverändert.
-    const rematchBtn = `<button onclick="requestRematch()" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">🔄 Nochmal</button>`;
+    const rematchBtn = `<button onclick="requestRematch()" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;">🔄 Nochmal</button>`;
     // §97b (Walter): Zusatzzeile „oder ☰ Optionen …" entfernt — die Werkzeugleiste steht
     // ohnehin sichtbar darunter, der Hinweis war reine Wiederholung.
-    winArea.innerHTML = bannerHtml + rematchBtn;
+    // §172 (9.9., Walters Screenshots 10:34/10:35): DIE ABSAGE GEHÖRT VOR DEN TIPP.
+    // Bis v135 stand „Nochmal" voll eingefärbt da, auch wenn der Mitspieler nachweislich weg war
+    // — der Knopf lud zum Tippen ein und antwortete dann mit „neue Runde nicht möglich". Dieselbe
+    // Irreführung wie beim ausgebauten Wiedereinstiegs-Knopf (§167).
+    // ⚠️ KLEINE LÖSUNG (Entscheid Walter): der Knopf bleibt tippbar und wird NICHT ausgegraut.
+    // Grund: nach Spielende läuft der Präsenz-Tick nicht mehr (`inGame` ist falsch), ein grauer
+    // Knopf bliebe also grau, auch wenn der Mitspieler zurückkommt — das wäre schlechter als
+    // heute. Gezeigt wird nur der Hinweis; das Kriterium ist DASSELBE wie in requestRematch
+    // (§78a), damit Anzeige und Sperre nie auseinanderlaufen können.
+    // §177: Text UND Kriterium kommen aus neueRundeUnmoeglich() — dieselbe Quelle wie die Sperre.
+    // §179: bei einem ENDGÜLTIGEN Hindernis (Mitspieler hat den Raum verlassen) fällt der Knopf
+    // ganz weg. Die kleine Lösung aus §172 (Knopf bleibt, Hinweis darunter) war für den
+    // VORLÄUFIGEN Fall gedacht — dort gilt sie unverändert weiter.
+    const hindernis = neueRundeUnmoeglich();
+    const wegHinweis = hindernis
+      ? '<div class="msg info" style="margin-top:8px;">'+hindernis.text+'</div>'
+      : '';
+    winArea.innerHTML = bannerHtml + ((hindernis && hindernis.endgueltig) ? '' : rematchBtn) + wegHinweis;
   } else {
     winArea.innerHTML='';
   }
@@ -2755,19 +3660,85 @@ function updateStatusUI(){
     s.innerHTML=`Bonuszug!<br>${who}<br>(${parity})`;
     return;
   }
-  if(isMyTurn) s.innerHTML=`Du bist dran<br>(${myParity})`;
-  else s.innerHTML=`${oppName} ist dran<br>(${opParity})`;
+  // §177: das EIGENE offene Angebot als dritte Zeile — sie steht, bis der Raum es nicht mehr
+  // trägt (Antwort, Partieende). Bis v138 war es eine einmalige Statuszeile, die die nächste
+  // Meldung überschrieb. Im Bonuszug nicht: dort sind die drei Zeilen schon belegt.
+  const angebotZeile = (gameMode==='mvm' && eigenesRemisOffen) ? '<br>🤝 Remis angeboten' : '';
+  if(isMyTurn) s.innerHTML=`Du bist dran<br>(${myParity})${angebotZeile}`;
+  else s.innerHTML=`${oppName} ist dran<br>(${opParity})${angebotZeile}`;
 }
 
 // ── Rematch ──────────────────────────────────────────────────────
 // rematch handled via showNeuMenu flow
 
 // ── Disconnect handling ──────────────────────────────────────────
-function handleDisconnect(msg){
+// §167 (7.9.): Der Parameter `wiederkehr` ist mit dem Knopf entfallen — es gibt nichts mehr
+// zu unterscheiden. Was BLEIBT, ist der letzte Blick in den Raum (§162-B): steht dort ein
+// beendetes Spiel, tritt das Ergebnis an die Stelle der Abbruchmeldung. Genau das hat in
+// Walters Test funktioniert und soll erhalten bleiben.
+// §182: `titel` ist optional. Ohne Angabe bleibt es bei „Verbindung unterbrochen" — richtig für
+// jeden Weg, auf dem wirklich die Leitung das Thema ist. Steht das Ende fest (Partie beendet,
+// Raum aufgelöst), gehört eine andere Überschrift darüber.
+function handleDisconnect(msg, titel){
+  // §162 (7.9.): Vor dem Aufräumen merken, WO wir waren. cleanup() nullt roomRef, roomCode,
+  // myRole und myPlayer — danach ist beides nicht mehr zu haben.
+  const wasRoom=roomRef, wasCode=roomCode, wasRole=myRole, wasPlayer=myPlayer;
   cleanup(false);
-  document.getElementById('dc-msg').textContent=msg||'Verbindung unterbrochen.';
+  setzeAbschlussTafel(titel||'Verbindung unterbrochen', msg||'Verbindung unterbrochen.');
   showOverlay('dc-overlay');
+  letzterBlickAufDenRaum(wasRoom, wasPlayer);             // §162-B
 }
+
+// §182: EINE Stelle, die Überschrift und Text der Abschlusstafel setzt. `letzterBlickAufDenRaum`
+// schreibt später noch einmal darüber — beide benutzen diese Funktion, damit die Überschrift
+// nicht zum Text von vorhin stehen bleibt.
+function setzeAbschlussTafel(titel, text){
+  const t=document.getElementById('dc-title'); if(t) t.textContent=titel;
+  const m=document.getElementById('dc-msg');   if(m) m.textContent=text;
+}
+
+// ── §162 (7.9.): Walters Befund — Verbindungsabbruch während eines Remisangebots ──────
+// Der Anbieter sah nicht, dass der Mitspieler angenommen hatte. URSACHE: cleanup() hängt den
+// Raum-Zuhörer ab (`roomListener()`) und nullt roomRef. Ab da kann keine Aktualisierung mehr
+// ankommen, auch wenn das Netz eine Sekunde später zurück ist — nur ein neuer Beitritt liest
+// den Raum frisch. Das galt für JEDES Spielende während einer Unterbrechung, nicht nur Remis.
+//
+// §162-B: EIN LETZTER BLICK. Nach dem Aufräumen einmal lesen. Steht dort ein beendetes Spiel,
+// wird die Abbruchmeldung durch das ERGEBNIS ersetzt. Schlägt das Lesen fehl (wirklich kein
+// Netz), bleibt es bei der bisherigen Meldung — die Tafel steht ja schon.
+async function letzterBlickAufDenRaum(wasRoom, wasPlayer){
+  if(!wasRoom) return;
+  try{
+    const snap=await get(wasRoom);
+    if(!snap.exists()) return;
+    const data=snap.val();
+    const st=data.state;
+    if(!st || st.phase!=='finished') return;
+    // §182 (Walters Befund 12.9.): DER GRUND DARF NICHT VERLOREN GEHEN. §181 setzte „Mitspieler
+    // hat den Raum verlassen — die Partie ist beendet." als Tafeltext; dieser letzte Blick
+    // überschrieb ihn eine Sekunde später mit dem allgemeinen „Die Partie ist beendet: Du hast
+    // gewonnen. Die Meldung hat dich wegen der Unterbrechung nicht mehr erreicht." — richtig,
+    // aber ohne Ursache, und der Nachsatz schob es auf die Leitung. Jetzt steht der Grund VORN
+    // und das Ergebnis dahinter; der Nachsatz bleibt dem Fall, in dem wir den Grund NICHT kennen.
+    const verlassen = !!(data.meta && data.meta.abortReason==='verlassen');
+    if(verlassen)
+      setzeAbschlussTafel('Partie beendet',
+        'Mitspieler hat den Raum verlassen. '+ergebnisSatz(st, wasPlayer)+'.');
+    else
+      setzeAbschlussTafel('Partie beendet',
+        'Die Partie ist beendet: '+ergebnisSatz(st, wasPlayer)+
+        '. Die Meldung hat dich wegen der Unterbrechung nicht mehr erreicht.');
+  }catch(e){ /* kein Netz: die bisherige Meldung bleibt stehen */ }
+}
+
+function ergebnisSatz(st, wasPlayer){
+  if(st.winner==null){
+    const grund=(st.lastMove && st.lastMove.drawReason) ? ' ('+st.lastMove.drawReason+')' : '';
+    return 'Unentschieden'+grund;
+  }
+  return (st.winner===wasPlayer) ? 'Du hast gewonnen' : 'Mitspieler hat gewonnen';
+}
+
 
 function cleanup(removeRoom=true){
   stopHeartbeat();      // §72c/§72e: eigenen Herzschlag + Präsenz-Monitor beenden
@@ -2794,6 +3765,31 @@ function cleanup(removeRoom=true){
   }
   roomRef=null; roomCode=null; myRole=null; myPlayer=null; isMyTurn=false;
   phase='waiting';
+  // §170 (9.9., Walters Screenshot): DAS ANGEBOTSRECHT GEHÖRT ZUR PARTIE, NICHT ZUM GERÄT.
+  // `mvmOfferedThisTurn` wurde nur in den beiden HOST-Startroutinen zurückgesetzt. Der GAST
+  // durchläuft die nie — er bekommt seinen Zustand über applyRemoteState. Ergebnis: wer als
+  // Gast Remis angeboten hatte, trug das Flag in den NÄCHSTEN Raum mit und fand dort vor dem
+  // ersten Zug einen ausgegrauten Knopf „Remis angeboten (warte auf deinen Zug)".
+  mvmOfferedThisTurn=false;
+  // §177: auch diese drei gehören zur Sitzung, nicht zum Gerät (Lehre aus §170).
+  eigenesRemisOffen=false; mitspielerGegangen=false; raumEndeText=null;
+  standWirdGeprueft=false;   // §181: ohne Raum gibt es nichts zu prüfen
+  entwerteAnzeige();   // §169
+}
+
+// §169 (9.9., Walters Befund): KEIN ZOMBIE-BRETT.
+// cleanup() hat bis v132 den INNEREN Zustand abgeräumt (Zuhörer, Herzschlag, roomRef, phase),
+// aber NICHTS auf dem Bildschirm. Auf Walters Mac stand deshalb noch „Remis angeboten — warte
+// auf Mitspieler…" über einer Stellung, die es so längst nicht mehr gab: der Client wusste, dass
+// er raus ist, die Anzeige behauptete das Gegenteil. Wer dort tippt, tippt ins Leere.
+// GEBAUT: die Statuszeile wird geleert und neu gezeichnet. Mit `phase==='waiting'` zeichnet
+// render() weder Zugansage noch Remis-/Aufgabe-Knöpfe — die Stellung BLEIBT stehen (sie ist das
+// Letzte, was man wusste, und die will man sehen), aber sie behauptet nichts mehr.
+// ⚠️ Bewusst NICHT hier: das Brett leeren. Das sähe aus, als hätte man die Partie verloren
+// statt die Verbindung (Entscheid Walter, 9.9.).
+function entwerteAnzeige(){
+  setLog('');
+  try{ render(); }catch(e){ console.warn('§169 render nach cleanup:', (e&&e.message)||e); }
 }
 
 // ── Hintergrund-Reconnect ────────────────────────────────────────
@@ -2810,21 +3806,48 @@ document.addEventListener('visibilitychange',async()=>{
     // Präsenz-Hinweis ist und beim Zurückkehren durch den nächsten Herzschlag überschrieben wird.
     stopHeartbeat();
   } else {
-    // Returning to foreground
-    if(!roomRef || !myRole) return; // not in a room, nothing to do
+    raumRueckkehrPruefen();   // §162: derselbe Pfad wie nach einer Wiederverbindung
+  }
+});
+
+// §162 (7.9.): AUSGELAGERT, Inhalt unverändert aus dem visibilitychange-Handler.
+// Diese Routine ist der einzige Ort, an dem ein Client seinen Raum wieder aufnimmt: Raum
+// da? abgebrochen? Gegner gegangen? eigene Präsenz zurückschreiben, Herzschlag starten,
+// Zuhörer wieder anbinden, Zustand anwenden. Sie wird jetzt aus DREI Richtungen gerufen —
+// Rückkehr aus dem Hintergrund (wie bisher), „Erneut verbinden" (§162-C) und die eigene
+// Wiederverbindung (§163). Vorher hing sie in einer anonymen Funktion und war damit für
+// die anderen beiden Wege unerreichbar.
+async function raumRueckkehrPruefen(){
+    // §166 (7.9.): An JEDEM Ausstieg eine Zeile. In der v129-Runde fehlte im Protokoll die
+    // Rückkehr-Meldung, und es war nicht zu entscheiden, ob der Pfad gar nicht lief, früh
+    // ausstieg oder im catch landete — das hat eine ganze Testrunde gekostet.
+    if(!roomRef || !myRole){ console.log('§162 Rückkehr: kein Raum mehr (roomRef/myRole leer) — nichts zu tun'); return; }
     try{
       const snap=await get(roomRef);
       if(!snap.exists()){
+        console.log('§162 Rückkehr: der Raum existiert nicht mehr');
         // §75-W3-A: Raum weg = der wartende Gegner hat nach 12s+45s sauber abgebrochen und den
         // Raum gelöscht (finalizeOppAbort). Klare Meldung + zurück zur Modus-Auswahl (wie Fix 5).
-        handleAbortReturn('Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
+        // §177: HIER STAND `abbruchText(data)` — aber `data` wird erst weiter unten mit `const`
+        // angelegt. Zugriff davor ist ein ReferenceError (temporal dead zone); der Pfad fiel in
+        // den catch-Zweig und zeigte dauerhaft „⏳ Verbindung wird wiederhergestellt…" statt der
+        // Tafel. Seit §170 (v134) so, am 11.9. im node nachgestellt. Ein Raum, der nicht mehr
+        // existiert, trägt keinen Grund mehr: er kann nach einem Abbruch verschwunden sein ODER
+        // (seit §177) weil der Host die Partie aufgelöst hat. Also die neutrale Fassung — oder
+        // den Grund, den dieser Client vorher schon gesehen hat.
+        handleAbortReturn(raumEndeText || 'Der Raum wurde inzwischen aufgelöst — die Partie ist beendet.');
         return;
       }
       const data=snap.val();
+      // §164: nach §132-Muster — die nächste Fehlersuche soll fünf Sekunden dauern.
+      console.log('§162 Rückkehr: phase =', (data.state ? data.state.phase : '(kein state)'),
+                  '· gameGen =', (data.state ? data.state.gameGen : '—'),
+                  '· meta =', (data.meta || '(keine)'));
       // §75-W3-A: Abbruch-Flag erkennen (Race-Fenster: Gegner hat aborted gesetzt, remove() aber
       // noch nicht durchgelaufen — oder Gast-Abbruch, der nur das Flag setzt). Gleiche Behandlung.
       if(data.meta && data.meta.aborted){
-        handleAbortReturn('Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.');
+        console.log('§162 Rückkehr: meta/aborted steht — abgebrochen von', (data.meta.abortedBy||'unbekannt'));
+        handleAbortReturn(abbruchText(data));
         return;
       }
       // §86: War dieser Client HIDDEN, als der Gegner absichtlich ging, hat der Listener das
@@ -2832,7 +3855,7 @@ document.addEventListener('visibilitychange',async()=>{
       // MUSS die Verlassen-/Skelett-Prüfung HIER laufen, und zwar VOR der §75-W3-A-Kulanz:
       // genau deren „Gegner erstmal als frisch annehmen" hat den Endlos-Loop („Mitspieler
       // wieder verbunden" → Countdown → Tab-Wechsel → …) am Leben gehalten.
-      if(await handleGuestDeparture(data)) return;
+      if(await handleGuestDeparture(data)){ console.log('§162 Rückkehr: der Gast hat den Raum verlassen — behandelt'); return; }
       if(roomLooksHostless(data)){ remove(roomRef).catch(()=>{}); handleDisconnect('Raum nicht mehr vorhanden.'); return; }
       // §72c: Präsenz wiederherstellen = eigenes online-Flag zurückschreiben + Heartbeat neu
       // starten (schreibt sofort einen frischen Zeitstempel). Kein destruktives remove()/null mehr.
@@ -2859,12 +3882,20 @@ document.addEventListener('visibilitychange',async()=>{
         // Listener still active — just refresh state
         if(data.state && data.state.board) applyRemoteState(data.state);
       }
+      // §181: erst HIER ist klar, dass es weitergeht — jetzt darf das Brett wieder frei liegen.
+      // Alle Wege, die vorher aussteigen, zeigen ihre eigene Tafel.
+      clearEigenenAusfall();
+      console.log('§162 Rückkehr: Stand übernommen — weiter geht es');
     }catch(e){
       // Network unreachable — show reconnect message but don't disconnect yet
+      console.warn('§162 Rückkehr: Lesen fehlgeschlagen —', (e && e.message) ? e.message : e);
       setLog('<span class="msg wait">⏳ Verbindung wird wiederhergestellt…</span>');
+      // §181: das Lesen ist gescheitert, der Stand bleibt unbekannt — die Tafel muss weg,
+      // sonst hängt der Spieler in „Der Stand wird geprüft…" fest. Der Präsenz-Monitor
+      // übernimmt wieder: fehlt die Leitung weiter, zeigt er die eigene Ausfalltafel.
+      clearEigenenAusfall();
     }
-  }
-});
+}
 
 // ── Regelschicht: KANONISCH aus gembel_rules.js (§38b Zusammenführung) ──
 // Die frühere Online-EIGENKOPIE aller Regelfunktionen (canLift/canDrop/canStack/
@@ -2961,7 +3992,7 @@ function showWinBanner(winner){
   // §95 (Walter): „Nochmal"-Button direkt ins Schlussbild — die häufigste Folgeaktion ist ein Klick
   // statt erst „↺ Neu" zu öffnen. Toolbar (Regeln/Neu) bleibt unverändert daneben bestehen.
   // MvKI: direkter Neustart derselben Stufe (wie der bestehende Dialog-Button startAIGame(aiSkill)).
-  const rematchBtn = `<button onclick="startAIGame('${aiSkill}')" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;">🔄 Nochmal</button>`;
+  const rematchBtn = `<button onclick="startAIGame('${aiSkill}')" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;">🔄 Nochmal</button>`;
   // §97b (Walter): Zusatzzeile „oder ☰ Optionen …" entfernt (s. MvM-Zweig).
   winArea.innerHTML = bannerHtml + rematchBtn;
 }
@@ -3646,25 +4677,25 @@ window.showMarkedGames=async function(){
   showOverlay('marks-overlay');
   const fb=document.getElementById('marks-feedback'); if(fb) fb.textContent='';
   const listEl=document.getElementById('marks-list');
-  listEl.innerHTML='<div style="color:var(--text3);font-size:15px;text-align:center;">Lade…</div>';
+  listEl.innerHTML='<div style="color:var(--text3);font-size:var(--fs-lg);text-align:center;">Lade…</div>';
   try{
     const q=query(ref(db,'games_countred_marks'), orderByChild('ts'), limitToLast(20));
     const snap=await get(q);
     if(!snap.exists()){
-      listEl.innerHTML='<div style="color:var(--text3);font-size:15px;text-align:center;">Noch keine markierten Partien.<br>Im Spiel gegen Max Michu: ☰ Optionen → 📌 markieren.</div>';
+      listEl.innerHTML='<div style="color:var(--text3);font-size:var(--fs-lg);text-align:center;">Noch keine markierten Partien.<br>Im Spiel gegen Max Michu: ☰ Optionen → 📌 markieren.</div>';
       return;
     }
     const items=[]; snap.forEach(ch=>{ const v=ch.val(); if(v) items.push(v); });
     items.sort((a,b)=>(b.ts||0)-(a.ts||0));
     listEl.innerHTML=items.map(d=>
-      `<button class="big-btn" style="width:100%;text-align:left;font-size:12.5px;line-height:1.5;" onclick="copyGameCode('${escapeHtml(d.code||'')}')">`+
+      `<button class="big-btn" style="width:100%;text-align:left;font-size:var(--fs-sm);line-height:1.5;" onclick="copyGameCode('${escapeHtml(d.code||'')}')">`+
       `<span style="font-family:monospace;font-weight:600;letter-spacing:1px;">${escapeHtml(d.code||'?')}</span><br>`+
       `<span style="color:var(--text3);">${escapeHtml(markEntryLabel(d))}</span></button>`).join('');
   }catch(e){
     console.error('§88 showMarkedGames: Laden fehlgeschlagen:', e);
     const why=String((e&&(e.code||e.message))||e||'unbekannt'); // §89c: Ursache anzeigen
     const hint=/PERMISSION/i.test(why)?'<br>Firebase-Rules: games_countred_marks freischalten (s. HANDOVER §88/§89).':'';
-    listEl.innerHTML=`<div style="color:var(--text3);font-size:15px;text-align:center;">Laden fehlgeschlagen: ${escapeHtml(why)}${hint}</div>`;
+    listEl.innerHTML=`<div style="color:var(--text3);font-size:var(--fs-lg);text-align:center;">Laden fehlgeschlagen: ${escapeHtml(why)}${hint}</div>`;
   }
 };
 
@@ -3776,6 +4807,13 @@ async function logMvkiMove(move, meta, by='ai'){
 // unterscheidbar bleibt, wie Remis zustande kommen.
 async function finalizeMvkiGame(winner, reason){
   if(gameMode!=='mvki'||!mvkiGameCode) return;
+  // §144: Punkte fuer die Freischaltung. ABSICHTLICH HIER und nirgends sonst — an genau
+  // dieser Stelle wird die Partie mit playerKey und skillLevel nach games_countred
+  // geschrieben, also ist zu jeder Gutschrift ein pruefbarer Datensatz vorhanden (§136
+  // Belegregel). Nur ein echter Sieg des Menschen zaehlt: `winner` traegt die Spielernummer,
+  // Remis kommt als null herein, und Aufgeben liefert aiPlayer. Synchron VOR dem await,
+  // damit eine haengende Netzverbindung dem Spieler nicht seinen Punkt kostet.
+  if(winner && winner===myPlayer) gateAward(aiSkill);
   // §61a/§65a: gehärtet. Vorher warf ein fehlendes HEURISTIC_VERSION hier einen synchronen
   // ReferenceError BEIM OBJEKTBAU — also VOR dem await/.catch — der als unhandled rejection
   // still verschwand (kein MvKI-Ergebnis wurde je geloggt). Jetzt: try/catch um den GESAMTEN
@@ -4024,6 +5062,58 @@ try{
 // Als wahr gelten: true, "true", 1, "1", "on", "yes", "ja", "offline", "wartung".
 // ⚠️ Ein Tippfehler im Wert darf NICHT dazu fuehren, dass das Spiel gesperrt bleibt —
 // deshalb wird nur diese Liste akzeptiert, nicht „alles ausser false".
+//
+// §161 (7.9.): DAS MENUE WARTET NICHT MEHR AUF DIE DATENBANK.
+// Bis v126 stand `showOverlay('mode-overlay'); render();` AM ENDE dieser async-Funktion,
+// also HINTER `await get(ref(db,'config'))`. Der Startbildschirm hing damit an einem
+// Netz-Umlauf, dessen Antwort in aller Regel „kein Wartungsflag" lautet — bei schlechtem
+// Empfang sah der Nutzer solange die nackte Brettmaske aus dem statischen HTML.
+// JETZT: Menue sofort, Abfrage nebenher.
+// ⚠️ BEWUSSTE ABWAEGUNG (Entscheid Walter, 7.9.): die Sperre greift dadurch einen Moment
+// SPAETER. Sie greift aber weiterhin — schlaegt das Flag an, legt sich die Wartungstafel
+// ueber das Menue, und showOverlay() blendet alles andere aus. Ein Spiel beginnt erst auf
+// Klick; die Antwort ist lange vorher da.
+// ═══════════════════════════════════════════════════════════════════
+// §163 (7.9.): DIE EIGENE VERBINDUNG ÜBERWACHEN
+// ═══════════════════════════════════════════════════════════════════
+// Bis v127 kam `.info/connected` in dieser Datei NULL Mal vor — der Client merkte nie, dass
+// er weg war, und erst recht nicht, dass er wieder da ist. Firebase liefert diesen Zustand
+// gratis (lokaler Spezialpfad, keine Abfrage ans Netz).
+// ⚠️ RÜCKZIEHER: EIGENE_PRAESENZ_AN oben auf false — dann wird dieser Zuhörer nicht
+// aufgesetzt, und presenceTick verhält sich wieder wie in v127.
+if(EIGENE_PRAESENZ_AN){
+  onValue(ref(db,'.info/connected'), snap=>{
+    const verbunden = snap.val()===true;
+    if(!verbunden){
+      if(selbstOffline) return;
+      selbstOffline=true;
+      console.log('§163 eigene Verbindung: WEG');
+      return;
+    }
+    if(!selbstOffline) return;      // erster Aufruf beim Start: nichts nachzuholen
+    selbstOffline=false;
+    // §181 (Walters Befund 12.9.: „davor blitzt kurz das Brett auf"): DIE TAFEL BLEIBT STEHEN,
+    // BIS DER STAND BEKANNT IST. Bis v141 räumte `clearEigenenAusfall()` sie sofort weg (§166:
+    // nicht auf den nächsten Tick warten) — danach lag für die Dauer eines Netz-Umlaufs das alte
+    // Brett offen da, obwohl die Partie längst beendet war. Jetzt wird nur der TEXT
+    // ausgetauscht; geräumt wird sie erst, wenn die Partie wirklich weitergeht
+    // (raumRueckkehrPruefen), und bei einem Ende legt sich die Abbruchtafel darüber.
+    if(roomRef && myRole) zeigeStandWirdGeprueft();
+    else clearEigenenAusfall();
+    console.log('§163 eigene Verbindung: ZURÜCK — Raum wird frisch gelesen');
+    // Kulanz: der Gegner bekommt eine FRISCHE Frist. Sein Herzschlag konnte uns während
+    // unseres eigenen Ausfalls nicht erreichen; ihn dafür in einen laufenden Countdown zu
+    // stellen, wäre genau das Fehlurteil, das §163 abstellen soll.
+    if(oppOfflineSince!==null){
+      oppOfflineSince=serverNow();
+      oppAbortDeadline=oppOfflineSince+OPP_ABORT_GRACE_MS;
+    }
+    raumRueckkehrPruefen();
+  });
+}
+
+showOverlay('mode-overlay');
+render();
 (async()=>{
   const WARTUNG_WAHR = [true, 'true', 1, '1', 'on', 'yes', 'ja', 'offline', 'wartung'];
   const istWartung = v => WARTUNG_WAHR.some(w =>
@@ -4050,8 +5140,8 @@ try{
     // „Flag steht auf false" — das hat die Fehlersuche unmoeglich gemacht.
     console.warn('§132 Wartungsflag NICHT lesbar (Spiel startet trotzdem):', e && e.message ? e.message : e);
   }
-  showOverlay('mode-overlay');
-  render();
+  // §161: hier stand bis v126 der Start des Menues. Er ist nach oben gewandert, VOR die
+  // Abfrage — deshalb steht hier nichts mehr. Wer ihn zurueckholt, macht §161 rueckgaengig.
 })();
 </script>
 </body>
