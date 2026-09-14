@@ -1,4 +1,3 @@
-// Count Red · © 1998–2026 Walter Rehm · Alle Rechte vorbehalten · countred.com
 // ═══════════════════════════════════════════════════════════════════
 // countred_ai_worker.js — Web-Worker-Hülle für die KI-Suche (§47)
 // ═══════════════════════════════════════════════════════════════════
@@ -33,12 +32,12 @@
 
 'use strict';
 
-// §61e-3/§65e: Cache-Busting-Query (?v=NN) synchron zur Startdatei halten (dort v124).
+// §61e-3/§65e: Cache-Busting-Query (?v=NN) synchron zur Startdatei halten (dort v112).
 // §134-NAMENSHINWEIS: Die Startdatei heisst seit v98 index.html, NICHT mehr countred.html.
 // Die Kommentare unten nennen stellenweise noch den alten Namen — gemeint ist immer index.html.
 // Sonst kann der Worker alte Kern-/Regeldateien aus dem Cache laden, während das Hauptfenster
 // neue nutzt — gemischte Versionen (§51-Klasse).
-importScripts('gembel_rules.js?v=145', 'countred_ai_core.js?v=145');
+importScripts('gembel_rules.js?v=112', 'countred_ai_core.js?v=112');
 
 // §61b-2/§F4: Antisymmetrie-Selbsttest VERDRAHTEN. Der Kern-Kommentar („bleibt verbaut, sperrt
 // bei Verletzung") stimmte bis 12.7. nicht — die Funktion wurde nirgends aufgerufen, die Sperre
