@@ -432,6 +432,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      Selbst gezeichnet, keine fremde Bibliothek: damit gibt es keine Lizenzpflicht (§185).
      ⚠️ Die Formen sind auf 19 px hin entworfen. Wer Striche hinzufügt, prüfe sie in dieser
      Größe, nicht in der Vorschau — ein vierter Strich wird dort zu Grau.
+     §188 (14.9., Walter am Gerät): im ☰-Menü trugen sechs Knöpfe KEIN Symbol, während ihre
+     Nachbarn eines hatten — das wirkte unharmonisch. Nachgetragen: Weiterspielen, Weiterschauen,
+     Raum auflösen/Verlassen, Raum verlassen, „Neu (anderer Modus/Stufe)“ und „Zurück zum Brett“.
+     Bei den letzten beiden ersetzt das Symbol die Textpfeile ↺ und ↩, die dieselbe Rolle
+     spielten, aber aus der Schrift kamen. In Dialogen (Schließen, Zurück, Abbrechen, Ablehnen)
+     bleibt es bei reiner Beschriftung: dort trägt KEIN Knopf ein Symbol, das ist für sich stimmig.
      BEWUSST GEBLIEBEN: 🏆 🏅 und 🤝 im Siegerbanner. Dort trägt die Farbe den Moment;
      ein graues Pokalsymbol sähe aus wie eine Bilanzgrafik. -->
 <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
@@ -451,6 +457,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <symbol id="s-marke" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.8 5.4h10.4v14.2l-5.2-3.5-5.2 3.5z"/></symbol>
   <symbol id="s-sanduhr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M7.4 4.6h9.2M7.4 19.4h9.2"/><path d="M8.6 4.6c0 3.9 3.4 4.9 3.4 7.4s-3.4 3.5-3.4 7.4"/><path d="M15.4 4.6c0 3.9-3.4 4.9-3.4 7.4s3.4 3.5 3.4 7.4"/></symbol>
   <symbol id="s-drehen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3.6" width="6" height="11.4" rx="1.6"/><path d="M6.2 17.4a7 7 0 0 0 11.6 0"/><path d="M6.2 14v3.4h3.4"/></symbol>
+  <symbol id="s-weiter" viewBox="0 0 24 24" fill="currentColor"><path d="M8.4 5.4 18.4 12 8.4 18.6z"/></symbol>
+  <symbol id="s-auge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 12s3.6-6.2 9.2-6.2S21.2 12 21.2 12s-3.6 6.2-9.2 6.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.6"/></symbol>
+  <symbol id="s-aufloesen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4.8" width="16" height="14.4" rx="2.6"/><path d="M9.6 9.6l4.8 4.8M14.4 9.6l-4.8 4.8"/></symbol>
+  <symbol id="s-verlassen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.4 4.8H6.2a2 2 0 0 0-2 2v10.4a2 2 0 0 0 2 2h4.2"/><path d="M10.4 12h9.2M16.4 8.6l3.2 3.4-3.2 3.4"/></symbol>
+  <symbol id="s-neustart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 10.6 12 4.6l7.6 6v8.1a1.2 1.2 0 0 1-1.2 1.2H5.6a1.2 1.2 0 0 1-1.2-1.2z"/><path d="M9.6 19.9v-5.6h4.8v5.6"/></symbol>
+  <symbol id="s-zurueck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.4 6.6 4.6 10.4l3.8 3.8"/><path d="M4.6 10.4h9.6a4.8 4.8 0 0 1 0 9.6h-2"/></symbol>
   <symbol id="s-werkzeug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.8 4.6a4.6 4.6 0 0 0-5 7.2l-5.4 5.4a1.7 1.7 0 0 0 2.4 2.4l5.4-5.4a4.6 4.6 0 0 0 7.2-5l-2.8 2.8-2.4-.6-.6-2.4z"/></symbol>
 </svg>
 
@@ -541,7 +553,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=147'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=148'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
@@ -1014,7 +1026,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=147" charset="utf-8"></script>
+<script src="gembel_rules.js?v=148" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1026,7 +1038,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=147" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=148" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1820,7 +1832,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v147';
+const BUILD_MARKER='· Build v148';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2137,7 +2149,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=147'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=148'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2314,11 +2326,11 @@ window.showNeuMenu=function(){
         drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Nur wenn du am Zug bist"><svg class="sym" aria-hidden="true"><use href="#s-remis"/></svg>Remis (nur wenn du am Zug bist)</button>`;
       }
       btnsEl.innerHTML=`
-        <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">Weiterspielen</button>
+        <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-weiter"/></svg>Weiterspielen</button>
         ${MARK_UI ? `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()"><svg class="sym" aria-hidden="true"><use href="#s-marke"/></svg>Hier stimmt was nicht</button>` : ''}
         ${drawBtn}
         <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvki()"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>Aufgeben</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();">↺ Neu (anderer Modus/Stufe)</button>
+        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();"><svg class="sym" aria-hidden="true"><use href="#s-neustart"/></svg>Neu (anderer Modus/Stufe)</button>
         <div style="font-size:var(--fs-xs);color:var(--text3);text-align:center;">Partie <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
       showOverlay('neu-overlay');
     } else if(isFinished){
@@ -2327,8 +2339,8 @@ window.showNeuMenu=function(){
       btnsEl.innerHTML=`
         <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu();startAIGame('${aiSkill}')"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>Nochmal (${skillLabel(aiSkill)})</button>
         ${MARK_UI ? `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()"><svg class="sym" aria-hidden="true"><use href="#s-marke"/></svg>Hier stimmte was nicht</button>` : ''}
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();">↺ Neu (anderer Modus/Stufe)</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu()">↩ Zurück zum Brett</button>
+        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();"><svg class="sym" aria-hidden="true"><use href="#s-neustart"/></svg>Neu (anderer Modus/Stufe)</button>
+        <button class="big-btn" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-zurueck"/></svg>Zurück zum Brett</button>
         <div style="font-size:var(--fs-xs);color:var(--text3);text-align:center;">Partie <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
       showOverlay('neu-overlay');
     } else {
@@ -2354,8 +2366,8 @@ window.showNeuMenu=function(){
     // bleibt (das Endbrett ansehen), verliert aber das Blau.
     btnsEl.innerHTML=`
       ${endgueltigM ? '' : `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>Nochmal anfragen</button>`}
-      <button class="big-btn${endgueltigM ? '' : ' primary'}" style="width:100%" onclick="closeNeuMenu()">Weiterschauen</button>
-      <button class="big-btn${endgueltigM ? ' primary' : ''}" style="width:100%;${endgueltigM ? '' : 'border-color:#ef4444;color:#ef4444'}" onclick="leaveRoom()">Raum verlassen</button>`;
+      <button class="big-btn${endgueltigM ? '' : ' primary'}" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-auge"/></svg>Weiterschauen</button>
+      <button class="big-btn${endgueltigM ? ' primary' : ''}" style="width:100%;${endgueltigM ? '' : 'border-color:#ef4444;color:#ef4444'}" onclick="leaveRoom()"><svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>Raum verlassen</button>`;
   } else if(inGame){
     titleEl.textContent='Spiel läuft';
     descEl.textContent='';
@@ -2387,12 +2399,12 @@ window.showNeuMenu=function(){
       drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Nur wenn du am Zug bist"><svg class="sym" aria-hidden="true"><use href="#s-remis"/></svg>Remis (nur wenn du am Zug bist)</button>`;
     }
     btnsEl.innerHTML=`
-      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">Weiterspielen</button>
+      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-weiter"/></svg>Weiterspielen</button>
       ${drawBtn}
       ${atTurn
         ? `<button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvm()"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>Aufgeben</button>`
         : `<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Nur wenn du am Zug bist"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>Aufgeben (nur wenn du am Zug bist)</button>`}
-      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="verlassenFragen()">${myRole==='host'?'Raum auflösen':'Verlassen'}</button>`;
+      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="verlassenFragen()">${myRole==='host'?'<svg class="sym" aria-hidden="true"><use href="#s-aufloesen"/></svg>Raum auflösen':'<svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>Verlassen'}</button>`;
     // §177 (Entscheid Walter, 11.9.): „Neu anfragen" gibt es in der LAUFENDEN Partie nicht mehr.
     // Es war ein Abbruch mit Neustart, bei dem der Mitspieler nur „Ja, nochmal" oder „Nein,
     // verlassen" hatte — wer weiterspielen wollte, konnte nicht einfach ablehnen. Wer neu anfangen
@@ -2722,8 +2734,8 @@ window.verlassenFragen=function(){
                              : 'Das zählt als Aufgabe — dein Mitspieler gewinnt.';
   // §79: der harmlose Rückweg ist blau, die Handlung, die den anderen trifft, nicht.
   btnsEl.innerHTML=`
-      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()">↩ Zurück zum Brett</button>
-      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();verlassenAlsAufgabe()">${host?'Raum auflösen':'Verlassen'}</button>`;
+      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-zurueck"/></svg>Zurück zum Brett</button>
+      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();verlassenAlsAufgabe()">${host?'<svg class="sym" aria-hidden="true"><use href="#s-aufloesen"/></svg>Raum auflösen':'<svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>Verlassen'}</button>`;
   showOverlay('neu-overlay');
 };
 

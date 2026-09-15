@@ -70,8 +70,8 @@ ok(/winArea\.innerHTML = bannerHtml \+ \(\(hindernis && hindernis\.endgueltig\) 
    /const wegHinweis = hindernis/.test(html) && /\n\s*: '';/.test(html),
    'MvM-Schlussbild: der \u00a7172-Hinweis ist BEDINGT (leer, sobald ein Nochmal m\u00f6glich ist)')
 ;
-ok(/\u21ba Neu \(anderer Modus\/Stufe\)/.test(html),
-   '„\u21ba Neu (anderer Modus/Stufe)" im Men\u00fc bleibt \u2014 das startet wirklich etwas Neues');
+ok(/#s-neustart"\/><\/svg>Neu \(anderer Modus\/Stufe\)/.test(html),
+   '„Neu (anderer Modus/Stufe)" im Men\u00fc bleibt \u2014 das startet wirklich etwas Neues (\u00a7188: Symbol statt \u21ba)');
 
 console.log('\u00a797 \u2014 Stufen-Anzeige gro\u00df, Schl\u00fcssel klein:');
 ok(/const SKILL_LABEL=\{einsteiger:'Einsteiger'/.test(html) && /function skillLabel\(/.test(html),
@@ -1387,21 +1387,21 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
      '\u00a7177: beide Zuh\u00f6rer zeigen eine Nochmal-Anfrage nur nach dem Ende');
 
   // ── C. Verlassen während der Partie zählt als Aufgabe ──────────────────────────────
-  ok(/onclick="verlassenFragen\(\)">\$\{myRole==='host'\?'Raum aufl\u00f6sen':'Verlassen'\}<\/button>/.test(imSpiel),
+  ok(/onclick="verlassenFragen\(\)">\$\{myRole==='host'\?'[^']*Raum aufl\u00f6sen':'[^']*Verlassen'\}<\/button>/.test(imSpiel),
      '\u00a7177: \u201eVerlassen\u201c/\u201eRaum aufl\u00f6sen\u201c in der laufenden Partie fragt erst nach');
   // §180 hat den isFinished-Block laenger gemacht (Hindernis-Abfrage) — die Absicht bleibt:
   // nach dem Ende fuehrt „Raum verlassen" direkt in leaveRoom, ohne die Aufgabe-Rueckfrage.
   // ⚠️ ANKER: `if(isFinished){` steht ZWEIMAL in der Datei (MvKI-Menü als `} else if(...)`).
   // Der MvM-Block ist der am Zeilenanfang eingerueckte — sonst spannt der Treffer ueber beide.
   const fin = (html.match(/\n  if\(isFinished\)\{[\s\S]*?\n  \} else if\(inGame\)\{/)||[''])[0];
-  ok(/onclick="leaveRoom\(\)">Raum verlassen</.test(fin) && !/verlassenFragen/.test(fin),
+  ok(/onclick="leaveRoom\(\)">(<svg[^>]*>)?(<use[^>]*\/>)?(<\/svg>)?Raum verlassen</.test(fin) && !/verlassenFragen/.test(fin),
      '\u00a7177: nach dem Ende ist Verlassen einfach Verlassen (ohne R\u00fcckfrage)');
   const vf = fn(/window\.verlassenFragen=function\(\)\{[\s\S]*?\n\};/, 'verlassenFragen');
   ok(vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 die Partie endet f\u00fcr beide.'") > -1 &&
      vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 dein Mitspieler gewinnt.'") > -1 &&
      vf.indexOf("'Raum aufl\u00f6sen?'") > -1 && vf.indexOf("'Partie verlassen?'") > -1,
      '\u00a7177: Wortlaut der R\u00fcckfrage wie vereinbart (Host und Gast)');
-  ok(/big-btn primary[^>]*onclick="closeNeuMenu\(\)">\u21a9 Zur\u00fcck zum Brett/.test(vf) &&
+  ok(/big-btn primary[^>]*onclick="closeNeuMenu\(\)">(?:<svg[^>]*><use[^>]*\/><\/svg>)?Zur\u00fcck zum Brett/.test(vf) &&
      !/primary[^>]*verlassenAlsAufgabe/.test(vf),
      '\u00a7177 (\u00a779): blau ist der harmlose R\u00fcckweg, nicht das Verlassen');
   ok(/^window\.verlassenFragen=/m.test(html) && /^window\.verlassenAlsAufgabe=/m.test(html),
@@ -1583,9 +1583,11 @@ console.log('\u00a7180 \u2014 das Men\u00fc wei\u00df dasselbe wie das Schlussbi
   ok(mVor.indexOf('Nochmal anfragen') > -1 && mFrei.indexOf('Nochmal anfragen') > -1,
      '\u00a7180 VERHALTEN: vorl\u00e4ufiges Hindernis oder keines \u2192 \u201eNochmal anfragen\u201c bleibt');
   // Walters Vorgabe: dann trägt „Raum verlassen" die Betonung — der Weg ins Obermenü.
+  // \u00a7188: die Beschriftung steht jetzt HINTER einem Symbol \u2014 Auszeichnung entfernen, nicht
+  // bis zum ersten `<` lesen, sonst liefert der Vergleich stumm den leeren Text.
   const primaerVor = (t) => {
-    const m = t.match(/<button class="big-btn primary"[^>]*>([^<]*)</);
-    return m ? m[1].replace(/\s+/g,' ').trim() : null;
+    const m = t.match(/<button class="big-btn primary"[^>]*>([\s\S]*?)<\/button>/);
+    return m ? m[1].replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim() : null;
   };
   ok(primaerVor(mEnd) === 'Raum verlassen',
      '\u00a7180 VERHALTEN: im endg\u00fcltigen Fall ist \u201eRaum verlassen\u201c der blaue Knopf');
@@ -1771,7 +1773,7 @@ console.log('\u00a7187 Symbolsatz \u2014 kein Emoji, ein Vorrat, keine Verweise 
 
   const vorrat  = new Set([...html.matchAll(/<symbol id="(s-[a-z0-9]+)"/g)].map(m => m[1]));
   const benutzt = new Set([...html.matchAll(/<use href="#(s-[a-z0-9]+)"\s*\/>/g)].map(m => m[1]));
-  ok(vorrat.size === 17, 'Symbolvorrat h\u00e4lt 17 Formen \u2014 gefunden: ' + vorrat.size);
+  ok(vorrat.size === 23, 'Symbolvorrat h\u00e4lt 23 Formen \u2014 gefunden: ' + vorrat.size);
   const insLeere = [...benutzt].filter(x => !vorrat.has(x));
   ok(insLeere.length === 0, 'kein <use> zeigt auf ein fehlendes Symbol'
      + (insLeere.length ? ' \u2014 fehlt: ' + insLeere.join(', ') : ''));
@@ -1786,6 +1788,22 @@ console.log('\u00a7187 Symbolsatz \u2014 kein Emoji, ein Vorrat, keine Verweise 
 
   ok(/@media print\{[\s\S]{0,400}\.sym,\.sym-gross\{color:#5f5e5a;\}/.test(html),
      'Druckblock f\u00e4rbt auch die Symbole fest \u2014 sonst drucken sie im System-Dunkelmodus hell');
+
+  // \u00a7188 (Walter am Ger\u00e4t): Der Fehler war nicht ein fehlendes Symbol, sondern ein UNEINHEITLICHES
+  // Men\u00fc \u2014 vier Kn\u00f6pfe mit, zwei ohne. Gepr\u00fcft wird deshalb nicht \u201eKnopf X hat ein Symbol\u201c,
+  // sondern: INNERHALB eines \u2630-Men\u00fcs tr\u00e4gt JEDER Knopf eines. In Dialogen (Schlie\u00dfen, Zur\u00fcck,
+  // Abbrechen) tr\u00e4gt umgekehrt keiner eines \u2014 auch das ist f\u00fcr sich stimmig und bleibt ungepr\u00fcft.
+  const menueBloecke = html.match(/btnsEl\.innerHTML=`[\s\S]*?`;/g) || [];
+  const ohneSymbol = [];
+  for(const block of menueBloecke){
+    for(const b of block.matchAll(/<button[^>]*>([\s\S]*?)<\/button>/g)){
+      if(!/<svg class="sym"/.test(b[1]))
+        ohneSymbol.push(b[1].replace(/<[^>]*>/g,'').replace(/\s+/g,' ').trim().slice(0,38));
+    }
+  }
+  ok(menueBloecke.length >= 4 && ohneSymbol.length === 0,
+     'in den \u2630-Men\u00fcs tr\u00e4gt jeder Knopf ein Symbol \u2014 ' + menueBloecke.length + ' Men\u00fcs'
+     + (ohneSymbol.length ? ', OHNE: ' + ohneSymbol.join(' | ') : ''));
 
   ok(!/cr\.textContent\s*=/.test(ohneKom187),
      'gateRefresh schreibt den Erstellen-Knopf nicht mehr per textContent (das SVG \u00fcberlebt das nicht)');
