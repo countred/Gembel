@@ -434,7 +434,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      Größe, nicht in der Vorschau — ein vierter Strich wird dort zu Grau.
      §188 (14.9., Walter am Gerät): im ☰-Menü trugen sechs Knöpfe KEIN Symbol, während ihre
      Nachbarn eines hatten — das wirkte unharmonisch. Nachgetragen: Weiterspielen, Weiterschauen,
-     Raum auflösen/Verlassen, Raum verlassen, „Neu (anderer Modus/Stufe)“ und „Zurück zum Brett“.
+     Partie verlassen, Raum verlassen, „Neu (anderer Modus/Stufe)“ und „Zurück zum Brett“.
+     §189: das Kreuz-im-Quadrat für „Raum auflösen“ ist wieder entfallen — der Knopf heißt jetzt
+     für beide Rollen „Partie verlassen“ und trägt den Pfeil hinaus.
      Bei den letzten beiden ersetzt das Symbol die Textpfeile ↺ und ↩, die dieselbe Rolle
      spielten, aber aus der Schrift kamen. In Dialogen (Schließen, Zurück, Abbrechen, Ablehnen)
      bleibt es bei reiner Beschriftung: dort trägt KEIN Knopf ein Symbol, das ist für sich stimmig.
@@ -459,7 +461,6 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <symbol id="s-drehen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3.6" width="6" height="11.4" rx="1.6"/><path d="M6.2 17.4a7 7 0 0 0 11.6 0"/><path d="M6.2 14v3.4h3.4"/></symbol>
   <symbol id="s-weiter" viewBox="0 0 24 24" fill="currentColor"><path d="M8.4 5.4 18.4 12 8.4 18.6z"/></symbol>
   <symbol id="s-auge" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2.8 12s3.6-6.2 9.2-6.2S21.2 12 21.2 12s-3.6 6.2-9.2 6.2S2.8 12 2.8 12z"/><circle cx="12" cy="12" r="2.6"/></symbol>
-  <symbol id="s-aufloesen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4.8" width="16" height="14.4" rx="2.6"/><path d="M9.6 9.6l4.8 4.8M14.4 9.6l-4.8 4.8"/></symbol>
   <symbol id="s-verlassen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M10.4 4.8H6.2a2 2 0 0 0-2 2v10.4a2 2 0 0 0 2 2h4.2"/><path d="M10.4 12h9.2M16.4 8.6l3.2 3.4-3.2 3.4"/></symbol>
   <symbol id="s-neustart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 10.6 12 4.6l7.6 6v8.1a1.2 1.2 0 0 1-1.2 1.2H5.6a1.2 1.2 0 0 1-1.2-1.2z"/><path d="M9.6 19.9v-5.6h4.8v5.6"/></symbol>
   <symbol id="s-zurueck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.4 6.6 4.6 10.4l3.8 3.8"/><path d="M4.6 10.4h9.6a4.8 4.8 0 0 1 0 9.6h-2"/></symbol>
@@ -553,7 +554,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=148'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=149'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
@@ -778,6 +779,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Übertragungscode in das Fenster auf deinem anderen Gerät:</div>
       <div id="gate-code" style="font-family:monospace;font-size:var(--fs-sm);letter-spacing:1px;
         color:var(--text);word-break:break-all;background:var(--bg2);padding:8px 10px;border-radius:8px;"></div>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="big-btn" style="flex:none;padding:9px 14px;" onclick="copyGateCode()">Code kopieren</button>
+        <span id="gate-copy-msg" style="font-size:var(--fs-sm);color:var(--text2);"></span>
+      </div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input id="gate-input" type="text" autocomplete="off" spellcheck="false"
           placeholder="Code eingeben" style="flex:1;min-width:180px;padding:9px 10px;border-radius:8px;
@@ -1026,7 +1031,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=148" charset="utf-8"></script>
+<script src="gembel_rules.js?v=149" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1038,7 +1043,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=148" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=149" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1802,7 +1807,37 @@ window.openGateInfo = function(){
   if(cd) cd.textContent = gateMakeCode();      // textContent, nie innerHTML (§4.4)
   if(ms) ms.textContent = '';
   if(inp) inp.value = '';
+  const km = document.getElementById('gate-copy-msg'); if(km) km.textContent = '';
   showOverlay('gate-overlay');
+};
+// §189: Der Übertragungscode ist lang und steht in Monospace mit Zeilenumbruch mitten im Wort —
+// er von Hand zu markieren ist am Telefon eine Zumutung, und genau das verlangte der Text daneben
+// („Kopier einfach diesen Übertragungscode“). Drei Wege, absteigend:
+//   1. die Zwischenablage (braucht HTTPS; countred.com hat es, ein lokal geöffnetes file:// nicht),
+//   2. der alte execCommand-Weg — abgekündigt, aber in älteren Safari-Ständen der einzige,
+//   3. wenigstens MARKIEREN, damit ein Fingertipp aufs Menü „Kopieren“ reicht.
+// ⚠️ Der dritte Weg ist kein Scheitern, sondern das Ergebnis — die Rückmeldung sagt das auch so.
+window.copyGateCode = async function(){
+  const cd = document.getElementById('gate-code'), ms = document.getElementById('gate-copy-msg');
+  const text = (cd && cd.textContent) || '';
+  if(!text || !ms) return;
+  let kopiert = false, markiert = false;
+  try{
+    if(navigator.clipboard && window.isSecureContext){ await navigator.clipboard.writeText(text); kopiert = true; }
+  }catch(e){ /* weiter zum Rueckfallweg */ }
+  if(!kopiert){
+    try{
+      const r = document.createRange(); r.selectNodeContents(cd);
+      const sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(r);
+      markiert = true;
+      if(document.execCommand) kopiert = document.execCommand('copy');
+    }catch(e){ /* dann bleibt es bei der Markierung */ }
+  }
+  ms.style.color = 'var(--text2)';
+  ms.textContent = kopiert ? 'Kopiert.'
+                 : markiert ? 'Code ist markiert — jetzt kopieren.'
+                            : 'Konnte nicht kopieren — bitte von Hand markieren.';
+  setTimeout(()=>{ if(ms) ms.textContent=''; }, 5000);
 };
 window.redeemGateCode = function(){
   const inp = document.getElementById('gate-input'), ms = document.getElementById('gate-msg');
@@ -1832,7 +1867,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v148';
+const BUILD_MARKER='· Build v149';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2149,7 +2184,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=148'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=149'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2404,12 +2439,12 @@ window.showNeuMenu=function(){
       ${atTurn
         ? `<button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvm()"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>Aufgeben</button>`
         : `<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Nur wenn du am Zug bist"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>Aufgeben (nur wenn du am Zug bist)</button>`}
-      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="verlassenFragen()">${myRole==='host'?'<svg class="sym" aria-hidden="true"><use href="#s-aufloesen"/></svg>Raum auflösen':'<svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>Verlassen'}</button>`;
+      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="verlassenFragen()"><svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>Partie verlassen</button>`;
     // §177 (Entscheid Walter, 11.9.): „Neu anfragen" gibt es in der LAUFENDEN Partie nicht mehr.
     // Es war ein Abbruch mit Neustart, bei dem der Mitspieler nur „Ja, nochmal" oder „Nein,
     // verlassen" hatte — wer weiterspielen wollte, konnte nicht einfach ablehnen. Wer neu anfangen
     // will, bietet Remis an; nach dem Ende steht „Nochmal" wie bisher im Schlussbild.
-    // „Verlassen"/„Raum auflösen" fragt jetzt nach (verlassenFragen): es zählt als Aufgabe.
+    // „Partie verlassen" fragt nach (verlassenFragen): es zählt als Aufgabe. §189: EIN Wortlaut.
   } else {
     showLobby(); return;
   }
@@ -2728,14 +2763,18 @@ window.verlassenFragen=function(){
   const titleEl=document.getElementById('neu-title');
   const descEl=document.getElementById('neu-desc');
   const btnsEl=document.getElementById('neu-buttons');
-  const host = (myRole==='host');
-  titleEl.textContent = host ? 'Raum auflösen?' : 'Partie verlassen?';
-  descEl.textContent  = host ? 'Das zählt als Aufgabe — die Partie endet für beide.'
-                             : 'Das zählt als Aufgabe — dein Mitspieler gewinnt.';
+  // §189 (Entscheid Walter, 14.9.): EIN Wortlaut für beide Rollen. Vorher hieß es beim Host
+  // „Raum auflösen“, beim Gast „Verlassen“. Der Unterschied ist technisch echt (der Host
+  // löscht den Raum, der Gast nur sich selbst), aber für den Spieler folgenlos: in BEIDEN
+  // Fällen zählt es als Aufgabe, der andere gewinnt, und für beide ist die Partie zu Ende —
+  // „Nochmal“ gibt es danach so oder so nicht (mitspielerGegangen, §180). „Auflösen“ benannte
+  // also eine Innenansicht der Datenbank, keine Information für den, der davorsteht.
+  titleEl.textContent = 'Partie verlassen?';
+  descEl.textContent  = 'Das zählt als Aufgabe — dein Mitspieler gewinnt und die Partie ist beendet.';
   // §79: der harmlose Rückweg ist blau, die Handlung, die den anderen trifft, nicht.
   btnsEl.innerHTML=`
       <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-zurueck"/></svg>Zurück zum Brett</button>
-      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();verlassenAlsAufgabe()">${host?'<svg class="sym" aria-hidden="true"><use href="#s-aufloesen"/></svg>Raum auflösen':'<svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>Verlassen'}</button>`;
+      <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();verlassenAlsAufgabe()"><svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>Partie verlassen</button>`;
   showOverlay('neu-overlay');
 };
 
@@ -3919,7 +3958,9 @@ async function raumRueckkehrPruefen(){
         // existiert, trägt keinen Grund mehr: er kann nach einem Abbruch verschwunden sein ODER
         // (seit §177) weil der Host die Partie aufgelöst hat. Also die neutrale Fassung — oder
         // den Grund, den dieser Client vorher schon gesehen hat.
-        handleAbortReturn(raumEndeText || 'Der Raum wurde inzwischen aufgelöst — die Partie ist beendet.');
+        // §189: nicht mehr „aufgelöst“ — häufigste Ursache ist seit §177 ein Mitspieler, der VERLASSEN
+        // hat. Der Satz soll denselben Vorgang nicht anders nennen als der Knopf.
+        handleAbortReturn(raumEndeText || 'Der Raum besteht nicht mehr — die Partie ist beendet.');
         return;
       }
       const data=snap.val();

@@ -1387,8 +1387,8 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
      '\u00a7177: beide Zuh\u00f6rer zeigen eine Nochmal-Anfrage nur nach dem Ende');
 
   // ── C. Verlassen während der Partie zählt als Aufgabe ──────────────────────────────
-  ok(/onclick="verlassenFragen\(\)">\$\{myRole==='host'\?'[^']*Raum aufl\u00f6sen':'[^']*Verlassen'\}<\/button>/.test(imSpiel),
-     '\u00a7177: \u201eVerlassen\u201c/\u201eRaum aufl\u00f6sen\u201c in der laufenden Partie fragt erst nach');
+  ok(/onclick="verlassenFragen\(\)">(?:<svg[^>]*><use[^>]*\/><\/svg>)?Partie verlassen<\/button>/.test(imSpiel),
+     '\u00a7177: \u201ePartie verlassen\u201c in der laufenden Partie fragt erst nach');
   // §180 hat den isFinished-Block laenger gemacht (Hindernis-Abfrage) — die Absicht bleibt:
   // nach dem Ende fuehrt „Raum verlassen" direkt in leaveRoom, ohne die Aufgabe-Rueckfrage.
   // ⚠️ ANKER: `if(isFinished){` steht ZWEIMAL in der Datei (MvKI-Menü als `} else if(...)`).
@@ -1397,10 +1397,14 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
   ok(/onclick="leaveRoom\(\)">(<svg[^>]*>)?(<use[^>]*\/>)?(<\/svg>)?Raum verlassen</.test(fin) && !/verlassenFragen/.test(fin),
      '\u00a7177: nach dem Ende ist Verlassen einfach Verlassen (ohne R\u00fcckfrage)');
   const vf = fn(/window\.verlassenFragen=function\(\)\{[\s\S]*?\n\};/, 'verlassenFragen');
-  ok(vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 die Partie endet f\u00fcr beide.'") > -1 &&
-     vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 dein Mitspieler gewinnt.'") > -1 &&
-     vf.indexOf("'Raum aufl\u00f6sen?'") > -1 && vf.indexOf("'Partie verlassen?'") > -1,
-     '\u00a7177: Wortlaut der R\u00fcckfrage wie vereinbart (Host und Gast)');
+  // \u00a7189: EIN Wortlaut f\u00fcr beide Rollen. Gepr\u00fcft wird beides \u2014 dass der neue Satz dasteht UND
+  // dass die Rollenweiche verschwunden ist; sonst k\u00f6nnte sie unbemerkt wiederkommen.
+  ok(vf.indexOf("'Partie verlassen?'") > -1 &&
+     vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 dein Mitspieler gewinnt und die Partie ist beendet.'") > -1 &&
+     !/myRole==='host'|\bhost \?/.test(vf),
+     '\u00a7189: R\u00fcckfrage hat EINEN Wortlaut, keine Rollenweiche mehr');
+  ok(!/Raum aufl\u00f6sen/.test(html.replace(/<!--[\s\S]*?-->/g,'').replace(/\/\/.*$/gm,'')),
+     '\u00a7189: \u201eRaum aufl\u00f6sen\u201c kommt nirgends mehr in der Oberfl\u00e4che vor');
   ok(/big-btn primary[^>]*onclick="closeNeuMenu\(\)">(?:<svg[^>]*><use[^>]*\/><\/svg>)?Zur\u00fcck zum Brett/.test(vf) &&
      !/primary[^>]*verlassenAlsAufgabe/.test(vf),
      '\u00a7177 (\u00a779): blau ist der harmlose R\u00fcckweg, nicht das Verlassen');
@@ -1773,7 +1777,7 @@ console.log('\u00a7187 Symbolsatz \u2014 kein Emoji, ein Vorrat, keine Verweise 
 
   const vorrat  = new Set([...html.matchAll(/<symbol id="(s-[a-z0-9]+)"/g)].map(m => m[1]));
   const benutzt = new Set([...html.matchAll(/<use href="#(s-[a-z0-9]+)"\s*\/>/g)].map(m => m[1]));
-  ok(vorrat.size === 23, 'Symbolvorrat h\u00e4lt 23 Formen \u2014 gefunden: ' + vorrat.size);
+  ok(vorrat.size === 22, 'Symbolvorrat h\u00e4lt 22 Formen \u2014 gefunden: ' + vorrat.size);
   const insLeere = [...benutzt].filter(x => !vorrat.has(x));
   ok(insLeere.length === 0, 'kein <use> zeigt auf ein fehlendes Symbol'
      + (insLeere.length ? ' \u2014 fehlt: ' + insLeere.join(', ') : ''));
@@ -1804,6 +1808,18 @@ console.log('\u00a7187 Symbolsatz \u2014 kein Emoji, ein Vorrat, keine Verweise 
   ok(menueBloecke.length >= 4 && ohneSymbol.length === 0,
      'in den \u2630-Men\u00fcs tr\u00e4gt jeder Knopf ein Symbol \u2014 ' + menueBloecke.length + ' Men\u00fcs'
      + (ohneSymbol.length ? ', OHNE: ' + ohneSymbol.join(' | ') : ''));
+
+  // \u00a7189: Kopierknopf f\u00fcr den \u00dcbertragungscode \u2014 gepr\u00fcft wird der VOLLST\u00c4NDIGE Rueckfallweg,
+  // nicht nur das Vorhandensein: ohne ihn scheitert das Kopieren auf jedem Ger\u00e4t ohne
+  // Zwischenablage-Recht still, und der Nutzer sieht gar nichts.
+  // Im FUNKTIONSK\u00d6RPER pr\u00fcfen, nicht in der ganzen Datei \u2014 sonst gen\u00fcgt der Kommentar dar\u00fcber,
+  // der die drei Wege beschreibt, und die Pr\u00fcfung h\u00e4lt nichts mehr fest (vgl. U7).
+  const cg189 = (html.match(/window\.copyGateCode\s*=\s*async function\(\)\{[\s\S]*?\n\};/)||[''])[0]
+                  .replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
+  ok(/onclick="copyGateCode\(\)"/.test(html) && /id="gate-copy-msg"/.test(html) && cg189
+     && /navigator\.clipboard\.writeText/.test(cg189) && /selectNodeContents/.test(cg189)
+     && /document\.execCommand\('copy'\)/.test(cg189),
+     '\u00a7189: Code kopieren \u2014 Knopf, R\u00fcckmeldung und alle drei Wege (Zwischenablage, execCommand, Markieren)');
 
   ok(!/cr\.textContent\s*=/.test(ohneKom187),
      'gateRefresh schreibt den Erstellen-Knopf nicht mehr per textContent (das SVG \u00fcberlebt das nicht)');
