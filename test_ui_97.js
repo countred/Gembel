@@ -52,13 +52,14 @@ function ok(cond, name){
 }
 
 console.log('\u00a797 \u2014 Beschriftungen:');
-ok(/>🤖 Gegen Max Michu<\/button>/.test(html) && !/Spiele gegen Max Michu/.test(html),
+ok(/<use href="#s-robot"\/><\/svg>Gegen Max Michu<\/button>/.test(html) && !/Spiele gegen Max Michu/.test(html),
    'Startmen\u00fc: „Gegen Max Michu" (ohne „Spiele")');
-ok(/onclick="showNeuMenu\(\)">☰ Optionen<\/button>/.test(html) && !/>☰ Men\u00fc</.test(html),
+ok(/showNeuMenu\(\)"><svg class="sym"[^>]*><use href="#s-menue"\/><\/svg>Optionen<\/button>/.test(html)
+   && !/Men\u00fc<\/button>/.test(html),   // §187: „Menü" bleibt als ÜBERSCHRIFT erlaubt, nur der KNOPF heißt Optionen
    'Werkzeugleiste: „\u2630 Optionen" statt „\u21ba Neu"');
 // Auf die AUSGEGEBENE Auszeichnung pruefen, nicht auf den Fliesstext: der Quelltext erwaehnt
 // die entfernte Zeile weiterhin im Kommentar (Wiedereinbau-Schutz).
-ok(!/>oder \u21ba Neu f\u00fcr weitere Optionen/.test(html) && !/>oder ☰ Optionen/.test(html),
+ok(!/>oder \u21ba Neu f\u00fcr weitere Optionen/.test(html) && !/>oder [^<]{0,3}Optionen/.test(html),
    'Schlussbild ohne Zusatzzeile „oder \u2630 Optionen \u2026" (in BEIDEN Modi entfernt)');
 // §172 (9.9.) hat diese Pruefung ANGEPASST (Entscheid Walter): das MvM-Schlussbild traegt jetzt
 // zusaetzlich `wegHinweis`. Die §97b-Absicht bleibt gewahrt — verboten ist eine DAUERHAFTE
@@ -75,7 +76,7 @@ ok(/\u21ba Neu \(anderer Modus\/Stufe\)/.test(html),
 console.log('\u00a797 \u2014 Stufen-Anzeige gro\u00df, Schl\u00fcssel klein:');
 ok(/const SKILL_LABEL=\{einsteiger:'Einsteiger'/.test(html) && /function skillLabel\(/.test(html),
    'skillLabel() vorhanden (reine Anzeigeabbildung)');
-ok(/🔄 Nochmal \(\$\{skillLabel\(aiSkill\)\}\)/.test(html),
+ok(/<use href="#s-nochmal"\/><\/svg>Nochmal \(\$\{skillLabel\(aiSkill\)\}\)/.test(html),
    '„Nochmal (Meister)" nutzt skillLabel, nicht den Rohschl\u00fcssel');
 for(const key of ['einsteiger','fortgeschritten','meister']){
   ok(new RegExp("startAIGame\\('"+key+"'\\)").test(html),
@@ -921,7 +922,7 @@ ok(/const MARK_UI\s*=\s*false;/.test(html),
    'MARK_UI steht auf false \u2014 der Knopf wird nicht ausgeliefert');
 ok((html.match(/\$\{MARK_UI \? `<button[^`]*markMvkiPosition\(\)[^`]*`\s*:\s*''\}/g)||[]).length === 2,
    'BEIDE Men\u00fczust\u00e4nde (laufend/beendet) h\u00e4ngen am selben Schalter');
-ok((html.match(/📌 Hier stimmt(e)? was nicht/g)||[]).length === 2,
+ok((html.match(/#s-marke"\/><\/svg>Hier stimmt(e)? was nicht/g)||[]).length === 2,
    'beide Beschriftungen stehen weiter im Quelltext (Wiedereinbau ohne Neuformulierung)');
 ok((html.match(/onclick="closeNeuMenu\(\);markMvkiPosition\(\)"/g)||[]).length === 2,
    'die Funktion dahinter ist unver\u00e4ndert dieselbe');
@@ -1369,7 +1370,7 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
      od.indexOf('eigenesRemisSetzen(true);') < od.indexOf("update(roomRef,{'meta/drawOffer':myRole})"),
      '\u00a7177: Anbieten zeigt sofort und schreibt danach \u2014 kein await');
   const su = fn(/function updateStatusUI\(\)\{[\s\S]*?\n\}/, 'updateStatusUI');
-  ok(/eigenesRemisOffen\) \? '<br>🤝 Remis angeboten'/.test(su) && (su.match(/\$\{angebotZeile\}/g)||[]).length === 2,
+  ok(/eigenesRemisOffen\) \? '<br>Remis angeboten'/.test(su) && (su.match(/\$\{angebotZeile\}/g)||[]).length === 2,
      '\u00a7177: die Statusanzeige tr\u00e4gt das offene Angebot als eigene Zeile (am Zug und nicht am Zug)');
   ok(/\} else if\(eigenesRemisOffen\)\{[\s\S]{0,300}?disabled[\s\S]{0,120}?Remis angeboten \u2014 wartet auf Antwort/.test(html),
      '\u00a7177: im Men\u00fc ist \u201eRemis anbieten\u201c gesperrt, solange das eigene Angebot steht');
@@ -1739,9 +1740,55 @@ console.log('\u00a7186 Wortmarke \u2014 eine Regel, f\u00fcnf Stellen, schwarzwe
   const REGEL = /\.wortmarke \.wm-count\{font-weight:400;color:var\(--red-fig-bg\);\}\s*\.wortmarke \.wm-red\{font-weight:700;color:var\(--text\);\}/;
   ok(REGEL.test(html),   'index.html: Gewicht UND Farbe, als EINE Quelle im Kopf');
   ok(REGEL.test(anl186), 'anleitung.html tr\u00e4gt dieselbe Regel wortgleich');
-  const DRUCK = /@media print\{\s*html,body\{background:#fff;color:#2c2c2a;\}\s*\.wortmarke \.wm-count\{color:#5f5e5a;\}\s*\.wortmarke \.wm-red\{color:#2c2c2a;\}\s*\}/;
+  const DRUCK = /@media print\{\s*html,body\{background:#fff;color:#2c2c2a;\}\s*\.wortmarke \.wm-count\{color:#5f5e5a;\}\s*\.wortmarke \.wm-red\{color:#2c2c2a;\}/;
   ok(DRUCK.test(html),   'index.html: Druckregeln da, Grauwerte als Literale (kein var, kein Dunkelmodus)');
   ok(DRUCK.test(anl186), 'anleitung.html: dieselben Druckregeln');
+}
+
+// §187 (14.9.): DER SYMBOLSATZ IST EIN VERSPRECHEN AN DIE TESTER — dass jeder dasselbe sieht.
+// Emoji brechen dieses Versprechen still: sie werden vom Gerät des Betrachters gezeichnet, und
+// niemand merkt am eigenen Bildschirm, dass ein anderer etwas anderes sieht. Diese Prüfungen
+// halten drei Dinge fest, die sich nicht von selbst halten:
+//   1. dass KEIN Emoji zurückkehrt — geprüft wird die ganze Datei, nicht eine Liste von Knoepfen,
+//      denn der nächste Emoji-Griff passiert an einer Stelle, die heute noch niemand kennt.
+//      Ausgenommen sind genau drei: \u{1F3C6} \u{1F3C5} \u{1F91D} im Siegerbanner — dort trägt Farbe den Moment.
+//   2. dass Vorrat und Verwendung sich decken: kein Verweis ins Leere (unsichtbares Symbol,
+//      das kein Test sonst bemerkt) und keine Symbol-Leiche, die nur noch Bytes kostet.
+//   3. dass `gateRefresh` den Knopftext NICHT mehr per textContent schreibt. Genau das würde das
+//      SVG im Erstellen-Knopf beim ersten Umschalten löschen — ein Fehler, der erst aufträte,
+//      wenn die Punkte-Schwelle greift, also beim Tester und nicht beim Entwickler.
+console.log('\u00a7187 Symbolsatz \u2014 kein Emoji, ein Vorrat, keine Verweise ins Leere:');
+{
+  const ohneKom187 = html.replace(/<!--[\s\S]*?-->/g, '')
+                         .replace(/\/\*[\s\S]*?\*\//g, '')
+                         .replace(/^[ \t]*\/\/.*$/gm, '');
+  // Das Siegerbanner wird HERAUSGESCHNITTEN, nicht seine Zeichen freigegeben: sonst d\u00fcrfte
+  // \u{1F91D} \u00fcberall wieder auftauchen \u2014 und genau das ist der Knopf, von dem es kam.
+  const ohneBanner187 = ohneKom187.replace(/<div class="win-banner">[\s\S]*?<\/div>/g, '');
+  const reste = [...new Set([...ohneBanner187.matchAll(/[\u{1F300}-\u{1FAFF}\u{23F3}\u{2630}]/gu)].map(m => m[0]))];
+  ok(reste.length === 0, 'index.html: kein Emoji au\u00dferhalb des Siegerbanners \u2014 gefunden: '
+     + (reste.length ? reste.join(' ') : 'keins'));
+
+  const vorrat  = new Set([...html.matchAll(/<symbol id="(s-[a-z0-9]+)"/g)].map(m => m[1]));
+  const benutzt = new Set([...html.matchAll(/<use href="#(s-[a-z0-9]+)"\s*\/>/g)].map(m => m[1]));
+  ok(vorrat.size === 17, 'Symbolvorrat h\u00e4lt 17 Formen \u2014 gefunden: ' + vorrat.size);
+  const insLeere = [...benutzt].filter(x => !vorrat.has(x));
+  ok(insLeere.length === 0, 'kein <use> zeigt auf ein fehlendes Symbol'
+     + (insLeere.length ? ' \u2014 fehlt: ' + insLeere.join(', ') : ''));
+  const leichen = [...vorrat].filter(x => !benutzt.has(x));
+  ok(leichen.length === 0, 'kein unbenutztes Symbol im Vorrat'
+     + (leichen.length ? ' \u2014 tot: ' + leichen.join(', ') : ''));
+
+  const symTags = [...html.matchAll(/<svg class="sym[^"]*"[^>]*>/g)].map(m => m[0]);
+  ok(symTags.length >= 25 && symTags.every(t => t.includes('aria-hidden="true"')),
+     'jedes eingesetzte Symbol ist aria-hidden (die Beschriftung tr\u00e4gt den Sinn) \u2014 '
+     + symTags.length + ' Stellen');
+
+  ok(/@media print\{[\s\S]{0,400}\.sym,\.sym-gross\{color:#5f5e5a;\}/.test(html),
+     'Druckblock f\u00e4rbt auch die Symbole fest \u2014 sonst drucken sie im System-Dunkelmodus hell');
+
+  ok(!/cr\.textContent\s*=/.test(ohneKom187),
+     'gateRefresh schreibt den Erstellen-Knopf nicht mehr per textContent (das SVG \u00fcberlebt das nicht)');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
