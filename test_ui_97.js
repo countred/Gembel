@@ -415,23 +415,21 @@ console.log('\u00a7159 \u2014 Urheberrechtsvermerk:');
   // staerker: Spielregeln und Spielideen sind urheberrechtlich frei. Der Absatz nennt
   // deshalb Code, Texte und Gestaltung — und darf die Regeln NICHT beanspruchen.
   const absatz = (imp.match(/<strong[^>]*>Urheberrecht<\/strong>[\s\S]*?<\/div>/)||[''])[0];
-  // \u00a7185 (12.9.): bis v144 verbot diese Pruefung die Woerter „Spielidee" und „Spielregel"
-  // im Absatz \u2014 als Schutz gegen einen ueberdehnten Vermerk. Der neue Wortlaut BRAUCHT sie
-  // aber, weil er beide Richtungen benennt. Gepruefert wird deshalb nicht mehr auf Abwesenheit,
-  // sondern auf die richtige SEITE: die Spielidee steht im nicht-beanspruchten Teil, Code und
-  // Wortlaut im beanspruchten. Ein Absatz, der die Spielidee beansprucht, faellt weiter.
+  // \u00a7195 (17.9.): Der Vermerk im Impressum ist wieder EINE Zeile. \u00a7185 hatte hier eine
+  // Abgrenzung in beide Richtungen stehen; sie \u00e4nderte die Rechtslage nicht und wies als
+  // Einzige auf die L\u00fccke hin. Sie steht jetzt in der LICENSE (weiter unten gepr\u00fcft).
+  // Gepr\u00fcft wird hier wieder das, was \u00a7185 urspr\u00fcnglich sch\u00fctzte: dass der Absatz sich NICHT
+  // \u00fcberdehnt. Weder „Spielidee" noch „Spielsystem" geh\u00f6ren in diesen Absatz \u2014 eine
+  // Beanspruchung w\u00e4re falsch, ein Verzicht eine Einladung.
   ok(absatz.length > 0, 'der Urheberrechts-Absatz ist isoliert (' + absatz.length + ' Zeichen)');
   {
     const t = absatz.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ');
-    const i = t.indexOf('Nicht beansprucht'), j = t.indexOf('Beansprucht werden der');
-    ok(i > -1 && j > i, 'beide Richtungen stehen darin, in dieser Reihenfolge');
-    const ohne = t.slice(i, j), mit = t.slice(j);
-    ok(/Spielidee/.test(ohne) && /Spielsystem als solche/.test(ohne) &&
-       !/Spielidee|Spielsystem/.test(mit),
-       'Spielidee und Spielsystem stehen NUR im nicht beanspruchten Teil');
-    ok(/Programmcode/.test(mit) && /Wortlaut der Spielregeln/.test(mit) &&
-       /interaktiven Anleitung/.test(mit) && /Bildschirmaufbau/.test(mit),
-       'beansprucht sind Code, Regelwortlaut, Anleitung und Gestaltung \u2014 die Anleitung ausdr\u00fccklich');
+    ok(/\u00a9 1998\u20132026 Walter Rehm\. Alle Rechte vorbehalten\./.test(t),
+       '\u00a7195: der Vermerk nennt Jahr, Inhaber und den Vorbehalt');
+    ok(!/Spielidee|Spielsystem/.test(t),
+       '\u00a7195: der Absatz spricht weder von Spielidee noch von Spielsystem \u2014 in keine Richtung');
+    ok(t.replace(/[^.]/g,'').length <= 2,
+       '\u00a7195: er bleibt kurz (h\u00f6chstens zwei S\u00e4tze) \u2014 Einzelheiten geh\u00f6ren in die LICENSE');
   }
 
   const VERMERK = /Count Red \u00b7 \u00a9 1998\u20132026 Walter Rehm \u00b7 Alle Rechte vorbehalten/;
@@ -453,20 +451,20 @@ console.log('\u00a7159 \u2014 Urheberrechtsvermerk:');
     const L = fs.readFileSync(lic,'utf8');
     ok(/Walter Rehm/.test(L) && /Alle Rechte vorbehalten/.test(L) && /KEINER\s+Open-Source-Lizenz/.test(L),
        'LICENSE nennt den Rechteinhaber und stellt klar, dass keine Open-Source-Lizenz gilt');
-    // \u00a7185: DRIFT-SCHUTZ zwischen zwei Dateien. Derselbe Satz steht im Impressum und in der
-    // LICENSE; laufen sie auseinander, zitiert eine Gegenseite die schwaechere Fassung. Dieselbe
-    // Klasse Absicherung wie \u00a7184a, nur zwischen Auslieferung und Repository-Beiwerk.
-    const satz = 'Nicht beansprucht werden die Spielidee und das Spielsystem als solche.';
-    ok(L.includes(satz), 'LICENSE tr\u00e4gt den Satz zur Spielidee w\u00f6rtlich');
-    ok(html.replace(/\s+/g,' ').includes(satz),
-       'derselbe Satz steht w\u00f6rtlich im Impressum \u2014 die beiden k\u00f6nnen nicht auseinanderlaufen');
+    // \u00a7195: Der Verzichtssatz ist auch hier entfallen \u2014 in beiden Sprachfassungen. Was BLEIBT,
+    // ist die positive Aufz\u00e4hlung: Sie sagt dasselbe \u00fcber den Umfang, ohne die L\u00fccke zu benennen.
+    // Der fr\u00fchere Drift-Schutz zwischen Impressum und LICENSE ist damit gegenstandslos: den Satz
+    // gibt es nur noch an EINER Stelle, und genau das wird hier festgehalten.
+    ok(!/Nicht beansprucht/.test(L) && !/Not claimed/.test(L),
+       '\u00a7195: LICENSE verzichtet auf den Verzichtssatz \u2014 deutsch wie englisch');
+    ok(/Beansprucht werden der Programmcode/.test(L),
+       'LICENSE benennt weiterhin, WAS beansprucht wird');
     ok(/der Wortlaut der Spielregeln und der\s+interaktiven Anleitung/.test(L),
        'LICENSE beansprucht den Regelwortlaut UND die interaktive Anleitung');
     // Die englische Kurzfassung ist kein Rechtsgrund, sondern nimmt dem Nachahmer die Ausrede,
     // den deutschen Text nicht verstanden zu haben (und hilft bei einem DMCA-Takedown).
     ok(/the German text above is authoritative/.test(L) &&
-       /Not claimed: the game idea and the game system as such/.test(L) &&
-       /interactive guide/.test(L),
+       /Claimed: the program code/.test(L) && /interactive guide/.test(L),
        'englische Kurzfassung vorhanden, mit Vorrang des deutschen Textes und derselben Grenze');
   }
 }

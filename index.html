@@ -556,7 +556,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=152'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=153'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
@@ -683,11 +683,18 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         E-Mail: <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a></div>
       <div><strong style="color:var(--text);">Verantwortlich für den Inhalt</strong><br>
         Walter Rehm, Anschrift wie oben</div>
+      <!-- §195 (17.9., Entscheid Walter): Der Vermerk ist wieder EINE Zeile. Bis v152 stand hier
+           eine Abgrenzung in beide Richtungen (§185) — was nicht beansprucht wird und was schon.
+           Sie änderte an der Rechtslage NICHTS: Schutz entsteht unabhängig davon, was im
+           Impressum steht, und der Vermerk gehört ohnehin nicht zu den Pflichtangaben nach
+           § 5 DDG. Was sie änderte, war die Lesart: Sie wies als Einzige auf die Lücke hin —
+           dass Spielidee und Spielsystem als solche nicht geschützt sind (Trennung von Idee und
+           Ausdruck, in DE wie in der EU gefestigt) — und brachte genau die Leser darauf, die
+           sonst nie danach gefragt hätten. ⚠️ Die Abgrenzung ist nicht verschwunden, sie steht
+           in der `LICENSE`, wo Nutzungsrechte hingehören und ein Publikum bewusst nachliest.
+           Was hier NICHT stehen darf: eine Beanspruchung der Spielidee. Dagegen prüft §195. -->
       <div><strong style="color:var(--text);">Urheberrecht</strong><br>
-        © 1998–2026 Walter Rehm. Alle Rechte vorbehalten.
-        Nicht beansprucht werden die Spielidee und das Spielsystem als solche.
-        Beansprucht werden der Programmcode, der Wortlaut der Spielregeln und der
-        interaktiven Anleitung sowie Gestaltung und Bildschirmaufbau.</div>
+        © 1998–2026 Walter Rehm. Alle Rechte vorbehalten.</div>
       <div style="font-size:var(--fs-sm);color:var(--text3);">
         Count Red ist ein privates, nicht kommerzielles Projekt. Das Spiel erschien 1998
         erstmals als Brettspiel unter dem Namen Gembel.</div>
@@ -1100,7 +1107,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=152" charset="utf-8"></script>
+<script src="gembel_rules.js?v=153" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1112,7 +1119,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=152" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=153" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1937,7 +1944,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v152';
+const BUILD_MARKER='· Build v153';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2254,7 +2261,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=152'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=153'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
