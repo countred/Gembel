@@ -188,21 +188,35 @@ ok(!/onclick="showOverlay\(/.test(html) && !/onclick="hideOverlay\(/.test(html),
 // eigenen Stacking-Context). Beide Absicherungen müssen stehen.
 {
   const foot = html.match(/<div id="legal-footer">[\s\S]*?<\/div>/)[0];
-  // \u00a7191: drei Verweise statt zwei \u2014 \u201e\u00dcber das Spiel\u201c ist dazugekommen. Gepr\u00fcft wird weiter die
-  // EIGENSCHAFT (jeder Verweis blendet das Startmen\u00fc aus), gez\u00e4hlt gegen die Zahl der Verweise.
+  // \u00a7196: Die Verweise LEGEN ihr Overlay jetzt auf, statt das Startmen\u00fc auszublenden \u2014 nur so
+  // sind sie auch aus einer laufenden Partie erreichbar. Gepr\u00fcft wird beides: dass jeder Verweis
+  // sein Overlay einblendet UND dass keiner mehr am Startmen\u00fc herumschaltet.
   const nLinks = (foot.match(/class="legal-link"/g)||[]).length;
-  ok(nLinks === 3 && (foot.match(/getElementById\('mode-overlay'\)\.classList\.add\('hidden'\)/g)||[]).length === nLinks,
-     'jeder Fu\u00dfzeilen-Verweis blendet das Startmen\u00fc aus, bevor er sein Overlay zeigt');
+  ok(nLinks === 3 && (foot.match(/classList\.remove\('hidden'\)/g)||[]).length === nLinks
+     && !/mode-overlay/.test(foot),
+     'jeder Fu\u00dfzeilen-Verweis legt sein Overlay auf, ohne das Startmen\u00fc anzutasten');
   ok(/#impressum-overlay, #datenschutz-overlay, #ueber-overlay\{z-index:200;\}/.test(html),
      'alle drei Fu\u00dfzeilen-Overlays liegen per z-index \u00fcber den \u00fcbrigen (zweite Absicherung)');
-  // Direkt im ganzen Dokument suchen: das Schliessen-Muster ist eindeutig genug, und ein
-  // Ausschnitts-Regex ueber verschachtelte <div> ist fehleranfaellig (erster Versuch schlug
-  // genau daran fehl — er endete vor dem Button).
+  // \u00a7196: Schlie\u00dfen blendet nur noch AUS \u2014 darunter kommt wieder zum Vorschein, was vorher da
+  // war (Startbildschirm ODER Brett). Ein hart verdrahtetes `mode-overlay` w\u00fcrde aus einer
+  // laufenden Partie heraus den Spieler ins Startmen\u00fc werfen; genau das darf nicht zur\u00fcck.
   for(const id of ['impressum','datenschutz','ueber']){
-    const muster = new RegExp("getElementById\\('" + id +
-      "-overlay'\\)\\.classList\\.add\\('hidden'\\);document\\.getElementById\\('mode-overlay'\\)\\.classList\\.remove\\('hidden'\\)");
-    ok(muster.test(html),
-       id + ': Schlie\u00dfen holt das Startmen\u00fc zur\u00fcck (sonst steht der Nutzer vor einem leeren Bildschirm)');
+    const zu = new RegExp("getElementById\\('" + id + "-overlay'\\)\\.classList\\.add\\('hidden'\\)\">Schlie\u00dfen");
+    ok(zu.test(html), id + ': Schlie\u00dfen blendet nur aus');
+    const hart = new RegExp(id + "-overlay'\\)\\.classList\\.add\\('hidden'\\);document\\.getElementById\\('mode-overlay'");
+    ok(!hart.test(html), id + ': kein hart verdrahteter R\u00fcckweg ins Startmen\u00fc');
+  }
+  // \u00a7196: dieselbe Zeile im \u2630-Men\u00fc \u2014 sonst f\u00fchrt der einzige Weg zum Impressum w\u00e4hrend einer
+  // Partie \u00fcber deren Aufgabe. Statisch im Markup, nicht in `btnsEl.innerHTML`: so gilt sie f\u00fcr
+  // alle Men\u00fcvarianten und f\u00e4llt nicht unter die \u00a7188-Symbolpflicht f\u00fcr Kn\u00f6pfe.
+  {
+    const nm = (html.match(/<div class="overlay hidden" id="neu-overlay">[\s\S]*?\n<\/div>/)||[''])[0];
+    const mf = (nm.match(/<div class="legal-footer">[\s\S]*?<\/div>/)||[''])[0];
+    ok((mf.match(/class="legal-link"/g)||[]).length === 3,
+       '\u00a7196: das \u2630-Men\u00fc tr\u00e4gt dieselben drei Verweise');
+    ok(mf.includes("ueber-overlay") && mf.includes("impressum-overlay") && mf.includes("datenschutz-overlay")
+       && !/mode-overlay/.test(mf),
+       '\u00a7196: sie legen auf, ohne das Startmen\u00fc anzur\u00fchren \u2014 die Partie bleibt stehen');
   }
 }
 ok(/'impressum-overlay','datenschutz-overlay'/.test(html) && /'ueber-overlay'/.test(html),
@@ -1837,8 +1851,8 @@ console.log('\u00a7191 \u00dcber das Spiel \u2014 Seite, Nachweise, Bildtechnik:
   ok(ue.length > 0 && /id="ueber-overlay"/.test(html), 'die Seite \u201e\u00dcber das Spiel\u201c ist da');
   ok(/'ueber-overlay'/.test(html.slice(html.indexOf('function showOverlay'), html.indexOf('function showOverlay')+700)),
      'showOverlay kennt sie \u2014 sonst bliebe sie beim Wechsel offen stehen');
-  ok((html.match(/class="legal-link"/g)||[]).length === 3 && />\u00dcber das Spiel<\/button>/.test(html),
-     'die Fu\u00dfzeile f\u00fchrt drei Verweise');
+  ok((html.match(/class="legal-link"/g)||[]).length === 6 && />\u00dcber das Spiel<\/button>/.test(html),
+     'drei Verweise auf dem Startbildschirm, dieselben drei im \u2630-Men\u00fc (\u00a7196)');
   ok(/Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm/.test(ue),
      '\u00a7191: Nachweis der Design-Entwicklung steht unter dem Objektfoto');
   ok(/Foto: Christian Alber/.test(ue), '\u00a7191: der Fotograf ist genannt');

@@ -180,7 +180,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 #impressum-overlay, #datenschutz-overlay, #ueber-overlay{z-index:200;}
 /* §191: `flex-wrap` — mit dem dritten Verweis wird die Zeile auf schmalen Telefonen sonst
    breiter als die Karte. Umbruch statt Überlauf. */
-#legal-footer{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;
+#legal-footer, .legal-footer{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;
   margin-top:14px;padding-top:12px;border-top:1px solid var(--border);width:100%;}
 .legal-link{background:none;border:none;padding:2px 4px;cursor:pointer;
   font:inherit;font-size:var(--fs-sm);color:var(--text2);text-decoration:underline;
@@ -188,6 +188,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 .legal-link:hover{color:var(--text);}
 .legal-sep{font-size:var(--fs-sm);color:var(--text3);}
 @media (max-width:520px){ #legal-footer{margin-top:18px;} .legal-link{font-size:var(--fs-sm);} }
+/* §196: im ☰-Menü sitzt dieselbe Zeile enger und mit Trennlinie — sie ist dort Beiwerk
+   unter den Knöpfen, nicht der Abschluss einer Seite. */
+.legal-footer{margin-top:14px;padding-top:10px;border-top:1px solid var(--border);width:100%;}
 
 /* §144: die Anleitung ist seit v113 ein gleichrangiger big-btn und OBEN (s. Startmenue-
    Kommentar). Die frueheren Stile #anleitung-zeile/.anleitung-link sind damit entfallen.
@@ -556,22 +559,30 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=153'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=154'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
          Rechner keinen Platz kostet; auf dem Telefon ist unten ohnehin Luft. -->
+    <!-- §196 (17.9.): AUFLEGEN statt UMSCHALTEN. Bis v153 blendete jeder dieser Verweise erst
+         das Startmenü aus und zeigte dann sein Overlay; Schließen holte das Startmenü fest
+         verdrahtet zurück. Damit waren die Rechtsseiten aus einer LAUFENDEN PARTIE nicht
+         erreichbar — der einzige Weg dorthin führte über das Aufgeben des Spiels.
+         Jetzt machen sie es wie das Regeln-Overlay seit jeher: nur einblenden, beim Schließen
+         nur ausblenden. Sie legen sich über das, was gerade da ist, und geben es wieder frei —
+         Startbildschirm oder Brett, es ist ihnen gleich. Kein Rückkehrziel, keine Buchführung.
+         Deshalb steht dieselbe Zeile jetzt auch im ☰-Menü (§ 5 DDG: „ständig verfügbar“). -->
     <div id="legal-footer">
       <button type="button" class="legal-link"
-        onclick="document.getElementById('mode-overlay').classList.add('hidden');document.getElementById('ueber-overlay').classList.remove('hidden')">Über das Spiel</button>
+        onclick="document.getElementById('ueber-overlay').classList.remove('hidden')">Über das Spiel</button>
       <span class="legal-sep" aria-hidden="true">·</span>
       <button type="button" class="legal-link"
-        onclick="document.getElementById('mode-overlay').classList.add('hidden');document.getElementById('impressum-overlay').classList.remove('hidden')">Impressum</button>
+        onclick="document.getElementById('impressum-overlay').classList.remove('hidden')">Impressum</button>
       <span class="legal-sep" aria-hidden="true">·</span>
       <button type="button" class="legal-link"
-        onclick="document.getElementById('mode-overlay').classList.add('hidden');document.getElementById('datenschutz-overlay').classList.remove('hidden')">Datenschutz</button>
+        onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')">Datenschutz</button>
     </div>
     <!-- §134: SICHTBARE Test-Kennung. Es ist exakt die Zufallskennung aus §124, die ohnehin
          in jeder Partie mitgeschrieben wird — hier nur lesbar gemacht, damit ein Testspieler
@@ -669,7 +680,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       </div>
     </div>
     <button class="big-btn primary" style="width:100%;"
-      onclick="document.getElementById('ueber-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
+      onclick="document.getElementById('ueber-overlay').classList.add('hidden')">Schließen</button>
   </div>
 </div>
 
@@ -700,7 +711,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         erstmals als Brettspiel unter dem Namen Gembel.</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
-      onclick="document.getElementById('impressum-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
+      onclick="document.getElementById('impressum-overlay').classList.add('hidden')">Schließen</button>
   </div>
 </div>
 
@@ -823,7 +834,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Verantwortlich ist die im Impressum genannte Person. Stand: 12. September 2026</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
-      onclick="document.getElementById('datenschutz-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
+      onclick="document.getElementById('datenschutz-overlay').classList.add('hidden')">Schließen</button>
   </div>
 </div>
 
@@ -1003,6 +1014,20 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <h2 id="neu-title">Menü</h2>
     <p id="neu-desc" style="font-size:var(--fs-md);color:var(--text2);"></p>
     <div id="neu-buttons" style="display:flex;flex-direction:column;gap:8px;width:100%;"></div>
+    <!-- §196: dieselben drei Verweise wie auf dem Startbildschirm. Sie stehen STATISCH hier,
+         nicht in `btnsEl.innerHTML` — dadurch gelten sie für alle fünf Menüvarianten auf
+         einmal, und die §188-Prüfung (jeder Knopf im Menü trägt ein Symbol) bleibt
+         unberührt: eine Fußzeile ist kein Knopf im Sinne dieser Regel. -->
+    <div class="legal-footer">
+      <button type="button" class="legal-link"
+        onclick="document.getElementById('ueber-overlay').classList.remove('hidden')">Über das Spiel</button>
+      <span class="legal-sep" aria-hidden="true">·</span>
+      <button type="button" class="legal-link"
+        onclick="document.getElementById('impressum-overlay').classList.remove('hidden')">Impressum</button>
+      <span class="legal-sep" aria-hidden="true">·</span>
+      <button type="button" class="legal-link"
+        onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')">Datenschutz</button>
+    </div>
   </div>
 </div>
 
@@ -1107,7 +1132,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=153" charset="utf-8"></script>
+<script src="gembel_rules.js?v=154" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1119,7 +1144,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=153" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=154" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1944,7 +1969,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v153';
+const BUILD_MARKER='· Build v154';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2261,7 +2286,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=153'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=154'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
