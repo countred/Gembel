@@ -177,8 +177,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
    backdrop-filter, und das erzeugt einen eigenen Stacking-Context, den Browser
    unterschiedlich aufloesen. Jetzt zweifach abgesichert: das Startmenue wird beim Oeffnen
    ausgeblendet UND beide Overlays haben einen hoeheren z-index. */
-#impressum-overlay, #datenschutz-overlay{z-index:200;}
-#legal-footer{display:flex;justify-content:center;align-items:center;gap:10px;
+#impressum-overlay, #datenschutz-overlay, #ueber-overlay{z-index:200;}
+/* §191: `flex-wrap` — mit dem dritten Verweis wird die Zeile auf schmalen Telefonen sonst
+   breiter als die Karte. Umbruch statt Überlauf. */
+#legal-footer{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;
   margin-top:14px;padding-top:12px;border-top:1px solid var(--border);width:100%;}
 .legal-link{background:none;border:none;padding:2px 4px;cursor:pointer;
   font:inherit;font-size:var(--fs-sm);color:var(--text2);text-decoration:underline;
@@ -554,7 +556,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=150'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=151'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
@@ -562,6 +564,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
          Rechner keinen Platz kostet; auf dem Telefon ist unten ohnehin Luft. -->
     <div id="legal-footer">
+      <button type="button" class="legal-link"
+        onclick="document.getElementById('mode-overlay').classList.add('hidden');document.getElementById('ueber-overlay').classList.remove('hidden')">Über das Spiel</button>
+      <span class="legal-sep" aria-hidden="true">·</span>
       <button type="button" class="legal-link"
         onclick="document.getElementById('mode-overlay').classList.add('hidden');document.getElementById('impressum-overlay').classList.remove('hidden')">Impressum</button>
       <span class="legal-sep" aria-hidden="true">·</span>
@@ -609,6 +614,62 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      560px sind es rund 68 Zeichen je Zeile, also weiter im guten Bereich.
      `marks-overlay` bleibt bei seiner Groesse: dort steht kein Fliesstext, sondern eine
      Liste, die das Skript erzeugt. -->
+<!-- §191 (17.9.): „ÜBER DAS SPIEL“ — die dritte Seite in der Fußzeile, neben Impressum und
+     Datenschutz. Sie heißt NICHT „Über uns“: hinter CountRed steht eine Person, und „wir“ wäre
+     eine kleine Unwahrheit, die genau den Lesern auffällt, die sonst wohlgesonnen wären.
+     Aufbau: was es ist → die Frage, die jeder Neuling stellt, samt Antwort → Herkunft → der
+     Gegner → was es NICHT gibt → wer dahintersteht. Die Zugregel steht bewusst direkt hinter
+     der Frage, nicht im Absatz über die Geschichte: dort sucht sie niemand.
+     ⚠️ ZWEI NACHWEISE SIND PFLICHT und stehen unter den Bildern: die Design-Entwicklung zu
+     dritt (die SPIELIDEE ist Walters allein, das DESIGN war Gemeinschaftsarbeit — §185 lebt
+     von dieser Unterscheidung) und der Fotograf. Beide nicht entfernen.
+     Die Bilder liegen als eigene Dateien daneben, nicht eingebettet: eingebettet würde
+     `index.html` um rund 250 KB wachsen, und geladen würden sie trotzdem. `loading="lazy"`
+     holt sie erst, wenn jemand die Seite öffnet. `width`/`height` stehen dran, damit beim
+     Nachladen nichts springt. -->
+<div class="overlay hidden" id="ueber-overlay">
+  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
+    <h2 style="text-align:center;font-size:var(--fs-xl);">Über das Spiel</h2>
+    <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:12px;">
+      <div>CountRed ist ein Strategiespiel. Kein Würfel, kein Zufall, kein Glück. Die Regeln lesen
+        sich in drei Minuten, eine Partie dauert selten länger als 15 Minuten.</div>
+      <div>Dann kommt meistens diese Frage: „Was sind denn jetzt meine Figuren? Welche Farbe gehört
+        mir?“ Antwort: keine. Jeder kann prinzipiell jede Figur ziehen — niemand ist rot, niemand
+        ist schwarz. Was du ziehen darfst, entscheidet das Brett: Zähle die roten Nachbarn der
+        Figur. Ist die Zahl gerade, darfst du sie ziehen. Ist sie ungerade, darf dein Mitspieler.</div>
+      <div>Neu ist das Spiel nicht. Erfunden habe ich es 1998; das Design haben wir zu dritt über
+        mehrere Jahre entwickelt. Die damalige limitierte Auflage ist seit Jahren vergriffen.
+        Hier ist es erstmals online spielbar, mit den Regeln von damals.</div>
+      <figure style="margin:0;">
+        <img src="countred-objekt.jpg" width="1200" height="1110" loading="lazy"
+          alt="Das Brett der limitierten Auflage: sechzehn gedrehte Figuren in Schwarz und Aluminium auf einem Holzbrett, mehrere davon gestapelt."
+          style="width:100%;height:auto;display:block;border-radius:10px;">
+        <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;">
+          Die limitierte Auflage. Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm</figcaption>
+      </figure>
+      <div>Der Computergegner heißt Max Michu. Er ist kein lernendes Modell, sondern rechnet Züge
+        durch und bewertet Stellungen nach Regeln, die ich selbst aufgestellt und in Tausenden von
+        Testpartien nachgeschärft habe. Drei Stufen, von nachsichtig bis unangenehm.</div>
+      <div>Was es hier nicht gibt: Anmeldung, Konto, Werbung, Nachverfolgung. Wer zu zweit spielen
+        will, teilt einen Code — das ist alles. Das Spiel kostet nichts.</div>
+      <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
+        <figure style="margin:0;flex:none;width:130px;">
+          <img src="walter-rehm-figur.jpg" width="900" height="1096" loading="lazy"
+            alt="Walter Rehm, im Schneidersitz sitzend, schwarzweiß."
+            style="width:100%;height:auto;display:block;border-radius:10px;">
+          <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;">
+            Foto: Christian Alber</figcaption>
+        </figure>
+        <div style="flex:1 1 220px;">Dahinter steht kein Studio, sondern eine Person: Mein Name ist
+          Walter Rehm, ich wohne in München. Fragen, Fehlermeldungen und Ideen gerne an
+          <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a>.</div>
+      </div>
+    </div>
+    <button class="big-btn primary" style="width:100%;"
+      onclick="document.getElementById('ueber-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
+  </div>
+</div>
+
 <div class="overlay hidden" id="impressum-overlay">
   <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <h2 style="text-align:center;font-size:var(--fs-xl);">Impressum</h2>
@@ -1036,7 +1097,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=150" charset="utf-8"></script>
+<script src="gembel_rules.js?v=151" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1048,7 +1109,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=150" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=151" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1873,7 +1934,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v150';
+const BUILD_MARKER='· Build v151';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2190,7 +2251,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=150'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=151'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2313,7 +2374,7 @@ function makeLogCode(){
 function showOverlay(id){
   ['mode-overlay','ai-setup-overlay','lobby-overlay','create-overlay','join-overlay','wait-overlay','dc-overlay',
    'neu-overlay','rematch-req-overlay','regeln-overlay','maintenance-overlay','draw-offer-overlay','ai-draw-offer-overlay','opp-offline-overlay','marks-overlay',
-   'impressum-overlay','datenschutz-overlay','gate-overlay']  // §126, §144
+   'impressum-overlay','datenschutz-overlay','gate-overlay','ueber-overlay']  // §126, §144, §191
     .forEach(o=>document.getElementById(o).classList.toggle('hidden',o!==id));
 }
 window.showModeMenu=function(){ gameMode='mvm'; showOverlay('mode-overlay'); };

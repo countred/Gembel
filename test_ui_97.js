@@ -188,22 +188,25 @@ ok(!/onclick="showOverlay\(/.test(html) && !/onclick="hideOverlay\(/.test(html),
 // eigenen Stacking-Context). Beide Absicherungen müssen stehen.
 {
   const foot = html.match(/<div id="legal-footer">[\s\S]*?<\/div>/)[0];
-  ok((foot.match(/getElementById\('mode-overlay'\)\.classList\.add\('hidden'\)/g)||[]).length === 2,
-     'beide Links blenden das Startmen\u00fc aus, bevor sie ihr Overlay zeigen');
-  ok(/#impressum-overlay, #datenschutz-overlay\{z-index:200;\}/.test(html),
-     'beide Rechts-Overlays liegen per z-index \u00fcber den \u00fcbrigen (zweite Absicherung)');
+  // \u00a7191: drei Verweise statt zwei \u2014 \u201e\u00dcber das Spiel\u201c ist dazugekommen. Gepr\u00fcft wird weiter die
+  // EIGENSCHAFT (jeder Verweis blendet das Startmen\u00fc aus), gez\u00e4hlt gegen die Zahl der Verweise.
+  const nLinks = (foot.match(/class="legal-link"/g)||[]).length;
+  ok(nLinks === 3 && (foot.match(/getElementById\('mode-overlay'\)\.classList\.add\('hidden'\)/g)||[]).length === nLinks,
+     'jeder Fu\u00dfzeilen-Verweis blendet das Startmen\u00fc aus, bevor er sein Overlay zeigt');
+  ok(/#impressum-overlay, #datenschutz-overlay, #ueber-overlay\{z-index:200;\}/.test(html),
+     'alle drei Fu\u00dfzeilen-Overlays liegen per z-index \u00fcber den \u00fcbrigen (zweite Absicherung)');
   // Direkt im ganzen Dokument suchen: das Schliessen-Muster ist eindeutig genug, und ein
   // Ausschnitts-Regex ueber verschachtelte <div> ist fehleranfaellig (erster Versuch schlug
   // genau daran fehl — er endete vor dem Button).
-  for(const id of ['impressum','datenschutz']){
+  for(const id of ['impressum','datenschutz','ueber']){
     const muster = new RegExp("getElementById\\('" + id +
       "-overlay'\\)\\.classList\\.add\\('hidden'\\);document\\.getElementById\\('mode-overlay'\\)\\.classList\\.remove\\('hidden'\\)");
     ok(muster.test(html),
        id + ': Schlie\u00dfen holt das Startmen\u00fc zur\u00fcck (sonst steht der Nutzer vor einem leeren Bildschirm)');
   }
 }
-ok(/'impressum-overlay','datenschutz-overlay'/.test(html),
-   'beide Overlays stehen in der Overlay-Liste (sonst schlie\u00dfen sie sich nicht sauber)');
+ok(/'impressum-overlay','datenschutz-overlay'/.test(html) && /'ueber-overlay'/.test(html),
+   'die drei Fu\u00dfzeilen-Overlays stehen in der Overlay-Liste (sonst schlie\u00dfen sie sich nicht sauber)');
 ok(/@media \(max-width:520px\)\{ #legal-footer/.test(html),
    'mobile Feinjustierung vorhanden, ohne den Rechner zu verschieben (Walters Auflage)');
 // Der Datenschutztext MUSS zum tatsaechlichen Verhalten passen — sonst ist er schlimmer als keiner.
@@ -1088,7 +1091,7 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
   for(const fn of ['tryCreateRoom','openGateInfo','redeemGateCode'])
     ok(new RegExp('window\\.'+fn+'\\s*=').test(html),
        fn + ' h\u00e4ngt an window (\u00a7127: inline-onclick erreicht Modul-Funktionen sonst nicht)');
-  ok(/'impressum-overlay','datenschutz-overlay','gate-overlay'\]/.test(html),
+  ok(/'impressum-overlay','datenschutz-overlay','gate-overlay'/.test(html),
      'gate-overlay steht in der Overlay-Liste (sonst schlie\u00dft es sich nicht sauber)');
 
   // Ein kaputter oder fremder Speicherstand darf NIE mehr erlauben als ein leerer.
@@ -1823,6 +1826,30 @@ console.log('\u00a7187 Symbolsatz \u2014 kein Emoji, ein Vorrat, keine Verweise 
 
   ok(!/cr\.textContent\s*=/.test(ohneKom187),
      'gateRefresh schreibt den Erstellen-Knopf nicht mehr per textContent (das SVG \u00fcberlebt das nicht)');
+}
+
+// §191 (17.9.): „Über das Spiel“. Zwei Dinge auf dieser Seite sind nicht Geschmack, sondern
+// Zusage an Dritte: die Design-Entwicklung zu dritt und der Name des Fotografen. Beides ist
+// beim nächsten Wortlaut-Umbau als Erstes in Gefahr, weil es wie Beiwerk aussieht — deshalb
+// steht es hier. Dazu die Bildtechnik: `loading="lazy"` (sonst lädt jeder Besucher 190 KB, die
+// fast niemand sieht) und `width`/`height` (sonst springt der Text beim Nachladen).
+console.log('\u00a7191 \u00dcber das Spiel \u2014 Seite, Nachweise, Bildtechnik:');
+{
+  const ue = (html.match(/<div class="overlay hidden" id="ueber-overlay">[\s\S]*?\n<\/div>/)||[''])[0];
+  ok(ue.length > 0 && /id="ueber-overlay"/.test(html), 'die Seite \u201e\u00dcber das Spiel\u201c ist da');
+  ok(/'ueber-overlay'/.test(html.slice(html.indexOf('function showOverlay'), html.indexOf('function showOverlay')+700)),
+     'showOverlay kennt sie \u2014 sonst bliebe sie beim Wechsel offen stehen');
+  ok((html.match(/class="legal-link"/g)||[]).length === 3 && />\u00dcber das Spiel<\/button>/.test(html),
+     'die Fu\u00dfzeile f\u00fchrt drei Verweise');
+  ok(/Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm/.test(ue),
+     '\u00a7191: Nachweis der Design-Entwicklung steht unter dem Objektfoto');
+  ok(/Foto: Christian Alber/.test(ue), '\u00a7191: der Fotograf ist genannt');
+  const bilder = [...ue.matchAll(/<img [^>]*>/g)].map(m => m[0]);
+  ok(bilder.length === 2 && bilder.every(b => /loading="lazy"/.test(b) && /width="\d+"/.test(b)
+       && /height="\d+"/.test(b) && /alt="[^"]{20,}"/.test(b)),
+     'beide Bilder: lazy, feste Ma\u00dfe, beschreibender alt-Text \u2014 ' + bilder.length + ' gefunden');
+  ok(/Z\u00e4hle die roten Nachbarn der\s+Figur\. Ist die Zahl gerade/.test(ue),
+     'die Zugregel steht auf der Seite \u2014 direkt hinter der Frage, nicht im Geschichtsabsatz');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
