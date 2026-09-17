@@ -31,3 +31,11 @@ loeschliste.txt
 # LICENSE gehoert ins Repository (§159). Ohne diese Zeile verschluckt die
 # *-Regel oben die Datei, und git add meldet das nur beilaeufig (§157/23.h).
 !LICENSE
+
+# §193 (17.9.): die beiden Bilder der Seite Ueber das Spiel (§191). Genau derselbe
+# Fall wie LICENSE, und er ist auch genauso aufgefallen: `git add` meldete sie als
+# ignoriert, der Commit lief trotzdem durch, und die Seite zeigte zwei leere Rahmen.
+# Einzeln benannt statt `!*.jpg` — das Repository ist die AUSLIEFERUNG, nicht das
+# Archiv, und ein versehentlich abgelegtes Urlaubsfoto soll nicht mitgehen.
+!countred-objekt.jpg
+!walter-rehm-figur.jpg
