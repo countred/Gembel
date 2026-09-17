@@ -199,6 +199,12 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
    als eines, das einen Klick weiter liegt. Ebenfalls bewusst KEIN `?legal=`-Parameter, der
    das Overlay direkt oeffnet — index.html wertet location.search/hash NIRGENDS aus, und das
    ist eine gemessene Eigenschaft der Angriffsflaeche (Pruefung 6.8.), keine Zufaelligkeit.
+   §197 (17.9., Walters Befund): Die Verweise oeffnen jetzt einen NEUEN TAB. Vorher ersetzten
+   sie die Anleitung durch index.html — wer nach neun Schritten kurz ins Impressum sah, stand
+   danach im Startmenue und musste von vorn beginnen. `target="_blank"` laesst die Anleitung
+   samt Fortschritt stehen; `rel="noopener"` gehoert dazu, damit die neue Seite keinen Zugriff
+   auf das oeffnende Fenster bekommt. An den beiden Entscheidungen oben aendert das nichts:
+   weiterhin keine zweite Kopie der Rechtstexte und weiterhin kein `?legal=`-Parameter.
    flex:0 0 auto und eine Zeile Hoehe: #board-area ist das wachsende Element, groesse()
    MISST dessen clientHeight — das Brett wird also einfach ein paar Pixel kleiner, es gibt
    keine feste Hoehe, die hier nachgerechnet werden muesste. */
@@ -360,9 +366,9 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
        Modul-Scope-Fallstrick wie index.html (§127), und ein Verweis auf eine andere Seite
        IST ein Link, kein Knopf. Beide zeigen auf index.html; dort liegen die Texte. -->
   <div id="legal-footer">
-    <a href="index.html">Impressum</a>
+    <a href="index.html" target="_blank" rel="noopener">Impressum</a>
     <span class="legal-sep" aria-hidden="true">·</span>
-    <a href="index.html">Datenschutz</a>
+    <a href="index.html" target="_blank" rel="noopener">Datenschutz</a>
   </div>
 </div>
 
@@ -444,7 +450,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=154" charset="utf-8"></script>
+<script src="gembel_rules.js?v=155" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -453,7 +459,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 65 · 17.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 66 · 17.09.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -835,7 +841,7 @@ const STEPS = [
       nachher:'<p>Dein Bonuszug ist korrekt, aber du schenkst dem Mitspieler damit direkt den Sieg. '
              +'Drei Dinge musst du beachten:</p>' },
     { art:'zeigen', bereich:['1C','2C','3C','4C'],
-      text:'<p><b>Erstens:</b> Die Lücke in Zeile 3 zwischen den drei gleichfarbigen Figuren in '
+      text:'<p><b>Erstens:</b> Die Lücke zwischen den drei gleichfarbigen Figuren in '
           +'Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.</p>' },
     { art:'zeigen', feld:'3D', blass:['3D'], geist:{von:'3D', auf:'3C'},
       pruefungen:[{art:'anheben', feld:'3D', summe:2}],

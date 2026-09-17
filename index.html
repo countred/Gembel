@@ -559,7 +559,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=154'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=155'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
@@ -1132,7 +1132,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=154" charset="utf-8"></script>
+<script src="gembel_rules.js?v=155" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1144,7 +1144,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=154" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=155" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1969,7 +1969,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v154';
+const BUILD_MARKER='· Build v155';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2286,7 +2286,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=154'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=155'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

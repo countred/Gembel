@@ -379,8 +379,11 @@ console.log('\u00a7184a \u2014 Rechtsfu\u00dfzeile auch in der Anleitung:');
   ok(foot.length > 0, 'anleitung.html tr\u00e4gt eine Fu\u00dfzeile #legal-footer');
   ok(/>Impressum<\/a>/.test(foot) && />Datenschutz<\/a>/.test(foot),
      'beide Beschriftungen stehen darin');
-  ok((foot.match(/<a href="index\.html">/g) || []).length === 2,
-     'beide sind echte Verweise auf index.html \u2014 dort liegen die Texte');
+  // \u00a7197: weiterhin echte Verweise auf index.html (Drift-Schutz, s. unten), aber im NEUEN TAB \u2014
+  // sonst ersetzt der Klick die Anleitung samt Fortschritt. `rel="noopener"` geh\u00f6rt zu
+  // `target="_blank"`: ohne es bek\u00e4me die neue Seite \u00fcber `window.opener` Zugriff auf diese.
+  ok((foot.match(/<a href="index\.html" target="_blank" rel="noopener">/g) || []).length === 2,
+     'beide sind echte Verweise auf index.html, im neuen Tab und mit noopener');
   // DRIFT-SCHUTZ, der eigentliche Grund fuer die Verweis-Loesung: eine zweite Kopie der
   // Rechtstexte in der Anleitung liefe zwangsläufig auseinander (Erkenntnis L8/N), und ein
   // veraltetes Impressum ist schlimmer als eines, das einen Klick weiter liegt.

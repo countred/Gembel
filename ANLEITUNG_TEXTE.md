@@ -1,6 +1,6 @@
 # Count Red — Interaktive Spielanleitung: alle Texte
 
-**Quelle: `anleitung.html` · Anleitung · Fassung 24 · 25.08.2026**
+**Quelle: `anleitung.html` · Anleitung · Fassung 66 · 17.09.2026**
 
 > Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`
 > im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt
@@ -160,7 +160,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  anheben**
 
-> Beim Stapeln zählst du keine Nachbarfiguren, sondern nur die roten Figuren im Stapel. Du darfst eine Figur auf eine andere setzen, wenn danach die Summe der **roten** Figuren im Stapel **ungerade** ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.
+> Beim Stapeln zählst du nur die roten Figuren im Stapel. Du darfst eine Figur auf eine andere setzen, wenn danach die Summe der **roten** Figuren im Stapel **ungerade** ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.
 
 *Rechnung:*  Du darfst anheben. Summe der roten Nachbarfiguren und der Zugfigur: 3 = ungerade
 
@@ -357,7 +357,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  lesen**
 
-> Jetzt gelten mehrere Besonderheiten. Die wichtigste: **Du bekommst einen Bonuszug.** Ist kein Bonuszug möglich, zieht der Mitspieler.
+> Jetzt gelten mehrere Besonderheiten. Die wichtigste: **Du bekommst einen Bonuszug.**
 >
 > Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf bleibt erlaubt, und die obere Figur darfst du auch wieder herunternehmen. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.
 
@@ -440,7 +440,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  zeigen**
 
-> **Erstens:** Die Lücke in Zeile 3 zwischen den drei gleichfarbigen Figuren in Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.
+> **Erstens:** Die Lücke zwischen den drei gleichfarbigen Figuren in Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.
 
 *Brett:*  gesperrt: 2B, 3B, 4B
 
@@ -499,7 +499,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 |---|---|
 | Kopfzeile links | `COUNT · RED` |
 | Kopfzeile rechts | `Schritt N von 9` |
-| unter dem Fortschrittsbalken | `Anleitung · Fassung 24 · 25.08.2026` |
+| unter dem Fortschrittsbalken | `Anleitung · Fassung 66 · 17.09.2026` |
 | Knopf links | `Zurück` — einen Teilschritt zurück |
 | Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |
 
