@@ -556,7 +556,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=151'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=152'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
@@ -640,11 +640,14 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div>Neu ist das Spiel nicht. Erfunden habe ich es 1998; das Design haben wir zu dritt über
         mehrere Jahre entwickelt. Die damalige limitierte Auflage ist seit Jahren vergriffen.
         Hier ist es erstmals online spielbar, mit den Regeln von damals.</div>
-      <figure style="margin:0;">
-        <img src="countred-objekt.jpg" width="1200" height="1110" loading="lazy"
+      <!-- §192: über die volle Kartenbreite war das Objektfoto fast 500 px hoch und drängte den
+           Text auseinander. 240 px, mittig — es illustriert den Absatz, es ist nicht der Absatz.
+           Die Datei ist auf 720 px gerechnet (dreifach für scharfe Bildschirme), nicht 1200. -->
+      <figure style="margin:0 auto;max-width:240px;text-align:center;">
+        <img src="countred-objekt.jpg" width="720" height="666" loading="lazy"
           alt="Das Brett der limitierten Auflage: sechzehn gedrehte Figuren in Schwarz und Aluminium auf einem Holzbrett, mehrere davon gestapelt."
           style="width:100%;height:auto;display:block;border-radius:10px;">
-        <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;">
+        <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;text-align:left;">
           Die limitierte Auflage. Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm</figcaption>
       </figure>
       <div>Der Computergegner heißt Max Michu. Er ist kein lernendes Modell, sondern rechnet Züge
@@ -654,7 +657,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         will, teilt einen Code — das ist alles. Das Spiel kostet nichts.</div>
       <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
         <figure style="margin:0;flex:none;width:130px;">
-          <img src="walter-rehm-figur.jpg" width="900" height="1096" loading="lazy"
+          <img src="walter-rehm-figur.jpg" width="420" height="511" loading="lazy"
             alt="Walter Rehm, im Schneidersitz sitzend, schwarzweiß."
             style="width:100%;height:auto;display:block;border-radius:10px;">
           <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;">
@@ -1097,7 +1100,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=151" charset="utf-8"></script>
+<script src="gembel_rules.js?v=152" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1109,7 +1112,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=151" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=152" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1934,7 +1937,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v151';
+const BUILD_MARKER='· Build v152';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2251,7 +2254,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=151'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=152'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
