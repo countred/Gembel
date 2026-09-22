@@ -74,22 +74,26 @@ for(const k of ['meister','stark'])
   ok(L[k].maxDepth === 5, k + ': maxDepth unver\u00e4ndert 5');
 
 console.log('\u00a7113 \u2014 k\u00fcnstliche Denkzeit (minThinkMs) tr\u00e4gt jetzt die Animation:');
-ok(L.einsteiger.minThinkMs === 1000,
-   'einsteiger minThinkMs 1000 (war 600; bei Tiefe 3 ist die Suche im Median in 80 ms fertig, ' +
-   'die Wartezeit ist die sichtbare Blau-Phase)');
+ok(L.einsteiger.minThinkMs === 2000,
+   'einsteiger minThinkMs 2000 (\u00a7199: war 1000; die Suche ist im Median unter 1 ms fertig, ' +
+   'die Wartezeit TR\u00c4GT die ganze sichtbare Zeit)');
 // §122-NACHZUG: fortgeschritten rechnet nach dem Rücken auf Tiefe 3 und braucht deshalb
 // selbst minThinkMs 1000 — die Zusage „700, die rechnen lang genug" galt für Tiefe 5.
 // Die namensunabhängige Regel unten (maxDepth ≤ 3 ⇒ minThinkMs ≥ 1000) deckt das ab.
-ok(L.fortgeschritten.minThinkMs === 1000,
-   'fortgeschritten minThinkMs 1000 (\u00a7122: rechnet jetzt auf Tiefe 3)');
+ok(L.fortgeschritten.minThinkMs === 2000,
+   'fortgeschritten minThinkMs 2000 (\u00a7122: rechnet auf Tiefe 3, Median 77 ms)');
 // §125-NACHZUG (hier nachgeholt): minThinkMs wurde bei ALLEN Stufen auf 1000 vereinheitlicht.
 // Diese Zeile stand noch auf 800/900 und war seit §125 ROT — unbemerkt, weil die Suite an der
 // readFileSync-Zeile darüber gegen eine countred.html lief, die es nicht mehr gibt.
 // Geprüft wird jetzt die Vereinheitlichung selbst, nicht mehr zwei Einzelzahlen.
 {
   const alle = Object.keys(L).map(k => L[k].minThinkMs);
-  ok(new Set(alle).size === 1 && alle[0] === 1000,
-     '\u00a7125: minThinkMs bei ALLEN Stufen gleich 1000 (' + Object.keys(L).map(k => k+':'+L[k].minThinkMs).join(', ') + ')');
+  ok(new Set(alle).size === 1 && alle[0] === 2000,
+     '\u00a7125/\u00a7199: minThinkMs bei ALLEN Stufen gleich 2000 (' + Object.keys(L).map(k => k+':'+L[k].minThinkMs).join(', ') + ')');
+  // §199: die Vereinheitlichung ist der Punkt, nicht die Zahl — aber sie muss OBERHALB der
+  // gemessenen Suchdauer der flachen Stufen liegen, sonst trägt sie die Animation nicht mehr.
+  ok(alle[0] >= 1500,
+     '\u00a7199: die Untergrenze liegt deutlich \u00fcber der Suchdauer der flachen Stufen (' + alle[0] + ' ms)');
 }
 
 console.log('\u00a7113 \u2014 das Einsteiger-PAKET h\u00e4lt zusammen (auch unter anderem Stufennamen):');

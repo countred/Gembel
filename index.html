@@ -595,7 +595,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=156'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=157'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
@@ -1197,7 +1197,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=156" charset="utf-8"></script>
+<script src="gembel_rules.js?v=157" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1209,7 +1209,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=156" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=157" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -2077,7 +2077,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v156';
+const BUILD_MARKER='· Build v157';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2394,7 +2394,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=156'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=157'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -3983,7 +3983,10 @@ function applyRemoteState(state){
     (async ()=>{
       try{
         await animateAIMove({fr:lmA.fr,fc:lmA.fc,tr:lmA.tr,tc:lmA.tc}, 0,
-          {bMin:700, cMs:600}); // §76b: gemächlicher als MvKI (Walter-Wunsch); wait=0 (Gegner hat real überlegt)
+          {bMin:1000, cMs:750}); // §76b/§199: gemächlicher als MvKI (Walter-Wunsch); wait=0 (Mitspieler hat real überlegt).
+          // §199 (Walters Entscheid 22.9.): zieht mit Max mit, im selben Verhältnis — MvKI wuchs von
+          // 1450 auf ~2600 ms, MvM von 1300 auf 1750. Bewusst weniger stark: hier wartet ein MENSCH
+          // am anderen Ende auf seinen Zug, und der Zug ist ja längst gefallen.
       } finally {
         // (3) Zielzustand herstellen und zeichnen — die Figur „springt" ans Ziel, JETZT erscheint der
         // Dreier-/Vierer-Rahmen. NUR wenn in der Zwischenzeit kein neuerer Zug/State kam (sonst NICHT
@@ -4708,7 +4711,8 @@ async function maybeTriggerAI(){
     // §37g künstliche Denkzeit: mind. minThinkMs Wanduhr, bevor der Zug erscheint.
     // §95 (Walter): AUSNAHME für den allerersten Zug der Partie (moveIndex===0, d.h. die KI
     // eröffnet). Dort ist das Brett leer, die Suche in ~250 ms fertig, aber die volle minThinkMs
-    // (meister 900 ms) ließ den Eröffnungszug „einen Tick zu lang" wirken. Nur der ERSTE Zug wird
+    // (damals meister 900 ms, seit §199 überall 2000) ließ den Eröffnungszug „einen Tick zu lang"
+    // wirken. Nur der ERSTE Zug wird
     // auf 400 ms gedeckelt; eröffnet der Mensch, ist der erste KI-Zug bereits moveIndex===1 und
     // behält die volle Denkzeit. Alle Stufen.
     const FIRST_MOVE_MIN_THINK_MS=400;
@@ -4717,6 +4721,12 @@ async function maybeTriggerAI(){
     const wait=Math.max(0, effMinThink-elapsed);
     // §39e A→B→C: (A) Quellfeld blau, (B) Pause = restliche Denkzeit, (C) Zielfeld blau.
     await animateAIMove(move, wait);
+    // §199: NOCHMALS prüfen. Die Prüfung oben liegt VOR der Wartezeit — wer währenddessen
+    // „Neu" drückt oder aufgibt, bekam den inzwischen veralteten Zug trotzdem aufs neue
+    // Brett. Das Fenster war mit 1,45 s schon da; mit ~2,6 s ist es leicht zu treffen.
+    // §180: wer eine Handlung sperrt, sucht JEDEN Weg, der zu ihr führt — applyMoveA ist
+    // der zweite, und er lag hinter einem `await`.
+    if(myToken!==aiTurnToken || !aiThinking){ aiThinking=false; return; }
     // Zug ausführen (wie handleCellClick, aber für die KI)
     const colLabels={0:'A',1:'B',2:'C',3:'D'}, rowLabels={3:'1',2:'2',1:'3',0:'4'};
     pendingLastMove={player:currentPlayer,
@@ -4750,16 +4760,30 @@ async function maybeTriggerAI(){
   }
 }
 
-// §39e Zug-Animation A→B→C. wait = restliche künstliche Denkzeit (in Phase B).
-// §76b: Timing parametrierbar gemacht. Defaults = bisherige MvKI-Werte (Max Michu unverändert).
-// MvM ruft mit gemächlicheren Werten auf (Walter-Wunsch „einen Tick langsamer"), OHNE MvKI zu ändern.
+// §39e Zug-Animation A→B→C. wait = restliche künstliche Denkzeit.
+// §76b: Timing parametrierbar gemacht. MvM ruft mit gemächlicheren Werten auf, OHNE MvKI zu ändern.
+// §199 (22.9., Rückmeldung der Neulinge): Bis v156 lag die GANZE Wartezeit zwischen Anheben und
+// Absetzen — Max griff also sofort zu und zögerte dann mit der Figur in der Hand. Das liest sich
+// nicht als Überlegen, sondern als Unentschlossenheit, und der Griff selbst kam ohne jede
+// Bedenkzeit. Jetzt wird die Wartezeit geteilt: ein Teil läuft VOR dem Anheben (Phase 0, das
+// Brett steht still — Max denkt), der Rest bleibt zwischen Anheben und Absetzen.
+// ⚠️ Die Felder werden ERST NACH Phase 0 gesucht: ein `render()` dazwischen würde die alten
+// Knoten ersetzen, und die Klassen landeten auf Elementen, die nicht mehr im Dokument stehen.
+// MvM übergibt `wait=0` (der Mitspieler hat real überlegt) — dort gibt es Phase 0 gar nicht,
+// nur die beiden gemächlicheren Dauern.
 async function animateAIMove(move, wait, opts){
   const B_MIN=(opts&&typeof opts.bMin==='number')?opts.bMin:400; // Mindest-Pause Aufheben↔Absetzen
-  const C_MS =(opts&&typeof opts.cMs ==='number')?opts.cMs :450; // Nachleuchten Zielfeld
+  const C_MS =(opts&&typeof opts.cMs ==='number')?opts.cMs :600; // Nachleuchten Zielfeld
+  // Anteil der Wartezeit, der vor das Anheben geht. 0,55: der Griff soll den längeren Teil
+  // ABWARTEN, das Absetzen danach noch als eigener Schritt lesbar bleiben.
+  const VOR_ANTEIL=(opts&&typeof opts.vorAnteil==='number')?opts.vorAnteil:0.55;
+  const rest0=Math.max(0, wait);
+  const vor=Math.round(rest0*VOR_ANTEIL), zwischen=rest0-vor;
+  if(vor) await new Promise(r=>setTimeout(r, vor));            // (0) Max denkt, nichts leuchtet
   const from=document.querySelector(`[data-cell="${move.fr}-${move.fc}"]`);
   const to=document.querySelector(`[data-cell="${move.tr}-${move.tc}"]`);
   if(from) from.classList.add('ai-lift');       // (A) Quellfeld blau
-  await new Promise(r=>setTimeout(r, Math.max(B_MIN, wait))); // (B) Pause = Denkzeit
+  await new Promise(r=>setTimeout(r, Math.max(B_MIN, zwischen))); // (B) Pause bis zum Absetzen
   if(from) from.classList.remove('ai-lift');
   if(to) to.classList.add('ai-drop');           // (C) Zielfeld blau
   await new Promise(r=>setTimeout(r, C_MS));
@@ -4771,7 +4795,7 @@ window.handleCellClick=function(r,c){
   if(phase==='finished'||phase==='waiting') return;
   // §76b: Während der MvM-Gegnerzug-Animation zeigt `board` kurz den ALTEN Zustand — Klicks in diesem
   // Fenster komplett ignorieren (kein render, kein Zug), sonst Race auf falschem Brett. Das Fenster ist
-  // kurz (~1,3 s) und endet mit dem Ziel-Render; danach ist regulär wieder klickbar.
+  // kurz (seit §199 ~1,75 s) und endet mit dem Ziel-Render; danach ist regulär wieder klickbar.
   if(mvmAnimating) return;
   if(!isMyTurn) {
     // Brief visual feedback on the board without clearing the log

@@ -1971,6 +1971,46 @@ console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Re
      'die Escape-Liste nennt die f\u00fcnf Lesefenster und KEINE Dialogkarte');
 }
 
+// §199 (22.9.) — DIE DENKZEIT LIEGT JETZT AUCH VOR DEM ANHEBEN. Bis v156 lag die ganze
+// Wartezeit zwischen Anheben und Absetzen: Max griff sofort zu und zögerte dann mit der Figur
+// in der Hand. Geprüft wird deshalb nicht die Dauer (die ist Geschmack), sondern die
+// REIHENFOLGE — und dass die beiden Wege, die einen Zug aufs Brett bringen, beide gesperrt
+// sind, wenn der Zug veraltet ist.
+console.log('\u00a7199 \u2014 Denkzeit vor dem Anheben, MvM-Takt, Abbruch hinter der Wartezeit:');
+{
+  const fn = (html.match(/async function animateAIMove\([\s\S]*?\n\}/)||[''])[0];
+  ok(fn.length > 0, 'animateAIMove ist als Ganzes l\u00f6sbar (' + fn.length + ' Zeichen)');
+  const iVor = fn.indexOf('if(vor)'), iLift = fn.indexOf("classList.add('ai-lift')"),
+        iQuery = fn.indexOf('querySelector');
+  ok(iVor > 0 && iLift > 0 && iVor < iLift,
+     'die Denkpause l\u00e4uft VOR dem Anheben \u2014 nicht erst zwischen Anheben und Absetzen');
+  ok(iQuery > iVor,
+     'die Felder werden ERST NACH der Denkpause gesucht (ein render dazwischen ersetzt die Knoten)');
+  const anteil = Number((fn.match(/opts\.vorAnteil:([0-9.]+)/)||[])[1]);
+  ok(anteil > 0 && anteil < 1,
+     'der Anteil vor dem Anheben liegt zwischen 0 und 1 \u2014 beide Phasen bleiben sichtbar (' + anteil + ')');
+  const bMin = Number((fn.match(/opts\.bMin:(\d+)/)||[])[1]);
+  const cMs  = Number((fn.match(/opts\.cMs :(\d+)/)||[])[1]);
+  ok(bMin > 0 && cMs > 0, 'MvKI-Grundwerte gefunden (bMin ' + bMin + ', cMs ' + cMs + ')');
+
+  // MvM zieht mit (Walters Entscheid 22.9.), bleibt aber gem\u00e4chlicher als Max \u2014 und das
+  // ist eine ORDNUNG, keine Zahl: wer eine der beiden Seiten \u00e4ndert, wird hier rot.
+  const ruf = (html.match(/animateAIMove\(\{fr:lmA[\s\S]{0,400}?\}\);/)||[''])[0];
+  const mB = Number((ruf.match(/bMin:(\d+)/)||[])[1]), mC = Number((ruf.match(/cMs:(\d+)/)||[])[1]);
+  ok(mB >= bMin && mC >= cMs,
+     'der MvM-Zug bleibt gem\u00e4chlicher als Max Michu (' + mB + '/' + mC + ' gegen ' + bMin + '/' + cMs + ')');
+  ok(/wait=0|wait 0|\}, 0,/.test(ruf),
+     'MvM \u00fcbergibt KEINE k\u00fcnstliche Denkzeit \u2014 der Mitspieler hat real \u00fcberlegt');
+
+  // Der Abbruch-Token: die Pruefung VOR der Wartezeit allein genuegt seit \u00a7199 nicht mehr.
+  const zug = (html.match(/const move=res\.move;[\s\S]*?applyMoveA\(move\.fr/)||[''])[0];
+  const nachAnimation = zug.indexOf('await animateAIMove');
+  const pruefungen = [...zug.matchAll(/myToken!==aiTurnToken \|\| !aiThinking/g)].map(m => m.index);
+  ok(pruefungen.length >= 1 && pruefungen.some(i => i > nachAnimation && nachAnimation > 0),
+     'nach der Wartezeit wird der Abbruch-Token NOCHMALS gepr\u00fcft \u2014 sonst landet ein veralteter ' +
+     'Zug auf dem neuen Brett (\u00a7180: beide Wege zu applyMoveA sperren)');
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];

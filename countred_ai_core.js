@@ -109,6 +109,17 @@ const HEURISTIC_VERSION = 'countred-ai-2.2';
 //      Ausfuehrliche Begruendung im Kasten bei _jitterOf. Vorerst traegt KEINE Stufe das
 //      Feld: der Mechanismus steht, der Wert wird erst gemessen (Walters Grundsatz — nie
 //      unterhalb der real gespielten Tiefe entscheiden, K1).
+// v156 -> v157 (22.9., §199): minThinkMs bei ALLEN Stufen 1000 -> 2000. Rueckmeldung der
+//      Neulinge: Max reagiert zu schnell, das wirkt abweisend. Vereinheitlicht bleibt es
+//      aus dem §125-Grund (die Bedenkzeit darf die Spielstaerke nicht verraten) — Walters
+//      Entscheid 22.9.: gleichmaessig ueber alle Stufen. Gemessen (Ausgangslauf, je Stufe
+//      mehrere Partien): einsteiger Median unter 1 ms, fortgeschritten 77 ms, meister
+//      1320 ms. Bei den flachen Stufen traegt die Untergrenze also die ganze sichtbare
+//      Zeit, bei meister greift sie nur in der schnelleren Haelfte — genau richtig, denn
+//      dort hat er wirklich gerechnet. KEIN HEURISTIC-Bump: weder Suche noch Bewertung
+//      noch Zugwahl sind beteiligt; timeBudgetMs bleibt bei 2500 (das WAERE Spielstaerke).
+//      Die Aufteilung der Wartezeit (vor dem Anheben / zwischen Anheben und Absetzen)
+//      liegt in index.html bei animateAIMove — hier steht nur die Untergrenze.
 // v100 -> v101 (3.8., §125): minThinkMs bei ALLEN Stufen auf 1000 vereinheitlicht (war
 //      1000/1000/800/900). Walters Punkt: die Bedenkzeit darf die Spielstaerke nicht
 //      verraten. Sie ist ohnehin nur eine UNTERGRENZE — meister rechnet auf Tiefe 5
@@ -256,7 +267,7 @@ const SKILL_LEVELS = {
   // │    fertig, und minThinkMs traegt seither die sichtbare Zuganimation (Phase A in   │
   // │    animateAIMove = das blaue Aufheben). Mit 600 ms zog Max „fast zu schnell".     │
   // └──────────────────────────────────────────────────────────────────────────────────┘
-  einsteiger:      { timeBudgetMs: 2500, maxDepth: 2, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 250, poolTemp: 60, forceTriple: true, jitterAmp: 80, randomRate: 0.3 },
+  einsteiger:      { timeBudgetMs: 2500, maxDepth: 2, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 2000, poolWindow: 250, poolTemp: 60, forceTriple: true, jitterAmp: 80, randomRate: 0.3 },
   // ┌─ FORTGESCHRITTEN (§122: war bis v97 `einsteiger`) ───────────────────────────────┐
   // │ Gemessen 7,8 % gegen meister. Walter stand hier ueber 13 Partien bei 6:6:1 —      │
   // │ das ist die ehrliche „fortgeschritten"-Stufe. Dieselben Abhaengigkeiten wie oben: │
@@ -264,7 +275,7 @@ const SKILL_LEVELS = {
   // │ KEIN jitterAmp — diese Stufe darf ihre Lage sauber einschaetzen und Remis         │
   // │ annehmen (accepts:true).                                                          │
   // └──────────────────────────────────────────────────────────────────────────────────┘
-  fortgeschritten: { timeBudgetMs: 2500, maxDepth: 3, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow: 110, poolTemp: 30, forceTriple: true },
+  fortgeschritten: { timeBudgetMs: 2500, maxDepth: 3, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 2000, poolWindow: 110, poolTemp: 30, forceTriple: true },
   // ┌─ STARK (§122: war bis v97 `fortgeschritten`) — GEPARKT, NICHT ENTFERNEN ─────────┐
   // │ Gemessen 40,6 % gegen meister (§109, t = −3,0, p ≈ 0,02). Die Stufe wird in       │
   // │ countred.html NICHT angeboten — Walter entscheidet spaeter, ob sie erscheint.     │
@@ -274,8 +285,8 @@ const SKILL_LEVELS = {
   // │ Fenster 30 < Bonus 80 ⇒ KEIN forceTriple noetig, der Dreier ist hier ohnehin      │
   // │ nicht ueberstimmbar.                                                              │
   // └──────────────────────────────────────────────────────────────────────────────────┘
-  stark:           { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000, poolWindow:  30, poolTemp: 10 },
-  meister:         { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 1000 },
+  stark:           { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 2000, poolWindow:  30, poolTemp: 10 },
+  meister:         { timeBudgetMs: 2500, maxDepth: 5, minDepth: 2, rankPool: 1, blockRate: 1.0, minThinkMs: 2000 },
 };
 
 // Zeitquelle: performance.now im Browser, Date.now sonst. Injizierbar für Tests.
