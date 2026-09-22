@@ -125,6 +125,20 @@ pruef('A23d kein "gesperrtes Feld" im sichtbaren Text',
 pruef('A23e die Anleitung sagt, was trotz Sperrung erlaubt bleibt',
     /Stapeln darauf bleibt erlaubt/.test(alleTexte) &&
     /obere Figur darfst du auch wieder herunternehmen/.test(alleTexte));
+
+// §198 (Rueckmeldung der Neulinge, 22.9.): Die Punkteregel steht in der Richtung da, in
+// der die Regelschicht sie anwendet — `canPlaceOnEmpty` prueft die Uebereinstimmung NUR
+// beim leeren Zielfeld, beim Stapeln ist sie gleichgueltig. Die frueher figurseitige
+// Fassung („die vier Figuren mit einer 2 koennen nur auf … abgesetzt werden") las sich als
+// Aussage ueber die FIGUR und stand damit halb gegen canStack — und gegen den zweiten
+// Absatz desselben Schrittes. Beides wird festgehalten: der neue Satz steht da, der alte
+// kommt nicht zurueck.
+const beginnText = (M.STEPS.find(s=>s.id==='beginn')||{}).intro || '';
+pruef('A23f Schritt 2 nennt die Punkteregel vom FELD aus',
+  /Auf den leeren Feldern 2A, 2B, 2C oder 2D können nur Figuren mit einer <b>2<\/b> abgesetzt werden/
+    .test(beginnText.replace(/\s+/g,' ')), beginnText.replace(/<[^>]+>/g,'').slice(0,120));
+pruef('A23g die figurseitige Fassung ist nicht zurueck (Wiedereinbau-Schutz)',
+  !/Figuren mit einer <b>2<\/b> können nur auf den leeren Feldern/.test(alleTexte.replace(/\s+/g,' ')));
 }
 
 // Die Zuege des Mitspielers: genau zwei, und beide dort, wo Walter sie wollte.

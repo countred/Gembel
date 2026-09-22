@@ -1,6 +1,6 @@
 # Count Red — Interaktive Spielanleitung: alle Texte
 
-**Quelle: `anleitung.html` · Anleitung · Fassung 66 · 17.09.2026**
+**Quelle: `anleitung.html` · Anleitung · Fassung 67 · 22.09.2026**
 
 > Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`
 > im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt
@@ -74,7 +74,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 **·  anheben**
 
-> Die Punktezahl oben auf einem Feld (3, 2, 1 oder 0 Punkte) und die Zahl auf der Figur (3, 2, 1 oder 0) auf diesem Feld müssen übereinstimmen. Beispiel: Die vier Figuren mit einer **2** können nur auf den leeren Feldern 2A, 2B, 2C oder 2D abgesetzt werden.
+> Die Punktezahl oben auf einem Feld (3, 2, 1 oder 0 Punkte) und die Zahl auf der Figur (3, 2, 1 oder 0) auf diesem Feld müssen übereinstimmen. Beispiel: Auf den leeren Feldern 2A, 2B, 2C oder 2D können nur Figuren mit einer **2** abgesetzt werden.
 
 *Aufgabe:*  `Tippe 1B an.`
 
@@ -499,7 +499,7 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 |---|---|
 | Kopfzeile links | `COUNT · RED` |
 | Kopfzeile rechts | `Schritt N von 9` |
-| unter dem Fortschrittsbalken | `Anleitung · Fassung 66 · 17.09.2026` |
+| unter dem Fortschrittsbalken | `Anleitung · Fassung 67 · 22.09.2026` |
 | Knopf links | `Zurück` — einen Teilschritt zurück |
 | Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |
 

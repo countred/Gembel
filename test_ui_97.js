@@ -1119,15 +1119,22 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
 
   // \u00dcbertragungscode: Walters Bauart \u2014 individuell gestempelt, \u00fcberall einl\u00f6sbar,
   // aber OHNE Kennungs\u00fcbernahme (\u00a7124 bleibt intakt: eine Kennung = ein Browserprofil).
-  ok(/return k \+ '-' \+ t \+ '-' \+ gateHash/.test(html),
-     'der Code tr\u00e4gt die Kennung des ausstellenden Ger\u00e4ts');
+  ok(/paare\.map\(e => e\.key \+ '-' \+ Math\.round\(e\.p\*10\)\)\.join\('\.'\)/.test(html),
+     '\u00a7198: der Code tr\u00e4gt jeden Anteil unter der Kennung des Ger\u00e4ts, das ihn erspielt hat');
+  ok(/if\(gateState\.p > 0\) paare\.push\(\{ key:k, p:gateState\.p \}\);/.test(html) &&
+     /for\(const q in gateState\.von\) if\(q !== k && gateState\.von\[q\] > 0\)/.test(html),
+     '\u00a7198: er tr\u00e4gt den GANZEN Stand \u2014 eigene Punkte UND Gutschriften (Sicherung, nicht nur Umzug)');
+  ok(/paare\.sort\(/.test(html),
+     'die Anteile gehen SORTIERT in den Streuwert (sonst h\u00e4ngt er an der Schl\u00fcsselreihenfolge)');
   ok(!/localStorage\.setItem\('countred_pkey'[\s\S]{0,200}gateReadCode|gateReadCode[\s\S]{0,400}countred_pkey/.test(html),
      'das Einl\u00f6sen \u00fcberschreibt die eigene Kennung NICHT (kein Zusammenwachsen, Walters Entscheid)');
-  ok(/if\(PLAYER_KEY && r\.key === PLAYER_KEY\)/.test(html),
-     'der eigene Code auf dem eigenen Ger\u00e4t wird abgewiesen (w\u00e4re eine Verdopplung)');
-  ok(/const vorher = gateSumme\(\), alt = gateState\.von\[r\.key\] \|\| 0;/.test(html) &&
-     /if\(r\.p > alt\)\{ gateState\.von\[r\.key\] = r\.p;/.test(html),
-     '\u00a7148: je Aussteller EIN Eintrag \u2014 anheben statt addieren');
+  ok(/const fremd = paare\.filter\(e => !\(PLAYER_KEY && e\.key === PLAYER_KEY\)\);/.test(html),
+     '\u00a7198: Anteile unter der EIGENEN Kennung werden \u00fcbergangen \u2014 sonst A \u2192 B \u2192 A im Kreis');
+  ok(/if\(!fremd\.length\)\{[\s\S]{0,200}Das ist der Code dieses Ger\u00e4ts\./.test(html),
+     'bleibt nichts Fremdes \u00fcbrig, ist es der Code dieses Ger\u00e4ts (Wortlaut steht)');
+  ok(/const alt = gateState\.von\[e\.key\] \|\| 0;/.test(html) &&
+     /if\(e\.p > alt\)\{ gateState\.von\[e\.key\] = e\.p; geaendert = true; \}/.test(html),
+     '\u00a7148: je Aussteller EIN Eintrag \u2014 anheben statt addieren, jetzt \u00fcber alle Anteile');
 
   // Der Schalter muss allein gen\u00fcgen. Geprueft wird die ZWEITE Stellung im vm: MVM_GATE=false
   // muss gateOpen() bedingungslos wahr machen, auch bei leerem Punktestand.
@@ -1167,9 +1174,16 @@ console.log('\u00a7144 \u2014 VERHALTEN: die Mechanik wird wirklich gefahren (\u
       document:{ getElementById:()=>null } };
     vmod.createContext(ctx);
     vmod.runInContext(block + '\nfunction gateRefresh(){}' +
-      '\n;__G={gateLoad,gateSave,gateOpen,gateAward,gateMakeCode,gateReadCode,' +
+      '\n;__G={gateLoad,gateSave,gateOpen,gateAward,gateMakeCode,gateReadCode,gateHash,GATE_SALT,' +
       'gateSumme,gateStandSatz,get p(){return gateState.p}, set st(v){gateState=v},' +
-      'gutschrift(k,w){const a=gateState.von[k]||0; if(w>a){gateState.von[k]=w; gateSave();}}};', ctx);
+      'gutschrift(k,w){const a=gateState.von[k]||0; if(w>a){gateState.von[k]=w; gateSave();}},' +
+      // §198: derselbe Ablauf wie in redeemGateCode — eigene Anteile übergehen, je
+      // Aussteller das Maximum. Die Quelltextprüfungen oben halten fest, dass die
+      // echte Funktion es genauso macht; hier wird er GEFAHREN.
+      'einloesen(txt){const paare=gateReadCode(txt); if(!paare) return null;' +
+      ' const fremd=paare.filter(e=>!(PLAYER_KEY&&e.key===PLAYER_KEY)); if(!fremd.length) return \"eigen\";' +
+      ' for(const e of fremd){const a=gateState.von[e.key]||0; if(e.p>a) gateState.von[e.key]=e.p;}' +
+      ' gateSave(); return gateSumme();}};', ctx);
     const G = ctx.__G;
 
     G.st = { p:0, von:{} };
@@ -1198,7 +1212,7 @@ console.log('\u00a7144 \u2014 VERHALTEN: die Mechanik wird wirklich gefahren (\u
     const code = G.gateMakeCode();
     ok(/^BWpirSxjlz5b-30-[0-9A-Z]{7}$/.test(code),
        'Code tr\u00e4gt Kennung des Ausstellers und Punkte\u00d710 (' + code + ')');
-    ok((G.gateReadCode(code)||{}).p === 3, 'der eigene Code wird gelesen');
+    ok((G.gateReadCode(code)||[])[0].p === 3, 'der eigene Code wird gelesen');
     ok(G.gateReadCode(code.slice(0,-1) + 'X') === null, 'ein ver\u00e4ndertes Zeichen macht den Code ung\u00fcltig');
     ok(G.gateReadCode('BWpirSxjlz5b-99-' + code.split('-')[2]) === null,
        'hochgesetzte Punktzahl f\u00e4llt durch die Pr\u00fcfsumme');
@@ -1217,13 +1231,26 @@ console.log('\u00a7144 \u2014 VERHALTEN: die Mechanik wird wirklich gefahren (\u
     ok(G.gateSumme() === 4, 'ein DRITTES Ger\u00e4t tr\u00e4gt bei \u2014 und es gibt KEINEN Deckel bei 3');
     G.gutschrift('BBBBBBBBBBBB', 2.5);
     ok(G.gateSumme() === 5.5, 'sp\u00e4terer Code desselben Ger\u00e4ts HEBT den Eintrag an (1 \u2192 2,5), addiert ihn nicht');
-    // Der Code darf nur die SELBST erspielten Punkte tragen — sonst entsteht ein Kreis:
-    // A schickt an B, B zur\u00fcck an A, und A schreibt seine eigenen Punkte erneut gut.
+    // §198 (Weg B): der Code tr\u00e4gt jetzt den GANZEN Stand — die eigenen 2 Punkte und
+    // beide Gutschriften, jede unter der Kennung, unter der sie entstanden ist.
     const eigen = G.gateReadCode(G.gateMakeCode());
-    ok(eigen.p === 2 && G.gateSumme() === 5.5,
-       'der ausgestellte Code tr\u00e4gt nur die eigenen 2 Punkte, nicht die Summe 5,5 (kein Kreis)');
+    ok(eigen.length === 3 && G.gateSumme() === 5.5,
+       'der ausgestellte Code tr\u00e4gt alle drei Anteile (' + G.gateMakeCode() + ')');
+    ok(eigen.map(e=>e.key).join(',') === 'BBBBBBBBBBBB,BWpirSxjlz5b,CCCCCCCCCCCC',
+       'die Anteile stehen sortiert und unter ihrem URSPR\u00dcNGLICHEN Aussteller');
+    ok(eigen.reduce((a,e)=>a+e.p,0) === 5.5, 'ihre Summe ist der Stand (2 + 2,5 + 1)');
+    // KEIN KREIS: dieser Code zur\u00fcck ins eigene Ger\u00e4t \u00e4ndert nichts — der eigene Anteil
+    // wird \u00fcbergangen, die beiden Gutschriften stehen schon in derselben H\u00f6he.
+    ok(G.einloesen(G.gateMakeCode()) === 5.5,
+       'der eigene Code zur\u00fcck eingel\u00f6st l\u00e4sst den Stand bei 5,5 (kein Kreis)');
     ok(G.gateStandSatz() === 'Du hast 5,5 Punkte.',
        'freigeschaltet: Stand ohne Schwelle \u2014 „' + G.gateStandSatz() + '\u201c');
+    // ALTES FORMAT: ein vor v156 notierter Code muss weiter gelten. Er wird hier mit der
+    // ALTEN Formel gebaut (k|t|SALT) — h\u00e4tte das neue Format sie ver\u00e4ndert, f\u00e4llt das hier auf.
+    const altCode = 'DDDDDDDDDDDD-30-' + G.gateHash('DDDDDDDDDDDD|30|' + G.GATE_SALT);
+    ok((G.gateReadCode(altCode)||[]).length === 1 && G.gateReadCode(altCode)[0].p === 3,
+       'ein Code im alten Format (ein Anteil) wird unver\u00e4ndert gelesen');
+    ok(G.einloesen(altCode) === 8.5, 'und er tr\u00e4gt seine 3 Punkte bei (5,5 \u2192 8,5)');
     G.st = { p:1, von:{} };
     ok(G.gateStandSatz() === 'Du hast 1 von 3 Punkten.',
        'gesperrt: Stand mit Schwelle \u2014 „' + G.gateStandSatz() + '\u201c');
@@ -1247,6 +1274,25 @@ console.log('\u00a7145 \u2014 Wortlaut der Freischalttexte (Walters Fassung, 27.
      'der Satz, dass Eingeladene selbst keine Punkte brauchen, steht da');
   ok(/Willst du deinen Punktestand auf ein anderes Ger\u00e4t mitnehmen\?/.test(html),
      '\u00dcbertragungscode ist als Frage eingef\u00fchrt, nicht als Technik');
+  // §198: der Code ist auch die einzige Sicherung des Punktestands. Stand bis v155 nirgends.
+  ok(/Bewahre diesen Code auf\./.test(html) &&
+     /Website-Daten deines Browsers, ist dein\s+Punktestand weg; mit dem Code holst du ihn zur\u00fcck\./.test(html),
+     '\u00a7198: der Satz zur Sicherung steht im Punkte-Fenster (Walters Wortlaut)');
+  {
+    // TEXT GEGEN CODE, wie bei den Fristen: sobald der Code MEHRERE Anteile tragen kann,
+    // nennt er fremde Kennungen — und dann muss der Datenschutztext das aussprechen.
+    const mehrteilig = /\.join\('\.'\) \+ '-' \+ gateCodeHash/.test(html);
+    const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen<\/button>/) || [''])[0];
+    ok(!mehrteilig || /Kennungen der Ger\u00e4te, auf denen dein\s+Punktestand entstanden ist/.test(ds),
+       'der Datenschutztext nennt die MEHRZAHL der Kennungen (mehrteiliger Code gefunden: ' + mehrteilig + ')');
+    // Walters Auflage (22.9.): der Text soll niemanden auf die Idee bringen, Punkte von
+    // anderen zu uebernehmen. Die Auskunft bleibt vollstaendig, sie steht aber als
+    // AUFLAGE da, nicht als Moeglichkeit.
+    ok(!mehrteilig || /gib ihn deshalb\s+nur auf deinen eigenen Ger\u00e4ten ein/.test(ds),
+       'und er sagt, was daraus folgt \u2014 als Auflage, nicht als Beschreibung des Weitergebens');
+    ok(!/gibst du diese Kennungen mit|kannst du ihn weitergeben/.test(ds),
+       'kein Satz, der das Weitergeben des Codes beschreibt (Walters Auflage)');
+  }
   ok(/Der Code ist nicht korrekt\. Bitte vollst\u00e4ndigen Code eingeben\./.test(html),
      'Fehlermeldung im Wortlaut');
   // \u00a7148: die Erfolgsmeldung nennt jetzt den NEUEN GESAMTSTAND, nicht mehr den Wert des
@@ -1795,7 +1841,7 @@ console.log('\u00a7187 Symbolsatz \u2014 kein Emoji, ein Vorrat, keine Verweise 
 
   const vorrat  = new Set([...html.matchAll(/<symbol id="(s-[a-z0-9]+)"/g)].map(m => m[1]));
   const benutzt = new Set([...html.matchAll(/<use href="#(s-[a-z0-9]+)"\s*\/>/g)].map(m => m[1]));
-  ok(vorrat.size === 22, 'Symbolvorrat h\u00e4lt 22 Formen \u2014 gefunden: ' + vorrat.size);
+  ok(vorrat.size === 23, 'Symbolvorrat h\u00e4lt 23 Formen \u2014 gefunden: ' + vorrat.size);   // §198: s-schliessen dazu
   const insLeere = [...benutzt].filter(x => !vorrat.has(x));
   ok(insLeere.length === 0, 'kein <use> zeigt auf ein fehlendes Symbol'
      + (insLeere.length ? ' \u2014 fehlt: ' + insLeere.join(', ') : ''));
@@ -1865,6 +1911,64 @@ console.log('\u00a7191 \u00dcber das Spiel \u2014 Seite, Nachweise, Bildtechnik:
      'beide Bilder: lazy, feste Ma\u00dfe, beschreibender alt-Text \u2014 ' + bilder.length + ' gefunden');
   ok(/Z\u00e4hle die roten Nachbarn der\s+Figur\. Ist die Zahl gerade/.test(ue),
      'die Zugregel steht auf der Seite \u2014 direkt hinter der Frage, nicht im Geschichtsabsatz');
+}
+
+// §198 (22.9.) — DER AUSGANG OBEN RECHTS. Die fuenf Lesefenster tragen eine Kopfzeile, die
+// beim Blaettern stehen bleibt, mit einem Kreuz rechts. Gefahr bei dieser Bauart ist nicht
+// das fehlende Kreuz (das sieht man sofort), sondern eine ZWEITE Schliesslogik, die von der
+// des Knopfes abweicht — beim Punkte-Fenster etwa kaeme man dann ohne Startmenue heraus.
+// Deshalb prueft dieser Block vor allem Gleichheit: Kreuz und Knopf tun dasselbe, und
+// Escape drueckt das Kreuz, statt selbst zu schliessen.
+console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
+{
+  const LESE = ['regeln-overlay','ueber-overlay','impressum-overlay','datenschutz-overlay','gate-overlay'];
+  const karte = id => (html.match(new RegExp('<div class="overlay hidden" id="'+id+'">[\\s\\S]*?\\n<\\/div>'))||[''])[0];
+
+  ok(/<symbol id="s-schliessen"/.test(html),
+     'das Schliessen-Symbol liegt im Symbolvorrat (sonst bleibt der Knopf leer)');
+  ok(/\.lesekopf\{[^}]*position:sticky[^}]*top:0/.test(html.replace(/\s+/g,' ').replace(/ \{/g,'{')) ||
+     /\.lesekopf\{[\s\S]{0,200}position:sticky;top:0/.test(html),
+     'die Kopfzeile klebt oben (`position:sticky;top:0`) \u2014 ohne das bl\u00e4ttert der Ausgang weg');
+  ok(/\.card\.lesekarte\{padding-top:0;\}/.test(html),
+     'die Lesekarte bringt oben keine eigene Polsterung mehr mit (sonst helle L\u00fccke beim Bl\u00e4ttern)');
+
+  const ohneKreuz = LESE.filter(id => !/class="lesezu"/.test(karte(id)));
+  ok(ohneKreuz.length === 0,
+     'alle f\u00fcnf Lesefenster tragen den Ausgang oben rechts' +
+     (ohneKreuz.length ? ' \u2014 fehlt bei: ' + ohneKreuz.join(', ') : ''));
+
+  // DIE Kernpruefung: das Kreuz ruft exakt denselben Ausdruck wie der Knopf unten. Wer
+  // eine der beiden Stellen aendert und die andere vergisst, wird hier rot.
+  const ungleich = LESE.filter(id => {
+    const k = karte(id);
+    const kreuz = (k.match(/class="lesezu"[^>]*onclick="([^"]+)"/)||[])[1];
+    const knopf = (k.match(/class="big-btn primary"[^>]*onclick="([^"]+)"\s*>Schlie\u00dfen/)||
+                   k.match(/onclick="([^"]+)"\s*>Schlie\u00dfen/)||[])[1];
+    return !kreuz || !knopf || kreuz !== knopf;
+  });
+  ok(ungleich.length === 0,
+     'Kreuz und Schlie\u00dfen-Knopf tun in jedem Fenster dasselbe' +
+     (ungleich.length ? ' \u2014 weicht ab bei: ' + ungleich.join(', ') : ''));
+
+  const kreuze = (html.match(/class="lesezu"/g)||[]).length;
+  ok(kreuze === LESE.length,
+     'genau f\u00fcnf Kreuze \u2014 keine Dialogkarte hat eins bekommen (\u00a7177: dort w\u00e4re ' +
+     'Wegklicken kein definierter Zustand), gez\u00e4hlt: ' + kreuze);
+  ok((html.match(/class="lesezu" aria-label="Schlie\u00dfen"/g)||[]).length === LESE.length,
+     'jedes Kreuz tr\u00e4gt ein aria-label \u2014 ein Knopf ohne Beschriftung ist sonst stumm');
+
+  // Escape: nur am Rechner, und er DRUECKT den Ausgang.
+  const esc = (html.match(/document\.addEventListener\('keydown'[\s\S]*?\n\}\);/)||[''])[0];
+  ok(/e\.key !== 'Escape'/.test(esc), 'es gibt einen Escape-Zweig');
+  ok(/matchMedia\('\(pointer:fine\)'\)/.test(esc),
+     'Escape greift nur bei Maus oder Trackpad (\u00a7165-Unterscheidung), nicht am Telefon');
+  ok(/querySelector\('\.lesezu'\)/.test(esc) && /\.click\(\)/.test(esc),
+     'Escape dr\u00fcckt den Ausgang der Karte \u2014 keine zweite Schlie\u00dflogik');
+  ok(!/classList\.add\('hidden'\)/.test(esc),
+     'der Escape-Zweig blendet NICHTS selbst aus (sonst driftet er vom Knopf weg)');
+  const liste = (html.match(/const LESEFENSTER = \[([^\]]*)\]/)||[])[1] || '';
+  ok(LESE.every(id => liste.includes(id)) && !/neu-overlay|draw-offer|rematch-req|dc-overlay|wait-overlay/.test(liste),
+     'die Escape-Liste nennt die f\u00fcnf Lesefenster und KEINE Dialogkarte');
 }
 
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');

@@ -358,6 +358,38 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   display:flex;flex-direction:column;gap:16px;align-items:center;text-align:center;
 }
 .card h2{font-size:24px;font-weight:600;letter-spacing:-.4px;}
+/* §198 (Rückmeldung der Neulinge, 22.9.): die fünf LESEFENSTER — Regeln, Über das Spiel,
+   Impressum, Datenschutz, Punkte — sind lang. Wer nur kurz etwas nachsehen wollte, musste
+   bis ans Ende blättern, weil der Schließen-Knopf dort steht; bei den Regeln heißt das
+   einmal durch den ganzen Text. Der Knopf unten bleibt (Walter: „zusätzlich"), dazu kommt
+   eine Kopfzeile, die beim Blättern STEHEN BLEIBT, mit dem Ausgang rechts — dasselbe
+   Muster wie „Zum Spiel" oben rechts in der Anleitung.
+   `position:sticky` klebt an der Oberkante des scrollenden Kartenkörpers; die negativen
+   Seitenränder heben dessen Polsterung auf, sonst liefe der Text in einem Streifen NEBEN
+   der Kopfzeile durch. `padding-top:0` an der Karte, weil die Kopfzeile ihren Abstand
+   selbst mitbringt — läge beides übereinander, entstünde beim Blättern eine helle Lücke.
+   DIALOGKARTEN bekommen das bewusst NICHT: bei einem Remisangebot oder einer
+   Nochmal-Anfrage ist „wegklicken" kein definierter Zustand (§177: jedes Angebot hat ein
+   festes Ende, und das wird irgendwo geschrieben). */
+.card.lesekarte{padding-top:0;}
+.lesekopf{
+  position:sticky;top:0;z-index:2;align-self:stretch;
+  display:flex;align-items:center;gap:8px;
+  margin:0 -24px;padding:20px 24px 10px;
+  background:var(--bg3);border-bottom:1px solid var(--border);
+}
+.lesekopf h2{flex:1;margin:0;}
+.lesekopf .lese-platz{flex:none;width:38px;}   /* Gegengewicht: hält die Überschrift mittig */
+.lesezu{
+  flex:none;width:38px;height:38px;padding:0;
+  display:flex;align-items:center;justify-content:center;
+  border-radius:10px;border:1px solid var(--border);background:var(--bg2);
+  cursor:pointer;color:var(--text2);font-family:inherit;touch-action:manipulation;
+  transition:border-color .12s,color .12s;
+}
+.lesezu:hover{border-color:var(--sel-bd);color:var(--sel-bd);}
+.lesezu:active{transform:scale(0.94);}
+.lesezu .sym{margin-right:0;}
 .card p{font-size:var(--fs-md);color:var(--text2);line-height:1.5;}
 .card-row{display:flex;gap:8px;width:100%;flex-wrap:wrap;}
 /* §95: Querformat-Hinweis. Standardmäßig aus; nur bei schmalem Querformat sichtbar. */
@@ -470,6 +502,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <symbol id="s-neustart" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4.4 10.6 12 4.6l7.6 6v8.1a1.2 1.2 0 0 1-1.2 1.2H5.6a1.2 1.2 0 0 1-1.2-1.2z"/><path d="M9.6 19.9v-5.6h4.8v5.6"/></symbol>
   <symbol id="s-zurueck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M8.4 6.6 4.6 10.4l3.8 3.8"/><path d="M4.6 10.4h9.6a4.8 4.8 0 0 1 0 9.6h-2"/></symbol>
   <symbol id="s-werkzeug" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.8 4.6a4.6 4.6 0 0 0-5 7.2l-5.4 5.4a1.7 1.7 0 0 0 2.4 2.4l5.4-5.4a4.6 4.6 0 0 0 7.2-5l-2.8 2.8-2.4-.6-.6-2.4z"/></symbol>
+  <!-- §198: der Ausgang oben rechts in den fuenf Lesefenstern. Ein schlichtes Kreuz, keine
+       Beschriftung — deshalb traegt der Knopf ein `aria-label`, sonst hoerte ein Screenreader
+       nichts als „Schaltflaeche". Dieselbe Strichstaerke wie der uebrige Satz. -->
+  <symbol id="s-schliessen" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6.6 6.6l10.8 10.8M17.4 6.6 6.6 17.4"/></symbol>
 </svg>
 
 <div id="rotate-hint">
@@ -559,7 +595,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=155'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=156'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
       <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
     </div>
@@ -639,8 +675,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      holt sie erst, wenn jemand die Seite öffnet. `width`/`height` stehen dran, damit beim
      Nachladen nichts springt. -->
 <div class="overlay hidden" id="ueber-overlay">
-  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
-    <h2 style="text-align:center;font-size:var(--fs-xl);">Über das Spiel</h2>
+  <div class="card lesekarte" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
+    <div class="lesekopf">
+      <span class="lese-platz" aria-hidden="true"></span>
+      <h2 style="text-align:center;font-size:var(--fs-xl);">Über das Spiel</h2>
+      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('ueber-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+    </div>
     <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:12px;">
       <div>CountRed ist ein Strategiespiel. Kein Würfel, kein Zufall, kein Glück. Die Regeln lesen
         sich in drei Minuten, eine Partie dauert selten länger als 15 Minuten.</div>
@@ -685,8 +725,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 </div>
 
 <div class="overlay hidden" id="impressum-overlay">
-  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
-    <h2 style="text-align:center;font-size:var(--fs-xl);">Impressum</h2>
+  <div class="card lesekarte" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
+    <div class="lesekopf">
+      <span class="lese-platz" aria-hidden="true"></span>
+      <h2 style="text-align:center;font-size:var(--fs-xl);">Impressum</h2>
+      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('impressum-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+    </div>
     <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Angaben gemäß § 5 DDG</strong><br>
         Walter Rehm<br>Guldeinstr. 32 A<br>80339 München<br>Deutschland</div>
@@ -751,8 +795,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      Fristen sind BEWUSST als Aufraeumarbeit der Seite beschrieben, nicht als Zusage: beide
      Laeufe sind fire-and-forget mit stummem catch (ToDo 33). -->
 <div class="overlay hidden" id="datenschutz-overlay">
-  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
-    <h2 style="text-align:center;font-size:var(--fs-xl);">Datenschutz</h2>
+  <div class="card lesekarte" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
+    <div class="lesekopf">
+      <span class="lese-platz" aria-hidden="true"></span>
+      <h2 style="text-align:center;font-size:var(--fs-xl);">Datenschutz</h2>
+      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('datenschutz-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+    </div>
     <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div><strong style="color:var(--text);">Kurz gesagt</strong><br>
         Diese Seite setzt keine Cookies, bindet keine Werbung ein und verwendet kein
@@ -787,8 +835,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         weg wie die Kennung.</div>
       <div><strong style="color:var(--text);">Wechsel auf ein anderes Gerät</strong><br>
         Du kannst dir einen Übertragungscode anzeigen lassen und ihn auf einem zweiten Gerät
-        eingeben. Er enthält deine Kennung und deinen Punktestand, sonst nichts. Das zweite
-        Gerät behält dabei seine eigene Kennung.</div>
+        eingeben; mit demselben Code holst du deinen Punktestand auch zurück, wenn du die
+        Website-Daten gelöscht hast. Er enthält die Kennungen der Geräte, auf denen dein
+        Punktestand entstanden ist, und den jeweiligen Stand, sonst nichts — gib ihn deshalb
+        nur auf deinen eigenen Geräten ein. Das zweite Gerät behält dabei seine eigene
+        Kennung.</div>
       <div><strong style="color:var(--text);">Warum, und auf welcher Grundlage</strong><br>
         Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO — unser berechtigtes Interesse. Es
         besteht darin, das Spiel zu betreiben und weiterzuentwickeln: die Spielstärke der
@@ -831,7 +882,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Art. 11 DSGVO auch nicht verpflichtet, zusätzliche Daten zu erheben, nur um dich
         identifizieren zu können.</div>
       <div style="font-size:var(--fs-sm);color:var(--text3);">
-        Verantwortlich ist die im Impressum genannte Person. Stand: 12. September 2026</div>
+        Verantwortlich ist die im Impressum genannte Person. Stand: 22. September 2026</div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('datenschutz-overlay').classList.add('hidden')">Schließen</button>
@@ -845,8 +896,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      Rueckmeldungen gehen per textContent hinein — die einzige Eingabe der Seite (das
      Codefeld) darf nie als HTML interpretiert werden. -->
 <div class="overlay hidden" id="gate-overlay">
-  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
-    <h2 style="text-align:center;font-size:var(--fs-xl);">Mit Code zu zweit</h2>
+  <div class="card lesekarte" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
+    <div class="lesekopf">
+      <span class="lese-platz" aria-hidden="true"></span>
+      <h2 style="text-align:center;font-size:var(--fs-xl);">Mit Code zu zweit</h2>
+      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('gate-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+    </div>
     <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div id="gate-state" style="color:var(--text);font-weight:600;"></div>
       <div>Um jemand zum Spiel mit dir einzuladen, brauchst du 3 Punkte:</div>
@@ -870,6 +925,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         <button class="big-btn" style="flex:none;margin-left:auto;padding:9px 14px;" onclick="copyGateCode()">Code kopieren</button>
       </div>
       <div id="gate-copy-msg" style="font-size:var(--fs-sm);color:var(--text2);display:none;"></div>
+      <!-- §198 (Walters Wortlaut, 22.9.): der Code kann mehr, als seine Überschrift sagt —
+           er ist auch die einzige Sicherung des Punktestands. Bis v155 stand das nirgends,
+           und wer seine Website-Daten löschte, fing bei null an. Steht direkt UNTER dem
+           Code, nicht unter der Überschrift: gelesen wird er da, wo er ihn gerade sieht. -->
+      <div>Bewahre diesen Code auf. Löschst du die Website-Daten deines Browsers, ist dein
+        Punktestand weg; mit dem Code holst du ihn zurück.</div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input id="gate-input" type="text" autocomplete="off" spellcheck="false"
           placeholder="Code eingeben" style="flex:1;min-width:180px;padding:9px 10px;border-radius:8px;
@@ -1080,8 +1141,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 
 <!-- Regeln Overlay -->
 <div class="overlay hidden" id="regeln-overlay">
-  <div class="card" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
-    <h2 style="text-align:center;font-size:var(--fs-xl);">Regeln</h2>
+  <div class="card lesekarte" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
+    <div class="lesekopf">
+      <span class="lese-platz" aria-hidden="true"></span>
+      <h2 style="text-align:center;font-size:var(--fs-xl);">Regeln</h2>
+      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('regeln-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+    </div>
     <p style="font-size:var(--fs-xs);color:var(--text3);text-align:center;margin-top:-8px;">First published in 1998 as Gembel</p>
 
     <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
@@ -1132,7 +1197,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=155" charset="utf-8"></script>
+<script src="gembel_rules.js?v=156" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1144,7 +1209,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=155" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=156" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1860,20 +1925,55 @@ function gateAward(skill){
 }
 
 // ── Uebertragungscode ────────────────────────────────────────────
-// Aufbau: <Kennung>-<Punkte×10>-<Streuwert>. Er traegt die Kennung des Geraets, das ihn
-// AUSGESTELLT hat — Walters Wahl („individuell gestempelt, ueberall einloesbar"): so ist
-// jeder Code unterscheidbar und Walter kann im Notfall selbst einen ausstellen, ohne eine
-// Liste zu fuehren. Eingeloest wird NUR die Freischaltung; die Kennung des Zielgeraets
-// bleibt seine eigene (Walters Entscheid: kein Zusammenwachsen, §124 bleibt intakt).
+// Aufbau: <Kennung>-<Punkte×10>[.<Kennung>-<Punkte×10> …]-<Streuwert>. Er traegt die
+// Kennung des Geraets, das die Punkte erspielt hat — Walters Wahl („individuell
+// gestempelt, ueberall einloesbar"): so ist jeder Code unterscheidbar und Walter kann im
+// Notfall selbst einen ausstellen, ohne eine Liste zu fuehren. Eingeloest wird NUR die
+// Freischaltung; die Kennung des Zielgeraets bleibt seine eigene (Walters Entscheid: kein
+// Zusammenwachsen, §124 bleibt intakt).
+//
+// §198 (Walter, Weg B): der Code traegt jetzt den GANZEN Stand, nicht mehr nur die selbst
+// erspielten Punkte — jeden Anteil unter der Kennung des Geraets, auf dem er entstanden
+// ist. Erst damit ist er eine echte Sicherung: wer die Website-Daten loescht, bekommt mit
+// ihm alles zurueck. (Dass das Zurueckholen ueberhaupt geht, ist kein neuer Mechanismus:
+// mit den Website-Daten faellt auch `countred_pkey`, das Geraet zieht eine neue Kennung,
+// und der alte Code ist damit ein fremder.)
+// KEIN KREIS trotz Summe — drei Dinge zusammen:
+//   1. jeder Anteil bleibt an seinem URSPRUNGS-Aussteller haengen, nie am Weitergeber;
+//   2. eingeloest wird je Aussteller das MAXIMUM, nie eine Addition (idempotent);
+//   3. Eintraege unter der EIGENEN Kennung werden beim Einloesen uebergangen — sie stehen
+//      schon in `p`. Ohne (3) haette A → B → A die eigenen Punkte doppelt gutgeschrieben.
+// Die Summe ist damit nach oben durch „was alle beteiligten Geraete selbst erspielt haben"
+// begrenzt, gleich wie oft die Codes im Kreis laufen.
+// ALTE CODES BLEIBEN GUELTIG: bei genau EINEM Eintrag ist die Zeichenkette, ueber die der
+// Streuwert laeuft, Zeichen fuer Zeichen die alte (`k|t|SALT`). Das neue Format ist eine
+// Erweiterung des alten, kein Ersatz — Testspieler mit einem notierten Code merken nichts.
+// ⚠️ DATENSCHUTZ: ein weitergegebener Code nennt jetzt MEHRERE Kennungen (die eigenen
+// anderen Geraete, und die fremder Aussteller, deren Code man eingeloest hat). Der Absatz
+// „Wechsel auf ein anderes Geraet" im Datenschutztext sagt das ausdruecklich; wer das
+// Format anfasst, zieht ihn mit. Vgl. ToDo 27.
+function gateCodeHash(paare){
+  return gateHash(paare.map(e => e.key + '|' + Math.round(e.p*10)).join('|') + '|' + GATE_SALT);
+}
+// Sortiert, damit der Streuwert nicht an der zufaelligen Reihenfolge der Objektschluessel
+// haengt — dieselbe Vorsichtsmassnahme wie in gateSig().
+function gateCodePaare(){
+  const k = PLAYER_KEY || '0', paare = [];
+  if(gateState.p > 0) paare.push({ key:k, p:gateState.p });
+  for(const q in gateState.von) if(q !== k && gateState.von[q] > 0) paare.push({ key:q, p:gateState.von[q] });
+  if(!paare.length) paare.push({ key:k, p:0 });   // ohne Punkte: genau der alte Code
+  return paare.sort((a,b) => a.key < b.key ? -1 : a.key > b.key ? 1 : 0);
+}
 function gateMakeCode(){
-  const t = Math.round(gateState.p * 10), k = PLAYER_KEY || '0';
-  return k + '-' + t + '-' + gateHash(k+'|'+t+'|'+GATE_SALT);
+  const paare = gateCodePaare();
+  return paare.map(e => e.key + '-' + Math.round(e.p*10)).join('.') + '-' + gateCodeHash(paare);
 }
 function gateReadCode(txt){
-  const m = String(txt||'').trim().match(/^([A-Za-z0-9]{1,16})-(\d{1,4})-([0-9A-Z]{7})$/);
+  const m = String(txt||'').trim().match(/^((?:[A-Za-z0-9]{1,16}-\d{1,4}\.)*[A-Za-z0-9]{1,16}-\d{1,4})-([0-9A-Z]{7})$/);
   if(!m) return null;
-  if(gateHash(m[1]+'|'+m[2]+'|'+GATE_SALT) !== m[3]) return null;
-  return { key:m[1], p: parseInt(m[2],10)/10 };
+  const paare = m[1].split('.').map(t => { const s = t.split('-'); return { key:s[0], p: parseInt(s[1],10)/10 }; });
+  if(gateCodeHash(paare) !== m[2]) return null;
+  return paare;
 }
 
 // ── Anzeige ──────────────────────────────────────────────────────
@@ -1944,10 +2044,13 @@ window.copyGateCode = async function(){
 window.redeemGateCode = function(){
   const inp = document.getElementById('gate-input'), ms = document.getElementById('gate-msg');
   if(!inp || !ms) return;
-  const r = gateReadCode(inp.value);
-  if(!r){ ms.style.color='#ef4444'; ms.textContent='Der Code ist nicht korrekt. Bitte vollständigen Code eingeben.'; return; }
-  // Der eigene Code auf dem eigenen Geraet waere eine glatte Verdopplung.
-  if(PLAYER_KEY && r.key === PLAYER_KEY){
+  const paare = gateReadCode(inp.value);
+  if(!paare){ ms.style.color='#ef4444'; ms.textContent='Der Code ist nicht korrekt. Bitte vollständigen Code eingeben.'; return; }
+  // Der eigene Anteil steht schon in `p` — ihn aus dem eigenen Code noch einmal
+  // gutzuschreiben waere eine glatte Verdopplung (§198 Punkt 3). Bleibt danach nichts
+  // uebrig, ist es der Code dieses Geraets und sonst nichts.
+  const fremd = paare.filter(e => !(PLAYER_KEY && e.key === PLAYER_KEY));
+  if(!fremd.length){
     ms.style.color='var(--text2)';
     ms.textContent = 'Das ist der Code dieses Geräts. Gib den Code deines anderen Geräts ein.';
     return;
@@ -1957,8 +2060,13 @@ window.redeemGateCode = function(){
   // Ein Code unterhalb der Schwelle wird jetzt angenommen — er traegt ja echte Punkte bei;
   // bis v116 wurde er abgewiesen, was bei getrennt erspielten Punkten die Freischaltung
   // unmoeglich machte (2 auf dem Telefon + 2 auf dem Laptop ergaben nie 3).
-  const vorher = gateSumme(), alt = gateState.von[r.key] || 0;
-  if(r.p > alt){ gateState.von[r.key] = r.p; gateSave(); gateRefresh(); }
+  const vorher = gateSumme();
+  let geaendert = false;
+  for(const e of fremd){
+    const alt = gateState.von[e.key] || 0;
+    if(e.p > alt){ gateState.von[e.key] = e.p; geaendert = true; }
+  }
+  if(geaendert){ gateSave(); gateRefresh(); }
   const jetzt = gateSumme();
   ms.style.color = (jetzt > vorher) ? 'var(--online-text)' : 'var(--text2)';
   ms.textContent = (jetzt > vorher ? 'Code erfolgreich übertragen. ' : 'Dieser Code war schon eingelöst. ')
@@ -1969,7 +2077,7 @@ window.redeemGateCode = function(){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v155';
+const BUILD_MARKER='· Build v156';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2286,7 +2394,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=155'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=156'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2412,6 +2520,31 @@ function showOverlay(id){
    'impressum-overlay','datenschutz-overlay','gate-overlay','ueber-overlay']  // §126, §144, §191
     .forEach(o=>document.getElementById(o).classList.toggle('hidden',o!==id));
 }
+// §198: Escape schließt das oberste Lesefenster — NUR am Rechner (Walters Auflage).
+// `(pointer:fine)` ist dieselbe Unterscheidung wie beim Querformat-Hinweis (§165): Maus
+// oder Trackpad ja, Berührungsgerät nein. Ein Telefon hat keine Escape-Taste, und eine
+// angestöpselte Tastatur ist der Ausnahmefall — dort bleiben Kreuz und Knopf.
+// ⚠️ Escape DRÜCKT den Ausgang der Karte, statt selbst zu schließen. Damit gibt es
+// weiterhin nur EINE Schließlogik je Fenster (§145), und sie steht dort, wo sie sichtbar
+// ist: im onclick des Knopfes. Eine zweite, hier nachgebaute könnte davon abweichen —
+// das Punkte-Fenster etwa holt beim Schließen das Startmenü zurück, die vier anderen
+// legen sich nach §196 nur auf und geben frei, was darunter steht.
+// Reihenfolge = Stapelreihenfolge: die drei Rechtsfenster liegen auf z-index 200 und
+// können über dem Regeln- oder Punkte-Fenster liegen, also zuerst.
+// KEINE Dialogkarte steht in dieser Liste (§177, s. CSS-Begründung bei .lesekopf).
+const LESEFENSTER = ['impressum-overlay','datenschutz-overlay','ueber-overlay','regeln-overlay','gate-overlay'];
+document.addEventListener('keydown', e => {
+  if(e.key !== 'Escape') return;
+  if(!(window.matchMedia && window.matchMedia('(pointer:fine)').matches)) return;
+  for(const id of LESEFENSTER){
+    const el = document.getElementById(id);
+    if(!el || el.classList.contains('hidden')) continue;
+    const ausgang = el.querySelector('.lesezu');
+    if(ausgang){ ausgang.click(); e.preventDefault(); }
+    return;
+  }
+});
+
 window.showModeMenu=function(){ gameMode='mvm'; showOverlay('mode-overlay'); };
 window.showAISetup=function(){ showOverlay('ai-setup-overlay'); };
 window.showLobby=function(){
