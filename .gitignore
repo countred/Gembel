@@ -23,6 +23,10 @@ loeschliste.txt
 !texte.js
 !layout.js
 !bau_vorschau.js
+# §200 (22.9.): das Werkzeug, das die sichtbare Ausgabe vor und nach einer
+# Änderung vergleicht. Es läuft nie im Browser, gehört aber ins Repository,
+# damit jederzeit gegen den ausgelieferten Stand geprüft werden kann.
+!textvergleich.js
 !test_*.js
 
 # robots.txt gehoert zur Auslieferung (§157), nicht zum Archiv
