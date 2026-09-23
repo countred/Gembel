@@ -17,6 +17,30 @@ if(fs.existsSync(__dirname + '/countred.html'))
   console.log('  \u26a0\ufe0f  countred.html liegt noch im Ordner \u2014 ALTKOPIE, wird NICHT geprueft.');
 const html = fs.readFileSync(HTML_PATH, 'utf8');
 
+// §200: die sichtbaren Texte stehen nicht mehr im Markup, sondern in der Tabelle. Zwei
+// Hilfsmittel fuer die ganze Suite: `DE` ist die Tabelle, `ktext(k)` der Wert dazu, und
+// `kvon(text)` findet den Schluessel zu einem Wortlaut — damit Pruefungen, die frueher
+// einen Satz im Markup suchten, jetzt nach seinem Schluessel suchen koennen.
+const DE = (() => {
+  const blk = html.slice(html.indexOf('const SPRACHE'), html.indexOf('function t(schluessel'));
+  const ctx = {}; require('vm').createContext(ctx);
+  require('vm').runInContext(blk + '\n;__T = TEXTE.de.t;', ctx);
+  return ctx.__T;
+})();
+const ktext = k => (typeof DE[k] === 'object' ? DE[k].andere : DE[k]);
+const kvon  = txt => Object.keys(DE).find(k => ktext(k) === txt);
+// `sichtbar(x)` setzt die Texte in einen Markup-Ausschnitt zurueck ein — dieselbe Ersetzung,
+// die der Browser beim Laden macht. Pruefungen, die einen Satz AN SEINEM ORT suchen, bleiben
+// damit im Wortlaut unveraendert lesbar; nur die Quelle, aus der sie lesen, ist eine andere.
+// (Der Text wird direkt hinter das oeffnende Tag gesetzt — fuer `data-t-label` also vor das
+// Symbol statt dahinter. Fuer Regex-Pruefungen macht das keinen Unterschied.)
+const sichtbar = x => String(x).replace(
+  /<([a-zA-Z0-9-]+)([^>]*?)data-t(-label|-html)?="([^"]+)"([^>]*)>/g,
+  (m, tag, a, art, k, b) => '<'+tag+a+'data-t'+(art||'')+'="'+k+'"'+b+'>' + (ktext(k)||''));
+// Fuer Pruefungen ueber die GANZE Datei: Schluesselnamen sind kein angezeigter Text.
+const ohneSchluessel = x => String(x).replace(/data-t(?:-label|-html)?="[^"]+"/g,'')
+                                     .replace(/^\s*'[a-z][a-z0-9.#-]*':/gm,'');
+
 // §147: die Schriftgroessen stehen seit v116 als Skala in :root. Wer eine Groesse pruefen
 // will, muss sie AUFLOESEN — sonst prueft man den Variablennamen statt der Zahl. Der Helfer
 // liest die Skala aus der Auslieferung, damit kein zweiter Wert gepflegt werden muss.
@@ -52,9 +76,9 @@ function ok(cond, name){
 }
 
 console.log('\u00a797 \u2014 Beschriftungen:');
-ok(/<use href="#s-robot"\/><\/svg>Gegen Max Michu<\/button>/.test(html) && !/Spiele gegen Max Michu/.test(html),
+ok(/Gegen Max Michu[\s\S]{0,120}?#s-robot[\s\S]{0,60}?<\/button>/.test(sichtbar(html)) && !/Spiele gegen Max Michu/.test(sichtbar(html)),
    'Startmen\u00fc: „Gegen Max Michu" (ohne „Spiele")');
-ok(/showNeuMenu\(\)"><svg class="sym"[^>]*><use href="#s-menue"\/><\/svg>Optionen<\/button>/.test(html)
+ok(/showNeuMenu\(\)"[^>]*>Optionen<svg class="sym"[^>]*><use href="#s-menue"\/><\/svg><\/button>/.test(sichtbar(html))
    && !/Men\u00fc<\/button>/.test(html),   // §187: „Menü" bleibt als ÜBERSCHRIFT erlaubt, nur der KNOPF heißt Optionen
    'Werkzeugleiste: „\u2630 Optionen" statt „\u21ba Neu"');
 // Auf die AUSGEGEBENE Auszeichnung pruefen, nicht auf den Fliesstext: der Quelltext erwaehnt
@@ -201,8 +225,8 @@ ok(!/onclick="showOverlay\(/.test(html) && !/onclick="hideOverlay\(/.test(html),
   // war (Startbildschirm ODER Brett). Ein hart verdrahtetes `mode-overlay` w\u00fcrde aus einer
   // laufenden Partie heraus den Spieler ins Startmen\u00fc werfen; genau das darf nicht zur\u00fcck.
   for(const id of ['impressum','datenschutz','ueber']){
-    const zu = new RegExp("getElementById\\('" + id + "-overlay'\\)\\.classList\\.add\\('hidden'\\)\">Schlie\u00dfen");
-    ok(zu.test(html), id + ': Schlie\u00dfen blendet nur aus');
+    const zu = new RegExp("getElementById\\('" + id + "-overlay'\\)\\.classList\\.add\\('hidden'\\)\"[^>]*>Schlie\u00dfen");
+    ok(zu.test(sichtbar(html)), id + ': Schlie\u00dfen blendet nur aus');
     const hart = new RegExp(id + "-overlay'\\)\\.classList\\.add\\('hidden'\\);document\\.getElementById\\('mode-overlay'");
     ok(!hart.test(html), id + ': kein hart verdrahteter R\u00fcckweg ins Startmen\u00fc');
   }
@@ -816,7 +840,7 @@ console.log('\u00a7162/\u00a7163 \u2014 Verbindungsabbruch: Ergebnis geht nicht 
   ok(!/dc-reconnect/.test(html) && !/wiederVerbinden/.test(html) && !/merkeRaumFuerWiederkehr/.test(html),
      '\u00a7167: der wirkungslose Wiedereinstiegs-Knopf ist samt Mechanik ausgebaut');
   const dcT = html.match(/id="dc-overlay">[\s\S]*?<\/div>/)[0];
-  ok((dcT.match(/<button/g)||[]).length===1 && /Zur\u00fcck zur Auswahl/.test(dcT),
+  ok((dcT.match(/<button/g)||[]).length===1 && /Zur\u00fcck zur Auswahl/.test(sichtbar(dcT)),
      '\u00a7167: auf der Abbruchtafel steht genau EIN Knopf, und der f\u00fchrt ins Men\u00fc');
 
   // §162: der Rueckkehr-Pfad ist benannt und wird aus DREI Richtungen gerufen.
@@ -899,7 +923,11 @@ console.log('\u00a7132 \u2014 Wartungsflag:');
 
 console.log('\u00a7144 \u2014 Startmen\u00fc: DREI Kn\u00f6pfe, gestapelt, neue Reihenfolge:');
 {
-  const menu = html.match(/<p>Wie m\u00f6chtest du spielen\?<\/p>[\s\S]*?<\/div>/)[0];
+  // §200: der Block wird jetzt ueber den SCHLUESSEL der Frage gefunden, nicht ueber ihren
+  // Wortlaut im Markup. Der Wortlaut selbst wird gleich darunter geprueft.
+  const frage = kvon('Wie m\u00f6chtest du spielen?');
+  ok(!!frage, '\u00a7200: die Frage des Startmen\u00fcs steht in der Tabelle');
+  const menu = html.match(new RegExp('<p data-t="' + frage + '"><\\/p>[\\s\\S]*?<\\/div>'))[0];
   ok(/class="card-col"/.test(menu) && !/class="card-row"/.test(menu),
      'card-col statt card-row \u2014 alle Kn\u00f6pfe gleich breit, untereinander (wie die Stufen, \u00a795)');
   const btns = menu.match(/<button[\s\S]*?<\/button>/g) || [];
@@ -908,11 +936,18 @@ console.log('\u00a7144 \u2014 Startmen\u00fc: DREI Kn\u00f6pfe, gestapelt, neue 
   // Kommentar begruendet. Geprueft wird die REIHENFOLGE, weil genau sie die Betonung traegt:
   // die Anleitung zuerst, der gesperrte Modus zuletzt.
   ok(btns.length === 3, 'genau DREI Kn\u00f6pfe im Startmen\u00fc (' + btns.length + ' gefunden)');
-  ok(/Interaktive Spielanleitung/.test(btns[0]||'') && /anleitung\.html\?v=/.test(btns[0]||''),
+  // §200: die Beschriftung steht nicht mehr im Knopf, sondern unter seinem Schluessel.
+  // `beschriftung()` loest ihn wieder auf — die Pruefung sagt damit weiterhin „oben steht
+  // die Anleitung", nur eine Ebene tiefer.
+  const beschriftung = b => {
+    const k = (String(b).match(/data-t(?:-label|-html)?="([^"]+)"/)||[])[1];
+    return k ? String(ktext(k) || '') : String(b);
+  };
+  ok(/Interaktive Spielanleitung/.test(beschriftung(btns[0])) && /anleitung\.html\?v=/.test(btns[0]||''),
      '„Interaktive Spielanleitung" steht OBEN und f\u00fchrt mit ?v= auf die Anleitung');
-  ok(/Gegen Max Michu/.test(btns[1]||''),
+  ok(/Gegen Max Michu/.test(beschriftung(btns[1])),
      '„Gegen Max Michu" steht in der MITTE');
-  ok(/Mit Code zu zweit/.test(btns[2]||'') && /id="btn-mvm"/.test(btns[2]||''),
+  ok(/Mit Code zu zweit/.test(beschriftung(btns[2])) && /id="btn-mvm"/.test(btns[2]||''),
      '„Mit Code zu zweit" steht UNTEN und tr\u00e4gt die Kennung f\u00fcr die Sperre');
   ok(!/Neu hier\?/.test(html) && !/class="anleitung-link"/.test(html) && !/^\.anleitung-link\{/m.test(html),
      'die alte „Neu hier?"-Zeile ist restlos entfernt — Text, Markup und Stilregel (der Kommentar darf sie nennen)');
@@ -1740,7 +1775,7 @@ console.log('\u00a7182 \u2014 die Abschlusstafel nennt den Grund und tr\u00e4gt 
   // Walters Befund (12.9.): über „Mitspieler hat den Raum verlassen. Du hast gewonnen." stand
   // weiter „Verbindung unterbrochen" — und der letzte Blick (§162-B) überschrieb den Grund mit
   // dem allgemeinen „Die Partie ist beendet: … wegen der Unterbrechung …".
-  ok(/<h2 id="dc-title">/.test(html) &&
+  ok(/<h2 id="dc-title"[^>]*>/.test(html) &&
      /function setzeAbschlussTafel\(titel, text\)\{[\s\S]{0,400}?dc-title[\s\S]{0,200}?dc-msg/.test(html),
      '\u00a7182: \u00dcberschrift und Text der Tafel kommen aus EINER Funktion');
 
@@ -1802,7 +1837,7 @@ console.log('\u00a7186 Wortmarke \u2014 eine Regel, f\u00fcnf Stellen, schwarzwe
   ok(n186 === 4, 'index.html zeigt die Wortmarke an genau vier Stellen (Spielkopf, Startmen\u00fc, '
                  + 'Stufenwahl, Lobby) \u2014 gefunden: ' + n186);
   ok((anl186.split(MARKE).length - 1) === 1, 'anleitung.html zeigt sie genau einmal (Kopfzeile)');
-  ok(!/COUNT\s*[\u00b7.\-]\s*RED/i.test(ohneKom(html)),
+  ok(!/COUNT\s*[\u00b7.\-]\s*RED/i.test(ohneSchluessel(ohneKom(html))),
      'index.html: keine getrennte Schreibweise mehr (Punkt, Bindestrich)');
   ok(!/COUNT\s*[\u00b7.\-]\s*RED/i.test(ohneKom(anl186)), 'anleitung.html: dasselbe');
   ok(!/class="[^"]*\b(ll2-word|logo-dot)\b/.test(html) && !/\.logo-dot\s*\{/.test(html),
@@ -1900,16 +1935,16 @@ console.log('\u00a7191 \u00dcber das Spiel \u2014 Seite, Nachweise, Bildtechnik:
   ok(ue.length > 0 && /id="ueber-overlay"/.test(html), 'die Seite \u201e\u00dcber das Spiel\u201c ist da');
   ok(/'ueber-overlay'/.test(html.slice(html.indexOf('function showOverlay'), html.indexOf('function showOverlay')+700)),
      'showOverlay kennt sie \u2014 sonst bliebe sie beim Wechsel offen stehen');
-  ok((html.match(/class="legal-link"/g)||[]).length === 6 && />\u00dcber das Spiel<\/button>/.test(html),
+  ok((html.match(/class="legal-link"/g)||[]).length === 6 && />\u00dcber das Spiel<\/button>/.test(sichtbar(html)),
      'drei Verweise auf dem Startbildschirm, dieselben drei im \u2630-Men\u00fc (\u00a7196)');
-  ok(/Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm/.test(ue),
+  ok(/Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm/.test(sichtbar(ue)),
      '\u00a7191: Nachweis der Design-Entwicklung steht unter dem Objektfoto');
-  ok(/Foto: Christian Alber/.test(ue), '\u00a7191: der Fotograf ist genannt');
+  ok(/Foto: Christian Alber/.test(sichtbar(ue)), '\u00a7191: der Fotograf ist genannt');
   const bilder = [...ue.matchAll(/<img [^>]*>/g)].map(m => m[0]);
   ok(bilder.length === 2 && bilder.every(b => /loading="lazy"/.test(b) && /width="\d+"/.test(b)
        && /height="\d+"/.test(b) && /alt="[^"]{20,}"/.test(b)),
      'beide Bilder: lazy, feste Ma\u00dfe, beschreibender alt-Text \u2014 ' + bilder.length + ' gefunden');
-  ok(/Z\u00e4hle die roten Nachbarn der\s+Figur\. Ist die Zahl gerade/.test(ue),
+  ok(/Z\u00e4hle die roten Nachbarn der\s+Figur\. Ist die Zahl gerade/.test(sichtbar(ue)),
      'die Zugregel steht auf der Seite \u2014 direkt hinter der Frage, nicht im Geschichtsabsatz');
 }
 
@@ -1919,6 +1954,55 @@ console.log('\u00a7191 \u00dcber das Spiel \u2014 Seite, Nachweise, Bildtechnik:
 // des Knopfes abweicht — beim Punkte-Fenster etwa kaeme man dann ohne Startmenue heraus.
 // Deshalb prueft dieser Block vor allem Gleichheit: Kreuz und Knopf tun dasselbe, und
 // Escape drueckt das Kreuz, statt selbst zu schliessen.
+// §200 (22.9.) — DIE TEXTSCHICHT. Die sichtbaren Texte stehen nicht mehr im Markup, sondern
+// unter Schluesseln in einer Tabelle. Diese drei Pruefungen gelten fuer JEDE weitere Sprache
+// unveraendert — sie pruefen den Mechanismus, waehrend die ~70 Wortlautpruefungen weiter den
+// deutschen Text pruefen, nur eine Ebene tiefer. Beides zusammen ist mehr als vorher: bisher
+// konnte eine Regex an einem Kommentar haengenbleiben (U10), jetzt wird nachgeschlagen.
+console.log('\u00a7200 \u2014 Textschicht: Schluessel, Vollstaendigkeit, Auszeichnung:');
+{
+  // ⚠️ Die Tabelle SELBST wird beim Suchen ausgeklammert. Sonst zaehlt jeder Schluessel als
+  // „benutzt", weil er ja in seiner eigenen Zeile steht — die Pruefung waere eine Attrappe.
+  // (Genau das ist in der Probe passiert und nur an der Negativkontrolle aufgefallen.)
+  const ohneTabelle = html.slice(0, html.indexOf('const SPRACHE')) +
+                      html.slice(html.indexOf('function t(schluessel'));
+  const benutzt = new Set([
+    ...[...html.matchAll(/data-t="([^"]+)"/g)].map(m => m[1]),
+    ...[...html.matchAll(/data-t-label="([^"]+)"/g)].map(m => m[1]),
+    ...[...html.matchAll(/data-t-html="([^"]+)"/g)].map(m => m[1]),
+    ...[...html.matchAll(/data-t-attr="([^"]+)"/g)].flatMap(m => m[1].split(';').map(x => x.split(':')[1]).filter(Boolean)),
+    ...[...ohneTabelle.matchAll(/'((?:[a-z]+\.)+[a-z0-9-]+(?:#html)?)'/g)].map(m => m[1])
+  ].map(x => x.trim()));
+  const fehlend = [...benutzt].filter(k => DE[k] === undefined);
+  ok(fehlend.length === 0,
+     'jeder benutzte Schl\u00fcssel ist belegt (' + benutzt.size + ' benutzt, ' + Object.keys(DE).length +
+     ' in der Tabelle' + (fehlend.length ? ', FEHLT: ' + fehlend.join(', ') : '') + ')');
+  const verwaist = Object.keys(DE).filter(k => !benutzt.has(k));
+  ok(verwaist.length === 0,
+     'kein verwaister Schl\u00fcssel' + (verwaist.length ? ': ' + verwaist.slice(0,6).join(', ') : ''));
+  // N12: nur ausdruecklich als Auszeichnung erklaerte Werte duerfen in innerHTML, und nur
+  // mit der Auszeichnung, die dort wirklich vorkommt.
+  const inHtml = [...html.matchAll(/data-t-html="([^"]+)"/g)].map(m => m[1]);
+  const ohneMarke = inHtml.filter(k => !k.endsWith('#html'));
+  const fremd = inHtml.filter(k => ((String(DE[k]||'').match(/<([a-zA-Z][a-zA-Z0-9-]*)/g))||[])
+                                     .some(tg => !/^<(strong|br|span|a|svg|use|em|b)$/i.test(tg)));
+  ok(ohneMarke.length === 0 && fremd.length === 0,
+     'nur `#html`-Schl\u00fcssel landen in innerHTML, und nur mit bekannter Auszeichnung (N12)');
+  // Der Fuellschritt muss VOR dem ersten Zeichnen laufen, sonst stehen leere Knoepfe da.
+  // ⚠️ Nicht nur „frueher als", sondern auch „ueberhaupt vorhanden": ohne die erste
+  // Bedingung liefert indexOf bei einem FEHLENDEN Aufruf -1, und -1 ist immer kleiner.
+  // Die Negativkontrolle „Aufruf entfernt" fiel deshalb zunaechst nicht.
+  const iFuell = html.indexOf('texteFuellen();');
+  ok(iFuell > 0 && iFuell < html.indexOf('gateState = gateLoad();'),
+     'der F\u00fcllschritt wird aufgerufen, und zwar vor dem ersten Zeichnen');
+  // Impressum und Datenschutz bleiben im Markup (\u00a7 5 DDG: st\u00e4ndig verf\u00fcgbar, auch ohne Skript).
+  for(const id of ['impressum-overlay','datenschutz-overlay']){
+    const blk = (html.match(new RegExp('id="' + id + '"[\\s\\S]*?Schlie\u00dfen<\\/button>'))||[''])[0];
+    ok(blk.length > 500 && !/data-t/.test(blk),
+       id + ': Wortlaut steht weiter im Markup, kein Schl\u00fcssel (Pflichtangaben brauchen kein Skript)');
+  }
+}
+
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
 {
   const LESE = ['regeln-overlay','ueber-overlay','impressum-overlay','datenschutz-overlay','gate-overlay'];
@@ -1942,8 +2026,8 @@ console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Re
   const ungleich = LESE.filter(id => {
     const k = karte(id);
     const kreuz = (k.match(/class="lesezu"[^>]*onclick="([^"]+)"/)||[])[1];
-    const knopf = (k.match(/class="big-btn primary"[^>]*onclick="([^"]+)"\s*>Schlie\u00dfen/)||
-                   k.match(/onclick="([^"]+)"\s*>Schlie\u00dfen/)||[])[1];
+    const knopf = (sichtbar(k).match(/class="big-btn primary"[^>]*onclick="([^"]+)"[^>]*>Schlie\u00dfen/)||
+                   sichtbar(k).match(/onclick="([^"]+)"[^>]*>Schlie\u00dfen/)||[])[1];
     return !kreuz || !knopf || kreuz !== knopf;
   });
   ok(ungleich.length === 0,
@@ -1954,8 +2038,15 @@ console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Re
   ok(kreuze === LESE.length,
      'genau f\u00fcnf Kreuze \u2014 keine Dialogkarte hat eins bekommen (\u00a7177: dort w\u00e4re ' +
      'Wegklicken kein definierter Zustand), gez\u00e4hlt: ' + kreuze);
-  ok((html.match(/class="lesezu" aria-label="Schlie\u00dfen"/g)||[]).length === LESE.length,
-     'jedes Kreuz tr\u00e4gt ein aria-label \u2014 ein Knopf ohne Beschriftung ist sonst stumm');
+  // §200: die Beschriftung kann aus der Tabelle kommen. Geprueft wird die EIGENSCHAFT
+  // „dieser Knopf ist beschriftet", nicht mehr ein festes Attribut.
+  const stumm = [...html.matchAll(/<button[^>]*class="lesezu"[^>]*>/g)].map(m => m[0]).filter(kn => {
+    if(/aria-label="[^"]+"/.test(kn)) return false;
+    const key = ((kn.match(/data-t-attr="([^"]+)"/)||[])[1]||'').match(/aria-label:([\w.#-]+)/);
+    return !(key && DE[key[1]]);
+  });
+  ok(stumm.length === 0,
+     'jedes Kreuz ist beschriftet \u2014 direkt oder \u00fcber einen belegten Schl\u00fcssel (stumm: ' + stumm.length + ')');
 
   // Escape: nur am Rechner, und er DRUECKT den Ausgang.
   const esc = (html.match(/document\.addEventListener\('keydown'[\s\S]*?\n\}\);/)||[''])[0];

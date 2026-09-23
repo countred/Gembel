@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
-<title>Gembel · Count Red</title>
+<title data-t="seite.gembel-count-red"></title>
 <!-- §161 (7.9.): VORVERBINDEN. Der Startbildschirm hing an zwei Netzverbindungen zu zwei
      fremden Servern: das Firebase-SDK von gstatic.com und die Datenbank selbst. Ohne
      preconnect beginnen DNS und TLS erst, wenn der Modul-Block gelesen ist — also nach dem
@@ -511,8 +511,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div id="rotate-hint">
   <div class="rotate-inner">
     <div class="rotate-icon"><svg class="sym-gross" aria-hidden="true"><use href="#s-drehen"/></svg></div>
-    <div class="rotate-title">Bitte Gerät drehen</div>
-    <div class="rotate-text">CountRed ist für das Hochformat gebaut.</div>
+    <div class="rotate-title" data-t="seite.bitte-geraet-drehen"></div>
+    <div class="rotate-text" data-t="seite.countred-ist-fuer-das"></div>
   </div>
 </div>
 
@@ -522,29 +522,29 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <span class="wm-count">Count</span><span class="wm-red">Red</span>
     </div>
   </div>
-  <div id="testlabel">Testversion</div>
+  <div id="testlabel" data-t="seite.testversion"></div>
   <div id="header">
     <div class="player-badge" id="p1-badge">
-      <span class="who">Du</span>
-      <span class="par">ungerade</span>
+      <span class="who" data-t="seite.du"></span>
+      <span class="par" data-t="seite.ungerade"></span>
     </div>
-    <div id="status-wrap"><div id="status">Verbinde…</div></div>
+    <div id="status-wrap"><div id="status" data-t="seite.verbinde"></div></div>
     <div class="player-badge" id="p2-badge">
-      <span class="who">Mitspieler</span>
-      <span class="par">gerade</span>
+      <span class="who" data-t="seite.mitspieler"></span>
+      <span class="par" data-t="seite.gerade"></span>
     </div>
   </div>
   <div id="board-area">
     <div id="board-container">
       <div id="row-labels">
-        <div class="row-label">1</div><div class="row-label">2</div>
-        <div class="row-label">3</div><div class="row-label">4</div>
+        <div class="row-label" data-t="seite.1"></div><div class="row-label" data-t="seite.2"></div>
+        <div class="row-label" data-t="seite.3"></div><div class="row-label" data-t="seite.4"></div>
       </div>
       <div id="board-wrap"><div id="board"></div></div>
       <div></div>
       <div id="col-labels">
-        <div class="col-label">A</div><div class="col-label">B</div>
-        <div class="col-label">C</div><div class="col-label">D</div>
+        <div class="col-label" data-t="seite.a"></div><div class="col-label" data-t="seite.b"></div>
+        <div class="col-label" data-t="seite.c"></div><div class="col-label" data-t="seite.d"></div>
       </div>
     </div>
   </div>
@@ -552,8 +552,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div id="draw-counter" class="hidden"></div>
   <div id="win-area"></div>
   <div id="toolbar">
-    <button class="tool-btn" id="btn-regeln" onclick="showRegeln()">? Regeln</button>
-    <button class="tool-btn" id="btn-neu" onclick="showNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-menue"/></svg>Optionen</button>
+    <button class="tool-btn" id="btn-regeln" onclick="showRegeln()" data-t="seite.regeln"></button>
+    <button class="tool-btn" id="btn-neu" onclick="showNeuMenu()" data-t-label="seite.optionen"><svg class="sym" aria-hidden="true"><use href="#s-menue"/></svg></button>
   </div>
 </div>
 
@@ -562,9 +562,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="card">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
       <div class="wortmarke"><span class="wm-count">Count</span><span class="wm-red">Red</span></div>
-      <div style="font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
+      <div style="font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-transform:uppercase;" data-t="start.testversion"></div>
     </div>
-    <p>Wie möchtest du spielen?</p>
+    <p data-t="start.wie-moechtest-du-spielen"></p>
     <!-- §134 (Walter, 5.8.): NUR NOCH ZWEI Knoepfe. „Markierte Partien (Analyse)" ist ein
          Entwicklerwerkzeug und war fuer Testspieler ein Raetselknopf; ausserdem fuellte sich
          seine Zwanzigerliste mit fremden Eintraegen, sobald mehrere Leute markieren.
@@ -595,9 +595,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=157'"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg>Interaktive Spielanleitung</button>
-      <button class="big-btn" onclick="showAISetup()"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg>Gegen Max Michu</button>
-      <button class="big-btn" id="btn-mvm" onclick="showLobby()"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg>Mit Code zu zweit</button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=158'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
+      <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
     <!-- §126: Rechtliche Fusszeile. Bewusst NUR im Startmenue — von dort erreicht man sie vor
          jeder Partie, und im Spiel selbst stoert nichts. Klein und grau, damit sie auf dem
@@ -612,13 +612,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          Deshalb steht dieselbe Zeile jetzt auch im ☰-Menü (§ 5 DDG: „ständig verfügbar“). -->
     <div id="legal-footer">
       <button type="button" class="legal-link"
-        onclick="document.getElementById('ueber-overlay').classList.remove('hidden')">Über das Spiel</button>
-      <span class="legal-sep" aria-hidden="true">·</span>
+        onclick="document.getElementById('ueber-overlay').classList.remove('hidden')" data-t="start.ueber-das-spiel"></button>
+      <span class="legal-sep" aria-hidden="true" data-t="start.text"></span>
       <button type="button" class="legal-link"
-        onclick="document.getElementById('impressum-overlay').classList.remove('hidden')">Impressum</button>
-      <span class="legal-sep" aria-hidden="true">·</span>
+        onclick="document.getElementById('impressum-overlay').classList.remove('hidden')" data-t="start.impressum"></button>
+      <span class="legal-sep" aria-hidden="true" data-t="start.text-2"></span>
       <button type="button" class="legal-link"
-        onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')">Datenschutz</button>
+        onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')" data-t="start.datenschutz"></button>
     </div>
     <!-- §134: SICHTBARE Test-Kennung. Es ist exakt die Zufallskennung aus §124, die ohnehin
          in jeder Partie mitgeschrieben wird — hier nur lesbar gemacht, damit ein Testspieler
@@ -678,19 +678,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="card lesekarte" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <div class="lesekopf">
       <span class="lese-platz" aria-hidden="true"></span>
-      <h2 style="text-align:center;font-size:var(--fs-xl);">Über das Spiel</h2>
-      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('ueber-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+      <h2 style="text-align:center;font-size:var(--fs-xl);" data-t="ueber.ueber-das-spiel"></h2>
+      <button type="button" class="lesezu" onclick="document.getElementById('ueber-overlay').classList.add('hidden')" data-t-attr="title:ueber.schliessen-2;aria-label:ueber.schliessen-3"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
     </div>
     <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:12px;">
-      <div>CountRed ist ein Strategiespiel. Kein Würfel, kein Zufall, kein Glück. Die Regeln lesen
-        sich in drei Minuten, eine Partie dauert selten länger als 15 Minuten.</div>
-      <div>Dann kommt meistens diese Frage: „Was sind denn jetzt meine Figuren? Welche Farbe gehört
-        mir?“ Antwort: keine. Jeder kann prinzipiell jede Figur ziehen — niemand ist rot, niemand
-        ist schwarz. Was du ziehen darfst, entscheidet das Brett: Zähle die roten Nachbarn der
-        Figur. Ist die Zahl gerade, darfst du sie ziehen. Ist sie ungerade, darf dein Mitspieler.</div>
-      <div>Neu ist das Spiel nicht. Erfunden habe ich es 1998; das Design haben wir zu dritt über
-        mehrere Jahre entwickelt. Die damalige limitierte Auflage ist seit Jahren vergriffen.
-        Hier ist es erstmals online spielbar, mit den Regeln von damals.</div>
+      <div data-t="ueber.countred-ist-ein-strategiespiel"></div>
+      <div data-t="ueber.dann-kommt-meistens-diese"></div>
+      <div data-t="ueber.neu-ist-das-spiel"></div>
       <!-- §192: über die volle Kartenbreite war das Objektfoto fast 500 px hoch und drängte den
            Text auseinander. 240 px, mittig — es illustriert den Absatz, es ist nicht der Absatz.
            Die Datei ist auf 720 px gerechnet (dreifach für scharfe Bildschirme), nicht 1200. -->
@@ -698,29 +692,22 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         <img src="countred-objekt.jpg" width="720" height="666" loading="lazy"
           alt="Das Brett der limitierten Auflage: sechzehn gedrehte Figuren in Schwarz und Aluminium auf einem Holzbrett, mehrere davon gestapelt."
           style="width:100%;height:auto;display:block;border-radius:10px;">
-        <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;text-align:left;">
-          Die limitierte Auflage. Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm</figcaption>
+        <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;text-align:left;" data-t="ueber.die-limitierte-auflage-design"></figcaption>
       </figure>
-      <div>Der Computergegner heißt Max Michu. Er ist kein lernendes Modell, sondern rechnet Züge
-        durch und bewertet Stellungen nach Regeln, die ich selbst aufgestellt und in Tausenden von
-        Testpartien nachgeschärft habe. Drei Stufen, von nachsichtig bis unangenehm.</div>
-      <div>Was es hier nicht gibt: Anmeldung, Konto, Werbung, Nachverfolgung. Wer zu zweit spielen
-        will, teilt einen Code — das ist alles. Das Spiel kostet nichts.</div>
+      <div data-t="ueber.der-computergegner-heisst-max"></div>
+      <div data-t="ueber.was-es-hier-nicht"></div>
       <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
         <figure style="margin:0;flex:none;width:130px;">
           <img src="walter-rehm-figur.jpg" width="420" height="511" loading="lazy"
             alt="Walter Rehm, im Schneidersitz sitzend, schwarzweiß."
             style="width:100%;height:auto;display:block;border-radius:10px;">
-          <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;">
-            Foto: Christian Alber</figcaption>
+          <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;" data-t="ueber.foto-christian-alber"></figcaption>
         </figure>
-        <div style="flex:1 1 220px;">Dahinter steht kein Studio, sondern eine Person: Mein Name ist
-          Walter Rehm, ich wohne in München. Fragen, Fehlermeldungen und Ideen gerne an
-          <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a>.</div>
+        <div style="flex:1 1 220px;" data-t-html="ueber.dahinter-steht-kein-studio#html"></div>
       </div>
     </div>
     <button class="big-btn primary" style="width:100%;"
-      onclick="document.getElementById('ueber-overlay').classList.add('hidden')">Schließen</button>
+      onclick="document.getElementById('ueber-overlay').classList.add('hidden')" data-t="ueber.schliessen"></button>
   </div>
 </div>
 
@@ -899,21 +886,15 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="card lesekarte" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <div class="lesekopf">
       <span class="lese-platz" aria-hidden="true"></span>
-      <h2 style="text-align:center;font-size:var(--fs-xl);">Mit Code zu zweit</h2>
-      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('gate-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+      <h2 style="text-align:center;font-size:var(--fs-xl);" data-t="punkte.mit-code-zu-zweit"></h2>
+      <button type="button" class="lesezu" onclick="document.getElementById('gate-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')" data-t-attr="title:punkte.schliessen-2;aria-label:punkte.schliessen-3"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
     </div>
     <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
       <div id="gate-state" style="color:var(--text);font-weight:600;"></div>
-      <div>Um jemand zum Spiel mit dir einzuladen, brauchst du 3 Punkte:</div>
-      <div style="color:var(--text);">
-        Sieg gegen Max Michu <strong>Einsteiger</strong> = 1 Punkt<br>
-        Sieg gegen Max Michu <strong>Fortgeschritten</strong> = 1,5 Punkte<br>
-        Sieg gegen Max Michu <strong>Meister</strong> = 3 Punkte</div>
-      <div>Also: dreimal gegen Einsteiger, zweimal gegen Fortgeschritten oder einmal gegen
-        Meister gewinnen. <strong>Einladen darfst du danach jeden.</strong></div>
-      <div><strong style="color:var(--text);">Anderes Gerät</strong><br>
-        Willst du deinen Punktestand auf ein anderes Gerät mitnehmen? Kopier einfach diesen
-        Übertragungscode in das Fenster auf deinem anderen Gerät:</div>
+      <div data-t="punkte.um-jemand-zum-spiel"></div>
+      <div style="color:var(--text);" data-t-html="punkte.sieg-gegen-max-michu#html"></div>
+      <div data-t-html="punkte.also-dreimal-gegen-einsteiger#html"></div>
+      <div data-t-label="punkte.willst-du-deinen-punktestand"><strong style="color:var(--text);" data-t="punkte.anderes-geraet"></strong><br></div>
       <!-- §190: Code und Knopf in EINER Zeile, der Knopf rechtsbündig — er steht damit genau über
            „Einlösen“ in der Zeile darunter. `flex:1 1 200px` ist die Mobilgrenze: bleiben weniger als
            200 px für den Code, rutscht der Knopf unter ihn (`margin-left:auto` hält ihn auch dann
@@ -922,25 +903,24 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div style="display:flex;gap:8px;align-items:flex-start;flex-wrap:wrap;">
         <div id="gate-code" style="flex:1 1 200px;font-family:monospace;font-size:var(--fs-sm);letter-spacing:1px;
           color:var(--text);word-break:break-all;background:var(--bg2);padding:8px 10px;border-radius:8px;"></div>
-        <button class="big-btn" style="flex:none;margin-left:auto;padding:9px 14px;" onclick="copyGateCode()">Code kopieren</button>
+        <button class="big-btn" style="flex:none;margin-left:auto;padding:9px 14px;" onclick="copyGateCode()" data-t="punkte.code-kopieren"></button>
       </div>
       <div id="gate-copy-msg" style="font-size:var(--fs-sm);color:var(--text2);display:none;"></div>
       <!-- §198 (Walters Wortlaut, 22.9.): der Code kann mehr, als seine Überschrift sagt —
            er ist auch die einzige Sicherung des Punktestands. Bis v155 stand das nirgends,
            und wer seine Website-Daten löschte, fing bei null an. Steht direkt UNTER dem
            Code, nicht unter der Überschrift: gelesen wird er da, wo er ihn gerade sieht. -->
-      <div>Bewahre diesen Code auf. Löschst du die Website-Daten deines Browsers, ist dein
-        Punktestand weg; mit dem Code holst du ihn zurück.</div>
+      <div data-t="punkte.bewahre-diesen-code-auf"></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input id="gate-input" type="text" autocomplete="off" spellcheck="false"
           placeholder="Code eingeben" style="flex:1;min-width:180px;padding:9px 10px;border-radius:8px;
           border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:monospace;font-size:var(--fs-sm);">
-        <button class="big-btn" style="flex:none;padding:9px 14px;" onclick="redeemGateCode()">Einlösen</button>
+        <button class="big-btn" style="flex:none;padding:9px 14px;" onclick="redeemGateCode()" data-t="punkte.einloesen"></button>
       </div>
       <div id="gate-msg" style="font-size:var(--fs-md);"></div>
     </div>
     <button class="big-btn primary" style="width:100%;"
-      onclick="document.getElementById('gate-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')">Schließen</button>
+      onclick="document.getElementById('gate-overlay').classList.add('hidden');document.getElementById('mode-overlay').classList.remove('hidden')" data-t="punkte.schliessen"></button>
   </div>
 </div>
 
@@ -948,10 +928,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      damit er im Replay-Werkzeug eingefügt werden kann. Gefüllt aus games_countred_marks/. -->
 <div class="overlay hidden" id="marks-overlay">
   <div class="card" style="width:min(560px,94vw);max-height:86vh;">
-    <h2 style="font-size:var(--fs-xl);"><svg class="sym" aria-hidden="true"><use href="#s-marke"/></svg>Markierte Partien</h2>
+    <h2 style="font-size:var(--fs-xl);" data-t-label="marken.markierte-partien"><svg class="sym" aria-hidden="true"><use href="#s-marke"/></svg></h2>
     <div id="marks-feedback" style="font-size:var(--fs-sm);color:var(--online-text);min-height:16px;text-align:center;"></div>
     <div id="marks-list" style="display:flex;flex-direction:column;gap:8px;overflow-y:auto;max-height:56vh;"></div>
-    <button class="big-btn primary" style="margin-top:8px;" onclick="showModeMenu()">Zurück</button>
+    <button class="big-btn primary" style="margin-top:8px;" onclick="showModeMenu()" data-t="marken.zurueck"></button>
   </div>
 </div>
 
@@ -960,16 +940,16 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
       <div class="wortmarke"><span class="wm-count">Count</span><span class="wm-red">Red</span></div>
     </div>
-    <p>Gegen Max Michu — wähle die Spielstärke:</p>
+    <p data-t="stufe.gegen-max-michu-waehle"></p>
     <!-- §95 (Walter): drei Stufen gleich groß UNTEREINANDER. card-row ist eine Flex-ZEILE mit
          flex-wrap — dort wurden die Buttons unterschiedlich breit (Textlänge) und brachen ungünstig
          um. card-col stapelt sie stattdessen und gibt allen dieselbe Breite. -->
     <div class="card-col">
-      <button class="big-btn" onclick="startAIGame('einsteiger')"><svg class="sym" aria-hidden="true"><use href="#s-stufe1"/></svg>Einsteiger</button>
-      <button class="big-btn" onclick="startAIGame('fortgeschritten')"><svg class="sym" aria-hidden="true"><use href="#s-stufe2"/></svg>Fortgeschritten</button>
-      <button class="big-btn" onclick="startAIGame('meister')"><svg class="sym" aria-hidden="true"><use href="#s-stufe3"/></svg>Meister</button>
+      <button class="big-btn" onclick="startAIGame('einsteiger')" data-t-label="stufe.einsteiger"><svg class="sym" aria-hidden="true"><use href="#s-stufe1"/></svg></button>
+      <button class="big-btn" onclick="startAIGame('fortgeschritten')" data-t-label="stufe.fortgeschritten"><svg class="sym" aria-hidden="true"><use href="#s-stufe2"/></svg></button>
+      <button class="big-btn" onclick="startAIGame('meister')" data-t-label="stufe.meister"><svg class="sym" aria-hidden="true"><use href="#s-stufe3"/></svg></button>
     </div>
-    <button class="big-btn" style="margin-top:8px;" onclick="showModeMenu()">Zurück</button>
+    <button class="big-btn" style="margin-top:8px;" onclick="showModeMenu()" data-t="stufe.zurueck"></button>
   </div>
 </div>
 
@@ -977,39 +957,38 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="card">
     <div style="display:flex;flex-direction:column;align-items:center;gap:4px;">
       <div class="wortmarke"><span class="wm-count">Count</span><span class="wm-red">Red</span></div>
-      <div style="font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-transform:uppercase;">Testversion</div>
+      <div style="font-size:var(--fs-xs);letter-spacing:2px;color:var(--text3);text-transform:uppercase;" data-t="lobby.testversion"></div>
     </div>
-    <p>Spiele mit Code gegen jemanden aus deinem Freundeskreis.</p>
+    <p data-t="lobby.spiele-mit-code-gegen"></p>
     <div class="card-row">
       <!-- §148: HIER sitzt die Sperre, nicht an der Lobbytuer. Bis v116 lag sie auf dem
            Startmenue-Knopf — und der ist die Tuer zu BEIDEM. Ein Eingeladener mit 0 Punkten
            kam dadurch nicht einmal an das Feld fuer den Partie-Code, obwohl im Quelltext und
            im Handover stand „nur das Eroeffnen ist gesperrt". Walters Befund. -->
-      <button class="big-btn primary" id="btn-create" onclick="tryCreateRoom()"><svg class="sym sym-offen" aria-hidden="true"><use href="#s-plus"/></svg><svg class="sym sym-zu" aria-hidden="true"><use href="#s-schloss"/></svg>Raum erstellen</button>
-      <button class="big-btn" onclick="showJoinScreen()"><svg class="sym" aria-hidden="true"><use href="#s-beitreten"/></svg>Beitreten</button>
+      <button class="big-btn primary" id="btn-create" onclick="tryCreateRoom()" data-t-label="lobby.raum-erstellen"><svg class="sym sym-offen" aria-hidden="true"><use href="#s-plus"/></svg><svg class="sym sym-zu" aria-hidden="true"><use href="#s-schloss"/></svg></button>
+      <button class="big-btn" onclick="showJoinScreen()" data-t-label="lobby.beitreten"><svg class="sym" aria-hidden="true"><use href="#s-beitreten"/></svg></button>
     </div>
-    <button class="big-btn" style="margin-top:8px;" onclick="showModeMenu()">Zurück</button>
+    <button class="big-btn" style="margin-top:8px;" onclick="showModeMenu()" data-t="lobby.zurueck"></button>
   </div>
 </div>
 
 <!-- Create Room Overlay -->
 <div class="overlay hidden" id="create-overlay">
   <div class="card">
-    <h2>Raum erstellt</h2>
-    <p>Teile diesen Code mit der Person, gegen die du spielen möchtest:</p>
-    <div class="room-code" id="display-code">----</div>
-    <p id="create-status" style="font-size:var(--fs-sm);color:var(--wait-text);">
-      <span class="status-dot"></span>Warte auf Mitspieler…
-    </p>
-    <button class="big-btn" onclick="cancelCreate()">Abbrechen</button>
+    <h2 data-t="seite.raum-erstellt"></h2>
+    <p data-t="seite.teile-diesen-code-mit"></p>
+    <div class="room-code" id="display-code" data-t="seite.text"></div>
+    <p id="create-status" style="font-size:var(--fs-sm);color:var(--wait-text);" data-t-label="seite.warte-auf-mitspieler">
+      <span class="status-dot"></span></p>
+    <button class="big-btn" onclick="cancelCreate()" data-t="seite.abbrechen"></button>
   </div>
 </div>
 
 <!-- Join Room Overlay -->
 <div class="overlay hidden" id="join-overlay">
   <div class="card">
-    <h2>Raum beitreten</h2>
-    <p>Gib den 5-stelligen Code ein:</p>
+    <h2 data-t="seite.raum-beitreten"></h2>
+    <p data-t="seite.gib-den-5-stelligen"></p>
     <input class="code-input" id="join-input" maxlength="5" placeholder="XXXXX"
       autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false"
       inputmode="text"
@@ -1018,8 +997,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       onpaste="setTimeout(()=>{this.value=this.value.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);},10)">
     <div class="err" id="join-err"></div>
     <div class="card-row">
-      <button class="big-btn" onclick="showLobby()">Zurück</button>
-      <button class="big-btn primary" id="btn-join" onclick="joinRoom()">Beitreten</button>
+      <button class="big-btn" onclick="showLobby()" data-t="seite.zurueck"></button>
+      <button class="big-btn primary" id="btn-join" onclick="joinRoom()" data-t="seite.beitreten"></button>
     </div>
   </div>
 </div>
@@ -1027,10 +1006,10 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- Waiting (joined, waiting for host to start) -->
 <div class="overlay hidden" id="wait-overlay">
   <div class="card">
-    <h2>Verbunden! ✓</h2>
-    <p>Warte auf den Spielstart…</p>
-    <p style="font-size:var(--fs-sm);color:var(--text3);">Raum: <strong id="wait-code"></strong></p>
-    <button class="big-btn" onclick="cancelJoin()">Verlassen</button>
+    <h2 data-t="warten.verbunden"></h2>
+    <p data-t="warten.warte-auf-den-spielstart"></p>
+    <p style="font-size:var(--fs-sm);color:var(--text3);" data-t-html="warten.raum#html"></p>
+    <button class="big-btn" onclick="cancelJoin()" data-t="warten.verlassen"></button>
   </div>
 </div>
 
@@ -1041,8 +1020,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          stand damit über JEDER Endtafel — auch über „Mitspieler hat den Raum verlassen. Du hast
          gewonnen.", wo die Verbindung längst zurück und gar nicht die Ursache war. Sie hat jetzt
          eine Kennung und wird vom Aufrufer gesetzt (Voreinstellung unverändert). -->
-    <h2 id="dc-title">Verbindung unterbrochen</h2>
-    <p id="dc-msg">Der andere Spieler hat die Verbindung getrennt.</p>
+    <h2 id="dc-title" data-t="verbindung.verbindung-unterbrochen"></h2>
+    <p id="dc-msg" data-t="verbindung.der-andere-spieler-hat"></p>
     <!-- §167 (7.9.): HIER STAND „Erneut verbinden" (§162-C, v128–v130) — AUSGEBAUT.
          Der Knopf war für den Fall gedacht, dass die eigene Leitung weg ist, während der Raum
          weiterlebt. Genau dieser Fall führt seit §163 aber nicht mehr auf diese Tafel: die
@@ -1052,7 +1031,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          das gezeigt. Ein Bedienelement, das nur dort erscheint, wo es nicht hilft, ist
          schlimmer als keines. Wer es zurückholt, braucht zuerst einen Weg hierher, auf dem
          der Raum noch lebt. -->
-    <button class="big-btn primary" onclick="showModeMenu()">Zurück zur Auswahl</button>
+    <button class="big-btn primary" onclick="showModeMenu()" data-t="verbindung.zurueck-zur-auswahl"></button>
   </div>
 </div>
 
@@ -1060,19 +1039,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      Anders als dc-overlay ein WARTEzustand: verschwindet, wenn der Gegner zurückkehrt. -->
 <div class="overlay hidden" id="opp-offline-overlay">
   <div class="card">
-    <h2><svg class="sym" aria-hidden="true"><use href="#s-sanduhr"/></svg>Verbindung unterbrochen</h2>
-    <p id="opp-offline-msg">Warte auf Rückkehr…</p>
+    <h2 data-t-label="verbindung.verbindung-unterbrochen-2"><svg class="sym" aria-hidden="true"><use href="#s-sanduhr"/></svg></h2>
+    <p id="opp-offline-msg" data-t="verbindung.warte-auf-rueckkehr"></p>
     <p id="opp-offline-count" style="font-variant-numeric:tabular-nums;opacity:.85;"></p>
-    <button class="big-btn primary" id="opp-offline-abort" onclick="abortToLobbyNow()" disabled>
-      Sofort abbrechen / zur Lobby
-    </button>
+    <button class="big-btn primary" id="opp-offline-abort" onclick="abortToLobbyNow()" disabled data-t="verbindung.sofort-abbrechen-zur-lobby"></button>
   </div>
 </div>
 
 <!-- Neu-Menu Overlay (während Spiel) -->
 <div class="overlay hidden" id="neu-overlay">
   <div class="card">
-    <h2 id="neu-title">Menü</h2>
+    <h2 id="neu-title" data-t="neu.menue"></h2>
     <p id="neu-desc" style="font-size:var(--fs-md);color:var(--text2);"></p>
     <div id="neu-buttons" style="display:flex;flex-direction:column;gap:8px;width:100%;"></div>
     <!-- §196: dieselben drei Verweise wie auf dem Startbildschirm. Sie stehen STATISCH hier,
@@ -1081,13 +1058,13 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          unberührt: eine Fußzeile ist kein Knopf im Sinne dieser Regel. -->
     <div class="legal-footer">
       <button type="button" class="legal-link"
-        onclick="document.getElementById('ueber-overlay').classList.remove('hidden')">Über das Spiel</button>
-      <span class="legal-sep" aria-hidden="true">·</span>
+        onclick="document.getElementById('ueber-overlay').classList.remove('hidden')" data-t="neu.ueber-das-spiel"></button>
+      <span class="legal-sep" aria-hidden="true" data-t="neu.text"></span>
       <button type="button" class="legal-link"
-        onclick="document.getElementById('impressum-overlay').classList.remove('hidden')">Impressum</button>
-      <span class="legal-sep" aria-hidden="true">·</span>
+        onclick="document.getElementById('impressum-overlay').classList.remove('hidden')" data-t="neu.impressum"></button>
+      <span class="legal-sep" aria-hidden="true" data-t="neu.text-2"></span>
       <button type="button" class="legal-link"
-        onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')">Datenschutz</button>
+        onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')" data-t="neu.datenschutz"></button>
     </div>
   </div>
 </div>
@@ -1095,11 +1072,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- Rematch-Request Overlay (Guest hat Nochmal angefragt, Host entscheidet) -->
 <div class="overlay hidden" id="rematch-req-overlay">
   <div class="card">
-    <h2>Nochmal spielen?</h2>
-    <p>Dein Mitspieler möchte eine neue Runde starten.</p>
+    <h2 data-t="nochmal.nochmal-spielen"></h2>
+    <p data-t="nochmal.dein-mitspieler-moechte-eine"></p>
     <div class="card-row">
-      <button class="big-btn" onclick="answerRematch(false)">Nein, verlassen</button>
-      <button class="big-btn primary" onclick="answerRematch(true)">Ja, nochmal!</button>
+      <button class="big-btn" onclick="answerRematch(false)" data-t="nochmal.nein-verlassen"></button>
+      <button class="big-btn primary" onclick="answerRematch(true)" data-t="nochmal.ja-nochmal"></button>
     </div>
   </div>
 </div>
@@ -1107,11 +1084,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- Remis-Angebot Overlay (für den Empfänger) -->
 <div class="overlay hidden" id="draw-offer-overlay">
   <div class="card" style="text-align:center;gap:16px;width:min(300px,94vw);">
-    <h2 style="font-size:var(--fs-xl);">Remis-Angebot</h2>
-    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;">Mitspieler bietet Remis an.<br>Einverstanden?</p>
+    <h2 style="font-size:var(--fs-xl);" data-t="remis.remis-angebot"></h2>
+    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;" data-t-html="remis.mitspieler-bietet-remis-an#html"></p>
     <div style="display:flex;gap:8px;width:100%;">
-      <button class="big-btn" style="flex:1" onclick="answerDraw(false)">Ablehnen</button>
-      <button class="big-btn primary" style="flex:1" onclick="answerDraw(true)">Einverstanden</button>
+      <button class="big-btn" style="flex:1" onclick="answerDraw(false)" data-t="remis.ablehnen"></button>
+      <button class="big-btn primary" style="flex:1" onclick="answerDraw(true)" data-t="remis.einverstanden"></button>
     </div>
   </div>
 </div>
@@ -1121,11 +1098,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      hängt — dieses hier ist rein lokal (MvKI hat keinen Firebase-Sync des Gegners). -->
 <div class="overlay hidden" id="ai-draw-offer-overlay">
   <div class="card" style="text-align:center;gap:16px;width:min(300px,94vw);">
-    <h2 style="font-size:var(--fs-xl);">Remis-Angebot</h2>
-    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;">Max Michu bietet Remis an.<br>Einverstanden?</p>
+    <h2 style="font-size:var(--fs-xl);" data-t="remis.remis-angebot-2"></h2>
+    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;" data-t-html="remis.max-michu-bietet-remis#html"></p>
     <div style="display:flex;gap:8px;width:100%;">
-      <button class="big-btn" style="flex:1" onclick="answerAIDraw(false)">Ablehnen</button>
-      <button class="big-btn primary" style="flex:1" onclick="answerAIDraw(true)">Einverstanden</button>
+      <button class="big-btn" style="flex:1" onclick="answerAIDraw(false)" data-t="remis.ablehnen-2"></button>
+      <button class="big-btn primary" style="flex:1" onclick="answerAIDraw(true)" data-t="remis.einverstanden-2"></button>
     </div>
   </div>
 </div>
@@ -1134,8 +1111,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <div class="overlay hidden" id="maintenance-overlay">
   <div class="card" style="text-align:center;gap:16px;width:min(320px,94vw);">
     <div style="font-size:32px;"><svg class="sym-gross" aria-hidden="true"><use href="#s-werkzeug"/></svg></div>
-    <h2 style="font-size:var(--fs-xl);">Wartungsarbeiten</h2>
-    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;">Das Spiel ist vorübergehend nicht verfügbar.<br>Bitte später noch einmal versuchen.</p>
+    <h2 style="font-size:var(--fs-xl);" data-t="wartung.wartungsarbeiten"></h2>
+    <p style="font-size:var(--fs-md);color:var(--text2);line-height:1.5;" data-t-html="wartung.das-spiel-ist-voruebergehend#html"></p>
   </div>
 </div>
 
@@ -1144,45 +1121,45 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
   <div class="card lesekarte" style="max-height:88vh;overflow-y:auto;text-align:left;gap:12px;width:min(560px,94vw);">
     <div class="lesekopf">
       <span class="lese-platz" aria-hidden="true"></span>
-      <h2 style="text-align:center;font-size:var(--fs-xl);">Regeln</h2>
-      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('regeln-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+      <h2 style="text-align:center;font-size:var(--fs-xl);" data-t="regeln.regeln"></h2>
+      <button type="button" class="lesezu" onclick="document.getElementById('regeln-overlay').classList.add('hidden')" data-t-attr="title:regeln.schliessen-2;aria-label:regeln.schliessen-3"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
     </div>
-    <p style="font-size:var(--fs-xs);color:var(--text3);text-align:center;margin-top:-8px;">First published in 1998 as Gembel</p>
+    <p style="font-size:var(--fs-xs);color:var(--text3);text-align:center;margin-top:-8px;" data-t="regeln.first-published-in-1998"></p>
 
     <div style="font-size:var(--fs-read);line-height:1.6;color:var(--text2);display:flex;flex-direction:column;gap:10px;">
-      <div><strong style="color:var(--text);">Ziel</strong><br>4 gleichfarbige Figuren in einer Spalte (A, B, C oder D). Bei einem Stapel zählt die Basis, nicht die Figur darauf.</div>
+      <div data-t-label="regeln.4-gleichfarbige-figuren-in"><strong style="color:var(--text);" data-t="regeln.ziel"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Brett</strong><br>4×4 Felder, Zeilen 1–4, Spalten A–D. Jedes Feld hat Punkte (oben im Feld): Zeile 1 = 3, Zeile 2 = 2, Zeile 3 = 1, Zeile 4 = 0.</div>
+      <div data-t-label="regeln.4-4-felder-zeilen"><strong style="color:var(--text);" data-t="regeln.brett"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Figuren</strong><br>Zwei Farben, schwarz und rot, mit Zahlen 0–3. Die Zahl entspricht dem Punktwert des Feldes, auf dem die Figur zu Beginn steht. Die Figuren gehören keinem Spieler.</div>
+      <div data-t-label="regeln.zwei-farben-schwarz-und"><strong style="color:var(--text);" data-t="regeln.figuren"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Spieler und Parität</strong><br>Die Spieler ziehen abwechselnd. Die Parität entscheidet, ob ein Zug erlaubt ist: einer zieht bei gerader Anzahl beteiligter roter Figuren, der andere bei ungerader.</div>
+      <div data-t-label="regeln.die-spieler-ziehen-abwechselnd"><strong style="color:var(--text);" data-t="regeln.spieler-und-paritaet"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Zugrichtung und Zugweite</strong><br>Keine Beschränkung. Eine Figur darf auf <em>jedes</em> Feld des Bretts gezogen werden — vorwärts, rückwärts, seitwärts, diagonal, über beliebige Entfernung und über andere Figuren hinweg. Ob ein Zug erlaubt ist, entscheidet allein die Parität, beim leeren Zielfeld zusätzlich die Punktzahl.</div>
+      <div data-t-html="regeln.zugrichtung-und-zugweite-keine#html"></div>
 
-      <div><strong style="color:var(--text);">Spielbeginn</strong><br>Wer beginnt und wer die gerade bzw. ungerade Parität erhält, wird zu Spielbeginn ausgelost.</div>
+      <div data-t-label="regeln.wer-beginnt-und-wer"><strong style="color:var(--text);" data-t="regeln.spielbeginn"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Nochmal</strong><br>Beim Nochmal beginnt der Verlierer der vorangegangenen Partie; nach einem Remis wechselt der Anziehende. Die Parität wechselt nach jeder Partie, sodass beide Spieler abwechselnd gerade und ungerade spielen.</div>
+      <div data-t-label="regeln.beim-nochmal-beginnt-der"><strong style="color:var(--text);" data-t="regeln.nochmal"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Anheben</strong><br>Zähle alle roten Figuren auf den bis zu 8 Nachbarfeldern (in einem Stapel jede rote einzeln). Zähle die Zugfigur selbst mit, wenn sie rot ist. Ungerade Summe → der ungerade Spieler darf anheben, gerade Summe → der gerade.</div>
+      <div data-t-label="regeln.zaehle-alle-roten-figuren"><strong style="color:var(--text);" data-t="regeln.anheben"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Absetzen auf ein leeres Feld</strong><br>Die Zahl auf der Figur muss zu den Punkten des Feldes passen. Zähle die roten Nachbarn des Zielfeldes nach dem geplanten Zug. Zugfigur mitzählen, wenn sie rot ist. Ungerade Summe → der ungerade Spieler darf absetzen, gerade Summe → der gerade.</div>
+      <div data-t-label="regeln.die-zahl-auf-der"><strong style="color:var(--text);" data-t="regeln.absetzen-auf-ein-leeres"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Stapeln</strong><br>Eine Figur auf eine Einzelfigur setzen. Es zählen nur die roten Figuren im neuen Stapel — keine Nachbarn. Die Punkte spielen dabei keine Rolle. Ein Stapel fasst 2 Figuren; auf einen Stapel darf nicht gestapelt werden.</div>
+      <div data-t-label="regeln.eine-figur-auf-eine"><strong style="color:var(--text);" data-t="regeln.stapeln"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Stapel auflösen</strong><br>Nur wer einen Stapel gebildet hat, darf ihn wieder auflösen. Bewegt wird immer nur die Top-Figur, nie der Stapel als Ganzes. Fürs Absetzen gelten die Regeln oben.</div>
+      <div data-t-label="regeln.nur-wer-einen-stapel"><strong style="color:var(--text);" data-t="regeln.stapel-aufloesen"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Drei in einer Spalte → Bonuszug</strong><br>Drei gleichfarbige Figuren direkt übereinander in einer Spalte, bei einem Stapel zählt die Basis. Diese drei Figuren werden gesperrt, und wer den Dreier gebildet hat, bekommt einen Bonuszug. Ist kein Bonuszug möglich, zieht der Mitspieler.<br><br>Gesperrt heißt: Diese Figur lässt sich nicht mehr bewegen. Auf sie darf aber weiterhin gestapelt werden, und die obere Figur eines so gebildeten Stapels darf auch wieder heruntergenommen werden. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.<br><br>Wer die vierte passende Figur in eine Spalte zieht, gewinnt — unabhängig davon, wer die drei darunter gebaut hat.</div>
+      <div data-t-html="regeln.drei-in-einer-spalte#html"></div>
 
-      <div><strong style="color:var(--text);">Zugverzicht</strong><br>Passen ist nicht erlaubt.</div>
+      <div data-t-label="regeln.passen-ist-nicht-erlaubt"><strong style="color:var(--text);" data-t="regeln.zugverzicht"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Keine Zugmöglichkeit</strong><br>Hat ein Spieler keinen erlaubten Zug, zieht der Mitspieler nochmals.</div>
+      <div data-t-label="regeln.hat-ein-spieler-keinen"><strong style="color:var(--text);" data-t="regeln.keine-zugmoeglichkeit"></strong><br></div>
 
-      <div><strong style="color:var(--text);">Remis</strong><br>Eine Einigung auf Remis ist jederzeit möglich; ein solches Angebot darf abgelehnt werden.<br><br>Tritt dieselbe Stellung — mit demselben Spieler am Zug — zum <strong style="color:var(--text);">dritten</strong> Mal auf, kann der Spieler am Zug Remis <strong style="color:var(--text);">einfordern</strong>. Der Mitspieler kann es nicht ablehnen.<br><br>Beim <strong style="color:var(--text);">fünften</strong> Auftreten derselben Stellung endet die Partie automatisch unentschieden, ebenso wenn 50 Züge lang kein neuer Dreier gebildet wurde.</div>
+      <div data-t-html="regeln.remis-eine-einigung-auf#html"></div>
 
     </div>
 
-    <button class="big-btn primary" style="width:100%;margin-top:4px;" onclick="document.getElementById('regeln-overlay').classList.add('hidden')">Schließen</button>
+    <button class="big-btn primary" style="width:100%;margin-top:4px;" onclick="document.getElementById('regeln-overlay').classList.add('hidden')" data-t="regeln.schliessen"></button>
   </div>
 </div>
 
@@ -1197,7 +1174,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=157" charset="utf-8"></script>
+<script src="gembel_rules.js?v=158" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1209,7 +1186,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=157" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=158" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1849,6 +1826,215 @@ const GATE_NEED = 3;            // Punkte fuer die Freischaltung
 // damit eine ueber die Konsole gestartete Partie keinen undefinierten Wert liefert.
 const GATE_WIN_POINTS = { einsteiger:1, fortgeschritten:1.5, stark:1.5, meister:3 };
 const GATE_STORE = 'countred_gate';
+// ── Textschicht (§200) ──────────────────────────────
+// Die sichtbaren Texte stehen nicht mehr im Markup und nicht mehr zwischen den
+// Anweisungen, sondern hier. Der Code verweist nur noch auf Schluessel.
+// WARUM hier und nicht in einer eigenen Datei: das Haus hat fuenf feste Ladewege und
+// fuenf Pruefsummen-Dateien, und der Deploy-Guard aller zwoelf Suiten vergleicht sie mit
+// dem Build-Marker. Eine sechste Datei gehoert zur zweiten SPRACHE, nicht zur Trennung.
+// Bei drei Sprachen wird daraus eine Datei je Sprache, von denen nur die aktive geladen
+// wird — Schluessel, Nachschlagen und Markup bleiben dabei unveraendert.
+//
+// DREI DINGE, die jetzt richtig stehen muessen, weil sie spaeter teuer waeren:
+//  1. Die ZAHL wird je Sprache formatiert (`zahl`), nicht deutsch fest verdrahtet.
+//  2. Ein Wert darf mehr als eine Zeichenkette sein: `{eins, andere}` traegt die
+//     Mehrzahl. Deutsch und Englisch brauchen zwei Formen, Polnisch drei, Arabisch
+//     sechs — die Form der TABELLE muss das aushalten, nicht der Code.
+//  3. NIRGENDS werden Satzteile zusammengeklebt. Platzhalter stehen im Satz, damit die
+//     Wortstellung der Sprache gehoert und nicht dem Programm.
+//
+// ⚠️ N12 (Fremddaten nie in innerHTML): Werte mit Auszeichnung tragen `#html` im
+// Schluessel und NUR die. Alles andere geht ueber `textContent`. Eine Pruefung haelt
+// fest, dass kein Schluessel ohne `#html` jemals in innerHTML landet und dass die
+// erlaubte Auszeichnung auf <strong> und <br> begrenzt bleibt.
+const SPRACHE = 'de';
+const TEXTE = {
+  de: {
+    zahl: n => String(n).replace('.', ','),                         // 1.5 → „1,5"
+    t: {
+      'lobby.beitreten':                             'Beitreten',
+      'lobby.raum-erstellen':                        'Raum erstellen',
+      'lobby.spiele-mit-code-gegen':                 'Spiele mit Code gegen jemanden aus deinem Freundeskreis.',
+      'lobby.testversion':                           'Testversion',
+      'lobby.zurueck':                               'Zurück',
+      'marken.markierte-partien':                    'Markierte Partien',
+      'marken.zurueck':                              'Zurück',
+      'neu.datenschutz':                             'Datenschutz',
+      'neu.impressum':                               'Impressum',
+      'neu.menue':                                   'Menü',
+      'neu.text':                                    '·',
+      'neu.text-2':                                  '·',
+      'neu.ueber-das-spiel':                         'Über das Spiel',
+      'nochmal.dein-mitspieler-moechte-eine':        'Dein Mitspieler möchte eine neue Runde starten.',
+      'nochmal.ja-nochmal':                          'Ja, nochmal!',
+      'nochmal.nein-verlassen':                      'Nein, verlassen',
+      'nochmal.nochmal-spielen':                     'Nochmal spielen?',
+      'punkte.also-dreimal-gegen-einsteiger#html':   'Also: dreimal gegen Einsteiger, zweimal gegen Fortgeschritten oder einmal gegen\n        Meister gewinnen. <strong>Einladen darfst du danach jeden.</strong>',
+      'punkte.anderes-geraet':                       'Anderes Gerät',
+      'punkte.bewahre-diesen-code-auf':              'Bewahre diesen Code auf. Löschst du die Website-Daten deines Browsers, ist dein Punktestand weg; mit dem Code holst du ihn zurück.',
+      'punkte.code-kopieren':                        'Code kopieren',
+      'punkte.einloesen':                            'Einlösen',
+      'punkte.mit-code-zu-zweit':                    'Mit Code zu zweit',
+      'punkte.schliessen':                           'Schließen',
+      'punkte.schliessen-2':                         'Schließen',
+      'punkte.schliessen-3':                         'Schließen',
+      'punkte.sieg-gegen-max-michu#html':            '\n        Sieg gegen Max Michu <strong>Einsteiger</strong> = 1 Punkt<br>\n        Sieg gegen Max Michu <strong>Fortgeschritten</strong> = 1,5 Punkte<br>\n        Sieg gegen Max Michu <strong>Meister</strong> = 3 Punkte',
+      'punkte.um-jemand-zum-spiel':                  'Um jemand zum Spiel mit dir einzuladen, brauchst du 3 Punkte:',
+      'punkte.willst-du-deinen-punktestand':         'Willst du deinen Punktestand auf ein anderes Gerät mitnehmen? Kopier einfach diesen Übertragungscode in das Fenster auf deinem anderen Gerät:',
+      'regeln.4-4-felder-zeilen':                    '4×4 Felder, Zeilen 1–4, Spalten A–D. Jedes Feld hat Punkte (oben im Feld): Zeile 1 = 3, Zeile 2 = 2, Zeile 3 = 1, Zeile 4 = 0.',
+      'regeln.4-gleichfarbige-figuren-in':           '4 gleichfarbige Figuren in einer Spalte (A, B, C oder D). Bei einem Stapel zählt die Basis, nicht die Figur darauf.',
+      'regeln.absetzen-auf-ein-leeres':              'Absetzen auf ein leeres Feld',
+      'regeln.anheben':                              'Anheben',
+      'regeln.beim-nochmal-beginnt-der':             'Beim Nochmal beginnt der Verlierer der vorangegangenen Partie; nach einem Remis wechselt der Anziehende. Die Parität wechselt nach jeder Partie, sodass beide Spieler abwechselnd gerade und ungerade spielen.',
+      'regeln.brett':                                'Brett',
+      'regeln.die-spieler-ziehen-abwechselnd':       'Die Spieler ziehen abwechselnd. Die Parität entscheidet, ob ein Zug erlaubt ist: einer zieht bei gerader Anzahl beteiligter roter Figuren, der andere bei ungerader.',
+      'regeln.die-zahl-auf-der':                     'Die Zahl auf der Figur muss zu den Punkten des Feldes passen. Zähle die roten Nachbarn des Zielfeldes nach dem geplanten Zug. Zugfigur mitzählen, wenn sie rot ist. Ungerade Summe → der ungerade Spieler darf absetzen, gerade Summe → der gerade.',
+      'regeln.drei-in-einer-spalte#html':            '<strong style="color:var(--text);">Drei in einer Spalte → Bonuszug</strong><br>Drei gleichfarbige Figuren direkt übereinander in einer Spalte, bei einem Stapel zählt die Basis. Diese drei Figuren werden gesperrt, und wer den Dreier gebildet hat, bekommt einen Bonuszug. Ist kein Bonuszug möglich, zieht der Mitspieler.<br><br>Gesperrt heißt: Diese Figur lässt sich nicht mehr bewegen. Auf sie darf aber weiterhin gestapelt werden, und die obere Figur eines so gebildeten Stapels darf auch wieder heruntergenommen werden. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.<br><br>Wer die vierte passende Figur in eine Spalte zieht, gewinnt — unabhängig davon, wer die drei darunter gebaut hat.',
+      'regeln.eine-figur-auf-eine':                  'Eine Figur auf eine Einzelfigur setzen. Es zählen nur die roten Figuren im neuen Stapel — keine Nachbarn. Die Punkte spielen dabei keine Rolle. Ein Stapel fasst 2 Figuren; auf einen Stapel darf nicht gestapelt werden.',
+      'regeln.figuren':                              'Figuren',
+      'regeln.first-published-in-1998':              'First published in 1998 as Gembel',
+      'regeln.hat-ein-spieler-keinen':               'Hat ein Spieler keinen erlaubten Zug, zieht der Mitspieler nochmals.',
+      'regeln.keine-zugmoeglichkeit':                'Keine Zugmöglichkeit',
+      'regeln.nochmal':                              'Nochmal',
+      'regeln.nur-wer-einen-stapel':                 'Nur wer einen Stapel gebildet hat, darf ihn wieder auflösen. Bewegt wird immer nur die Top-Figur, nie der Stapel als Ganzes. Fürs Absetzen gelten die Regeln oben.',
+      'regeln.passen-ist-nicht-erlaubt':             'Passen ist nicht erlaubt.',
+      'regeln.regeln':                               'Regeln',
+      'regeln.remis-eine-einigung-auf#html':         '<strong style="color:var(--text);">Remis</strong><br>Eine Einigung auf Remis ist jederzeit möglich; ein solches Angebot darf abgelehnt werden.<br><br>Tritt dieselbe Stellung — mit demselben Spieler am Zug — zum <strong style="color:var(--text);">dritten</strong> Mal auf, kann der Spieler am Zug Remis <strong style="color:var(--text);">einfordern</strong>. Der Mitspieler kann es nicht ablehnen.<br><br>Beim <strong style="color:var(--text);">fünften</strong> Auftreten derselben Stellung endet die Partie automatisch unentschieden, ebenso wenn 50 Züge lang kein neuer Dreier gebildet wurde.',
+      'regeln.schliessen':                           'Schließen',
+      'regeln.schliessen-2':                         'Schließen',
+      'regeln.schliessen-3':                         'Schließen',
+      'regeln.spielbeginn':                          'Spielbeginn',
+      'regeln.spieler-und-paritaet':                 'Spieler und Parität',
+      'regeln.stapel-aufloesen':                     'Stapel auflösen',
+      'regeln.stapeln':                              'Stapeln',
+      'regeln.wer-beginnt-und-wer':                  'Wer beginnt und wer die gerade bzw. ungerade Parität erhält, wird zu Spielbeginn ausgelost.',
+      'regeln.zaehle-alle-roten-figuren':            'Zähle alle roten Figuren auf den bis zu 8 Nachbarfeldern (in einem Stapel jede rote einzeln). Zähle die Zugfigur selbst mit, wenn sie rot ist. Ungerade Summe → der ungerade Spieler darf anheben, gerade Summe → der gerade.',
+      'regeln.ziel':                                 'Ziel',
+      'regeln.zugrichtung-und-zugweite-keine#html':  '<strong style="color:var(--text);">Zugrichtung und Zugweite</strong><br>Keine Beschränkung. Eine Figur darf auf <em>jedes</em> Feld des Bretts gezogen werden — vorwärts, rückwärts, seitwärts, diagonal, über beliebige Entfernung und über andere Figuren hinweg. Ob ein Zug erlaubt ist, entscheidet allein die Parität, beim leeren Zielfeld zusätzlich die Punktzahl.',
+      'regeln.zugverzicht':                          'Zugverzicht',
+      'regeln.zwei-farben-schwarz-und':              'Zwei Farben, schwarz und rot, mit Zahlen 0–3. Die Zahl entspricht dem Punktwert des Feldes, auf dem die Figur zu Beginn steht. Die Figuren gehören keinem Spieler.',
+      'remis.ablehnen':                              'Ablehnen',
+      'remis.ablehnen-2':                            'Ablehnen',
+      'remis.einverstanden':                         'Einverstanden',
+      'remis.einverstanden-2':                       'Einverstanden',
+      'remis.max-michu-bietet-remis#html':           'Max Michu bietet Remis an.<br>Einverstanden?',
+      'remis.mitspieler-bietet-remis-an#html':       'Mitspieler bietet Remis an.<br>Einverstanden?',
+      'remis.remis-angebot':                         'Remis-Angebot',
+      'remis.remis-angebot-2':                       'Remis-Angebot',
+      'seite.1':                                     '1',
+      'seite.2':                                     '2',
+      'seite.3':                                     '3',
+      'seite.4':                                     '4',
+      'seite.a':                                     'A',
+      'seite.abbrechen':                             'Abbrechen',
+      'seite.b':                                     'B',
+      'seite.beitreten':                             'Beitreten',
+      'seite.bitte-geraet-drehen':                   'Bitte Gerät drehen',
+      'seite.c':                                     'C',
+      'seite.countred-ist-fuer-das':                 'CountRed ist für das Hochformat gebaut.',
+      'seite.d':                                     'D',
+      'seite.du':                                    'Du',
+      'seite.gembel-count-red':                      'Gembel · Count Red',
+      'seite.gerade':                                'gerade',
+      'seite.gib-den-5-stelligen':                   'Gib den 5-stelligen Code ein:',
+      'seite.mitspieler':                            'Mitspieler',
+      'seite.optionen':                              'Optionen',
+      'seite.raum-beitreten':                        'Raum beitreten',
+      'seite.raum-erstellt':                         'Raum erstellt',
+      'seite.regeln':                                '? Regeln',
+      'seite.teile-diesen-code-mit':                 'Teile diesen Code mit der Person, gegen die du spielen möchtest:',
+      'seite.testversion':                           'Testversion',
+      'seite.text':                                  '----',
+      'seite.ungerade':                              'ungerade',
+      'seite.verbinde':                              'Verbinde…',
+      'seite.warte-auf-mitspieler':                  'Warte auf Mitspieler…',
+      'seite.zurueck':                               'Zurück',
+      'start.datenschutz':                           'Datenschutz',
+      'start.gegen-max-michu':                       'Gegen Max Michu',
+      'start.impressum':                             'Impressum',
+      'start.interaktive-spielanleitung':            'Interaktive Spielanleitung',
+      'start.mit-code-zu-zweit':                     'Mit Code zu zweit',
+      'start.testversion':                           'Testversion',
+      'start.text':                                  '·',
+      'start.text-2':                                '·',
+      'start.ueber-das-spiel':                       'Über das Spiel',
+      'start.wie-moechtest-du-spielen':              'Wie möchtest du spielen?',
+      'stufe.einsteiger':                            'Einsteiger',
+      'stufe.fortgeschritten':                       'Fortgeschritten',
+      'stufe.gegen-max-michu-waehle':                'Gegen Max Michu — wähle die Spielstärke:',
+      'stufe.meister':                               'Meister',
+      'stufe.zurueck':                               'Zurück',
+      'ueber.countred-ist-ein-strategiespiel':       'CountRed ist ein Strategiespiel. Kein Würfel, kein Zufall, kein Glück. Die Regeln lesen sich in drei Minuten, eine Partie dauert selten länger als 15 Minuten.',
+      'ueber.dahinter-steht-kein-studio#html':       'Dahinter steht kein Studio, sondern eine Person: Mein Name ist\n          Walter Rehm, ich wohne in München. Fragen, Fehlermeldungen und Ideen gerne an\n          <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a>.',
+      'ueber.dann-kommt-meistens-diese':             'Dann kommt meistens diese Frage: „Was sind denn jetzt meine Figuren? Welche Farbe gehört mir?“ Antwort: keine. Jeder kann prinzipiell jede Figur ziehen — niemand ist rot, niemand ist schwarz. Was du ziehen darfst, entscheidet das Brett: Zähle die roten Nachbarn der Figur. Ist die Zahl gerade, darfst du sie ziehen. Ist sie ungerade, darf dein Mitspieler.',
+      'ueber.der-computergegner-heisst-max':         'Der Computergegner heißt Max Michu. Er ist kein lernendes Modell, sondern rechnet Züge durch und bewertet Stellungen nach Regeln, die ich selbst aufgestellt und in Tausenden von Testpartien nachgeschärft habe. Drei Stufen, von nachsichtig bis unangenehm.',
+      'ueber.die-limitierte-auflage-design':         'Die limitierte Auflage. Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm',
+      'ueber.foto-christian-alber':                  'Foto: Christian Alber',
+      'ueber.neu-ist-das-spiel':                     'Neu ist das Spiel nicht. Erfunden habe ich es 1998; das Design haben wir zu dritt über mehrere Jahre entwickelt. Die damalige limitierte Auflage ist seit Jahren vergriffen. Hier ist es erstmals online spielbar, mit den Regeln von damals.',
+      'ueber.schliessen':                            'Schließen',
+      'ueber.schliessen-2':                          'Schließen',
+      'ueber.schliessen-3':                          'Schließen',
+      'ueber.ueber-das-spiel':                       'Über das Spiel',
+      'ueber.was-es-hier-nicht':                     'Was es hier nicht gibt: Anmeldung, Konto, Werbung, Nachverfolgung. Wer zu zweit spielen will, teilt einen Code — das ist alles. Das Spiel kostet nichts.',
+      'verbindung.der-andere-spieler-hat':           'Der andere Spieler hat die Verbindung getrennt.',
+      'verbindung.sofort-abbrechen-zur-lobby':       'Sofort abbrechen / zur Lobby',
+      'verbindung.verbindung-unterbrochen':          'Verbindung unterbrochen',
+      'verbindung.verbindung-unterbrochen-2':        'Verbindung unterbrochen',
+      'verbindung.warte-auf-rueckkehr':              'Warte auf Rückkehr…',
+      'verbindung.zurueck-zur-auswahl':              'Zurück zur Auswahl',
+      'warten.raum#html':                            'Raum: <strong id="wait-code"></strong>',
+      'warten.verbunden':                            'Verbunden! ✓',
+      'warten.verlassen':                            'Verlassen',
+      'warten.warte-auf-den-spielstart':             'Warte auf den Spielstart…',
+      'wartung.das-spiel-ist-voruebergehend#html':   'Das Spiel ist vorübergehend nicht verfügbar.<br>Bitte später noch einmal versuchen.',
+      'wartung.wartungsarbeiten':                    'Wartungsarbeiten',
+    }
+  }
+};
+// Nachschlagen. `t(schluessel, werte)` setzt die Platzhalter ein und waehlt bei einem
+// Wert mit Mehrzahlformen anhand von `werte.n`. Ein fehlender Schluessel gibt den
+// Schluessel zurueck, statt still nichts anzuzeigen — ein leerer Knopf faellt niemandem
+// auf, ein sichtbares `punkte.einloesen` sofort.
+function t(schluessel, werte){
+  const s = TEXTE[SPRACHE] || TEXTE.de;
+  let wert = s.t[schluessel];
+  if(wert === undefined) return schluessel;
+  if(typeof wert === 'object') wert = (werte && Math.abs(werte.n) === 1) ? wert.eins : wert.andere;
+  return wert.replace(/\{(\w+)\}/g, (_, k) => {
+    const v = werte ? werte[k] : undefined;
+    return v === undefined ? ('{'+k+'}') : (typeof v === 'number' ? s.zahl(v) : String(v));
+  });
+}
+// Fuellt das Markup beim Laden: `data-t` ueber textContent, `data-t-html` ueber
+// innerHTML (nur Schluessel mit `#html`), `data-t-label` den letzten Textknoten neben einer
+// Auszeichnung, und `data-t-attr` die textragenden Attribute (placeholder, title, aria-label)
+// in der Form Attribut:Schluessel, mehrere durch Strichpunkt getrennt.
+// ⚠️ KEIN Beispielschluessel in diesen Kommentaren: die Suite sucht benutzte Schluessel im
+// ganzen Quelltext, und ein erfundener im Kommentar gaelte als benutzt und unbelegt.
+function texteFuellen(wurzel){
+  const w = wurzel || document;
+  w.querySelectorAll('[data-t]').forEach(el => { el.textContent = t(el.getAttribute('data-t')); });
+  // `data-t-label`: Text NEBEN einer Auszeichnung — der Knopf „<svg/>Optionen" etwa. Hier
+  // wird KEIN Element eingefuegt (ein zusaetzliches <span> waere in einem Flex-Knopf ein
+  // weiteres Flex-Kind und koennte die Abstaende verschieben); gesetzt wird der letzte
+  // Textknoten, und wenn keiner da ist, wird einer angehaengt.
+  w.querySelectorAll('[data-t-label]').forEach(el => {
+    const wert = t(el.getAttribute('data-t-label'));
+    let letzter = null;
+    for(const kind of el.childNodes) if(kind.nodeType === 3) letzter = kind;
+    if(letzter) letzter.textContent = wert; else el.appendChild(document.createTextNode(wert));
+  });
+  w.querySelectorAll('[data-t-html]').forEach(el => {
+    const k = el.getAttribute('data-t-html');
+    if(k.endsWith('#html')) el.innerHTML = t(k);       // NUR #html-Schluessel
+  });
+  w.querySelectorAll('[data-t-attr]').forEach(el => {
+    el.getAttribute('data-t-attr').split(';').forEach(paar => {
+      const [attr, k] = paar.split(':');
+      if(attr && k) el.setAttribute(attr.trim(), t(k.trim()));
+    });
+  });
+}
 const GATE_SALT  = 'countred-gate-1';
 const GATE_TIP   = 'Erst drei Punkte sammeln: 3× Einsteiger, 2× Fortgeschritten oder 1× Meister schlagen.';
 
@@ -2074,10 +2260,13 @@ window.redeemGateCode = function(){
   const st = document.getElementById('gate-state');
   if(st) st.textContent = gateStandSatz();
 };
+// §200: Texte einsetzen, BEVOR gezeichnet wird. Die Lesefenster sind bis zum Öffnen
+// verborgen, der Punktezähler wird von gateRefresh() ohnehin selbst geschrieben.
+texteFuellen();
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v157';
+const BUILD_MARKER='· Build v158';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2394,7 +2583,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=157'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=158'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

@@ -22,6 +22,21 @@ const HTML_PATH = __dirname + '/index.html';
 if(fs.existsSync(__dirname + '/countred.html'))
   console.log('  \u26a0\ufe0f  countred.html liegt noch im Ordner \u2014 ALTKOPIE, wird NICHT geprueft.');
 const html = fs.readFileSync(HTML_PATH, 'utf8');
+
+// §200: die sichtbaren Texte stehen seit v158 unter Schluesseln in einer Tabelle.
+// `sichtbar(x)` setzt sie in einen Markup-Ausschnitt zurueck ein — dieselbe Ersetzung, die
+// der Browser beim Laden macht. Pruefungen, die einen Satz AN SEINEM ORT suchen, bleiben
+// damit unveraendert lesbar. (Dieselben drei Zeilen stehen in test_ui_97.)
+const DE = (() => {
+  const blk = html.slice(html.indexOf('const SPRACHE'), html.indexOf('function t(schluessel'));
+  const ctx = {}; require('vm').createContext(ctx);
+  require('vm').runInContext(blk + '\n;__T = TEXTE.de.t;', ctx);
+  return ctx.__T;
+})();
+const ktext = k => (typeof DE[k] === 'object' ? DE[k].andere : DE[k]);
+const sichtbar = x => String(x).replace(
+  /<([a-zA-Z0-9-]+)([^>]*?)data-t(-label|-html)?="([^"]+)"([^>]*)>/g,
+  (m, tag, a, art, k, b) => '<'+tag+a+'data-t'+(art||'')+'="'+k+'"'+b+'>' + (ktext(k)||''));
 const worker = fs.readFileSync(__dirname + '/countred_ai_worker.js', 'utf8');
 
 let pass = 0, fail = 0;
@@ -237,9 +252,9 @@ ok(/mvmOfferedThisTurn=false;\s*\n\s*mvkiOfferedThisTurn=false;/.test(html),
    'handleCellClick: Angebotsrecht wird beim eigenen Zug zur\u00fcckgesetzt');
 ok(/aiScoreHistory=\[\];[\s\S]{0,400}aiNoOfferBeforeLen=0; mvkiOfferedThisTurn=false;/.test(html),
    'startAIGame: alle \u00a785-Zust\u00e4nde pro Partie zur\u00fcckgesetzt');
-ok(/id="ai-draw-offer-overlay"[\s\S]{0,300}Max Michu bietet Remis an/.test(html),
+ok(/id="ai-draw-offer-overlay"[\s\S]{0,300}Max Michu bietet Remis an/.test(sichtbar(html)),
    'KI-Angebots-Overlay sagt \u201eMax Michu\u201c (nicht mehr \u201eMitspieler\u201c)');
-ok(/id="draw-offer-overlay"[\s\S]{0,300}Mitspieler bietet Remis an/.test(html),
+ok(/id="draw-offer-overlay"[\s\S]{0,300}Mitspieler bietet Remis an/.test(sichtbar(html)),
    'MvM-Overlay unver\u00e4ndert \u201eMitspieler\u201c (Modi sauber getrennt)');
 ok(/score:\s+\(meta&&typeof meta\.score==='number'\)\?Math\.round\(meta\.score\):null/.test(html),
    'Zug-Log schreibt das Kalibrierfeld score (null bei human/Altdaten; seit \u00a789a im mvkiLogEntry-Builder)');
