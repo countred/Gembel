@@ -2102,6 +2102,59 @@ console.log('\u00a7199 \u2014 Denkzeit vor dem Anheben, MvM-Takt, Abbruch hinter
      'Zug auf dem neuen Brett (\u00a7180: beide Wege zu applyMoveA sperren)');
 }
 
+// §201 (23.9.) — DIE AUSLIEFERUNGSLISTE. Dreimal ist dieselbe Sache passiert: eine Datei
+// gehoerte zur Auslieferung, stand aber nicht in der Positivliste der `.gitignore`, und die
+// `*`-Regel verschluckte sie. `LICENSE` (§159), die beiden Bilder (§193) und zuletzt
+// `textvergleich.js` (§200). `git add` meldet das nur beilaeufig, der Commit laeuft durch,
+// und auffallen tut es erst an der leeren Stelle im Browser. Ab jetzt faellt es HIER auf,
+// vor dem Deploy — und zwar ohne dass jemand daran denken muss.
+console.log('\u00a7201 \u2014 Auslieferungsliste: was geliefert wird, muss die .gitignore durchlassen:');
+{
+  const giPfad = __dirname + '/.gitignore';
+  const gi = fs.existsSync(giPfad) ? fs.readFileSync(giPfad, 'utf8') : '';
+  ok(gi.length > 0, 'die .gitignore liegt neben der Auslieferung');
+  const ausnahmen = [...gi.matchAll(/^!(.+)$/gm)].map(m => m[1].trim());
+  const passt = n => ausnahmen.some(a => a === n ||
+      (a.includes('*') && new RegExp('^' + a.replace(/[.+^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*') + '$').test(n)));
+
+  // Eine Pruefung „jede Ausnahme nennt eine vorhandene Datei" hatte ich zuerst gebaut und
+  // wieder herausgenommen: Sie schlaegt in einer unvollstaendigen Arbeitskopie an, ohne dass
+  // etwas kaputt waere — und sie ist ueberfluessig, denn ein VERTIPPTER Ausnahmename laesst
+  // die echte Datei durch (b), (c) oder (d) auffallen. Genau dort, wo es zaehlt.
+
+  // (b) Alles, was die SEITE laedt oder anzeigt, steht in der Liste. Hergeleitet, nicht
+  //     aufgezaehlt: Bilder, Skripte, Verweise auf eigene Dateien aus beiden HTML-Dateien
+  //     und die importScripts des Workers. Ein neues Bild oder Skript ist damit automatisch
+  //     erfasst, ohne dass jemand diese Pruefung anfasst.
+  const anl = fs.existsSync(__dirname + '/anleitung.html') ? fs.readFileSync(__dirname + '/anleitung.html', 'utf8') : '';
+  const wrk = fs.existsSync(__dirname + '/countred_ai_worker.js') ? fs.readFileSync(__dirname + '/countred_ai_worker.js', 'utf8') : '';
+  const bezug = new Set();
+  for(const quelle of [html, anl, wrk])
+    for(const m of quelle.matchAll(/(?:src|href|importScripts\(|new Worker\()\s*=?\s*['"]([^'"#]+)['"]/g)){
+      const datei = m[1].split('?')[0].trim();
+      if(datei && !/^(https?:|mailto:|data:|\/\/)/.test(datei) && !datei.startsWith('#')) bezug.add(datei);
+    }
+  const fehlt = [...bezug].filter(n => fs.existsSync(__dirname + '/' + n) && !passt(n));
+  ok(fehlt.length === 0,
+     'jede geladene oder angezeigte Datei steht in der Positivliste (' + bezug.size + ' hergeleitet' +
+     (fehlt.length ? ', FEHLT: ' + fehlt.join(', ') : '') + ')');
+
+  // (c) Die Dateien, die niemand laedt und die trotzdem ins Repository gehoeren: Werkzeuge,
+  //     Lizenz, Suchmaschinenhinweis, die Textfassung der Anleitung. Sie koennen nicht
+  //     hergeleitet werden — wer eine neue anlegt, traegt sie HIER und in der .gitignore ein.
+  const mit = ['LICENSE','robots.txt','texte.js','layout.js','bau_vorschau.js','textvergleich.js',
+               'ANLEITUNG_TEXTE.md','.gitignore'];
+  const fehlt2 = mit.filter(n => fs.existsSync(__dirname + '/' + n) && !passt(n));
+  ok(fehlt2.length === 0,
+     'auch die mitgelieferten Werkzeuge und Beilagen stehen darin' + (fehlt2.length ? ' \u2014 FEHLT: ' + fehlt2.join(', ') : ''));
+
+  // (d) Und die Suiten selbst: sie sind die Absicherung, sie duerfen nicht zurueckbleiben.
+  const suiten = fs.readdirSync(__dirname).filter(n => /^test_.*\.js$/.test(n));
+  const fehlt3 = suiten.filter(n => !passt(n));
+  ok(fehlt3.length === 0, 'alle ' + suiten.length + ' Suiten stehen in der Positivliste' +
+     (fehlt3.length ? ' \u2014 FEHLT: ' + fehlt3.join(', ') : ''));
+}
+
 console.log('Deploy-Guard \u2014 Cache-Bust synchron + Build-Marker:');
 {
   const vRules  = (html.match(/gembel_rules\.js\?v=(\d+)/)||[])[1];
