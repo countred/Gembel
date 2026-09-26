@@ -28,12 +28,22 @@ const html = fs.readFileSync(HTML_PATH, 'utf8');
 // der Browser beim Laden macht. Pruefungen, die einen Satz AN SEINEM ORT suchen, bleiben
 // damit unveraendert lesbar. (Dieselben drei Zeilen stehen in test_ui_97.)
 const DE = (() => {
-  const blk = html.slice(html.indexOf('const SPRACHE'), html.indexOf('function t(schluessel'));
+  const blk = html.slice(html.indexOf('const SPRACHE'), html.indexOf('function txt(schluessel'));
   const ctx = {}; require('vm').createContext(ctx);
   require('vm').runInContext(blk + '\n;__T = TEXTE.de.t;', ctx);
   return ctx.__T;
 })();
 const ktext = k => (typeof DE[k] === 'object' ? DE[k].andere : DE[k]);
+// §202: `meldung(x)` setzt txt('schluessel') im Programmtext wieder in den Wortlaut zurueck.
+const meldung = x => {
+  let s = String(x), vorher = null, runden = 0;
+  while(s !== vorher && runden++ < 6){
+    vorher = s;
+    s = s.replace(/\$\{txt\('([^']+)'(?:,\s*\{[\s\S]*?\}\s*)?\)\}/g, (m, k) => ktext(k) !== undefined ? ktext(k) : m)
+         .replace(/txt\('([^']+)'(?:,\s*\{[\s\S]*?\}\s*)?\)/g,        (m, k) => ktext(k) !== undefined ? ktext(k) : m);
+  }
+  return s;
+};
 const sichtbar = x => String(x).replace(
   /<([a-zA-Z0-9-]+)([^>]*?)data-t(-label|-html)?="([^"]+)"([^>]*)>/g,
   (m, tag, a, art, k, b) => '<'+tag+a+'data-t'+(art||'')+'="'+k+'"'+b+'>' + (ktext(k)||''));
@@ -244,7 +254,7 @@ ok(/aiScoreHistory\.push\(\(typeof res\.meta\.best === 'number'\)/.test(html),
 ok(!/aiScoreHistory\.push\(res\.meta\.score\)/.test(html),
    'die alte Verdrahtung auf meta.score ist wirklich weg (Wiedereinbau-Schutz)');
 const aad = html.match(/window\.answerAIDraw=function\(yes\)\{[\s\S]*?\n\};/m)[0];
-ok(/Remis abgelehnt[\s\S]*maybeTriggerAI\(\)/.test(aad), 'answerAIDraw: nach Ablehnung zieht die KI (maybeTriggerAI)');
+ok(/Remis abgelehnt[\s\S]*maybeTriggerAI\(\)/.test(meldung(aad)), 'answerAIDraw: nach Ablehnung zieht die KI (maybeTriggerAI)');
 const odm = html.match(/window\.offerDrawMvki=function\(\)\{[\s\S]*?\n\};/m)[0];
 ok(/aiWouldAcceptDraw\(\)/.test(odm) && /mvkiOfferedThisTurn/.test(odm) && /aiNoOfferBeforeLen\s*=\s*seenPositions\.length\s*\+\s*AI_OFFER_COOLDOWN_HALFMOVES/.test(odm),
    'offerDrawMvki: neue Annahme-Logik + Einmal-pro-Zug-Riegel + Ablehnungs-Cooldown D');
