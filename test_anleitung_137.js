@@ -52,7 +52,10 @@ block('A · Struktur und Quelltext');
 pruef('A1 Regelschicht wird per <script src> geladen', /<script src="gembel_rules\.js/.test(HTML));
 pruef('A2 keine Regelkopie im Quelltext', !/function canLift\s*\(/.test(HTML));
 pruef('A3 kein Firebase', !/firebase/i.test(ohneKommentar));
-pruef('A4 kein Browser-Speicher', !/localStorage|sessionStorage|document\.cookie/.test(HTML));
+// §203: gegen `ohneKommentar` statt gegen HTML. Ein Kommentar speichert nichts — und die
+// Begruendung, WARUM der Schritt in der Adresse steht und nicht im Speicher, muss das Wort
+// nennen duerfen. A3 macht es seit jeher so; A4 war die Ausnahme (U10-Muster).
+pruef('A4 kein Browser-Speicher', !/localStorage|sessionStorage|document\.cookie/.test(ohneKommentar));
 pruef('A5 keine KI', !/countred_ai/.test(ohneKommentar));
 pruef('A6 keine externe Quelle', !/https?:\/\/(?!www\.w3\.org)/.test(HTML.replace(/<!--[\s\S]*?-->/g,'')));
 pruef('A7 Fassungsstempel vorhanden', /Anleitung · Fassung \d+ · \d\d\.\d\d\.\d{4}/.test(M.ANL_FASSUNG), M.ANL_FASSUNG);

@@ -366,9 +366,9 @@ body{padding:max(env(safe-area-inset-top),10px) max(env(safe-area-inset-right),1
        Modul-Scope-Fallstrick wie index.html (§127), und ein Verweis auf eine andere Seite
        IST ein Link, kein Knopf. Beide zeigen auf index.html; dort liegen die Texte. -->
   <div id="legal-footer">
-    <a href="index.html" target="_blank" rel="noopener">Impressum</a>
+    <a id="legal-impressum" href="index.html#impressum">Impressum</a>
     <span class="legal-sep" aria-hidden="true">·</span>
-    <a href="index.html" target="_blank" rel="noopener">Datenschutz</a>
+    <a id="legal-datenschutz" href="index.html#datenschutz">Datenschutz</a>
   </div>
 </div>
 
@@ -450,7 +450,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=158" charset="utf-8"></script>
+<script src="gembel_rules.js?v=160" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -459,7 +459,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 69 · 22.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 71 · 23.09.2026';
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -1191,8 +1191,34 @@ function messeKastenhoehe(){
 // rueck=true: die Phase wird RUECKWAERTS betreten. Dann darf die Ausfuehrung nicht
 // noch einmal ablaufen — sonst sperrt jede Zurueck-Taste die Knoepfe, und man kommt
 // an einem ausgefuehrten Zug nicht vorbei.
+// §203 (23.9.): DER SCHRITT STEHT IN DER ADRESSE. Bis v159 lebte er in `idx` und verfiel beim
+// Navigieren — deshalb brauchten die Rechtsverweise einen NEUEN TAB (§197), und der Leser stand
+// dort ohne Erklaerung im Startmenue. Jetzt merkt sich die Adresse den Stand, und beide Verweise
+// koennen im SELBEN Fenster auf ihr Ziel zeigen.
+// RAUTE, nicht Fragezeichen: der Teil hinter der Raute wird nicht an den Server gesendet, landet
+// also in keinem Protokoll und in keinem Referer. Fuer eine reine Bedienhilfe ist das die
+// sauberere Form; `sessionStorage` waere eine Ablage auf dem Geraet und damit eine Frage nach
+// § 25 TDDDG, die hier niemand stellen muss.
+// `replaceState` statt `location.hash=`: sonst legte jeder Teilschritt einen Eintrag in die
+// Verlaufsliste, und die Zurueck-Taste liefe einzeln durch neun Schritte.
+function adresseSchreiben(){
+  try{ history.replaceState(null, '', '#schritt=' + idx); }catch(e){}
+  // Beide Verweise nehmen den Stand mit. Ohne Skript bleibt ihr `href` aus dem Markup gueltig
+  // und fuehrt wie bisher auf index.html — die Pflichtangaben haengen also nicht am Skript.
+  for(const [id, ziel] of [['legal-impressum','impressum'], ['legal-datenschutz','datenschutz']]){
+    const a=document.getElementById(id);
+    if(a) a.href = 'index.html#' + ziel + '&von=' + idx;
+  }
+}
+function schrittAusAdresse(){
+  const m=(location.hash||'').match(/^#schritt=(\d{1,3})$/);
+  if(!m) return 0;
+  const n=Number(m[1]);
+  return (n>=0 && n<PHASES.length) ? n : 0;   // ausserhalb: von vorn, nie ein Absturz
+}
 function zeigePhase(rueck){
   const ph=PHASES[idx], s=STEPS[ph.si], a=s.aktionen[ph.ai];
+  adresseSchreiben();
   board=boardFor(idx);
   leerMark(); gezeigt=false; laeuft=false; gezogen=false;
   // §150: ZUERST alle Wecker der vorigen Phase abbestellen. Sonst faellt eine verspaetete
@@ -1735,6 +1761,7 @@ function init(){
   document.getElementById('btn-next').onclick=weiter;
   document.getElementById('btn-back').onclick=zurueck;
   window.addEventListener('resize', function(){ messeKastenhoehe(); groesse(); });
+  idx=schrittAusAdresse();   // §203: dort weitermachen, wo der Leser war
   zeigePhase();
   setTimeout(function(){ messeKastenhoehe(); groesse(); }, 30);
 }

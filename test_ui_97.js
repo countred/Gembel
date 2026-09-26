@@ -22,10 +22,17 @@ const html = fs.readFileSync(HTML_PATH, 'utf8');
 // `kvon(text)` findet den Schluessel zu einem Wortlaut — damit Pruefungen, die frueher
 // einen Satz im Markup suchten, jetzt nach seinem Schluessel suchen koennen.
 const DE = (() => {
-  const blk = html.slice(html.indexOf('const SPRACHE'), html.indexOf('function t(schluessel'));
-  const ctx = {}; require('vm').createContext(ctx);
-  require('vm').runInContext(blk + '\n;__T = TEXTE.de.t;', ctx);
-  return ctx.__T;
+  // ⚠️ Wehrhaft gegen den eigenen Aufbau: findet sich die Textschicht nicht (falscher Name,
+  // Block verschoben), liefert diese Stelle eine LEERE Tabelle statt abzustuerzen. Sonst
+  // faellt die Suite hier um, bevor irgendeine Pruefung sagen kann, was los ist — und eine
+  // Negativkontrolle meldet dann einen Absturz statt eines Befunds.
+  const a = html.indexOf('const SPRACHE'), b = html.indexOf('function txt(schluessel');
+  if(a < 0 || b <= a) return {};
+  try{
+    const ctx = {}; require('vm').createContext(ctx);
+    require('vm').runInContext(html.slice(a,b) + '\n;__T = TEXTE.de.t;', ctx);
+    return ctx.__T || {};
+  }catch(e){ return {}; }
 })();
 const ktext = k => (typeof DE[k] === 'object' ? DE[k].andere : DE[k]);
 const kvon  = txt => Object.keys(DE).find(k => ktext(k) === txt);
@@ -34,6 +41,33 @@ const kvon  = txt => Object.keys(DE).find(k => ktext(k) === txt);
 // damit im Wortlaut unveraendert lesbar; nur die Quelle, aus der sie lesen, ist eine andere.
 // (Der Text wird direkt hinter das oeffnende Tag gesetzt — fuer `data-t-label` also vor das
 // Symbol statt dahinter. Fuer Regex-Pruefungen macht das keinen Unterschied.)
+// `meldung(x)` tut fuer den PROGRAMMTEXT, was `sichtbar(x)` fuer das Markup tut: es setzt
+// `t('schluessel', {...})` wieder in den Wortlaut zurueck. Pruefungen, die einen Satz im
+// Programm suchen, bleiben damit im Wortlaut unveraendert lesbar. Die eingesetzten Werte
+// bleiben als {0}, {1}, … stehen — sie sind ja nicht Teil des Wortlauts.
+// §202: Programmteile, die im `vm` GEFAHREN werden, rufen jetzt t(). Damit sie dort laufen,
+// bekommt jeder solche Kontext die Textschicht mit — dieselbe wie im Browser, aus derselben
+// Datei gelesen. Ohne das scheitert nicht die Pruefung, sondern der Aufbau: „t is not defined".
+const SCHICHT = (html.indexOf('const SPRACHE') >= 0 && html.indexOf('\nfunction texteFuellen') > 0)
+  ? html.slice(html.indexOf('const SPRACHE'), html.indexOf('\nfunction texteFuellen')) : '';
+// §203: HTML-, Block- und Zeilenkommentare heraus. Eine Pruefung, die dem Quelltext etwas
+// VERBIETET, muss gegen den wirksamen Code laufen — sonst faellt sie ueber die Begruendung,
+// die genau dieses Wort nennen MUSS, um verstaendlich zu sein. Heute dreimal passiert
+// (`data-t`, `sessionStorage`, `location.search`), und schon in U10 und §157 dieselbe Falle.
+const ohneKommentare = x => String(x).replace(/<!--[\s\S]*?-->/g, ' ')
+                                     .replace(/\/\*[\s\S]*?\*\//g, ' ')
+                                     .replace(/^[ \t]*\/\/.*$/gm, ' ');
+const HTML_CODE = ohneKommentare(html);
+const meldung = x => {
+  let s = String(x), vorher = null, runden = 0;
+  while(s !== vorher && runden++ < 6){
+    vorher = s;
+    // Auch die Einsetzklammer mitnehmen: aus `${t('…')}` wird der Wortlaut, nicht `${Wortlaut}`.
+    s = s.replace(/\$\{txt\('([^']+)'(?:,\s*\{[\s\S]*?\}\s*)?\)\}/g, (m, k) => ktext(k) !== undefined ? ktext(k) : m)
+         .replace(/txt\('([^']+)'(?:,\s*\{[\s\S]*?\}\s*)?\)/g,      (m, k) => ktext(k) !== undefined ? ktext(k) : m);
+  }
+  return s;
+};
 const sichtbar = x => String(x).replace(
   /<([a-zA-Z0-9-]+)([^>]*?)data-t(-label|-html)?="([^"]+)"([^>]*)>/g,
   (m, tag, a, art, k, b) => '<'+tag+a+'data-t'+(art||'')+'="'+k+'"'+b+'>' + (ktext(k)||''));
@@ -74,6 +108,14 @@ function ok(cond, name){
   if(cond){ pass++; console.log('  \u2713 ' + name); }
   else    { fail++; console.log('  \u2717 FAIL: ' + name); }
 }
+
+console.log('\u00a7202 \u2014 Voraussetzung: der Name der Nachschlagefunktion:');
+// Sie heisst txt(), nicht t(). In `gateStandSatz` steht `const t = gateSumme()` — hiesse sie
+// `t`, waere sie dort von einer ZAHL verdeckt. Diese Pruefung steht ganz vorn, weil jeder
+// vm-Kontext dieser Suite die Textschicht mitfaehrt: bei falschem Namen stuerzt der Aufbau
+// ab, und ein Absturz sagt nicht, was los ist.
+ok(/function txt\(schluessel, werte\)\{/.test(html) && !/function t\(schluessel/.test(html),
+   '\u00a7202: die Nachschlagefunktion hei\u00dft txt() \u2014 `t` w\u00e4re als lokaler Name zu h\u00e4ufig');
 
 console.log('\u00a797 \u2014 Beschriftungen:');
 ok(/Gegen Max Michu[\s\S]{0,120}?#s-robot[\s\S]{0,60}?<\/button>/.test(sichtbar(html)) && !/Spiele gegen Max Michu/.test(sichtbar(html)),
@@ -147,7 +189,7 @@ console.log('\u00a798 \u2014 Meldungs-Toggle f\u00fcr ALLE Erkl\u00e4rungsf\u00e
 {
   // Quellcode-W\u00e4chter: der Zweig „Figur ist hebbar" darf lastFailCell NUR noch beim echten
   // Aktivieren l\u00f6schen. Das unbedingte `lastFailCell=null;` davor war der Fehler.
-  ok(/if\(targets\.length>0\)\{selected=\[r,c\];validTargets=targets;lastFailCell=null;setLog\(''\);\}\s*\n\s*else explainOrToggle\(r,c,'keine Zielfelder'\);/.test(html),
+  ok(/if\(targets\.length>0\)\{selected=\[r,c\];validTargets=targets;lastFailCell=null;setLog\(''\);\}[\s\S]{0,400}?else explainOrToggle\(r,c,'keine Zielfelder'\);/.test(html),
      'hebbare Figur ohne Zielfeld geht durch explainOrToggle (kein unbedingtes Zur\u00fccksetzen mehr)');
   ok(/\} else \{\s*\n\s*explainOrToggle\(r,c,''\);\s*\n\s*\}/.test(html),
      'nicht hebbare Figur geht durch dieselbe Funktion (eine Stelle statt zwei)');
@@ -162,7 +204,7 @@ console.log('\u00a798 \u2014 Meldungs-Toggle f\u00fcr ALLE Erkl\u00e4rungsf\u00e
                   setLog(h){ ctx.log = h; },
                   debugLog(r,c,extra){ ctx.calls.push([r,c,extra]); ctx.log = 'MELDUNG '+r+','+c; } };
     vm2.createContext(ctx);
-    vm2.runInContext(src, ctx);
+    vm2.runInContext(SCHICHT + '\n' + src, ctx);
     const tap = (r,c,extra) => vm2.runInContext('explainOrToggle('+r+','+c+',"'+(extra||'')+'")', ctx);
     tap(1,2);            const s1 = ctx.log;
     tap(1,2);            const s2 = ctx.log;
@@ -403,11 +445,21 @@ console.log('\u00a7184a \u2014 Rechtsfu\u00dfzeile auch in der Anleitung:');
   ok(foot.length > 0, 'anleitung.html tr\u00e4gt eine Fu\u00dfzeile #legal-footer');
   ok(/>Impressum<\/a>/.test(foot) && />Datenschutz<\/a>/.test(foot),
      'beide Beschriftungen stehen darin');
-  // \u00a7197: weiterhin echte Verweise auf index.html (Drift-Schutz, s. unten), aber im NEUEN TAB \u2014
-  // sonst ersetzt der Klick die Anleitung samt Fortschritt. `rel="noopener"` geh\u00f6rt zu
-  // `target="_blank"`: ohne es bek\u00e4me die neue Seite \u00fcber `window.opener` Zugriff auf diese.
-  ok((foot.match(/<a href="index\.html" target="_blank" rel="noopener">/g) || []).length === 2,
-     'beide sind echte Verweise auf index.html, im neuen Tab und mit noopener');
+  // \u00a7203 (23.9.): weiterhin echte Verweise auf index.html (Drift-Schutz, s. unten), aber
+  // wieder im SELBEN Fenster \u2014 und mit Raute auf ihr Ziel. \u00a7197 hatte den neuen Tab gebraucht,
+  // weil der Fortschritt der Anleitung sonst verfiel; seit \u00a7203 steht der Schritt in der
+  // Adresse, also ist der Tab \u00fcberfluessig (und `rel="noopener"` damit auch: es gibt kein
+  // zweites Fenster mehr, das auf dieses zugreifen k\u00f6nnte).
+  ok((foot.match(/<a id="legal-(?:impressum|datenschutz)" href="index\.html#(?:impressum|datenschutz)">/g) || []).length === 2,
+     'beide sind echte Verweise auf index.html mit Raute, im selben Fenster');
+  ok(!/target="_blank"/.test(foot),
+     '\u00a7203: kein neuer Tab mehr \u2014 der Schritt steht jetzt in der Adresse');
+  // Der `href` im MARKUP muss ohne Skript tragen: f\u00e4llt das Skript aus, f\u00fchrt er wie bisher
+  // auf index.html, und die Pflichtangaben sind weiter erreichbar (\u00a7 5 DDG).
+  ok(/adresseSchreiben\(\)/.test(anl) && /history\.replaceState/.test(anl),
+     '\u00a7203: der Schritt wird in die Adresse geschrieben (replaceState, kein Verlaufseintrag je Schritt)');
+  ok(/#schritt=(\\d\{1,3\})\$/.test(anl) || /schritt=\(\\d\{1,3\}\)/.test(anl),
+     '\u00a7203: beim Lesen wird der Schritt gegen eine ZIFFERNFOLGE gepr\u00fcft, nicht \u00fcbernommen');
   // DRIFT-SCHUTZ, der eigentliche Grund fuer die Verweis-Loesung: eine zweite Kopie der
   // Rechtstexte in der Anleitung liefe zwangsläufig auseinander (Erkenntnis L8/N), und ein
   // veraltetes Impressum ist schlimmer als eines, das einen Klick weiter liegt.
@@ -421,10 +473,33 @@ console.log('\u00a7184a \u2014 Rechtsfu\u00dfzeile auch in der Anleitung:');
   ok(!/\u00a7 5 DDG/.test(anlSicht) && !/Guldeinstr/.test(anlSicht) &&
      !/Landesamt f\u00fcr Datenschutzaufsicht/.test(anlSicht) && !/Art\. 6 Abs\. 1 lit\. f/.test(anlSicht),
      'KEINE zweite Kopie der Rechtstexte in der Anleitung (Drift-Schutz)');
-  // Kein `?legal=`-Parameter: index.html wertet location.search/hash NIRGENDS aus, und das
-  // ist eine gemessene Eigenschaft der Angriffsflaeche (Pruefung 6.8.), keine Zufaelligkeit.
-  ok(!/location\.search/.test(html) && !/location\.hash/.test(html) && !/\?legal=/.test(anlSicht),
-     'der Weg l\u00e4uft ohne Adress-Parameter \u2014 index.html wertet search/hash weiter nirgends aus');
+  // \u00a7203: Die gemessene Nulleigenschaft „index.html wertet die Adresse NIRGENDS aus" ist
+  // bewusst aufgegeben \u2014 aber nur um genau einen Schritt. Was davon bleibt, wird hier
+  // festgehalten, und zwar enger als vorher:
+  //   (1) FRAGEZEICHEN bleibt tabu. `location.search` wird nach wie vor nirgends gelesen; nur
+  //       die Raute, und die geht nicht an den Server (kein Protokoll, kein Referer).
+  ok(!/location\.search/.test(HTML_CODE) && !/\?legal=/.test(anlSicht),
+     '\u00a7203: `location.search` wird weiter NIRGENDS ausgewertet, nur die Raute');
+  //   (2) Genau EINE Stelle liest die Raute.
+  ok((HTML_CODE.match(/location\.hash/g) || []).length === 1,
+     '\u00a7203: genau eine Stelle liest `location.hash` (gefunden: ' + (HTML_CODE.match(/location\.hash/g)||[]).length + ')');
+  //   (3) FESTE WEISSLISTE mit genau zwei Werten, und der Wert aus der Adresse wird nur als
+  //       SCHLUESSEL in diese Liste benutzt \u2014 nie als Text, nie als Kennung.
+  const weiss = (html.match(/const LEGAL_AUS_ADRESSE = \{[^}]*\}/) || [''])[0];
+  ok(/impressum:'impressum-overlay'/.test(weiss) && /datenschutz:'datenschutz-overlay'/.test(weiss) &&
+     (weiss.match(/:/g) || []).length === 2,
+     '\u00a7203: die Wei\u00dfliste nennt genau zwei Ziele');
+  const leser = (html.match(/function legalAusAdresse\(\)\{[\s\S]*?\n\}/) || [''])[0];
+  ok(leser.length > 0 && /if\(!zielId\) return;/.test(leser),
+     '\u00a7203: was nicht auf der Liste steht, tut NICHTS (kein Fehler, keine Meldung, keine Spur)');
+  //   (4) Kein Wert aus der Adresse erreicht eine Ausgabe. Der R\u00fcckweg wird aus einer
+  //       ZIFFERNFOLGE gebaut, und zwar ueber Number() \u2014 das ist die ganze Angriffsflaeche.
+  ok(!/innerHTML/.test(leser) && !/textContent/.test(leser) && !/insertAdjacent/.test(leser),
+     '\u00a7203: der Adress-Leser schreibt NICHTS in die Seite (kein innerHTML, kein textContent)');
+  ok(/match\(\/\^von=\(\\d\{1,3\}\)\$\//.test(leser) && /Number\(m\[1\]\)/.test(leser),
+     '\u00a7203: der R\u00fcckweg entsteht aus einer gepr\u00fcften Zahl, nicht aus Text');
+  ok((leser.match(/\.href = /g) || []).length === 1 && /anleitung\.html#schritt=/.test(leser),
+     '\u00a7203: genau ein Attribut wird gesetzt, und es zeigt auf die Anleitung');
   // Die Fusszeile muss den AUSFALL ueberleben: bail() blendet lesson, board-area, nav und bar
   // aus. Stuende legal-footer in dieser Liste, waere das Impressum genau dann weg, wenn die
   // Seite kaputt ist.
@@ -581,7 +656,7 @@ console.log('\u00a7170 \u2014 Angebotsrecht und ehrliche Abbruchmeldung:');
   ok(/'meta\/abortedBy':wasRole\|\|null/.test(html),
      '\u00a7170: beim Abbruch wird festgehalten, WER abgebrochen hat');
   const at = html.match(/function abbruchText\(data\)\{[\s\S]*?\n\}/)[0];
-  ok(/wer!==myRole/.test(at) && /Mitspieler hat die Partie beendet/.test(at),
+  ok(/wer!==myRole/.test(at) && /Mitspieler hat die Partie beendet/.test(meldung(at)),
      '\u00a7170: war es der Mitspieler, sagt die Meldung das auch');
   ok(!/handleAbortReturn\('Verbindung zu lange unterbrochen \u2014 der Raum wurde aufgel\u00f6st\.'\)/.test(html),
      '\u00a7170: keine Aufrufstelle nagelt den alten Einheitstext mehr fest');
@@ -605,9 +680,9 @@ console.log('\u00a7174 \u2014 der Rueckl\u00e4ufer wartet nicht mehr auf das Net
      '\u00a7174: das Abr\u00e4umen z\u00e4hlt die Epoche hoch');
   ok(/if\(phase!=='finished'\) return;/.test(sw),
      '\u00a7174: keine Absage in eine bereits laufende neue Partie hinein');
-  ok(sw.indexOf("if(phase!=='finished') return;") < sw.indexOf('Keine Antwort'),
+  ok(sw.indexOf("if(phase!=='finished') return;") < meldung(sw).indexOf('Keine Antwort'),
      '\u00a7174: der Riegel steht VOR der Meldung');
-  ok(/selbstOffline\)\{[\s\S]{0,220}?Deine Verbindung ist unterbrochen \u2014 die Anfrage konnte nicht zugestellt werden/.test(sw),
+  ok(/selbstOffline\)\{[\s\S]{0,260}?Deine Verbindung ist unterbrochen \u2014 die Anfrage konnte nicht zugestellt werden/.test(meldung(sw)),
      '\u00a7174: ohne eigene Leitung sagt die Meldung die Wahrheit, statt den Mitspieler zu beschuldigen');
 }
 
@@ -657,7 +732,7 @@ console.log('\u00a7172 \u2014 die Absage steht vor dem Tipp:');
   ok(!/disabled/.test(rb) && /onclick="requestRematch\(\)"/.test(rb),
      '\u00a7172: der Knopf bleibt tippbar \u2014 kein Dauergrau nach R\u00fcckkehr des Mitspielers');
   // Keine gestapelten Anfragen.
-  ok(/if\(rematchWaitTimer\)\{[\s\S]{0,200}?Anfrage l\u00e4uft bereits/.test(rr),
+  ok(/if\(rematchWaitTimer\)\{[\s\S]{0,240}?Anfrage l\u00e4uft bereits/.test(meldung(rr)),
      '\u00a7172: eine laufende Anfrage wird nicht durch weitere Tipps verl\u00e4ngert');
   ok(rr.indexOf('if(rematchWaitTimer)') < rr.indexOf("update(roomRef,{'meta/rematchFrom':myRole})"),
      '\u00a7172: der Riegel steht VOR dem Schreiben');
@@ -682,7 +757,7 @@ console.log('\u00a7171 \u2014 abgebrochene R\u00e4ume bleiben nicht liegen:');
   const iGuest = jr.indexOf('const guestAlive');
   ok(iAbort > -1 && iGuest > iAbort,
      '\u00a7171: ein abgebrochener Raum wird beim Beitreten abgewiesen (vor der Voll-Pr\u00fcfung)');
-  ok(/Dieser Raum wurde abgebrochen\./.test(jr),
+  ok(/Dieser Raum wurde abgebrochen\./.test(meldung(jr)),
      '\u00a7171: die Abweisung sagt, WARUM \u2014 nicht nur „nicht gefunden\"');
 }
 
@@ -825,7 +900,7 @@ console.log('\u00a7162/\u00a7163 \u2014 Verbindungsabbruch: Ergebnis geht nicht 
   // Das Ergebnis-Wort als VERHALTEN pruefen (reine Funktion, wie bei istWartung in §132).
   const teil = html.match(/function ergebnisSatz\(st, wasPlayer\)\{[\s\S]*?\n\}/)[0];
   const c = {}; require('vm').createContext(c);
-  require('vm').runInContext(teil + '\n;__e=ergebnisSatz;', c);
+  require('vm').runInContext(SCHICHT + '\n' + teil + '\n;__e=ergebnisSatz;', c);
   const e = c.__e;
   ok(/^Unentschieden \(beide einverstanden\)$/.test(e({winner:null,lastMove:{drawReason:'beide einverstanden'}},1)) &&
      e({winner:null},1) === 'Unentschieden' &&
@@ -911,7 +986,7 @@ console.log('\u00a7132 \u2014 Wartungsflag:');
   // Die Erkennung selbst als VERHALTEN pruefen, nicht nur als Wortlaut.
   const teil = html.match(/const WARTUNG_WAHR = \[[\s\S]*?const istWartung = v => WARTUNG_WAHR\.some\(w =>[\s\S]*?\);/)[0];
   const c = {}; require('vm').createContext(c);
-  require('vm').runInContext(teil + '\n;__f=istWartung;', c);
+  require('vm').runInContext(SCHICHT + '\n' + teil + '\n;__f=istWartung;', c);
   const f = c.__f;
   ok(f(true) && f('true') && f('TRUE') && f(' true ') && f('on') && f(1) && f('offline'),
      'true, "true", "TRUE", " true ", "on", 1 und "offline" sperren das Spiel');
@@ -975,7 +1050,7 @@ ok(/const MARK_UI\s*=\s*false;/.test(html),
    'MARK_UI steht auf false \u2014 der Knopf wird nicht ausgeliefert');
 ok((html.match(/\$\{MARK_UI \? `<button[^`]*markMvkiPosition\(\)[^`]*`\s*:\s*''\}/g)||[]).length === 2,
    'BEIDE Men\u00fczust\u00e4nde (laufend/beendet) h\u00e4ngen am selben Schalter');
-ok((html.match(/#s-marke"\/><\/svg>Hier stimmt(e)? was nicht/g)||[]).length === 2,
+ok((meldung(html).match(/#s-marke"\/><\/svg>Hier stimmt(e)? was nicht/g)||[]).length === 2,
    'beide Beschriftungen stehen weiter im Quelltext (Wiedereinbau ohne Neuformulierung)');
 ok((html.match(/onclick="closeNeuMenu\(\);markMvkiPosition\(\)"/g)||[]).length === 2,
    'die Funktion dahinter ist unver\u00e4ndert dieselbe');
@@ -1165,7 +1240,7 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
      'das Einl\u00f6sen \u00fcberschreibt die eigene Kennung NICHT (kein Zusammenwachsen, Walters Entscheid)');
   ok(/const fremd = paare\.filter\(e => !\(PLAYER_KEY && e\.key === PLAYER_KEY\)\);/.test(html),
      '\u00a7198: Anteile unter der EIGENEN Kennung werden \u00fcbergangen \u2014 sonst A \u2192 B \u2192 A im Kreis');
-  ok(/if\(!fremd\.length\)\{[\s\S]{0,200}Das ist der Code dieses Ger\u00e4ts\./.test(html),
+  ok(/if\(!fremd\.length\)\{[\s\S]{0,260}Das ist der Code dieses Ger\u00e4ts\./.test(meldung(html)),
      'bleibt nichts Fremdes \u00fcbrig, ist es der Code dieses Ger\u00e4ts (Wortlaut steht)');
   ok(/const alt = gateState\.von\[e\.key\] \|\| 0;/.test(html) &&
      /if\(e\.p > alt\)\{ gateState\.von\[e\.key\] = e\.p; geaendert = true; \}/.test(html),
@@ -1183,7 +1258,7 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
     const mk = gate => {
       const ctx = {};
       vmod.createContext(ctx);
-      vmod.runInContext('let gateState={p:0,von:{}};\n' +
+      vmod.runInContext(SCHICHT + '\nlet gateState={p:0,von:{}};\n' +
                         src.replace(/const MVM_GATE\s*=\s*true;/, 'const MVM_GATE = '+gate+';') +
                         '\n' + summe + '\n' + fn + '\n;__O=gateOpen();', ctx);
       return ctx.__O;
@@ -1332,10 +1407,10 @@ console.log('\u00a7145 \u2014 Wortlaut der Freischalttexte (Walters Fassung, 27.
      'Fehlermeldung im Wortlaut');
   // \u00a7148: die Erfolgsmeldung nennt jetzt den NEUEN GESAMTSTAND, nicht mehr den Wert des
   // Codes \u2014 seit die Punkte addiert werden, ist der Codewert allein keine Auskunft mehr.
-  ok(/'Code erfolgreich \u00fcbertragen\. ' : 'Dieser Code war schon eingel\u00f6st\. '\)\s*\+ gateStandSatz\(\)/.test(html),
+ok(/Code erfolgreich \u00fcbertragen\.[^:]{0,4}:[^D]{0,4}Dieser Code war schon eingel\u00f6st\.[\s\S]{0,8}\)\s*\+ gateStandSatz\(\)/.test(meldung(html)),
      'Erfolgs- und Wiederholungsmeldung nennen beide den neuen Gesamtstand');
-  ok(/'Du hast ' \+ gateNum\(t\) \+ ' Punkte\.'/.test(html) &&
-     /'Du hast ' \+ gateNum\(t\) \+ ' von ' \+ GATE_NEED \+ ' Punkten\.'/.test(html),
+ok(/Du hast \{0\} Punkte\./.test(meldung(html)) &&
+   /Du hast \{0\} von \{1\} Punkten\./.test(meldung(html)),
      '\u00a7148 zwei St\u00e4nde: mit Schwelle solange gesperrt, ohne Schwelle danach (Walters Score)');
   ok((html.match(/function gateStandSatz\(\)/g)||[]).length === 1 &&
      (html.match(/gateStandSatz\(\)/g)||[]).length >= 4,
@@ -1411,7 +1486,7 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
   const rag = fn(/function remisAngebotGilt\(data\)\{[\s\S]*?\n\}/, 'remisAngebotGilt');
   if(rag){
     const t = (raum, lokal) => { const c = { phase: lokal }; vm.createContext(c);
-      vm.runInContext(rag + '\n;__r=remisAngebotGilt(' + JSON.stringify(raum===null?{}:{state:{phase:raum}}) + ');', c); return c.__r; };
+      vm.runInContext(SCHICHT + '\n' + rag + '\n;__r=remisAngebotGilt(' + JSON.stringify(raum===null?{}:{state:{phase:raum}}) + ');', c); return c.__r; };
     ok(t('playing','playing')===true && t('bonus','bonus')===true && t('playing','bonus')===true,
        '\u00a7177: in einer laufenden Partie gilt das Angebot (auch im Bonuszug)');
     ok(t('finished','playing')===false && t('finished','finished')===false,
@@ -1443,7 +1518,7 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
       boardToFirebase:()=>'B', update:async(r,o)=>{ writes.push(JSON.parse(JSON.stringify(o))); },
       setLog(){}, document:{ getElementById:()=>({ classList:{ add(){}, remove(){} } }) } };
     vm.createContext(c);
-    vm.runInContext(ps + '\n' + ad.replace('window.answerDraw=', 'answerDraw=') + '\n;this.__a=answerDraw;', c);
+    vm.runInContext(SCHICHT + '\n' + ps + '\n' + ad.replace('window.answerDraw=', 'answerDraw=') + '\n;this.__a=answerDraw;', c);
     await c.__a(true);
     return writes;
   };
@@ -1469,9 +1544,9 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
      od.indexOf('eigenesRemisSetzen(true);') < od.indexOf("update(roomRef,{'meta/drawOffer':myRole})"),
      '\u00a7177: Anbieten zeigt sofort und schreibt danach \u2014 kein await');
   const su = fn(/function updateStatusUI\(\)\{[\s\S]*?\n\}/, 'updateStatusUI');
-  ok(/eigenesRemisOffen\) \? '<br>Remis angeboten'/.test(su) && (su.match(/\$\{angebotZeile\}/g)||[]).length === 2,
+ok(/eigenesRemisOffen\) \? [^<]{0,3}<br>Remis angeboten/.test(meldung(su)) && (meldung(su).match(/\$\{angebotZeile\}/g)||[]).length === 2,
      '\u00a7177: die Statusanzeige tr\u00e4gt das offene Angebot als eigene Zeile (am Zug und nicht am Zug)');
-  ok(/\} else if\(eigenesRemisOffen\)\{[\s\S]{0,300}?disabled[\s\S]{0,120}?Remis angeboten \u2014 wartet auf Antwort/.test(html),
+  ok(/\} else if\(eigenesRemisOffen\)\{[\s\S]{0,300}?disabled[\s\S]{0,120}?Remis angeboten \u2014 wartet auf Antwort/.test(meldung(html)),
      '\u00a7177: im Men\u00fc ist \u201eRemis anbieten\u201c gesperrt, solange das eigene Angebot steht');
 
   // ── B. Neue Runde nur nach dem Ende ────────────────────────────────────────────────
@@ -1486,25 +1561,25 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
      '\u00a7177: beide Zuh\u00f6rer zeigen eine Nochmal-Anfrage nur nach dem Ende');
 
   // ── C. Verlassen während der Partie zählt als Aufgabe ──────────────────────────────
-  ok(/onclick="verlassenFragen\(\)">(?:<svg[^>]*><use[^>]*\/><\/svg>)?Partie verlassen<\/button>/.test(imSpiel),
+  ok(/onclick="verlassenFragen\(\)">(?:<svg[^>]*><use[^>]*\/><\/svg>)?Partie verlassen<\/button>/.test(meldung(imSpiel)),
      '\u00a7177: \u201ePartie verlassen\u201c in der laufenden Partie fragt erst nach');
   // §180 hat den isFinished-Block laenger gemacht (Hindernis-Abfrage) — die Absicht bleibt:
   // nach dem Ende fuehrt „Raum verlassen" direkt in leaveRoom, ohne die Aufgabe-Rueckfrage.
   // ⚠️ ANKER: `if(isFinished){` steht ZWEIMAL in der Datei (MvKI-Menü als `} else if(...)`).
   // Der MvM-Block ist der am Zeilenanfang eingerueckte — sonst spannt der Treffer ueber beide.
   const fin = (html.match(/\n  if\(isFinished\)\{[\s\S]*?\n  \} else if\(inGame\)\{/)||[''])[0];
-  ok(/onclick="leaveRoom\(\)">(<svg[^>]*>)?(<use[^>]*\/>)?(<\/svg>)?Raum verlassen</.test(fin) && !/verlassenFragen/.test(fin),
+  ok(/onclick="leaveRoom\(\)">(<svg[^>]*>)?(<use[^>]*\/>)?(<\/svg>)?Raum verlassen</.test(meldung(fin)) && !/verlassenFragen/.test(meldung(fin)),
      '\u00a7177: nach dem Ende ist Verlassen einfach Verlassen (ohne R\u00fcckfrage)');
   const vf = fn(/window\.verlassenFragen=function\(\)\{[\s\S]*?\n\};/, 'verlassenFragen');
   // \u00a7189: EIN Wortlaut f\u00fcr beide Rollen. Gepr\u00fcft wird beides \u2014 dass der neue Satz dasteht UND
   // dass die Rollenweiche verschwunden ist; sonst k\u00f6nnte sie unbemerkt wiederkommen.
-  ok(vf.indexOf("'Partie verlassen?'") > -1 &&
-     vf.indexOf("'Das z\u00e4hlt als Aufgabe \u2014 dein Mitspieler gewinnt und die Partie ist beendet.'") > -1 &&
+ok(meldung(vf).indexOf('Partie verlassen?') > -1 &&
+     meldung(vf).indexOf('Das z\u00e4hlt als Aufgabe \u2014 dein Mitspieler gewinnt und die Partie ist beendet.') > -1 &&
      !/myRole==='host'|\bhost \?/.test(vf),
      '\u00a7189: R\u00fcckfrage hat EINEN Wortlaut, keine Rollenweiche mehr');
   ok(!/Raum aufl\u00f6sen/.test(html.replace(/<!--[\s\S]*?-->/g,'').replace(/\/\/.*$/gm,'')),
      '\u00a7189: \u201eRaum aufl\u00f6sen\u201c kommt nirgends mehr in der Oberfl\u00e4che vor');
-  ok(/big-btn primary[^>]*onclick="closeNeuMenu\(\)">(?:<svg[^>]*><use[^>]*\/><\/svg>)?Zur\u00fcck zum Brett/.test(vf) &&
+  ok(/big-btn primary[^>]*onclick="closeNeuMenu\(\)">(?:<svg[^>]*><use[^>]*\/><\/svg>)?Zur\u00fcck zum Brett/.test(meldung(vf)) &&
      !/primary[^>]*verlassenAlsAufgabe/.test(vf),
      '\u00a7177 (\u00a779): blau ist der harmlose R\u00fcckweg, nicht das Verlassen');
   ok(/^window\.verlassenFragen=/m.test(html) && /^window\.verlassenAlsAufgabe=/m.test(html),
@@ -1531,7 +1606,7 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
       showModeMenu(){ ablauf.push('menu'); }, leaveRoom(){ ablauf.push('leaveRoom'); },
       setTimeout:(f,ms)=>{ timer={f,ms}; ablauf.push('timer:'+ms); } };
     vm.createContext(c);
-    vm.runInContext(ps + '\n' + va.replace('window.verlassenAlsAufgabe=', 'verlassenAlsAufgabe=') + '\n;verlassenAlsAufgabe();', c);
+    vm.runInContext(SCHICHT + '\n' + ps + '\n' + va.replace('window.verlassenAlsAufgabe=', 'verlassenAlsAufgabe=') + '\n;verlassenAlsAufgabe();', c);
     const st = (writes.find(x => x.state)||{}).state;
     ok(!!st && st.phase==='finished' && st.winner===2 && st.lastMove.resignedBy===1 && st.lastMove.verlassen==='host',
        '\u00a7177 VERHALTEN: der Host schreibt seine Aufgabe (Gast gewinnt, verlassen:host)');
@@ -1570,7 +1645,7 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
       handleDisconnect(){ c.abbruch=true; }, clearOppOffline(){}, stopRematchWaitTimeout(){}, setLog(){}, render(){},
       document:{ getElementById:()=>({ classList:{ add(){}, remove(){} } }) } };
     vm.createContext(c);
-    vm.runInContext(ps + '\n' + gd + '\n;this.__g=handleGuestDeparture;', c);
+    vm.runInContext(SCHICHT + '\n' + ps + '\n' + gd + '\n;this.__g=handleGuestDeparture;', c);
     SPAET.push(c.__g({ guest:null, meta:{}, state:{ board:'NEU', phase:'playing', currentPlayer:1 } }).then(() => {
       const st = (writes.find(x => x.state)||{}).state;
       ok(!c.abbruch && !!st && st.winner===1 && st.lastMove.resignedBy===2 && st.lastMove.verlassen==='guest',
@@ -1581,10 +1656,10 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
   }
 
   // Meldungen und Tafeltext für den, der bleibt.
-  ok(/if\(!iResigned && weg\) satz='Mitspieler hat den Raum verlassen';/.test(html) &&
+ok(/if\(!iResigned && weg\) satz=[^M]{0,3}Mitspieler hat den Raum verlassen/.test(meldung(html)) &&
      !/das z\u00e4hlt als Aufgabe'/.test(html) && !/aufgegeben und den Raum aufgel\u00f6st/.test(html),
      '\u00a7179: EIN Wortlaut f\u00fcr beide Rollen \u2014 \u201eMitspieler hat den Raum verlassen\u201c');
-  ok(/if\(!data\)\{handleDisconnect\(raumEndeText \|\| 'Raum nicht mehr vorhanden\.', 'Partie beendet'\);return;\}/.test(html),
+ok(/if\(!data\)\{handleDisconnect\(raumEndeText \|\| [^R]{0,3}Raum nicht mehr vorhanden\.[^,]{0,3}, [^P]{0,3}Partie beendet[^)]{0,3}\);return;\}/.test(meldung(html)),
      '\u00a7177: verschwindet der Raum danach, nennt die Tafel des Gastes den Grund');
 
   // Ein Entscheider für „neue Runde möglich?\" — mit dem Weggang als erstem Grund.
@@ -1592,7 +1667,7 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
   if(nr){
     const t = (weg, lastSeen) => { const c = { mitspielerGegangen:weg, oppLastSeen:lastSeen, PRESENCE_STALE_MS:12000,
       serverNow:()=>100000, presenceIsStale:(now,ls,ms)=> ls===null || now-ls>ms }; vm.createContext(c);
-      vm.runInContext(nr + '\n;__n=neueRundeUnmoeglich();', c); return c.__n; };
+      vm.runInContext(SCHICHT + '\n' + nr + '\n;__n=neueRundeUnmoeglich();', c); return c.__n; };
     const rWeg = t(true, 99999), rFrisch = t(false, 99999), rAlt = t(false, 50000);
     ok(!!rWeg && rWeg.endgueltig === true && /nicht m\u00f6glich/.test(rWeg.text),
        '\u00a7177 VERHALTEN: Mitspieler gegangen \u2192 sofort \u201ekeine neue Runde\u201c (nicht erst nach 12 s), und ENDG\u00dcLTIG');
@@ -1629,7 +1704,7 @@ console.log('\u00a7179 \u2014 ein Wortlaut, und der Nochmal-Knopf verschwindet, 
     const c = { bannerHtml:'[BANNER]', rematchBtn:'[KNOPF]', hindernis:hindernis,
                 winArea:{innerHTML:''} };
     vm.createContext(c);
-    vm.runInContext("const wegHinweis = hindernis ? '[HINWEIS:'+hindernis.text+']' : '';\n" + wa, c);
+    vm.runInContext(SCHICHT + "\nconst wegHinweis = hindernis ? '[HINWEIS:'+hindernis.text+']' : '';\n" + wa, c);
     return c.winArea.innerHTML;
   };
   const endg = bauen({endgueltig:true,  text:'Eine neue Runde ist nicht m\u00f6glich.'});
@@ -1648,9 +1723,9 @@ console.log('\u00a7179 \u2014 ein Wortlaut, und der Nochmal-Knopf verschwindet, 
   ok(satzStellen === 6,
      '\u00a7179: der Satz steht an genau sechs Stellen (Aufgabe- und Weggang-Meldung, Tafeltext, \u00a7181-Abbruchtext in zwei Rollen, \u00a7182-Abschlusstafel) \u2014 gefunden: ' + satzStellen);
   const nru2 = (html.match(/function neueRundeUnmoeglich\(\)\{[\s\S]*?\n\}/)||[''])[0];
-  ok(/endgueltig:true,\s*text:'Eine neue Runde ist nicht m\u00f6glich\.'/.test(nru2),
+  ok(/endgueltig:true,\s*text:[^E]{0,4}Eine neue Runde ist nicht m\u00f6glich\./.test(meldung(nru2)),
      '\u00a7179: der endg\u00fcltige Hinweis ist EIN kurzer Satz ohne Begr\u00fcndung');
-  ok(/raumEndeText='Mitspieler hat den Raum verlassen \u2014 du hast gewonnen\.';/.test(html),
+  ok(/raumEndeText=[^M]{0,4}Mitspieler hat den Raum verlassen \u2014 du hast gewonnen\./.test(meldung(html)),
      '\u00a7179: die Tafel nach dem Aufl\u00f6sen tr\u00e4gt denselben Wortlaut');
   // Die Weggang-Meldung des Hosts darf nicht zusätzlich zur Aufgabe-Meldung stehen (§177-Riegel).
   const gd2 = (html.match(/async function handleGuestDeparture\(data\)\{[\s\S]*?\n\}/)||[''])[0];
@@ -1675,7 +1750,7 @@ console.log('\u00a7180 \u2014 das Men\u00fc wei\u00df dasselbe wie das Schlussbi
   const bauen = (hind) => {
     const c = { btnsEl:{innerHTML:''}, neueRundeUnmoeglich:()=>hind };
     vm.createContext(c);
-    vm.runInContext(fin2.slice(fin2.indexOf('const hindernisM')).split('btnsEl.innerHTML=')[0] + tmpl, c);
+    vm.runInContext(SCHICHT + '\n' + fin2.slice(fin2.indexOf('const hindernisM')).split('btnsEl.innerHTML=')[0] + tmpl, c);
     return c.btnsEl.innerHTML;
   };
   const mEnd = bauen({endgueltig:true,  text:'Eine neue Runde ist nicht m\u00f6glich.'});
@@ -1730,7 +1805,7 @@ console.log('\u00a7181 \u2014 der Abwesende erf\u00e4hrt den Grund, und das Bret
   const at = (html.match(/function abbruchText\(data\)\{[\s\S]*?\n\}/)||[''])[0];
   const t181 = (meta, rolle) => {
     const c = { myRole: rolle }; vm.createContext(c);
-    vm.runInContext(at + '\n;__t=abbruchText(' + JSON.stringify({meta:meta}) + ');', c);
+    vm.runInContext(SCHICHT + '\n' + at + '\n;__t=abbruchText(' + JSON.stringify({meta:meta}) + ');', c);
     return c.__t;
   };
   ok(/verlassen/.test(t181({aborted:true,abortedBy:'host',abortReason:'verlassen'}, 'guest')) &&
@@ -1788,7 +1863,7 @@ console.log('\u00a7182 \u2014 die Abschlusstafel nennt den Grund und tr\u00e4gt 
       setzeAbschlussTafel:(t,x)=>{ tafel.titel=t; tafel.text=x; },
       get:async()=>({exists:()=>true, val:()=>({meta:meta, state:{phase:'finished', winner:2}})}) };
     vm.createContext(c);
-    vm.runInContext(es + '\n' + lb + '\n;this.__b=letzterBlickAufDenRaum;', c);
+    vm.runInContext(SCHICHT + '\n' + es + '\n' + lb + '\n;this.__b=letzterBlickAufDenRaum;', c);
     await c.__b({}, 2);
     return tafel;
   };
@@ -1807,7 +1882,7 @@ console.log('\u00a7182 \u2014 die Abschlusstafel nennt den Grund und tr\u00e4gt 
 
   // Die Wege, auf denen das Ende feststeht, setzen die Überschrift mit.
   const har = (html.match(/function handleAbortReturn\(msg\)\{[\s\S]*?\n\}/)||[''])[0];
-  ok(/'Partie beendet'\);/.test(har),
+  ok(/[^P]{0,4}Partie beendet[^)]{0,4}\);/.test(meldung(har)),
      '\u00a7182: die Abbruch-R\u00fcckkehr tr\u00e4gt die \u00dcberschrift \u201ePartie beendet\u201c');
   // Und die Voreinstellung bleibt, wo die Leitung wirklich das Thema ist.
   const hd = (html.match(/function handleDisconnect\(msg, titel\)\{[\s\S]*?\n\}/)||[''])[0];
@@ -1869,7 +1944,13 @@ console.log('\u00a7187 Symbolsatz \u2014 kein Emoji, ein Vorrat, keine Verweise 
                          .replace(/^[ \t]*\/\/.*$/gm, '');
   // Das Siegerbanner wird HERAUSGESCHNITTEN, nicht seine Zeichen freigegeben: sonst d\u00fcrfte
   // \u{1F91D} \u00fcberall wieder auftauchen \u2014 und genau das ist der Knopf, von dem es kam.
-  const ohneBanner187 = ohneKom187.replace(/<div class="win-banner">[\s\S]*?<\/div>/g, '');
+  // §202: die Bannertexte stehen jetzt in der Tabelle, nicht mehr im Banner selbst. Also
+  // wird ZUSAETZLICH der Tabelleneintrag herausgeschnitten, an dem sie haengen — und nur
+  // dieser: die Aussage „nirgendwo sonst" bleibt damit genauso scharf wie vorher.
+  const bannerSchluessel = Object.keys(DE).filter(k => /[\u{1F300}-\u{1FAFF}]/u.test(String(ktext(k))));
+  let ohneBanner187 = ohneKom187.replace(/<div class="win-banner">[\s\S]*?<\/div>/g, '');
+  for(const k of bannerSchluessel)
+    ohneBanner187 = ohneBanner187.replace(new RegExp("'" + k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&') + "':[^\\n]*", 'g'), '');
   const reste = [...new Set([...ohneBanner187.matchAll(/[\u{1F300}-\u{1FAFF}\u{23F3}\u{2630}]/gu)].map(m => m[0]))];
   ok(reste.length === 0, 'index.html: kein Emoji au\u00dferhalb des Siegerbanners \u2014 gefunden: '
      + (reste.length ? reste.join(' ') : 'keins'));
@@ -1965,7 +2046,7 @@ console.log('\u00a7200 \u2014 Textschicht: Schluessel, Vollstaendigkeit, Auszeic
   // „benutzt", weil er ja in seiner eigenen Zeile steht — die Pruefung waere eine Attrappe.
   // (Genau das ist in der Probe passiert und nur an der Negativkontrolle aufgefallen.)
   const ohneTabelle = html.slice(0, html.indexOf('const SPRACHE')) +
-                      html.slice(html.indexOf('function t(schluessel'));
+                      html.slice(html.indexOf('function txt(schluessel'));
   const benutzt = new Set([
     ...[...html.matchAll(/data-t="([^"]+)"/g)].map(m => m[1]),
     ...[...html.matchAll(/data-t-label="([^"]+)"/g)].map(m => m[1]),
@@ -1997,7 +2078,8 @@ console.log('\u00a7200 \u2014 Textschicht: Schluessel, Vollstaendigkeit, Auszeic
      'der F\u00fcllschritt wird aufgerufen, und zwar vor dem ersten Zeichnen');
   // Impressum und Datenschutz bleiben im Markup (\u00a7 5 DDG: st\u00e4ndig verf\u00fcgbar, auch ohne Skript).
   for(const id of ['impressum-overlay','datenschutz-overlay']){
-    const blk = (html.match(new RegExp('id="' + id + '"[\\s\\S]*?Schlie\u00dfen<\\/button>'))||[''])[0];
+    const blk = (html.match(new RegExp('id="' + id + '"[\\s\\S]*?Schlie\u00dfen<\\/button>'))||[''])[0]
+                  .replace(/<!--[\s\S]*?-->/g, '');   // §203: Kommentare heraus (U10-Muster)
     ok(blk.length > 500 && !/data-t/.test(blk),
        id + ': Wortlaut steht weiter im Markup, kein Schl\u00fcssel (Pflichtangaben brauchen kein Skript)');
   }
