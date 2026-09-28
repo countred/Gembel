@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=160'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=161'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -1186,7 +1186,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=160" charset="utf-8"></script>
+<script src="gembel_rules.js?v=161" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1198,7 +1198,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=160" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=161" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -2409,7 +2409,7 @@ texteFuellen();
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v160';
+const BUILD_MARKER='· Build v161';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2726,7 +2726,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=160'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=161'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2878,13 +2878,24 @@ function legalAusAdresse(){
   if(!el) return;
   const m = teile.slice(1).join('&').match(/^von=(\d{1,3})$/);
   if(m){
+    const ziel = 'anleitung.html#schritt=' + Number(m[1]);
     const zurueck = document.getElementById(teile[0] + '-zurueck');
-    if(zurueck){ zurueck.href = 'anleitung.html#schritt=' + Number(m[1]); zurueck.hidden = false; }
+    if(zurueck){ zurueck.href = ziel; zurueck.hidden = false; }
+    // §204: JEDER Schliessweg fuehrt zurueck, nicht nur der Verweis oben. Wer aus der
+    // Anleitung kam, erwartet die Anleitung wieder — Kreuz, Escape und der Knopf unten
+    // landeten aber im Startmenue (§196: sie blenden nur aus, was darunter steht).
+    // ⚠️ Bewusst KEIN zweiter Schliessweg: die drei bleiben, wie sie sind, und ein
+    // Beobachter reagiert nur auf das ERGEBNIS. Sonst haetten wir drei Stellen, die
+    // auseinanderlaufen koennen (V1).
+    if(window.MutationObserver){
+      const beo = new MutationObserver(() => {
+        if(el.classList.contains('hidden')){ beo.disconnect(); location.href = ziel; }
+      });
+      beo.observe(el, { attributes:true, attributeFilter:['class'] });
+    }
   }
   el.classList.remove('hidden');
 }
-legalAusAdresse();
-
 // §198: Escape schließt das oberste Lesefenster — NUR am Rechner (Walters Auflage).
 // `(pointer:fine)` ist dieselbe Unterscheidung wie beim Querformat-Hinweis (§165): Maus
 // oder Trackpad ja, Berührungsgerät nein. Ein Telefon hat keine Escape-Taste, und eine
@@ -5862,6 +5873,11 @@ if(EIGENE_PRAESENZ_AN){
 
 showOverlay('mode-overlay');
 render();
+// §204: ERST HIER. `showOverlay()` blendet ALLE Fenster seiner Liste aus und zeigt eines —
+// stand der Aufruf oben, ging das Rechtsfenster auf und diese Zeile sofort wieder zu. Der
+// Leser landete im Startmenue, also genau dort, wo er vor §203 schon war. Am Gerät gefunden,
+// von keiner Suite: jsdom fuehrt die Startsequenz nicht aus.
+legalAusAdresse();
 (async()=>{
   const WARTUNG_WAHR = [true, 'true', 1, '1', 'on', 'yes', 'ja', 'offline', 'wartung'];
   const istWartung = v => WARTUNG_WAHR.some(w =>

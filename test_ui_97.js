@@ -498,8 +498,17 @@ console.log('\u00a7184a \u2014 Rechtsfu\u00dfzeile auch in der Anleitung:');
      '\u00a7203: der Adress-Leser schreibt NICHTS in die Seite (kein innerHTML, kein textContent)');
   ok(/match\(\/\^von=\(\\d\{1,3\}\)\$\//.test(leser) && /Number\(m\[1\]\)/.test(leser),
      '\u00a7203: der R\u00fcckweg entsteht aus einer gepr\u00fcften Zahl, nicht aus Text');
-  ok((leser.match(/\.href = /g) || []).length === 1 && /anleitung\.html#schritt=/.test(leser),
-     '\u00a7203: genau ein Attribut wird gesetzt, und es zeigt auf die Anleitung');
+  // §204: der Leser setzt jetzt ZWEI Ziele — das `href` des Rueckweg-Verweises und, wenn das
+  // Fenster auf irgendeinem Weg geschlossen wird, die Adresse selbst. Beide MUESSEN dieselbe
+  // gepruefte Zahl benutzen: `ziel` wird genau einmal aus Number() gebaut, alles andere zeigt
+  // darauf. Damit kann kein Wert aus der Adresse an einem zweiten Ort neu entstehen.
+  ok(/const ziel = 'anleitung\.html#schritt=' \+ Number\(m\[1\]\);/.test(leser),
+     '\u00a7204: das Ziel entsteht GENAU EINMAL, aus einer gepr\u00fcften Zahl');
+  const ziele = (leser.match(/(?:\.href = |location\.href = )([^;]+)/g) || []);
+  ok(ziele.length === 2 && ziele.every(z => /=\s*ziel$/.test(z.trim())),
+     '\u00a7204: beide Wege zur\u00fcck zeigen auf dasselbe `ziel` (gefunden: ' + ziele.length + ')');
+  ok(/MutationObserver/.test(leser) && /beo\.disconnect\(\)/.test(leser),
+     '\u00a7204: der R\u00fcckweg h\u00e4ngt an einem BEOBACHTER, nicht an einem zweiten Schlie\u00dfweg (V1)');
   // Die Fusszeile muss den AUSFALL ueberleben: bail() blendet lesson, board-area, nav und bar
   // aus. Stuende legal-footer in dieser Liste, waere das Impressum genau dann weg, wenn die
   // Seite kaputt ist.
@@ -952,7 +961,10 @@ console.log('\u00a7161 \u2014 Startbildschirm haengt nicht am Netz:');
   // `await get(ref(db,'config'))` im Fliesstext, und eine Suche danach findet zuerst den
   // KOMMENTAR — die Pruefung fiel damit, obwohl der Code stimmte (§157-Klasse, hier im
   // eigenen Wachhund). Deshalb Anker mit Code-Umgebung, die in Prosa nicht vorkommt.
-  const iMenue = html.indexOf("\nshowOverlay('mode-overlay');\nrender();\n(async()=>{");
+  // §204: der Anker war die ZEILENFOLGE bis `(async()=>{` — dazwischen steht seitdem der
+  // Aufruf von legalAusAdresse(). Geprueft wird weiter die REIHENFOLGE, nur der Anker ist
+  // jetzt kuerzer und damit gegen weitere Einschuebe unempfindlich.
+  const iMenue = html.indexOf("\nshowOverlay('mode-overlay');\nrender();");
   const iLesen = html.indexOf("const snap = await get(ref(db,'config'));");
   ok(iMenue > -1 && iLesen > -1 && iMenue < iLesen,
      'das Men\u00fc wird gezeigt, BEVOR das Wartungsflag gelesen wird');
