@@ -132,7 +132,7 @@ ok(!/>oder \u21ba Neu f\u00fcr weitere Optionen/.test(html) && !/>oder [^<]{0,3}
 // Zusatzzeile; der Hinweis ist bedingt und verschwindet, sobald ein Nochmal moeglich ist.
 ok((html.match(/winArea\.innerHTML = bannerHtml \+ rematchBtn;/g)||[]).length === 1,
    'MvKI-Schlussbild besteht weiterhin nur aus Banner + \u201eNochmal\u201c-Button');
-ok(/winArea\.innerHTML = bannerHtml \+ \(\(hindernis && hindernis\.endgueltig\) \? '' : rematchBtn\) \+ wegHinweis;/.test(html) &&
+ok(/winArea\.innerHTML = letztesBanner \+ \(\(hindernis && hindernis\.endgueltig\) \? '' : REMATCH_BTN_HTML\) \+ wegHinweis;/.test(html) &&
    /const wegHinweis = hindernis/.test(html) && /\n\s*: '';/.test(html),
    'MvM-Schlussbild: der \u00a7172-Hinweis ist BEDINGT (leer, sobald ein Nochmal m\u00f6glich ist)')
 ;
@@ -732,12 +732,23 @@ console.log('\u00a7172 \u2014 die Absage steht vor dem Tipp:');
   const rr = html.match(/window\.requestRematch=async function\(\)\{[\s\S]*?\n\};/)[0];
   ok(/const hindernis = neueRundeUnmoeglich\(\);/.test(rr),
      '\u00a7172: Anzeige und Sperre benutzen dasselbe Kriterium');
-  ok(/winArea\.innerHTML = bannerHtml \+ \(\(hindernis && hindernis\.endgueltig\) \? '' : rematchBtn\)/.test(html),
+  // §205: gezeichnet wird in schlussbildAuffrischen(), nicht mehr inline in applyRemoteState.
+  ok(/winArea\.innerHTML = letztesBanner \+ \(\(hindernis && hindernis\.endgueltig\) \? '' : REMATCH_BTN_HTML\) \+ wegHinweis;/.test(html),
      '\u00a7172: der Hinweis steht im Schlussbild, nicht erst als Antwort');
+  // §205: und er wird NEU gerechnet, wenn die Sperre greift — sonst bleibt das Schlussbild auf
+  // dem Stand des Partie-Endes stehen und der Knopf sieht aus, als reagiere er nicht.
+  ok(/console\.log\('\u00a7180: Nochmal abgelehnt[\s\S]{0,600}?schlussbildAuffrischen\(\);\s*\n\s*return;/.test(html),
+     '\u00a7205: die abgelehnte Anfrage frischt das Schlussbild auf');
+  // ⚠️ Und sie rechnet das Hindernis JEDES MAL NEU. Ein gemerkter Wert waere genau der Fehler
+  // von v161 in neuer Form: das Schlussbild stuende wieder auf dem Stand des Partie-Endes.
+  // (Die Negativkontrolle „gemerkt statt neu" fiel ohne diese Zeile nicht.)
+  const auffr = (html.match(/function schlussbildAuffrischen\(\)\{[\s\S]*?\n\}/)||[''])[0];
+  ok(/const hindernis = neueRundeUnmoeglich\(\);/.test(auffr),
+     '\u00a7205: das Auffrischen rechnet das Hindernis NEU, es merkt es sich nicht');
   // §172-Kleinlösung, seit §179 nur noch für den VORLÄUFIGEN Fall: dort bleibt der Knopf tippbar
   // (kein disabled, kein Dauergrau, wenn der Mitspieler zurückkommt). Im endgültigen Fall ist er
   // ganz weg — geprüft in der §179-Gruppe.
-  const rb = html.match(/const rematchBtn = `[\s\S]*?`;/)[0];
+  const rb = html.match(/const REMATCH_BTN_HTML = `[\s\S]*?`;/)[0];
   ok(!/disabled/.test(rb) && /onclick="requestRematch\(\)"/.test(rb),
      '\u00a7172: der Knopf bleibt tippbar \u2014 kein Dauergrau nach R\u00fcckkehr des Mitspielers');
   // Keine gestapelten Anfragen.
@@ -1707,13 +1718,13 @@ console.log('\u00a7179 \u2014 ein Wortlaut, und der Nochmal-Knopf verschwindet, 
   // „Mitspieler hat die Partie verlassen — das zählt als Aufgabe“, darunter „Nochmal“ und
   // darunter fast denselben Satz noch einmal. Ein Tipp auf den Knopf schrieb den Satz ZUSÄTZLICH
   // in die Meldungszeile — dieselbe Aussage dreimal auf einem Bildschirm.
-  const wa = (html.match(/winArea\.innerHTML = bannerHtml \+[^;]*;/)||[''])[0];
-  ok(/\(hindernis && hindernis\.endgueltig\) \? '' : rematchBtn/.test(wa),
+  const wa = (html.match(/winArea\.innerHTML = letztesBanner \+[^;]*;/)||[''])[0];
+  ok(/\(hindernis && hindernis\.endgueltig\) \? '' : REMATCH_BTN_HTML/.test(wa),
      '\u00a7179: bei einem endg\u00fcltigen Hindernis steht KEIN Nochmal-Knopf im Schlussbild');
 
   // VERHALTEN: das Schlussbild einmal mit dem echten Ausdruck aus der Auslieferung bauen.
   const bauen = (hindernis) => {
-    const c = { bannerHtml:'[BANNER]', rematchBtn:'[KNOPF]', hindernis:hindernis,
+    const c = { letztesBanner:'[BANNER]', REMATCH_BTN_HTML:'[KNOPF]', hindernis:hindernis,
                 winArea:{innerHTML:''} };
     vm.createContext(c);
     vm.runInContext(SCHICHT + "\nconst wegHinweis = hindernis ? '[HINWEIS:'+hindernis.text+']' : '';\n" + wa, c);
@@ -2064,7 +2075,10 @@ console.log('\u00a7200 \u2014 Textschicht: Schluessel, Vollstaendigkeit, Auszeic
     ...[...html.matchAll(/data-t-label="([^"]+)"/g)].map(m => m[1]),
     ...[...html.matchAll(/data-t-html="([^"]+)"/g)].map(m => m[1]),
     ...[...html.matchAll(/data-t-attr="([^"]+)"/g)].flatMap(m => m[1].split(';').map(x => x.split(':')[1]).filter(Boolean)),
-    ...[...ohneTabelle.matchAll(/'((?:[a-z]+\.)+[a-z0-9-]+(?:#html)?)'/g)].map(m => m[1])
+    // §205: gegen den KOMMENTARFREIEN Quelltext. Eine Begruendung, warum ein Schluessel FEHLT,
+    // muss ihn nennen duerfen — sonst gilt er als benutzt und die Pruefung faellt darueber.
+    // Vierter Fall derselben Klasse an zwei Tagen (X6).
+    ...[...ohneKommentare(ohneTabelle).matchAll(/'((?:[a-z]+\.)+[a-z0-9-]+(?:#html)?)'/g)].map(m => m[1])
   ].map(x => x.trim()));
   const fehlend = [...benutzt].filter(k => DE[k] === undefined);
   ok(fehlend.length === 0,

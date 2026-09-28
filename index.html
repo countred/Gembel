@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=161'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=162'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -1186,7 +1186,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=161" charset="utf-8"></script>
+<script src="gembel_rules.js?v=162" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1198,7 +1198,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=161" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=162" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -2409,7 +2409,7 @@ texteFuellen();
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v161';
+const BUILD_MARKER='· Build v162';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2726,7 +2726,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=161'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=162'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -3141,6 +3141,13 @@ window.requestRematch=async function(){
     // (wegHinweis); ein setLog schrieb ihn ein zweites Mal darüber — zweimal dasselbe auf einem
     // Bildschirm (Walters 10:50). Die Absage ist ohnehin schon zu sehen, bevor getippt wird.
     console.log('§180: Nochmal abgelehnt —', hindernis.text);
+    // §205 (28.9., Walters Konsolenzeile „x3"): Die Absage stand bis v161 NUR hier. Auf dem
+    // Bildschirm passierte nichts — der Knopf sah aus, als reagiere er gar nicht, und Walter
+    // tippte dreimal. §180 hatte das Schweigen richtig begruendet („das Schlussbild traegt den
+    // Satz bereits"), nur traf das nicht zu, wenn das Hindernis ERST NACH dem Zeichnen entstand.
+    // Also kein zweiter Text, sondern das Schlussbild auf den heutigen Stand bringen: derselbe
+    // Satz, dieselbe Stelle, die §172 dafuer vorgesehen hat.
+    schlussbildAuffrischen();
     return;
   }
   await update(roomRef,{'meta/rematchFrom':myRole}).catch(()=>{});
@@ -4026,6 +4033,30 @@ async function pushState(winner=null){
 }
 
 // ── Apply state received from Firebase ──────────────────────────
+// §205: Das MvM-Schlussbild an EINER Stelle. `letztesBanner` haelt den Teil, der am Zustand
+// haengt (wer gewonnen hat); alles andere — ob eine neue Runde moeglich ist, ob der Knopf
+// dasteht, ob ein Hinweis darunter steht — wird bei JEDEM Auffrischen neu gerechnet.
+// ⚠️ Der Knopf steht bewusst oben als Konstante: waere er weiter in applyRemoteState
+// eingesperrt, muesste die Auffrischung ihn nachbauen — zwei Fassungen desselben Knopfes,
+// die auseinanderlaufen (V1).
+const REMATCH_BTN_HTML = `<button onclick="requestRematch()" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>Nochmal</button>`;
+// ⚠️ „Nochmal" steht hier noch als deutscher Text, NICHT als Schluessel: §202 hat dieses Wort
+// uebersehen, weil seine Spracherkennung nach Umlauten und deutschen Funktionswoertern suchte
+// — ein einzelnes „Nochmal" hat weder das eine noch das andere. Beim Bauen von §205 wollte ich
+// `txt('meldung.nochmal')` schreiben und merkte, dass es den Schluessel gar nicht gibt: der
+// Knopf haette „meldung.nochmal" angezeigt. Eine Nachlese ist gemessen (ToDo 46), bis dahin
+// bleibt der Wortlaut hier stehen, damit sich nichts aendert, was nicht geprueft ist.
+let letztesBanner = '';
+function schlussbildAuffrischen(){
+  const winArea = document.getElementById('win-area');
+  if(!winArea || phase !== 'finished' || !letztesBanner) return;
+  const hindernis = neueRundeUnmoeglich();
+  const wegHinweis = hindernis
+    ? '<div class="msg info" style="margin-top:8px;">'+hindernis.text+'</div>'
+    : '';
+  winArea.innerHTML = letztesBanner + ((hindernis && hindernis.endgueltig) ? '' : REMATCH_BTN_HTML) + wegHinweis;
+}
+
 function applyRemoteState(state){
   // §164 (7.9.): KEIN RUECKWAERTSGANG. Eine beendete Partie darf durch einen Schnappschuss
   // NICHT wieder eroeffnet werden — weder durch einen veralteten Zwischenspeicher (ein `get()`
@@ -4294,7 +4325,6 @@ function applyRemoteState(state){
     // §95 (Walter): „Nochmal"-Button auch im MvM-Schlussbild. Hier ist es eine Rematch-ANFRAGE
     // (requestRematch) — der Klick führt sofort zum Warte-auf-Mitspieler-Bildschirm, deshalb reicht
     // „Nochmal" ohne den Zusatz „anfragen" (Walter). Toolbar bleibt unverändert.
-    const rematchBtn = `<button onclick="requestRematch()" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>Nochmal</button>`;
     // §97b (Walter): Zusatzzeile „oder ☰ Optionen …" entfernt — die Werkzeugleiste steht
     // ohnehin sichtbar darunter, der Hinweis war reine Wiederholung.
     // §172 (9.9., Walters Screenshots 10:34/10:35): DIE ABSAGE GEHÖRT VOR DEN TIPP.
@@ -4310,12 +4340,16 @@ function applyRemoteState(state){
     // §179: bei einem ENDGÜLTIGEN Hindernis (Mitspieler hat den Raum verlassen) fällt der Knopf
     // ganz weg. Die kleine Lösung aus §172 (Knopf bleibt, Hinweis darunter) war für den
     // VORLÄUFIGEN Fall gedacht — dort gilt sie unverändert weiter.
-    const hindernis = neueRundeUnmoeglich();
-    const wegHinweis = hindernis
-      ? '<div class="msg info" style="margin-top:8px;">'+hindernis.text+'</div>'
-      : '';
-    winArea.innerHTML = bannerHtml + ((hindernis && hindernis.endgueltig) ? '' : rematchBtn) + wegHinweis;
+    // §205 (28.9.): gezeichnet wird ab hier an EINER Stelle — schlussbildAuffrischen(). Das
+    // Banner haengt am Zustand und wird deshalb gemerkt; Hindernis, Knopf und Hinweis rechnet
+    // die Funktion jedes Mal NEU. Das ist der ganze Fehler von v161: Das Schlussbild rechnete
+    // das Hindernis GENAU EINMAL, im Moment des Partie-Endes. Da war der letzte Herzschlag des
+    // Mitspielers noch keine 12 s alt — also kein Hindernis, kein Hinweis, voll eingefaerbter
+    // Knopf. Sekunden spaeter war das Kriterium wahr, aber niemand zeichnete neu.
+    letztesBanner = bannerHtml;
+    schlussbildAuffrischen();
   } else {
+    letztesBanner = '';
     winArea.innerHTML='';
   }
 
