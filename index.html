@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=162'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=163'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -1186,7 +1186,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=162" charset="utf-8"></script>
+<script src="gembel_rules.js?v=163" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1198,7 +1198,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=162" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=163" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1366,6 +1366,20 @@ function presenceTick(){
   if(!inGame){
     if(oppOfflineSince!==null) clearOppOffline();
     if(eigenerAusfallSichtbar) clearEigenenAusfall();  // §166: auch die eigene Tafel geht weg
+    // §206 (28.9., Walters Livetest): NACH SPIELENDE WEITER HINSEHEN. Der Waechter wusste nach
+    // 12 s, dass der Mitspieler weg war, und stieg hier trotzdem sofort aus — erst ein Tippen
+    // auf „Nochmal" fragte nach. Jetzt zeichnet er das Schlussbild neu, sobald sich der ZUSTAND
+    // aendert. Nur dann, nicht jede Sekunde: sonst wuerde der Knopf unter dem Finger ersetzt.
+    // Das Signal ist nach Spielende EHRLICH: der Herzschlag laeuft vom Betreten des Raums bis
+    // zum Verlassen, nicht nur waehrend der Partie (startHeartbeat/cleanup). Solange der
+    // Mitspieler im Raum ist, bleibt `oppLastSeen` also frisch.
+    // Zweite Wirkung, die §172 von Anfang an wollte: kommt er zurueck, VERSCHWINDET der Hinweis
+    // wieder von selbst — deshalb blieb der Knopf damals tippbar und ungrau.
+    // ⚠️ `letztesBanner` gibt es nur im MvM-Schlussbild; gegen Max Michu passiert hier nichts.
+    if(phase==='finished' && letztesBanner &&
+       hinderniszustand(neueRundeUnmoeglich()) !== letzterHinderniszustand){
+      schlussbildAuffrischen();
+    }
     return;
   }
   // §163: Solange die EIGENE Verbindung weg ist, sagt ein fehlender Herzschlag NICHTS über den
@@ -2409,7 +2423,7 @@ texteFuellen();
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v162';
+const BUILD_MARKER='· Build v163';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2726,7 +2740,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=162'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=163'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -4047,10 +4061,15 @@ const REMATCH_BTN_HTML = `<button onclick="requestRematch()" style="display:inli
 // Knopf haette „meldung.nochmal" angezeigt. Eine Nachlese ist gemessen (ToDo 46), bis dahin
 // bleibt der Wortlaut hier stehen, damit sich nichts aendert, was nicht geprueft ist.
 let letztesBanner = '';
+// §206: der ZUSTAND, den das Schlussbild zuletzt gezeigt hat — frei, vorlaeufig oder endgueltig
+// verhindert. Der Praesenzwaechter vergleicht dagegen und zeichnet nur bei einer AENDERUNG neu.
+let letzterHinderniszustand = null;
+const hinderniszustand = h => h ? (h.endgueltig ? 'endgueltig' : 'vorlaeufig') : 'frei';
 function schlussbildAuffrischen(){
   const winArea = document.getElementById('win-area');
   if(!winArea || phase !== 'finished' || !letztesBanner) return;
   const hindernis = neueRundeUnmoeglich();
+  letzterHinderniszustand = hinderniszustand(hindernis);
   const wegHinweis = hindernis
     ? '<div class="msg info" style="margin-top:8px;">'+hindernis.text+'</div>'
     : '';

@@ -743,6 +743,39 @@ console.log('\u00a7172 \u2014 die Absage steht vor dem Tipp:');
   // von v161 in neuer Form: das Schlussbild stuende wieder auf dem Stand des Partie-Endes.
   // (Die Negativkontrolle „gemerkt statt neu" fiel ohne diese Zeile nicht.)
   const auffr = (html.match(/function schlussbildAuffrischen\(\)\{[\s\S]*?\n\}/)||[''])[0];
+
+  const vm = require('vm');
+  // §206 VERHALTEN: der Praesenzwaechter nach Spielende. Die ECHTE presenceTick aus der
+  // Auslieferung wird im vm gefahren; nur ihre Umgebung ist gestellt. Gezaehlt wird, wie oft
+  // sie das Schlussbild neu zeichnet — die Aussage ist „bei jeder AENDERUNG, sonst nie".
+  {
+    const tick = (html.match(/function presenceTick\(\)\{[\s\S]*?\n\}/)||[''])[0];
+    const hz = (html.match(/const hinderniszustand = [^\n]*;/)||[''])[0];
+    ok(tick.length > 0 && hz.length > 0, '\u00a7206: presenceTick und hinderniszustand sind l\u00f6sbar');
+    const fahre = (folge, banner) => {
+      const c = { phase:'finished', oppOfflineSince:null, eigenerAusfallSichtbar:false,
+                  letztesBanner: banner, gezeichnet:0, jetzt:null,
+                  clearOppOffline(){}, clearEigenenAusfall(){} };
+      c.neueRundeUnmoeglich = () => c.jetzt;   // gebunden an den Kontext, nicht an `this`
+      vm.createContext(c);
+      vm.runInContext(hz + '\nvar letzterHinderniszustand = null;\n' +
+        'function schlussbildAuffrischen(){ gezeichnet++; letzterHinderniszustand = hinderniszustand(neueRundeUnmoeglich()); }\n' +
+        tick + '\n;this.__t = presenceTick;', c);
+      for(const schritt of folge){ c.jetzt = schritt; c.__t(); }
+      return c.gezeichnet;
+    };
+    const VORL = {endgueltig:false, text:'x'}, ENDG = {endgueltig:true, text:'y'};
+    ok(fahre([null, null, null, null], '[B]') === 1,
+       '\u00a7206: bleibt der Zustand gleich, wird nur EINMAL gezeichnet (nicht jede Sekunde)');
+    ok(fahre([null, null, VORL, VORL, VORL], '[B]') === 2,
+       '\u00a7206: wird der Mitspieler unerreichbar, erscheint der Hinweis OHNE Tippen');
+    ok(fahre([null, VORL, VORL, null, null], '[B]') === 3,
+       '\u00a7206: kommt er zur\u00fcck, VERSCHWINDET der Hinweis wieder von selbst (\u00a7172)');
+    ok(fahre([null, VORL, ENDG], '[B]') === 3,
+       '\u00a7206: auch der Wechsel von vorl\u00e4ufig zu endg\u00fcltig wird gezeichnet');
+    ok(fahre([null, VORL, ENDG], '') === 0,
+       '\u00a7206: ohne MvM-Schlussbild (gegen Max Michu) passiert NICHTS');
+  }
   ok(/const hindernis = neueRundeUnmoeglich\(\);/.test(auffr),
      '\u00a7205: das Auffrischen rechnet das Hindernis NEU, es merkt es sich nicht');
   // §172-Kleinlösung, seit §179 nur noch für den VORLÄUFIGEN Fall: dort bleibt der Knopf tippbar
