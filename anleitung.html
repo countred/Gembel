@@ -450,7 +450,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=164" charset="utf-8"></script>
+<script src="gembel_rules.js?v=165" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -459,7 +459,52 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 72 · 28.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 73 · 29.09.2026';
+
+// ═══════════════════════════════════════════════════════════════════
+//  §208 — TEXTSCHICHT DER ANLEITUNG (Probe, ToDo 43)
+// ═══════════════════════════════════════════════════════════════════
+// Die Probe stellt EINEN Schritt um (1, Spielziel), dazu den gemeinsamen Aufgaben-Generator
+// in textTeile() und den Rahmen (Schrittzaehler, Weiter-Knopf). Sie soll zeigen, ob die
+// Suite, die Prosa gegen das Brett rechnet, mit Schluesseln noch dasselbe prueft — nicht
+// moeglichst viel umstellen. Die Schritte 2–9 und die Tipp-Rueckmeldungen folgen erst,
+// wenn die Probe traegt.
+// EIGENE Tabelle, nicht die von index.html: eine gemeinsame Datei waere ein neuer Ladeweg
+// und ein Eingriff in das Spiel. `txt()` ist eine ZEICHENGLEICHE Kopie der Funktion in
+// index.html (P9) — test_anleitung_137 haelt das fest; wer die eine aendert, aendert beide.
+// Werte mit Auszeichnung tragen `#html` im Schluessel (erlaubt: <p> und <b>, das ist, was
+// die Anleitungsprosa benutzt); alle anderen sind reiner Text.
+// ⚠️ Aufgeloest wird beim LADEN (STEPS ist eine Konstante). Das ist gewollt: `a.nachher`
+// steuert den Ablauf (`if(!a.nachher)` entscheidet, ob ein Zug eine eigene Seite bekommt),
+// und `txt()` liefert immer eine nicht-leere Zeichenkette — auch bei fehlendem Schluessel.
+const SPRACHE = 'de';
+const TEXTE = {
+  de: {
+    zahl: n => String(n).replace('.', ','),
+    t: {
+      'anl.aufgabe.jetzt-antippen':                  'Jetzt {0} antippen.',
+      'anl.aufgabe.mitspieler-hebt':                 'Mit Weiter hebt dein Mitspieler {0} an.',
+      'anl.aufgabe.mitspieler-setzt':                'Mit Weiter setzt er sie auf {0} ab.',
+      'anl.aufgabe.tippe':                           'Tippe {0} an.',
+      'anl.schritt-von':                             'Schritt {0} von {1}',
+      'anl.weiter':                                  'Weiter',
+      'anl.ziel.intro#html':                         '<p>Gewonnen hat, wer die <b>vierte gleichfarbige Figur in eine Spalte</b> ziehen kann — A, B, C oder D.</p>',
+      'anl.ziel.nachher#html':                       '<p>Vier schwarze Figuren in Spalte B. Du hast gewonnen.</p>',
+      'anl.ziel.titel':                              'Spielziel',
+      'anl.zum-spiel':                               'Zum Spiel',
+    }
+  }
+};
+function txt(schluessel, werte){
+  const s = TEXTE[SPRACHE] || TEXTE.de;
+  let wert = s.t[schluessel];
+  if(wert === undefined) return schluessel;
+  if(typeof wert === 'object') wert = (werte && Math.abs(werte.n) === 1) ? wert.eins : wert.andere;
+  return wert.replace(/\{(\w+)\}/g, (_, k) => {
+    const v = werte ? werte[k] : undefined;
+    return v === undefined ? ('{'+k+'}') : (typeof v === 'number' ? s.zahl(v) : String(v));
+  });
+}
 
 // Dauer der beiden Aufblinker beim Ausfuehren. MUSS mit den animation-Werten von
 // .cell.abflug / .cell.ankunft (eigener Zug) bzw. .cell.abflug-mit / .cell.ankunft-mit
@@ -696,11 +741,11 @@ function markAbsetzen(b, fr, fc, tr, tc, spieler){
 // `startet` sagt, wer im Schritt am Zug ist (Vorgabe: der Lernende).
 const STEPS = [
 
-{ id:'ziel', title:'Spielziel', setup:()=>fromSpec(ZIELSPEC, LEARNER),
-  intro:'<p>Gewonnen hat, wer die <b>vierte gleichfarbige Figur in eine Spalte</b> ziehen kann — A, B, C oder D.</p>',
+{ id:'ziel', title:txt('anl.ziel.titel'), setup:()=>fromSpec(ZIELSPEC, LEARNER),
+  intro:txt('anl.ziel.intro#html'),
   aktionen:[
     { art:'zug', von:'1D', nach:'1B', actor:LEARNER, roh:true, erwartet:'sieg',
-      nachher:'<p>Vier schwarze Figuren in Spalte B. Du hast gewonnen.</p>' }
+      nachher:txt('anl.ziel.nachher#html') }
   ]},
 
 // §198 (Ruecklauf der Neulinge, Walter): der Beispielsatz sagt die Regel jetzt in der
@@ -1080,10 +1125,15 @@ function zeichneBereich(){
   el.style.top    = spanne(zeileOben, '100%');
   el.style.height = laenge(r1-r0+1, '100%');
 }
+// §208: Die Aufgabe ist ein Textschluessel OHNE `#html` — sie geht deshalb maskiert in den
+// Kasten, hier wie in der Hoehenmessung (lessonProbe), damit beide dasselbe messen. Heute
+// enthaelt keine Aufgabe ein Zeichen, das sich dadurch aendert; die Regel gilt fuer morgen
+// (andere Sprache, anderer Wortlaut), nicht fuer heute.
+function alsText(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function setText(html, rechnung, aufgabe){
   document.getElementById('ltext').innerHTML =
       (html||'') + (rechnung ? '<div class="rechnung">'+rechnung+'</div>' : '')
-                 + (aufgabe  ? '<div class="aufgabe">'+aufgabe+'</div>'   : '');
+                 + (aufgabe  ? '<div class="aufgabe">'+alsText(aufgabe)+'</div>'   : '');
   document.getElementById('lesson').scrollTop=0;
 }
 
@@ -1111,7 +1161,7 @@ function textTeile(i, variante){
 
   if(ph.p==='tap'){
     const p=CELL[a.feld];
-    if(variante!=='nach') return {html:kopf, aufgabe:'Tippe '+a.feld+' an.'};
+    if(variante!=='nach') return {html:kopf, aufgabe:txt('anl.aufgabe.tippe', {0:a.feld})};
     // Die Rechnung steht IMMER sofort auf der Antipp-Seite (Walter, Fassung 14) —
     // es gibt keinen Weg, sie auf eine spaetere Seite zu verschieben.
     return {html: kopf + (a.nachher||''), rechnung: markAnheben(b,p[0],p[1],LEARNER).text};
@@ -1119,19 +1169,19 @@ function textTeile(i, variante){
   if(ph.p==='lift'){
     const f=CELL[a.von], m=markAnheben(b,f[0],f[1],a.actor);
     return {html:kopf, rechnung: a.roh ? '' : m.text,
-      aufgabe: a.actor===LEARNER ? 'Tippe '+a.von+' an.'
-                                 : 'Mit Weiter hebt dein Mitspieler '+a.von+' an.'};
+      aufgabe: a.actor===LEARNER ? txt('anl.aufgabe.tippe', {0:a.von})
+                                 : txt('anl.aufgabe.mitspieler-hebt', {0:a.von})};
   }
   if(ph.p==='drop'){
     const f=CELL[a.von], t=CELL[a.nach], m=markAbsetzen(b,f[0],f[1],t[0],t[1],a.actor);
     if(variante==='nach' && !a.nachher) return {html:'', rechnung: a.roh ? '' : m.text};
     return {html:'', rechnung: a.roh ? '' : m.text,
-      aufgabe: a.actor===LEARNER ? 'Jetzt '+a.nach+' antippen.'
-                                 : 'Mit Weiter setzt er sie auf '+a.nach+' ab.'};
+      aufgabe: a.actor===LEARNER ? txt('anl.aufgabe.jetzt-antippen', {0:a.nach})
+                                 : txt('anl.aufgabe.mitspieler-setzt', {0:a.nach})};
   }
   if(ph.p==='fail'){
     const f=CELL[a.von], t=CELL[a.nach], m=markAbsetzen(b,f[0],f[1],t[0],t[1],a.actor);
-    if(variante!=='nach') return {html:'', aufgabe:'Jetzt '+a.nach+' antippen.'};
+    if(variante!=='nach') return {html:'', aufgabe:txt('anl.aufgabe.jetzt-antippen', {0:a.nach})};
     return {html:(a.nachher||''), rechnung:m.text};
   }
   return {html: a.nachher||''};      // exec
@@ -1154,7 +1204,7 @@ function messeKastenhoehe(){
       probe.innerHTML='<h2>'+STEPS[PHASES[i].si].title+'</h2>'
         + (tl.html||'')
         + (tl.rechnung?'<div class="rechnung">'+tl.rechnung+'</div>':'')
-        + (tl.aufgabe ?'<div class="aufgabe">' +tl.aufgabe +'</div>':'');
+        + (tl.aufgabe ?'<div class="aufgabe">' +alsText(tl.aufgabe) +'</div>':'');
       if(probe.scrollHeight>max) max=probe.scrollHeight;
     }
   }
@@ -1228,7 +1278,7 @@ function zeigePhase(rueck){
   if(brett) brett.removeAttribute('data-sieg');   // auch die Sieg-Kennzeichnung zuruecknehmen
   phaseSeit = Date.now();                      // §146: Beginn der Sperrfrist
 
-  document.getElementById('stepno').textContent='Schritt '+(ph.si+1)+' von '+STEPS.length;
+  document.getElementById('stepno').textContent=txt('anl.schritt-von', {0:ph.si+1, 1:STEPS.length});
   document.getElementById('barfill').style.width=Math.round(idx/(PHASES.length-1)*100)+'%';
   document.getElementById('ltitle').textContent=s.title;
   document.getElementById('board-area').style.display = s.nurText ? 'none' : 'flex';
@@ -1328,7 +1378,7 @@ function navStand(){
   else if(ph.p==='drop' && !a.nachher) frei=gezogen;
   else frei=(a.actor===OPPONENT);   // beim Lernenden zaehlt sein Antippen, nicht der Knopf
   nx.disabled=!frei;
-  nx.textContent=(idx===PHASES.length-1) ? 'Zum Spiel' : 'Weiter';
+  nx.textContent=(idx===PHASES.length-1) ? txt('anl.zum-spiel') : txt('anl.weiter');
 }
 
 // ═══════════════════════════════════════════════════════════════════

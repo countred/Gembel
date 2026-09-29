@@ -41,10 +41,78 @@ function ladeModell(regeln){
     'return (function(){'+(regeln||RULES)+'\n'+code+
     '\nreturn {PHASES,STEPS,textTeile,selfTest,boardFor,amZug,markAnheben,markAbsetzen,'+
     'ANL_FASSUNG,ABFLUG_MS,ANKUNFT_MS,ABFLUG_MIT_MS,ANKUNFT_MIT_MS,GITTER_LUECKE,RAHMEN_LUFT,'+
-    'canLift,canDrop,initBoard,CELL,fromSpec,ZIELSPEC,DREIERSPEC,BONUSSPEC};})()')(
+    'canLift,canDrop,initBoard,CELL,fromSpec,ZIELSPEC,DREIERSPEC,BONUSSPEC,TEXTE,txt};})()')(
     {addEventListener(){}},{getElementById:()=>null,addEventListener(){}},{log(){},error(){}});
 }
 const M=ladeModell();
+
+// ═══════════════════════════════════════════════════════════════════
+block('T · Textschicht der Anleitung (§208, Probe an Schritt 1)');
+// ═══════════════════════════════════════════════════════════════════
+// Die Probe stellt Schritt 1, den Aufgaben-Generator und den Rahmen um. Was hier steht,
+// haelt fest, dass sie VOLLSTAENDIG ist (kein Wortlaut mehr an diesen Stellen) und dass die
+// Tabelle dieselben Regeln befolgt wie die des Spiels. Dass die AUSGABE gleich bleibt, zeigen
+// die Bloecke B–H (sie pruefen gerenderten Text) und `texte.js` (ANLEITUNG_TEXTE.md).
+{
+  const SKRIPT = [...HTML.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]).pop()
+                   .replace(/^\s*\/\/[^\n]*/gm, '')
+                   // die Tabelle selbst ist der erlaubte Ort fuer Wortlaut
+                   .replace(/\nconst TEXTE = \{[\s\S]*?\n\};\n/, '\n');
+  const T = (M.TEXTE && M.TEXTE.de && M.TEXTE.de.t) || {};
+
+  // T1 · Zwilling (P9): txt() hier und in index.html zeichengleich.
+  const SPIEL = fs.readFileSync(path.join(D,'index.html'),'utf8');
+  const fn = q => (q.match(/\nfunction txt\(schluessel, werte\)\{[\s\S]*?\n\}\n/)||[''])[0];
+  pruef('T1 txt() ist eine zeichengleiche Kopie der Funktion in index.html (P9)',
+    fn(HTML) !== '' && fn(HTML) === fn(SPIEL), fn(HTML).length+' / '+fn(SPIEL).length+' Zeichen');
+
+  // T2 · jeder benutzte Schluessel belegt, keiner verwaist
+  const benutzt = new Set([...SKRIPT.matchAll(/txt\('([^']+)'/g)].map(m=>m[1]));
+  const unbelegt = [...benutzt].filter(k => !(k in T));
+  const verwaist = Object.keys(T).filter(k => !benutzt.has(k));
+  pruef('T2 jeder benutzte Schluessel ist belegt ('+benutzt.size+')', unbelegt.length===0, unbelegt.join(', '));
+  pruef('T3 kein Schluessel ist verwaist ('+Object.keys(T).length+')', verwaist.length===0, verwaist.join(', '));
+
+  // T4 · Auszeichnung nur unter #html, und dort nur <p> und <b>
+  const falsch = Object.entries(T).filter(([k,v]) => {
+    const tags = [...String(v).matchAll(/<\/?([a-z]+)[^>]*>/gi)].map(m=>m[1].toLowerCase());
+    return k.endsWith('#html') ? tags.some(t => t!=='p' && t!=='b') : /[<>]/.test(String(v));
+  }).map(([k])=>k);
+  pruef('T4 Auszeichnung nur in #html-Werten, und dort nur <p>/<b>', falsch.length===0, falsch.join(', '));
+
+  // T5 · Schritt 1 ist vollstaendig umgestellt: im Quelltext des Schritts keine Zeichenkette
+  // mit Leerzeichen oder Tag mehr (Prosa hat beides; Kennungen und Felder haben keins).
+  const schritt1 = (SKRIPT.match(/\{ id:'ziel',[\s\S]*?\n  \]\},/)||[''])[0];
+  const prosa1 = [...schritt1.matchAll(/'([^']*)'/g)].map(m=>m[1]).filter(x => /[ <]/.test(x));
+  pruef('T5 Schritt 1 traegt keinen Wortlaut mehr im Quelltext', schritt1!=='' && prosa1.length===0, prosa1.join(' | '));
+
+  // T6 · Der Generator (textTeile) und der Rahmen tragen keinen Wortlaut mehr
+  const gen = String(M.textTeile);
+  // Wort NEBEN einem Leerzeichen, auf einer der beiden Seiten: ein geklebter Satz hat das
+  // Leerzeichen am Rand ('Tippe ' + feld + ' an.'), nicht in der Mitte — die erste Fassung
+  // dieser Pruefung suchte „Buchstabe Leerzeichen Buchstabe" und liess genau das durch (NT6).
+  const prosaGen = [...gen.matchAll(/'([^']*)'/g)].map(m=>m[1])
+                     .filter(x => /[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df]{2,} |\s[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df]{2,}/.test(x));
+  pruef('T6 textTeile() baut keine Aufgabe mehr aus Wortlaut zusammen', gen.length>500 && prosaGen.length===0, prosaGen.join(' | '));
+  pruef('T7 Rahmen: Schrittzaehler und Weiter/Zum Spiel aus der Tabelle',
+    !/'Schritt '\s*\+/.test(SKRIPT) && !/'Zum Spiel'|'Weiter'/.test(SKRIPT) &&
+    /txt\('anl\.schritt-von', \{0:ph\.si\+1, 1:STEPS\.length\}\)/.test(SKRIPT));
+
+  // T8 · Verhalten: was die Tabelle liefert, ist der alte Wortlaut
+  pruef('T8 Schritt 1 und Aufgaben liefern den bisherigen Wortlaut',
+    M.STEPS[0].title==='Spielziel' && /vierte gleichfarbige Figur in eine Spalte/.test(M.STEPS[0].intro) &&
+    M.txt('anl.aufgabe.tippe',{0:'1D'})==='Tippe 1D an.' &&
+    M.txt('anl.aufgabe.jetzt-antippen',{0:'1B'})==='Jetzt 1B antippen.' &&
+    M.txt('anl.schritt-von',{0:3,1:9})==='Schritt 3 von 9');
+  pruef('T9 fehlender Schluessel ergibt den Schluessel (nie leer — a.nachher steuert den Ablauf)',
+    M.txt('anl.gibt-es-nicht')==='anl.gibt-es-nicht');
+
+  // T10 · Aufgaben (ohne #html) gehen maskiert in den Kasten — Anzeige UND Hoehenmessung
+  pruef('T10 Aufgabe maskiert in setText und in der Hoehenmessung',
+    (SKRIPT.match(/'<div class="aufgabe">'\s*\+\s*alsText\(/g)||[]).length===2 &&
+    !/'<div class="aufgabe">'\s*\+\s*(?:tl\.)?aufgabe\b/.test(SKRIPT));
+}
+
 
 // ═══════════════════════════════════════════════════════════════════
 block('A · Struktur und Quelltext');
