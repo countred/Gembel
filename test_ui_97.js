@@ -136,13 +136,25 @@ ok(/winArea\.innerHTML = letztesBanner \+ \(\(hindernis && hindernis\.endgueltig
    /const wegHinweis = hindernis/.test(html) && /\n\s*: '';/.test(html),
    'MvM-Schlussbild: der \u00a7172-Hinweis ist BEDINGT (leer, sobald ein Nochmal m\u00f6glich ist)')
 ;
-ok(/#s-neustart"\/><\/svg>Neu \(anderer Modus\/Stufe\)/.test(html),
+ok(/#s-neustart"\/><\/svg>Neu \(anderer Modus\/Stufe\)/.test(meldung(html)),
    '„Neu (anderer Modus/Stufe)" im Men\u00fc bleibt \u2014 das startet wirklich etwas Neues (\u00a7188: Symbol statt \u21ba)');
 
 console.log('\u00a797 \u2014 Stufen-Anzeige gro\u00df, Schl\u00fcssel klein:');
-ok(/const SKILL_LABEL=\{einsteiger:'Einsteiger'/.test(html) && /function skillLabel\(/.test(html),
-   'skillLabel() vorhanden (reine Anzeigeabbildung)');
-ok(/<use href="#s-nochmal"\/><\/svg>Nochmal \(\$\{skillLabel\(aiSkill\)\}\)/.test(html),
+// §207: SKILL_LABEL bildet nur noch Kennung → Textschluessel ab. Geprueft wird deshalb, was
+// herauskommt (gefahren im vm mit der echten Textschicht), nicht, wie die Zeile aussieht.
+{
+  const teil = (html.match(/const SKILL_LABEL=\{[\s\S]*?\nfunction skillLabel\(s\)\{[^\n]*\}/)||[''])[0];
+  let lab = null;
+  try{ const c = {}; require('vm').createContext(c);
+       require('vm').runInContext(SCHICHT + '\n' + teil + '\n;__l=skillLabel;', c); lab = c.__l; }catch(e){}
+  ok(!!lab && lab('einsteiger')==='Einsteiger' && lab('fortgeschritten')==='Fortgeschritten' &&
+     lab('stark')==='Stark' && lab('meister')==='Meister',
+     'skillLabel() vorhanden (reine Anzeigeabbildung) \u2014 \u00a7207: die vier Namen kommen aus der Textschicht');
+  ok(/const SKILL_LABEL=\{einsteiger:'stufe\.einsteiger'/.test(html),
+     '\u00a7207: SKILL_LABEL tr\u00e4gt Schl\u00fcssel, keinen Wortlaut (die Kennung links bleibt klein)');
+}
+ok(/<use href="#s-nochmal"\/><\/svg>\$\{txt\('meldung\.nochmal-stufe', \{0:\(skillLabel\(aiSkill\)\)\}\)\}/.test(html) &&
+   ktext('meldung.nochmal-stufe') === 'Nochmal ({0})',
    '„Nochmal (Meister)" nutzt skillLabel, nicht den Rohschl\u00fcssel');
 for(const key of ['einsteiger','fortgeschritten','meister']){
   ok(new RegExp("startAIGame\\('"+key+"'\\)").test(html),
@@ -189,7 +201,7 @@ console.log('\u00a798 \u2014 Meldungs-Toggle f\u00fcr ALLE Erkl\u00e4rungsf\u00e
 {
   // Quellcode-W\u00e4chter: der Zweig „Figur ist hebbar" darf lastFailCell NUR noch beim echten
   // Aktivieren l\u00f6schen. Das unbedingte `lastFailCell=null;` davor war der Fehler.
-  ok(/if\(targets\.length>0\)\{selected=\[r,c\];validTargets=targets;lastFailCell=null;setLog\(''\);\}[\s\S]{0,400}?else explainOrToggle\(r,c,'keine Zielfelder'\);/.test(html),
+  ok(/if\(targets\.length>0\)\{selected=\[r,c\];validTargets=targets;lastFailCell=null;setLog\(''\);\}[\s\S]{0,400}?else explainOrToggle\(r,c,'keine-ziele'\);/.test(html),
      'hebbare Figur ohne Zielfeld geht durch explainOrToggle (kein unbedingtes Zur\u00fccksetzen mehr)');
   ok(/\} else \{\s*\n\s*explainOrToggle\(r,c,''\);\s*\n\s*\}/.test(html),
      'nicht hebbare Figur geht durch dieselbe Funktion (eine Stelle statt zwei)');
@@ -216,9 +228,9 @@ console.log('\u00a798 \u2014 Meldungs-Toggle f\u00fcr ALLE Erkl\u00e4rungsf\u00e
     ok(ctx.log === 'MELDUNG 3,0' && ctx.lastFailCell.join() === '3,0',
        'Tipp auf eine ANDERE Zelle erkl\u00e4rt sofort (kein Ausblenden)');
     ctx.calls.length = 0; ctx.lastFailCell = null;
-    tap(2,2,'keine Zielfelder');
-    ok(ctx.calls.length === 1 && ctx.calls[0][2] === 'keine Zielfelder',
-       'der Zusatz „keine Zielfelder" wird unver\u00e4ndert durchgereicht');
+    tap(2,2,'keine-ziele');
+    ok(ctx.calls.length === 1 && ctx.calls[0][2] === 'keine-ziele',
+       'der Zusatz \u201ekeine-ziele\u201c wird unver\u00e4ndert durchgereicht (\u00a7207: Kennung statt Satz)');
   }
 }
 
@@ -952,14 +964,29 @@ console.log('\u00a7162/\u00a7163 \u2014 Verbindungsabbruch: Ergebnis geht nicht 
 
   // Das Ergebnis-Wort als VERHALTEN pruefen (reine Funktion, wie bei istWartung in §132).
   const teil = html.match(/function ergebnisSatz\(st, wasPlayer\)\{[\s\S]*?\n\}/)[0];
+  // §207: ergebnisSatz uebersetzt die Kennung ueber remisGrund — beide zusammen fahren.
+  const grundTeil = (html.match(/const REMIS_GRUND = \{[\s\S]*?\nfunction remisGrund\(kennung\)\{[\s\S]*?\n\}/)||[''])[0];
+  const limit = (html.match(/const HALFMOVE_DRAW_LIMIT=(\d+);/)||[])[1];
   const c = {}; require('vm').createContext(c);
-  require('vm').runInContext(SCHICHT + '\n' + teil + '\n;__e=ergebnisSatz;', c);
+  require('vm').runInContext(SCHICHT + '\nconst HALFMOVE_DRAW_LIMIT=' + limit + ';\n' + grundTeil + '\n' + teil + '\n;__e=ergebnisSatz;', c);
   const e = c.__e;
-  ok(/^Unentschieden \(beide einverstanden\)$/.test(e({winner:null,lastMove:{drawReason:'beide einverstanden'}},1)) &&
+  ok(/^Unentschieden \(beide einverstanden\)$/.test(e({winner:null,lastMove:{drawReason:'einig'}},1)) &&
      e({winner:null},1) === 'Unentschieden' &&
      e({winner:1},1) === 'Du hast gewonnen' &&
      e({winner:2},1) === 'Mitspieler hat gewonnen',
      'ergebnisSatz benennt Remis mit Grund, eigenen Sieg und fremden Sieg richtig');
+  // §207: die vier Kennungen, und was NICHT angezeigt werden darf. Ein Raum eines aelteren
+  // Builds traegt noch den deutschen Satz, und `rooms` ist weltweit beschreibbar — beides
+  // fuehrt auf das blosse „Unentschieden", nie auf den Inhalt des Feldes.
+  ok(e({winner:null,lastMove:{drawReason:'eingefordert'}},1) === 'Unentschieden (Remis eingefordert \u2014 Stellung 3\u00d7 wiederholt)' &&
+     e({winner:null,lastMove:{drawReason:'wiederholt'}},1) === 'Unentschieden (Stellung 5\u00d7 wiederholt)' &&
+     e({winner:null,lastMove:{drawReason:'ohne-dreier'}},1) === 'Unentschieden (' + limit + ' Z\u00fcge ohne neuen Dreier)',
+     '\u00a7207: jede der vier Remis-Kennungen wird beim LESEN \u00fcbersetzt');
+  ok(e({winner:null,lastMove:{drawReason:'beide einverstanden'}},1) === 'Unentschieden' &&
+     e({winner:null,lastMove:{drawReason:'<img src=x onerror=alert(1)>'}},1) === 'Unentschieden' &&
+     e({winner:null,lastMove:{drawReason:'constructor'}},1) === 'Unentschieden' &&
+     e({winner:null,lastMove:{drawReason:{}}},1) === 'Unentschieden',
+     '\u00a7207: unbekannte Kennung (Altraum, Fremddaten, Objekteigenschaft) \u2192 blo\u00dfes \u201eUnentschieden\u201c, nichts aus dem Raum');
 
   // §167 (7.9.): „Erneut verbinden" ist AUSGEBAUT. Seit §163 fuehrt die eigene Unterbrechung
   // nicht mehr auf die Abbruchtafel; uebrig blieben nur Wege mit TOTEM Raum, auf denen der
@@ -1584,8 +1611,8 @@ console.log('\u00a7177 \u2014 Remis-Angebot, Verlassen als Aufgabe, kein Warten 
     }));
     SPAET.push(lauf('playing').then(w => {
       const st = (w.find(x => x.state)||{}).state;
-      ok(!!st && st.phase==='finished' && st.winner===null && st.lastMove && st.lastMove.drawReason==='beide einverstanden',
-         '\u00a7177 VERHALTEN: in laufender Partie wirkt die Annahme weiterhin (Remis, beide einverstanden)');
+      ok(!!st && st.phase==='finished' && st.winner===null && st.lastMove && st.lastMove.drawReason==='einig',
+         '\u00a7177 VERHALTEN: in laufender Partie wirkt die Annahme weiterhin (Remis, Kennung \u201eeinig\u201c \u2014 \u00a7207)');
     }));
   }
 
@@ -1942,7 +1969,8 @@ console.log('\u00a7182 \u2014 die Abschlusstafel nennt den Grund und tr\u00e4gt 
      '\u00a7182: die Abbruch-R\u00fcckkehr tr\u00e4gt die \u00dcberschrift \u201ePartie beendet\u201c');
   // Und die Voreinstellung bleibt, wo die Leitung wirklich das Thema ist.
   const hd = (html.match(/function handleDisconnect\(msg, titel\)\{[\s\S]*?\n\}/)||[''])[0];
-  ok(/titel\|\|'Verbindung unterbrochen'/.test(hd),
+  // §207: der Vorgabewert kommt aus der Textschicht — `meldung()` setzt ihn zurueck ein.
+  ok(/titel\|\|Verbindung unterbrochen,/.test(meldung(hd)),
      '\u00a7182: ohne Angabe bleibt es bei \u201eVerbindung unterbrochen\u201c (alle \u00fcbrigen Wege unver\u00e4ndert)');
 }
 
@@ -2079,7 +2107,9 @@ console.log('\u00a7191 \u00dcber das Spiel \u2014 Seite, Nachweise, Bildtechnik:
   ok(/Foto: Christian Alber/.test(sichtbar(ue)), '\u00a7191: der Fotograf ist genannt');
   const bilder = [...ue.matchAll(/<img [^>]*>/g)].map(m => m[0]);
   ok(bilder.length === 2 && bilder.every(b => /loading="lazy"/.test(b) && /width="\d+"/.test(b)
-       && /height="\d+"/.test(b) && /alt="[^"]{20,}"/.test(b)),
+       && /height="\d+"/.test(b)
+       // §207: der alt-Text steht in der Textschicht (data-t-attr), nicht mehr im Markup
+       && String(ktext(((b.match(/data-t-attr="alt:([^";]+)"/)||[])[1])||'')).length >= 20),
      'beide Bilder: lazy, feste Ma\u00dfe, beschreibender alt-Text \u2014 ' + bilder.length + ' gefunden');
   ok(/Z\u00e4hle die roten Nachbarn der\s+Figur\. Ist die Zahl gerade/.test(sichtbar(ue)),
      'die Zugregel steht auf der Seite \u2014 direkt hinter der Frage, nicht im Geschichtsabsatz');
@@ -2142,6 +2172,191 @@ console.log('\u00a7200 \u2014 Textschicht: Schluessel, Vollstaendigkeit, Auszeic
     ok(blk.length > 500 && !/data-t/.test(blk),
        id + ': Wortlaut steht weiter im Markup, kein Schl\u00fcssel (Pflichtangaben brauchen kein Skript)');
   }
+}
+
+// §207 (29.9.) — KEIN SICHTBARER TEXT AUSSERHALB DER TEXTSCHICHT. §202 erkannte deutsche Texte
+// an Umlauten und Funktionswoertern; `Nochmal`, `Aufgeben`, `Warte…` haben weder das eine noch
+// das andere und blieben liegen (ToDo 46, gemessen: rund 30 Texte an etwa 50 Stellen). Diese
+// Pruefung fragt deshalb nicht „sieht das deutsch aus?", sondern „kann das SICHTBAR werden?".
+// Sie zerlegt den Skriptteil selbst (kein Parser als Abhaengigkeit — die Suite laeuft ohne
+// npm) und meldet jede Zeichenkette, die weder ueber txt() laeuft noch als Kennung, Pfad,
+// Konsolen- oder Suchargument erkennbar ist, noch auf der benannten Ausnahmeliste steht.
+// ⚠️ Faellt sie, ist die Antwort fast nie „Ausnahme eintragen", sondern „Schluessel anlegen".
+console.log('\u00a7207 \u2014 kein sichtbarer Text au\u00dferhalb der Textschicht (ToDo 46):');
+{
+  // ── Zerleger: liefert jede String- und Template-Zeichenkette mit ihrem Umfeld ──
+  function zerlege(code, zeile0){
+    const aus = [];
+    const stapel = [];            // {art:'(' | '{' | '[', name}
+    let i = 0, letztes = '';      // letztes bedeutsames Zeichen/Wort (Regex-Erkennung)
+    const zeileVon = p => zeile0 + code.slice(0, p).split('\n').length - 1;
+    const REGEX_VOR = /^(?:[(,=:[!&|?{};+\-*%<>~^]|return|typeof|case|else|in|of|void|delete|throw|new|)$/;
+    function merke(text, anfang, ende, html){
+      let vor = code.slice(0, anfang).replace(/\s+$/, ''), nach = code.slice(ende).replace(/^\s+/, '');
+      aus.push({ text, zeile: zeileVon(anfang), html: html || /[<>]/.test(text), vorText: vor.slice(-40),
+                 stapel: stapel.map(x => Object.assign({}, x)),
+                 vorZeichen: vor.slice(-1), nachZeichen: nach.slice(0, 1),
+                 vergleich: /[!=]==?$/.test(vor) || /^[!=]==?/.test(nach) });
+    }
+    function wort(p){ const m = code.slice(0, p).match(/([A-Za-z_$][\w$]*)\s*$/); return m ? m[1] : ''; }
+    function zeichenkette(q){      // i steht auf dem Anfuehrungszeichen
+      const a = i; i++; let t = '';
+      while(i < code.length && code[i] !== q){
+        if(code[i] === '\\'){ t += code[i+1] === 'n' ? '\n' : code[i+1]; i += 2; continue; }
+        t += code[i++];
+      }
+      i++; merke(t, a, i, false); letztes = 'x';
+    }
+    function vorlage(){            // i steht auf dem Backtick
+      let a = ++i, t = '';
+      while(i < code.length && code[i] !== '`'){
+        if(code[i] === '\\'){ t += code[i+1]; i += 2; continue; }
+        if(code[i] === '$' && code[i+1] === '{'){
+          merke(t, a, i, true); t = '';
+          i += 2; stapel.push({ art:'${', name:'' }); lauf('}'); stapel.pop(); i++; a = i; continue;
+        }
+        t += code[i++];
+      }
+      merke(t, a, i, true); i++; letztes = 'x';
+    }
+    function lauf(bis){
+      while(i < code.length){
+        const ch = code[i];
+        if(bis && ch === bis && !stapel.some((x,n) => n === stapel.length-1 && x.art !== '${')) return;
+        if(ch === '/' && code[i+1] === '/'){ while(i < code.length && code[i] !== '\n') i++; continue; }
+        if(ch === '/' && code[i+1] === '*'){ i = code.indexOf('*/', i+2); i = i < 0 ? code.length : i+2; continue; }
+        if(ch === '"' || ch === "'"){ zeichenkette(ch); continue; }
+        if(ch === '`'){ vorlage(); continue; }
+        if(ch === '/' && REGEX_VOR.test(letztes)){
+          i++; let klasse = false;
+          while(i < code.length && (code[i] !== '/' || klasse)){
+            if(code[i] === '\\') i++; else if(code[i] === '[') klasse = true; else if(code[i] === ']') klasse = false;
+            i++;
+          }
+          i++; while(/[a-z]/.test(code[i]||'')) i++; letztes = 'x'; continue;
+        }
+        if(ch === '(' || ch === '[' || ch === '{'){ stapel.push({ art: ch, name: ch === '(' ? wort(i) : '' }); letztes = ch; i++; continue; }
+        if(ch === ')' || ch === ']' || ch === '}'){
+          if(ch === '}' && stapel.length && stapel[stapel.length-1].art === '${') return;
+          stapel.pop(); letztes = ch; i++; continue;
+        }
+        if(/\s/.test(ch)){ i++; continue; }
+        if(/[A-Za-z_$]/.test(ch)){ const m = code.slice(i).match(/^[\w$]+/)[0]; letztes = m; i += m.length; continue; }
+        letztes = ch; i++;
+      }
+    }
+    lauf('');
+    return aus;
+  }
+
+  // ── Skriptteil der Auslieferung, Tabelle ausgenommen ──
+  // Die Tabelle selbst ist der erlaubte Ort — sie wird durch Leerzeilen ersetzt, damit die
+  // Zeilennummern der Befunde auf die Auslieferung passen.
+  const tA = html.indexOf('const TEXTE = {'), tB = html.indexOf('\n};', tA);
+  const ohneTabelle = (tA < 0 || tB < 0) ? html
+    : html.slice(0, tA) + html.slice(tA, tB + 3).replace(/[^\n]/g, '') + html.slice(tB + 3);
+  const skripte = [];
+  for(const m of ohneTabelle.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g))
+    skripte.push({ code: m[1], zeile0: ohneTabelle.slice(0, m.index + m[0].indexOf('>') + 1).split('\n').length });
+  const alle = skripte.flatMap(s => zerlege(s.code, s.zeile0));
+
+  // Aufrufe, deren Zeichenketten nie angezeigt werden (Konsole, Nachschlagen, DOM-Suche,
+  // Speicher, Datenbankpfade, Fehlerobjekte fuer den Programmfluss).
+  const STILL = new Set(['txt','log','warn','error','info','debug','getElementById','querySelector',
+    'querySelectorAll','addEventListener','removeEventListener','getItem','setItem','removeItem','ref','child',
+    'add','remove','toggle','contains','startsWith','endsWith','includes','indexOf','split','replace','matchMedia',
+    'setAttribute','getAttribute','hasAttribute','removeAttribute','createElement','closest','showOverlay',
+    'Worker','importScripts','fetch','join','padStart','test','match','Error','postMessage','getPropertyValue',
+    'setProperty','orderByChild','replaceState','dispatchEvent','Event','CustomEvent']);
+  const still = f => {
+    for(let n = f.stapel.length-1; n >= 0; n--){
+      const x = f.stapel[n];
+      if(x.art === '(' && STILL.has(x.name)) return true;
+      if(x.art === '{' || x.art === '${') return false;     // ein Objekt/Einschub dazwischen: Wert zaehlt
+    }
+    return false;
+  };
+  // Benannte Ausnahmen — jede mit Grund. Der Name des Gegners ist ein Name, keine Vokabel.
+  const ERLAUBT = [
+    [/^Max Michu$/,            'Name des Computergegners (bleibt in jeder Sprache)'],
+    [/^\u00b7 Build v\d+$/,    'Build-Marker (Konsole und Pr\u00fcfsuiten)'],
+    [/^AIza[\w-]{30,}$/,        'Firebase-Konfiguration (kein Text)'],
+  ];
+  // Zweite Regel fuer Kleinwoerter: `gerade` sieht aus wie eine Kennung, ist aber ein Wort.
+  // Unterscheidbar ist es nur am Wortschatz: steht ein kleingeschriebenes Einzelwort auch in
+  // der Tabelle, gilt es als sichtbar — ausser es ist eine benannte KENNUNG, die in Daten oder
+  // Vergleichen lebt und zufaellig wie ein deutsches Wort aussieht.
+  const WORTSCHATZ = new Set();
+  for(const v of Object.values(DE))
+    for(const w of (typeof v === 'object' ? [v.eins, v.andere] : [v]))
+      for(const x of String(w).replace(/<[^>]*>/g, ' ').toLowerCase().match(/[a-z\u00e4\u00f6\u00fc\u00df]{3,}/g) || [])
+        WORTSCHATZ.add(x);
+  const KENNUNGEN = new Set([
+    'einsteiger','fortgeschritten','stark','meister',   // skillLevel — Daten und Kern-Konfiguration
+    'online','offline',                                  // Praesenzzustand im Raum, Wartungsflag
+    'verlassen',                                         // meta/abortReason und lastMove/verlassen
+    'einig','eingefordert','wiederholt',                 // \u00a7207: drawReason-Kennungen im Raum
+    'red',                                               // Figurenfarbe im Spielzustand (\u201eCount Red\u201c steht in der Tabelle)
+  ]);
+  const befunde = [];
+  let gesehen = 0, erlaubtGesehen = 0;
+  for(const f of alle){
+    gesehen++;
+    if(still(f)) continue;
+    const obj = f.stapel.length ? f.stapel[f.stapel.length-1].art : '';
+    if(!f.html && f.nachZeichen === ':' && (f.vorZeichen === '{' || f.vorZeichen === ',') && obj === '{') continue; // Objektschluessel
+    if(!f.html && f.vorZeichen === '[' && f.nachZeichen === ']') continue;                                         // obj['x']
+    // Zuweisung an eine Eigenschaft, die nie Text ist (Klasse, Kennung, Stil, Adresse)
+    if(/(className|\.id|\.type|\.href|\.src|\.cssText|style\.[A-Za-z]+)\s*\+?=\s*$/.test(f.vorText)) continue;
+    // Sichtbarer Anteil: Tags und Tag-Reste heraus, Attributwerte mit Text dazu
+    let t = f.text;
+    const attr = [...t.matchAll(/\b(?:title|aria-label|placeholder|alt)="([^"$]+)"/g)].map(m => m[1]);
+    if(f.html){
+      t = t.replace(/<style[\s\S]*?<\/style>/gi, ' ').replace(/<[^>]*>/g, ' ')
+           .replace(/^[^<>]*?>/, m => /["=]/.test(m) ? ' ' : m).replace(/<[^>]*$/, ' ');
+    }
+    t = t.replace(/&[a-z]+;|&#\d+;/gi, ' ');
+    const teile = t.split(/\s{2,}|\n/).map(x => x.trim()).filter(Boolean).concat(attr);
+    for(const x of teile){
+      if(!/[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df]{2,}/.test(x)) continue;
+      if(/^[a-z0-9_.#:-]+$/.test(x)){                            // Kennung, Schluessel, Ereignisname …
+        if(/^[a-z\u00e4\u00f6\u00fc\u00df]+$/.test(x) && WORTSCHATZ.has(x) && !KENNUNGEN.has(x) && !f.vergleich)
+          befunde.push('Z.' + f.zeile + ' [WORT DER TABELLE] ' + JSON.stringify(x));   // … oder doch ein Wort
+        continue;
+      }
+      if(/^[A-Z0-9_]+$/.test(x) || /^[a-z]+[A-Z][A-Za-z]*$/.test(x)) continue;   // KONSTANTE, camelCase
+      if(/^(https?:|data:|var\(|rgba?\(|calc\(|#[0-9a-f]{3,8}\b)/i.test(x)) continue;
+      if(/^[\w.\/-]+\.(html|js|jpg|png|json)([?#][\w=&.-]*)?$/.test(x)) continue;          // Dateiname, Adresse
+      if(/^([a-z-]+:[^;\s]+;?)+$/.test(x)) continue;                                        // CSS-Deklaration
+      if(/^["')\s]*(style|class|onclick|disabled|type|href)\b/.test(x) || /=\\?"/.test(x) || /^"\s/.test(x)) continue;
+      if(f.vergleich && !/[\s\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df]/.test(x)) continue;   // Vergleich auf ein Wort: Taste/Zustand
+      if(ERLAUBT.some(([re]) => re.test(x))){ erlaubtGesehen++; continue; }
+      befunde.push('Z.' + f.zeile + (f.vergleich ? ' [VERGLEICH]' : '') + ' ' + JSON.stringify(x));
+    }
+  }
+  // Gegen eine Attrappe: der Zerleger muss die Datei wirklich sehen.
+  ok(gesehen > 1500 && erlaubtGesehen >= 5,
+     'Zerleger sieht den Skriptteil (' + gesehen + ' Zeichenketten, ' + erlaubtGesehen + ' benannte Ausnahmen getroffen)');
+  ok(befunde.length === 0,
+     'keine sichtbare Zeichenkette au\u00dferhalb von txt() \u2014 Kriterium \u201esichtbar\u201c, nicht \u201esieht deutsch aus\u201c' +
+     (befunde.length ? ' \u2014 ' + befunde.length + ': ' + befunde.slice(0, 8).join(' \u00b7 ') : ''));
+
+  // ── Markup: textragende Attribute nur ueber data-t-attr ──
+  // (Den Textinhalt der Elemente prueft textvergleich.js Teil A; die Attribute sind die
+  // Luecke, durch die bei §200 die beiden alt-Texte und ein Platzhalter gefallen sind.)
+  // Ausgenommen: Impressum und Datenschutz — sie stehen bewusst ohne Skript da (\u00a7 5 DDG).
+  const ohneRecht = html.replace(/<div class="overlay hidden" id="(impressum|datenschutz)-overlay">[\s\S]*?\n<\/div>/g, '');
+  const koerper = ohneKommentare(ohneRecht.slice(ohneRecht.indexOf('<body')).replace(/<script[\s\S]*?<\/script>/g, ''));
+  const offen = [];
+  for(const m of koerper.matchAll(/<[a-zA-Z][^>]*>/g)){
+    const tag = m[0], dta = (tag.match(/data-t-attr="([^"]*)"/)||[])[1] || '';
+    for(const a of tag.matchAll(/\s(title|aria-label|placeholder|alt)="([^"]*)"/g))
+      if(/[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc]{2,}/.test(a[2]) && !/^X+$/.test(a[2]) && !dta.includes(a[1] + ':'))
+        offen.push(a[1] + '="' + a[2].slice(0, 30) + '"');
+  }
+  ok(offen.length === 0 && ohneRecht.length < html.length,
+     'Markup: jedes title/aria-label/placeholder/alt mit Text l\u00e4uft \u00fcber data-t-attr (Rechtsfenster ausgenommen)' +
+     (offen.length ? ' \u2014 ' + offen.join(' \u00b7 ') : ''));
 }
 
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');

@@ -99,27 +99,60 @@ function meldungen(quelle){
   }
   return raus;
 }
-// t('schluessel', {0:(ausdruck), …}) wieder in den Wortlaut zuruecksetzen
+// t('schluessel', {0:(ausdruck), …}) wieder in den Wortlaut zuruecksetzen.
+// §207: zwei Erweiterungen. (1) Auch der NACKTE Aufruf `txt('k', {0:x})` ausserhalb von
+// `${…}` wird aufgeloest — er wird zu einer Vorlage `…`, damit die kanonische Form ihn als
+// Text sieht. (2) Werte auch OHNE Klammer (`{0:oppName}`): getrennt wird an den Kommas der
+// obersten Ebene, nicht an einer Klammer, die es nicht gibt.
 function rueck(text, DE){
-  return text.replace(/\$\{txt\('([^']+)'(?:,\s*\{([^{}]*(?:\{[^{}]*\}[^{}]*)*)\})?\)\}/g, (m, k, args) => {
-    let wert = DE[k];
-    if (wert === undefined) return m;
-    if (typeof wert === 'object') wert = wert.andere;
-    if (args){
-      const paare = {};
-      let rest = args, n = 0;
-      // „0:(ausdruck), 1:(ausdruck)" — die Klammern halten zusammen, was zusammengehoert
-      const re = /(\d+):\(/g; let mm, stellen=[];
-      while((mm = re.exec(args))) stellen.push({nr: mm[1], ab: mm.index + mm[0].length});
-      stellen.forEach((st, i) => {
-        let tiefe = 1, j = st.ab;
-        while(j < args.length && tiefe > 0){ if(args[j]==='(') tiefe++; else if(args[j]===')') tiefe--; j++; }
-        paare[st.nr] = args.slice(st.ab, j-1);
-      });
-      wert = wert.replace(/\{(\d+)\}/g, (mm2, nr) => paare[nr] !== undefined ? '${'+paare[nr]+'}' : mm2);
+  const ende = (t, ab) => {                      // Index hinter der passenden schliessenden Klammer
+    let tiefe = 0, q = null;
+    for(let j = ab; j < t.length; j++){
+      const c = t[j];
+      if(q){ if(c === '\\') j++; else if(c === q) q = null; continue; }
+      if(c === "'" || c === '"' || c === '`'){ q = c; continue; }
+      if(c === '(' || c === '{' || c === '[') tiefe++;
+      else if(c === ')' || c === '}' || c === ']'){ tiefe--; if(tiefe === 0) return j + 1; }
     }
-    return wert;
-  });
+    return -1;
+  };
+  const oben = (t) => {                          // an den Kommas der obersten Ebene trennen
+    const teile = []; let tiefe = 0, q = null, a = 0;
+    for(let j = 0; j < t.length; j++){
+      const c = t[j];
+      if(q){ if(c === '\\') j++; else if(c === q) q = null; continue; }
+      if(c === "'" || c === '"' || c === '`'){ q = c; continue; }
+      if('({['.includes(c)) tiefe++; else if(')}]'.includes(c)) tiefe--;
+      else if(c === ',' && tiefe === 0){ teile.push(t.slice(a, j)); a = j + 1; }
+    }
+    teile.push(t.slice(a)); return teile.map(x => x.trim()).filter(Boolean);
+  };
+  let aus = '', i = 0;
+  while(true){
+    const k = text.indexOf("txt('", i);
+    if(k < 0){ aus += text.slice(i); break; }
+    const eingebettet = text.slice(k - 2, k) === '${';
+    const kEnde = text.indexOf("'", k + 5), schluessel = text.slice(k + 5, kEnde);
+    const zu = ende(text, k + 3);
+    let wert = DE[schluessel];
+    if(zu < 0 || wert === undefined){ aus += text.slice(i, k + 5); i = k + 5; continue; }
+    if(typeof wert === 'object') wert = wert.andere;
+    const rest = text.slice(kEnde + 1, zu - 1).trim();       // „, {0:(…), 1:x}" oder leer
+    const paare = {};
+    if(rest.startsWith(',')){
+      const obj = rest.slice(1).trim();
+      for(const p of oben(obj.slice(1, -1))){
+        const d = p.indexOf(':'); if(d < 0) continue;
+        let x = p.slice(d + 1).trim();
+        if(x.startsWith('(') && ende(x, 0) === x.length) x = x.slice(1, -1);
+        paare[p.slice(0, d).trim()] = x;
+      }
+    }
+    wert = wert.replace(/\{(\w+)\}/g, (m, nr) => paare[nr] !== undefined ? '${' + paare[nr] + '}' : m);
+    if(eingebettet && text[zu] === '}'){ aus += text.slice(i, k - 2) + wert; i = zu + 1; }
+    else { aus += text.slice(i, k) + '`' + wert.replace(/`/g, '\\`') + '`'; i = zu; }
+  }
+  return aus;
 }
 console.log('\nB \u00b7 Meldungen im Programmteil');
 {
@@ -131,9 +164,21 @@ console.log('\nB \u00b7 Meldungen im Programmteil');
   })();
   const alt = meldungen(ALT), neu = meldungen(NEU);
   const altText = new Set(alt.map(x => x.text));
+  // §207: die ALTE Seite ebenso aufloesen. Seit §202 traegt auch sie txt()-Aufrufe; ohne das
+  // stuende aufgeloester Text gegen einen unaufgeloesten Aufruf, sobald im selben Satz ein
+  // UNVERAENDERTER Aufruf steht — und der Vergleich meldete Aenderungen, die es nicht gibt.
+  const DE_ALT = (() => {
+    const i = ALT.indexOf('const SPRACHE'), j = ALT.indexOf('function txt(schluessel');
+    if(i < 0 || j < 0) return {};
+    const ctx = {}; vm.createContext(ctx);
+    vm.runInContext(ALT.slice(i, j) + '\n;__T = TEXTE.de.t;', ctx);
+    return ctx.__T;
+  })();
+  const aufgeloest = (t, D) => { let z = t, v = null, r = 0; while(z !== v && r++ < 6){ v = z; z = rueck(z, D); } return z; };
+  const altAufgeloest = [...altText].map(t => aufgeloest(t, DE_ALT));
   let geprueftB = 0, offen = [];
   for(const n of neu){
-    if(!/\$\{txt\('/.test(n.text)) continue;            // nur umgebaute Stellen
+    if(!/txt\('/.test(n.text)) continue;                 // nur umgebaute Stellen (auch nackte Aufrufe, §207)
     // ⚠️ Unveraenderte Stellen ueberspringen. Sonst ist dieses Werkzeug nur EINMAL brauchbar —
     // gegen die Fassung VOR der Umstellung. Steht in beiden Dateien dieselbe Stelle, ist
     // nichts zu beweisen; nur was sich unterscheidet, wird zurueckgerechnet.
@@ -169,7 +214,7 @@ console.log('\nB \u00b7 Meldungen im Programmteil');
       return teile.join('');
     };
     const zieh = nackt(zurueck);
-    if(![...altText].some(a => nackt(a) === zieh)) offen.push(zieh.slice(0,90));
+    if(!altAufgeloest.some(a => nackt(a) === zieh)) offen.push(zieh.slice(0,90));
   }
   melde(offen.length === 0, (geprueftB ? geprueftB + ' ge\u00e4nderte' : 'keine ge\u00e4nderte') +
         ' Meldung' + (geprueftB===1?'':'en') + ', Zeichen f\u00fcr Zeichen ' +

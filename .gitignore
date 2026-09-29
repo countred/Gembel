@@ -43,3 +43,10 @@ loeschliste.txt
 # Archiv, und ein versehentlich abgelegtes Urlaubsfoto soll nicht mitgehen.
 !countred-objekt.jpg
 !walter-rehm-figur.jpg
+
+# §207 (29.9.): CNAME traegt die Domain, .nojekyll schaltet die Jekyll-Verarbeitung ab. Beide
+# lagen schon im Repository, standen aber nicht auf dieser Liste — der Abgleich nach dem
+# Deploy (Positivliste) sah sie deshalb nicht, und eine versehentliche Aenderung an CNAME
+# haette die Domain abgehaengt, ohne dass eine Zeile ABWEICHUNG meldet.
+!CNAME
+!.nojekyll

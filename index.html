@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=163'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=164'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -692,7 +692,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
            Die Datei ist auf 720 px gerechnet (dreifach für scharfe Bildschirme), nicht 1200. -->
       <figure style="margin:0 auto;max-width:240px;text-align:center;">
         <img src="countred-objekt.jpg" width="720" height="666" loading="lazy"
-          alt="Das Brett der limitierten Auflage: sechzehn gedrehte Figuren in Schwarz und Aluminium auf einem Holzbrett, mehrere davon gestapelt."
+          data-t-attr="alt:ueber.bild-brett"
           style="width:100%;height:auto;display:block;border-radius:10px;">
         <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;text-align:left;" data-t="ueber.die-limitierte-auflage-design"></figcaption>
       </figure>
@@ -701,7 +701,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div style="display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;">
         <figure style="margin:0;flex:none;width:130px;">
           <img src="walter-rehm-figur.jpg" width="420" height="511" loading="lazy"
-            alt="Walter Rehm, im Schneidersitz sitzend, schwarzweiß."
+            data-t-attr="alt:ueber.bild-walter"
             style="width:100%;height:auto;display:block;border-radius:10px;">
           <figcaption style="font-size:var(--fs-sm);color:var(--text3);margin-top:6px;" data-t="ueber.foto-christian-alber"></figcaption>
         </figure>
@@ -925,7 +925,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div data-t="punkte.bewahre-diesen-code-auf"></div>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
         <input id="gate-input" type="text" autocomplete="off" spellcheck="false"
-          placeholder="Code eingeben" style="flex:1;min-width:180px;padding:9px 10px;border-radius:8px;
+          data-t-attr="placeholder:punkte.code-eingeben" style="flex:1;min-width:180px;padding:9px 10px;border-radius:8px;
           border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-family:monospace;font-size:var(--fs-sm);">
         <button class="big-btn" style="flex:none;padding:9px 14px;" onclick="redeemGateCode()" data-t="punkte.einloesen"></button>
       </div>
@@ -1186,7 +1186,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=163" charset="utf-8"></script>
+<script src="gembel_rules.js?v=164" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1198,7 +1198,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=163" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=164" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1496,7 +1496,7 @@ function updateOppOfflineCountdown(){
   const now=serverNow();
   const secsLeft=abortSecondsLeft(now, oppAbortDeadline);
   const countEl=document.getElementById('opp-offline-count');
-  if(countEl) countEl.textContent = 'Automatischer Abbruch in '+secsLeft+' s.';
+  if(countEl) countEl.textContent = txt('meldung.automatischer-abbruch-in', {0:secsLeft});
   const btn=document.getElementById('opp-offline-abort');
   if(btn && (now - oppOfflineSince) >= OPP_ABORT_MINWAIT_MS) btn.disabled=false;
   if(secsLeft<=0){
@@ -1883,7 +1883,15 @@ const TEXTE = {
       'lobby.spiele-mit-code-gegen':                 'Spiele mit Code gegen jemanden aus deinem Freundeskreis.',
       'lobby.testversion':                           'Testversion',
       'lobby.zurueck':                               'Zurück',
+      'marken.hinweis-regeln':                       'Firebase-Rules: games_countred_marks freischalten',
+      'marken.hinweis-regeln-2':                     'Firebase-Rules: games_countred_marks freischalten (s. HANDOVER §88/§89).',
+      'marken.lade':                                 'Lade…',
+      'marken.laden-fehlgeschlagen':                 'Laden fehlgeschlagen: {0}',
+      'marken.markieren-fehlgeschlagen':             'Markieren fehlgeschlagen: {0}',
       'marken.markierte-partien':                    'Markierte Partien',
+      'marken.offen-abgebrochen':                    'offen/abgebrochen',
+      'marken.unbekannt':                            'unbekannt',
+      'marken.zeile':                                '{0} · {1} · {2}× markiert · {3}',
       'marken.zurueck':                              'Zurück',
       'neu.datenschutz':                             'Datenschutz',
       'neu.impressum':                               'Impressum',
@@ -1898,6 +1906,7 @@ const TEXTE = {
       'punkte.also-dreimal-gegen-einsteiger#html':   'Also: dreimal gegen Einsteiger, zweimal gegen Fortgeschritten oder einmal gegen\n        Meister gewinnen. <strong>Einladen darfst du danach jeden.</strong>',
       'punkte.anderes-geraet':                       'Anderes Gerät',
       'punkte.bewahre-diesen-code-auf':              'Bewahre diesen Code auf. Löschst du die Website-Daten deines Browsers, ist dein Punktestand weg; mit dem Code holst du ihn zurück.',
+      'punkte.code-eingeben':                        'Code eingeben',
       'punkte.code-kopieren':                        'Code kopieren',
       'punkte.einloesen':                            'Einlösen',
       'punkte.mit-code-zu-zweit':                    'Mit Code zu zweit',
@@ -1989,7 +1998,10 @@ const TEXTE = {
       'stufe.fortgeschritten':                       'Fortgeschritten',
       'stufe.gegen-max-michu-waehle':                'Gegen Max Michu — wähle die Spielstärke:',
       'stufe.meister':                               'Meister',
+      'stufe.stark':                                 'Stark',
       'stufe.zurueck':                               'Zurück',
+      'ueber.bild-brett':                            'Das Brett der limitierten Auflage: sechzehn gedrehte Figuren in Schwarz und Aluminium auf einem Holzbrett, mehrere davon gestapelt.',
+      'ueber.bild-walter':                           'Walter Rehm, im Schneidersitz sitzend, schwarzweiß.',
       'ueber.countred-ist-ein-strategiespiel':       'CountRed ist ein Strategiespiel. Kein Würfel, kein Zufall, kein Glück. Die Regeln lesen sich in drei Minuten, eine Partie dauert selten länger als 15 Minuten.',
       'ueber.dahinter-steht-kein-studio#html':       'Dahinter steht kein Studio, sondern eine Person: Mein Name ist\n          Walter Rehm, ich wohne in München. Fragen, Fehlermeldungen und Ideen gerne an\n          <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a>.',
       'ueber.dann-kommt-meistens-diese':             'Dann kommt meistens diese Frage: „Was sind denn jetzt meine Figuren? Welche Farbe gehört mir?“ Antwort: keine. Jeder kann prinzipiell jede Figur ziehen — niemand ist rot, niemand ist schwarz. Was du ziehen darfst, entscheidet das Brett: Zähle die roten Nachbarn der Figur. Ist die Zahl gerade, darfst du sie ziehen. Ist sie ungerade, darf dein Mitspieler.',
@@ -2019,10 +2031,13 @@ const TEXTE = {
       // sind EIN Schluessel — Stueck fuer Stueck uebersetzt waeren sie unbrauchbar.
       'meldung.achtung-diese-stellung-war':          'Achtung: diese Stellung war schon 4× da — nochmal = Remis.',
       'meldung.anfrage-laeuft-bereits-warte':        'Anfrage läuft bereits – warte auf Mitspieler…',
+      'meldung.aufgeben':                            'Aufgeben',
       'meldung.aufgeben-nur-wenn-du':                'Aufgeben (nur wenn du am Zug bist)',
+      'meldung.automatischer-abbruch-in':            'Automatischer Abbruch in {0} s.',
       'meldung.basis-figur-im-dreier':               '{0}: Basis-Figur im Dreier ist gesperrt',
       'meldung.bitte-5-zeichen-eingeben':            'Bitte 5 Zeichen eingeben (aktuell: {0}).',
       'meldung.bonuszug-nicht-moeglich-am':          'Bonuszug nicht möglich — {0} am Zug',
+      'meldung.bonuszug-signal':                     'Bonuszug!',
       'meldung.code-bitte-manuell-kopieren':         'Code: {0} (bitte manuell kopieren)',
       'meldung.code-erfolgreich-uebertragen':        'Code erfolgreich übertragen.',
       'meldung.code-ist-markiert-jetzt':             'Code ist markiert — jetzt kopieren.',
@@ -2039,6 +2054,7 @@ const TEXTE = {
       'meldung.dieser-code-war-schon':               'Dieser Code war schon eingelöst.',
       'meldung.dieser-raum-wurde-abgebrochen':       'Dieser Raum wurde abgebrochen.',
       'meldung.display-code':                        'display-code',
+      'meldung.drei-in-einer-reihe':                 '3 in einer Reihe!',
       'meldung.du':                                  'Du',
       'meldung.du-bist':                             'Du bist',
       'meldung.du-bist-dran':                        'Du bist dran',
@@ -2054,7 +2070,12 @@ const TEXTE = {
       'meldung.eine-neue-runde-ist':                 'Eine neue Runde ist nicht möglich.',
       'meldung.einfordern-nicht-moeglich-stellung':  'Einfordern nicht möglich — Stellung noch nicht 3× wiederholt.',
       'meldung.erst-drei-punkte-sammeln':            'Erst drei Punkte sammeln: 3× Einsteiger, 2× Fortgeschritten oder 1× Meister schlagen.',
+      'meldung.erst-nach-dem-bonuszug':              'Erst nach dem Bonuszug',
+      'meldung.feld-rot-paritaet':                   '{0}: {1} rot — {2}, {3} {4}',
       'meldung.gate-code':                           'gate-code',
+      'meldung.gerade':                              'gerade',
+      'meldung.grund-beide-einverstanden':           'beide einverstanden',
+      'meldung.grund-stellung-5-wiederholt':         'Stellung 5× wiederholt',
       'meldung.hier-stimmt-was-nicht':               'Hier stimmt was nicht',
       'meldung.hier-stimmte-was-nicht':              'Hier stimmte was nicht',
       'meldung.im-spiel-gegen-max':                  'Im Spiel gegen Max Michu: Optionen → markieren.',
@@ -2066,6 +2087,8 @@ const TEXTE = {
       'meldung.keine-zugmoeglichkeit-nochmals':      '{0} keine Zugmöglichkeit — {1} nochmals',
       'meldung.ki-selbsttest-fehlgeschlagen-ki':     '⚠️ KI-Selbsttest fehlgeschlagen — KI gesperrt (Details in der Konsole)',
       'meldung.konnte-nicht-kopieren-bitte':         'Konnte nicht kopieren — bitte von Hand markieren.',
+      'meldung.kopieren':                            'kopieren',
+      'meldung.kopiert':                             'Kopiert.',
       'meldung.markiert-partie-zug':                 'markiert — Partie {0}, Zug {1}',
       'meldung.max-gewinnt':                         'Max gewinnt',
       'meldung.max-michu-bietet-remis':              'Max Michu bietet Remis an…',
@@ -2091,8 +2114,15 @@ const TEXTE = {
       'meldung.mitspieler-lehnt-remis-ab':           'Mitspieler lehnt Remis ab — Spiel läuft weiter',
       'meldung.mitspieler-offline-spiel-abgebroch':  'Mitspieler offline — Spiel abgebrochen.',
       'meldung.mitspieler-wieder-verbunden':         'Mitspieler wieder verbunden.',
+      'meldung.name-braucht':                        '{0} braucht',
+      'meldung.name-hat':                            '{0} hat',
+      'meldung.name-zieht':                          '{0} zieht',
+      'meldung.neu-anderer-modus-stufe':             'Neu (anderer Modus/Stufe)',
       'meldung.neue-runde-angefragt-warte':          'Neue Runde angefragt – warte auf Mitspieler…',
       'meldung.noch-keine-markierten-partien':       'Noch keine markierten Partien.',
+      'meldung.nochmal':                             'Nochmal',
+      'meldung.nochmal-anfragen':                    'Nochmal anfragen',
+      'meldung.nochmal-stufe':                       'Nochmal ({0})',
       'meldung.nur-wenn-du-am':                      'Nur wenn du am Zug bist',
       'meldung.partie':                              'Partie',
       'meldung.partie-beendet':                      'Partie beendet',
@@ -2122,6 +2152,7 @@ const TEXTE = {
       'meldung.remis-eingefordert-stellung-3-2':     'Remis eingefordert — Stellung 3× wiederholt (kein Widerspruch möglich)',
       'meldung.remis-eingefordert-stellung-3-3':     'Remis eingefordert — Stellung 3× wiederholt…',
       'meldung.remis-erst-nach-dem':                 'Remis (erst nach dem Bonuszug)',
+      'meldung.remis-kurz':                          'Remis',
       'meldung.remis-nur-anbieten-wenn':             'Remis nur anbieten, wenn du am Zug bist',
       'meldung.remis-nur-einfordern-wenn':           'Remis nur einfordern, wenn du am Zug bist',
       'meldung.remis-nur-wenn-du':                   'Remis (nur wenn du am Zug bist)',
@@ -2132,13 +2163,25 @@ const TEXTE = {
       'meldung.spiel-laeuft':                        'Spiel läuft',
       'meldung.stapel-ist-voll-max':                 '{0}: Stapel ist voll — max. 2 Figuren',
       'meldung.stapel-von-nur-er':                   '{0}: Stapel von {1} — nur er darf ihn auflösen',
+      'meldung.stapeln-rot':                         '{0}: Stapeln — {1} rot ({2}), {3} {4}',
       'meldung.suche-raum':                          'Suche Raum…',
+      'meldung.unentschieden':                       'Unentschieden',
+      'meldung.unentschieden-banner':                '🤝 Unentschieden',
+      'meldung.unentschieden-grund':                 'Unentschieden ({0})',
+      'meldung.ungerade':                            'ungerade',
+      'meldung.verbindung-unterbrochen-satz':        'Verbindung unterbrochen.',
+      'meldung.verbindung-unterbrochen-titel':       'Verbindung unterbrochen',
       'meldung.verbindung-wiederhergestellt-der-s':  'Verbindung wiederhergestellt. Der Stand wird geprüft…',
       'meldung.verbindung-wird-wiederhergestellt':   'Verbindung wird wiederhergestellt…',
       'meldung.verbindung-zu-lange-unterbrochen':    'Verbindung zu lange unterbrochen — der Raum wurde aufgelöst.',
       'meldung.verbindung-zum-mitspieler-unterbro':  'Verbindung zum Mitspieler unterbrochen. Warte auf Rückkehr…',
+      'meldung.verbindungsfehler':                   'Verbindungsfehler: {0}',
       'meldung.von-nach-gezogen':                    '↗ {0} von {1} nach {2} gezogen',
       'meldung.wait-code':                           'wait-code',
+      'meldung.warte':                               'Warte…',
+      'meldung.weiterschauen':                       'Weiterschauen',
+      'meldung.weiterspielen':                       'Weiterspielen',
+      'meldung.ziel-rot':                            '{0}: {1} rot ({2}) — {3} {4}',
       'meldung.zuege-ohne-neuen-dreier':             '{0} Züge ohne neuen Dreier',
       'meldung.zuege-ohne-neuen-dreier-2':           '{0}/{1} Züge ohne neuen Dreier',
       'meldung.zurueck-zum-brett':                   'Zurück zum Brett',
@@ -2378,7 +2421,7 @@ window.copyGateCode = async function(){
     }catch(e){ /* dann bleibt es bei der Markierung */ }
   }
   ms.style.color = 'var(--text2)';
-  ms.textContent = kopiert ? 'Kopiert.'
+  ms.textContent = kopiert ? txt('meldung.kopiert')
                  : markiert ? `${txt('meldung.code-ist-markiert-jetzt')}`
                             : `${txt('meldung.konnte-nicht-kopieren-bitte')}`;
   ms.style.display = 'block';
@@ -2423,7 +2466,7 @@ texteFuellen();
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v163';
+const BUILD_MARKER='· Build v164';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2585,9 +2628,12 @@ const AI_DRAW_POLICY={
 // §97 (Walter): Anzeigename der Stufe. NUR fuer die Oberflaeche — der SCHLUESSEL bleibt
 // klein geschrieben, weil SKILL_LEVELS, AI_DRAW_POLICY, das Firebase-Feld `skillLevel` und
 // das Replay-Werkzeug ihn so lesen. Wer hier den Schluessel gross macht, zerlegt die Logs.
-const SKILL_LABEL={einsteiger:'Einsteiger', fortgeschritten:'Fortgeschritten',
-                   stark:'Stark', meister:'Meister'};
-function skillLabel(s){ return SKILL_LABEL[s] || (s ? s.charAt(0).toUpperCase()+s.slice(1) : ''); }
+// §207: Die ANZEIGE steht in der Textschicht, damit sie mit der Sprache wechselt. Die Tabelle
+// hier bildet deshalb nur noch Kennung → Textschluessel ab; nachgeschlagen wird beim Aufruf,
+// nicht beim Laden (sonst bliebe ein spaeter Sprachwechsel an diesen vier Woertern haengen).
+const SKILL_LABEL={einsteiger:'stufe.einsteiger', fortgeschritten:'stufe.fortgeschritten',
+                   stark:'stufe.stark', meister:'stufe.meister'};
+function skillLabel(s){ return SKILL_LABEL[s] ? txt(SKILL_LABEL[s]) : (s ? s.charAt(0).toUpperCase()+s.slice(1) : ''); }
 
 // §92 (Walter): Bedenkzeit vor einem KI-Remis-Angebot (ms, zufällig im Bereich).
 // §97 (Walter): nochmals verlaengert — ein Remis-Angebot soll spuerbar laenger abgewogen
@@ -2740,7 +2786,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=163'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=164'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -2986,22 +3032,22 @@ window.showNeuMenu=function(){
         drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="${txt('meldung.nur-wenn-du-am')}"><svg class="sym" aria-hidden="true"><use href="#s-remis"/></svg>${txt('meldung.remis-nur-wenn-du')}</button>`;
       }
       btnsEl.innerHTML=`
-        <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-weiter"/></svg>Weiterspielen</button>
+        <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-weiter"/></svg>${txt('meldung.weiterspielen')}</button>
         ${MARK_UI ? `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()"><svg class="sym" aria-hidden="true"><use href="#s-marke"/></svg>${txt('meldung.hier-stimmt-was-nicht')}</button>` : ''}
         ${drawBtn}
-        <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvki()"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>Aufgeben</button>
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();"><svg class="sym" aria-hidden="true"><use href="#s-neustart"/></svg>Neu (anderer Modus/Stufe)</button>
-        <div style="font-size:var(--fs-xs);color:var(--text3);text-align:center;">${txt('meldung.partie')} <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
+        <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvki()"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>${txt('meldung.aufgeben')}</button>
+        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();"><svg class="sym" aria-hidden="true"><use href="#s-neustart"/></svg>${txt('meldung.neu-anderer-modus-stufe')}</button>
+        <div style="font-size:var(--fs-xs);color:var(--text3);text-align:center;">${txt('meldung.partie')} <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">${txt('meldung.kopieren')}</span></div>`;
       showOverlay('neu-overlay');
     } else if(isFinished){
       titleEl.textContent=`${txt('meldung.spiel-beendet')}`;
       descEl.textContent='';
       btnsEl.innerHTML=`
-        <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu();startAIGame('${aiSkill}')"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>Nochmal (${skillLabel(aiSkill)})</button>
+        <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu();startAIGame('${aiSkill}')"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>${txt('meldung.nochmal-stufe', {0:(skillLabel(aiSkill))})}</button>
         ${MARK_UI ? `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();markMvkiPosition()"><svg class="sym" aria-hidden="true"><use href="#s-marke"/></svg>${txt('meldung.hier-stimmte-was-nicht')}</button>` : ''}
-        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();"><svg class="sym" aria-hidden="true"><use href="#s-neustart"/></svg>Neu (anderer Modus/Stufe)</button>
+        <button class="big-btn" style="width:100%" onclick="closeNeuMenu();abortMvkiToModeMenu();"><svg class="sym" aria-hidden="true"><use href="#s-neustart"/></svg>${txt('meldung.neu-anderer-modus-stufe')}</button>
         <button class="big-btn" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-zurueck"/></svg>${txt('meldung.zurueck-zum-brett')}</button>
-        <div style="font-size:var(--fs-xs);color:var(--text3);text-align:center;">${txt('meldung.partie')} <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">kopieren</span></div>`;
+        <div style="font-size:var(--fs-xs);color:var(--text3);text-align:center;">${txt('meldung.partie')} <span style="font-family:monospace;letter-spacing:1px;">${mvkiGameCode||'—'}</span> · <span style="text-decoration:underline;cursor:pointer;" onclick="closeNeuMenu();copyGameCode('${mvkiGameCode||''}')">${txt('meldung.kopieren')}</span></div>`;
       showOverlay('neu-overlay');
     } else {
       cancelAIJob(); aiThinking=false; showModeMenu();
@@ -3025,8 +3071,8 @@ window.showNeuMenu=function(){
     // der Weg zurück ins Obermenü ist dann das Einzige, was noch Sinn hat. „Weiterschauen"
     // bleibt (das Endbrett ansehen), verliert aber das Blau.
     btnsEl.innerHTML=`
-      ${endgueltigM ? '' : `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>Nochmal anfragen</button>`}
-      <button class="big-btn${endgueltigM ? '' : ' primary'}" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-auge"/></svg>Weiterschauen</button>
+      ${endgueltigM ? '' : `<button class="big-btn" style="width:100%" onclick="closeNeuMenu();requestRematch()"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>${txt('meldung.nochmal-anfragen')}</button>`}
+      <button class="big-btn${endgueltigM ? '' : ' primary'}" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-auge"/></svg>${txt('meldung.weiterschauen')}</button>
       <button class="big-btn${endgueltigM ? ' primary' : ''}" style="width:100%;${endgueltigM ? '' : 'border-color:#ef4444;color:#ef4444'}" onclick="leaveRoom()"><svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>${txt('meldung.raum-verlassen')}</button>`;
   } else if(inGame){
     titleEl.textContent=`${txt('meldung.spiel-laeuft')}`;
@@ -3053,16 +3099,16 @@ window.showNeuMenu=function(){
       drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="${txt('meldung.schon-angeboten-erst-nach')}"><svg class="sym" aria-hidden="true"><use href="#s-remis"/></svg>${txt('meldung.remis-angeboten-warte-auf')}</button>`;
     } else if(phase==='bonus' && isMyTurn){
       // Am Zug, aber Bonuszug steht aus → Anbieten gesperrt (Walter-Regel).
-      drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="Erst nach dem Bonuszug"><svg class="sym" aria-hidden="true"><use href="#s-remis"/></svg>${txt('meldung.remis-erst-nach-dem')}</button>`;
+      drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="${txt('meldung.erst-nach-dem-bonuszug')}"><svg class="sym" aria-hidden="true"><use href="#s-remis"/></svg>${txt('meldung.remis-erst-nach-dem')}</button>`;
     } else {
       // Nicht am Zug → Anbieten gesperrt (würde den Gegner stören). Klarer Hinweis statt totem Button.
       drawBtn=`<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="${txt('meldung.nur-wenn-du-am')}"><svg class="sym" aria-hidden="true"><use href="#s-remis"/></svg>${txt('meldung.remis-nur-wenn-du')}</button>`;
     }
     btnsEl.innerHTML=`
-      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-weiter"/></svg>Weiterspielen</button>
+      <button class="big-btn primary" style="width:100%" onclick="closeNeuMenu()"><svg class="sym" aria-hidden="true"><use href="#s-weiter"/></svg>${txt('meldung.weiterspielen')}</button>
       ${drawBtn}
       ${atTurn
-        ? `<button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvm()"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>Aufgeben</button>`
+        ? `<button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="closeNeuMenu();resignMvm()"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>${txt('meldung.aufgeben')}</button>`
         : `<button class="big-btn" style="width:100%;opacity:0.5;cursor:default" disabled title="${txt('meldung.nur-wenn-du-am')}"><svg class="sym" aria-hidden="true"><use href="#s-fahne"/></svg>${txt('meldung.aufgeben-nur-wenn-du')}</button>`}
       <button class="big-btn" style="width:100%;border-color:#ef4444;color:#ef4444" onclick="verlassenFragen()"><svg class="sym" aria-hidden="true"><use href="#s-verlassen"/></svg>${txt('meldung.partie-verlassen')}</button>`;
     // §177 (Entscheid Walter, 11.9.): „Neu anfragen" gibt es in der LAUFENDEN Partie nicht mehr.
@@ -3226,7 +3272,7 @@ window.answerDraw=async function(yes){
     // Doppelmeldung: Host-Balken vs. Laptop-zwei-Meldungen).
     // §92 (Walter): Der ANNEHMENDE sieht „Remis — beide einverstanden"; dem ANBIETER meldet
     // applyRemoteState „Mitspieler ist mit Remis einverstanden" (drawAcceptedBy, s. dort).
-    pendingLastMove={player:null, drawReason:'beide einverstanden'}; // §73: Grund an beide Seiten
+    pendingLastMove={player:null, drawReason:'einig'}; // §73: Grund an beide Seiten · §207: als Kennung
     // §164 (7.9., Walters Livetest): HIER STAND EIN `await` DAZWISCHEN — und darin lag der Fehler.
     // Zwischen `phase='finished'` und `pushState` wurde `meta/drawAcceptedBy` geschrieben. In
     // dieser Wartezeit feuert der EIGENE Listener, applyRemoteState setzt `phase=state.phase`
@@ -3275,7 +3321,7 @@ window.claimDrawMvm=async function(){
   if(myRole==='host'){
     // Host ist Autorität → sofort umsetzen.
     phase='finished';
-    pendingLastMove={player:null, drawReason:`${txt('meldung.remis-eingefordert-stellung-3')}`};
+    pendingLastMove={player:null, drawReason:'eingefordert'};
     setLog(`<span class="msg info">${txt('meldung.remis-eingefordert-stellung-3-2')}</span>`);
     await pushState(null);
     render();
@@ -3683,7 +3729,7 @@ function attachHostListener(){
         // ohne gewirkt zu haben (genau das ist Walter am 7.9. passiert).
         if(myRole==='host' && (phase==='playing'||phase==='bonus')){
           phase='finished';
-          pendingLastMove={player:null, drawReason:'beide einverstanden'};
+          pendingLastMove={player:null, drawReason:'einig'};
           await pushState(null);
           render();
         }
@@ -3725,7 +3771,7 @@ function attachHostListener(){
       await update(roomRef,{'meta/drawClaim':null}).catch(()=>{});
       if(mvmCanClaimDraw(currentPlayer)){
         phase='finished';
-        pendingLastMove={player:null, drawReason:`${txt('meldung.remis-eingefordert-stellung-3')}`};
+        pendingLastMove={player:null, drawReason:'eingefordert'};
         setLog(`<span class="msg info">${txt('meldung.mitspieler-hat-remis-eingefordert')}</span>`);
         await pushState(null);
         render();
@@ -3806,7 +3852,7 @@ window.joinRoom=async function(){
       return;
     }
   }catch(e){
-    errEl.textContent='Verbindungsfehler: '+e.message;
+    errEl.textContent=txt('meldung.verbindungsfehler', {0:e.message});
     btn.disabled=false;
     return;
   }
@@ -4053,7 +4099,7 @@ async function pushState(winner=null){
 // ⚠️ Der Knopf steht bewusst oben als Konstante: waere er weiter in applyRemoteState
 // eingesperrt, muesste die Auffrischung ihn nachbauen — zwei Fassungen desselben Knopfes,
 // die auseinanderlaufen (V1).
-const REMATCH_BTN_HTML = `<button onclick="requestRematch()" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>Nochmal</button>`;
+const REMATCH_BTN_HTML = `<button onclick="requestRematch()" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>${txt('meldung.nochmal')}</button>`;
 // ⚠️ „Nochmal" steht hier noch als deutscher Text, NICHT als Schluessel: §202 hat dieses Wort
 // uebersehen, weil seine Spracherkennung nach Umlauten und deutschen Funktionswoertern suchte
 // — ein einzelnes „Nochmal" hat weder das eine noch das andere. Beim Bauen von §205 wollte ich
@@ -4224,14 +4270,13 @@ function applyRemoteState(state){
     // Host ist autoritativ: nur er stellt das Zwangsremis fest und schreibt es via pushState.
     if(myRole==='host'){
       if(repCount>=5 || mvmHalfmovesSinceTriple>=HALFMOVE_DRAW_LIMIT){
-        const reasonText = repCount>=5 ? 'Stellung 5× wiederholt'
-          : `${txt('meldung.zuege-ohne-neuen-dreier', {0:(HALFMOVE_DRAW_LIMIT)})}`;
+        const grund = repCount>=5 ? 'wiederholt' : 'ohne-dreier';   // §207: Kennung, nicht Satz
         phase='finished';
         // §73 (Walter-Befund): den AUSLÖSENDEN Zug erhalten (from/to/movePlayer), damit BEIDE
         // Seiten „letzter Zug + Remis" sehen (nicht nur der Host). player bleibt null (das ist ein
         // Spielende, kein Zug fürs moveSeq-Dedup), aber die Zug-Anzeige-Felder werden mitgegeben.
         const lm=state.lastMove;
-        pendingLastMove={ player:null, drawReason:reasonText,
+        pendingLastMove={ player:null, drawReason:grund,
                           from:(lm&&lm.from)||null, to:(lm&&lm.to)||null,
                           movePlayer:(lm&&lm.player)||null };
         pushState(null); // autoritatives Remis — Gast sieht es über den normalen state-Pfad
@@ -4241,7 +4286,7 @@ function applyRemoteState(state){
           const who=(lm.player===myPlayer)?`${txt('meldung.du-hast')}`:`${txt('meldung.mitspieler-hat')}`;
           localHtml+=`<span class="msg move">${txt('meldung.von-nach-gezogen', {0:(who), 1:(escapeHtml(lm.from)), 2:(escapeHtml(lm.to))})}</span>`;
         }
-        localHtml+=`<span class="msg signal">${txt('meldung.remis', {0:(reasonText)})}</span>`;
+        localHtml+=`<span class="msg signal">${txt('meldung.remis', {0:(remisGrund(grund))})}</span>`;
         setLog(localHtml);
         // render() folgt unten regulär
       }
@@ -4289,7 +4334,8 @@ function applyRemoteState(state){
       const who=(lm.movePlayer!=null)?(movedByMe?`${txt('meldung.du-hast')}`:`${txt('meldung.mitspieler-hat')}`):null;
       if(who) html+=`<span class="msg move">${txt('meldung.von-nach-gezogen', {0:(who), 1:(escapeHtml(lm.from)), 2:(escapeHtml(lm.to))})}</span>`;
     }
-    html+=`<span class="msg signal">${txt('meldung.remis', {0:(escapeHtml(lm.drawReason))})}</span>`;
+    { const g=remisGrund(lm.drawReason);
+      html+=`<span class="msg signal">${g ? txt('meldung.remis', {0:(escapeHtml(g))}) : txt('meldung.remis-kurz')}</span>`; }
     setLog(html);
   } else if(phase==='playing' && (oldPhase==='finished'||oldPhase==='waiting'||oldPhase===null)){
     // §73 (Welle 1): untere Startzeile WEGGELASSEN — wer anfängt + Parität steht jetzt verlässlich
@@ -4339,7 +4385,7 @@ function applyRemoteState(state){
       const iWon=(Number(w)===Number(myPlayer));
       bannerHtml=`<div class="win-banner">${iWon?`${txt('meldung.du-gewinnst')}`:`${txt('meldung.mitspieler-gewinnt')}`}</div>`;
     } else {
-      bannerHtml='<div class="win-banner">🤝 Unentschieden</div>';
+      bannerHtml=`<div class="win-banner">${txt('meldung.unentschieden-banner')}</div>`;
     }
     // §95 (Walter): „Nochmal"-Button auch im MvM-Schlussbild. Hier ist es eine Rematch-ANFRAGE
     // (requestRematch) — der Klick führt sofort zum Warte-auf-Mitspieler-Bildschirm, deshalb reicht
@@ -4437,7 +4483,7 @@ function applyRemoteState(state){
 function updateStatusUI(){
   const s=document.getElementById('status');
   s.classList.remove('signal'); // §80: Standard neutral; nur Sondermeldungen setzen 'signal'
-  if(phase==='waiting'){s.textContent='Warte…';return;}
+  if(phase==='waiting'){s.textContent=txt('meldung.warte');return;}
   if(phase==='finished'){s.classList.add('signal');s.textContent=`${txt('meldung.spiel-beendet')}`;return;} // §80: Ende rot
   const myParity=parityWordForPlayer(myPlayer); // §38d: nicht mehr myPlayer===1-hardcodiert
   const opParity=parityWordForPlayer(myPlayer===1?2:1);
@@ -4447,7 +4493,7 @@ function updateStatusUI(){
     const parity=isMyTurn?myParity:opParity;
     // §80: Bonuszug jetzt einheitlich rot (Signalfarbe), bis 3-zeilig. Kein Inline-Orange mehr.
     s.classList.add('signal');
-    s.innerHTML=`Bonuszug!<br>${who}<br>(${parity})`;
+    s.innerHTML=`${txt('meldung.bonuszug-signal')}<br>${who}<br>(${parity})`;
     return;
   }
   // §177: das EIGENE offene Angebot als dritte Zeile — sie steht, bis der Raum es nicht mehr
@@ -4474,7 +4520,7 @@ function handleDisconnect(msg, titel){
   // myRole und myPlayer — danach ist beides nicht mehr zu haben.
   const wasRoom=roomRef, wasCode=roomCode, wasRole=myRole, wasPlayer=myPlayer;
   cleanup(false);
-  setzeAbschlussTafel(titel||'Verbindung unterbrochen', msg||'Verbindung unterbrochen.');
+  setzeAbschlussTafel(titel||txt('meldung.verbindung-unterbrochen-titel'), msg||txt('meldung.verbindung-unterbrochen-satz'));
   showOverlay('dc-overlay');
   letzterBlickAufDenRaum(wasRoom, wasPlayer);             // §162-B
 }
@@ -4520,10 +4566,25 @@ async function letzterBlickAufDenRaum(wasRoom, wasPlayer){
   }catch(e){ /* kein Netz: die bisherige Meldung bleibt stehen */ }
 }
 
+// §207 — DER REMIS-GRUND REIST ALS KENNUNG. Bis v163 stand in `state/lastMove/drawReason` ein
+// fertiger deutscher Satz, geschrieben von dem Geraet, das das Remis feststellte, und angezeigt
+// auf dem anderen. Bei zwei Sprachen haette jeder den Grund in der Sprache des SCHREIBERS
+// gelesen. Jetzt steht dort eine Kennung, und jedes Geraet uebersetzt selbst.
+// Eine UNBEKANNTE Kennung (ein Raum eines aelteren Builds, hoechstens 2 h alt, oder
+// Fremddaten — `rooms` ist weltweit beschreibbar) ergibt '' und damit „Remis" ohne Grund:
+// nichts aus dem Raum wird wortwoertlich angezeigt. hasOwnProperty, damit `constructor`
+// o. ae. nicht die Objektmethode liefert.
+const REMIS_GRUND = { einig:'meldung.grund-beide-einverstanden', eingefordert:'meldung.remis-eingefordert-stellung-3',
+                      wiederholt:'meldung.grund-stellung-5-wiederholt', 'ohne-dreier':'meldung.zuege-ohne-neuen-dreier' };
+function remisGrund(kennung){
+  if(typeof kennung !== 'string' || !Object.prototype.hasOwnProperty.call(REMIS_GRUND, kennung)) return '';
+  return txt(REMIS_GRUND[kennung], {0:HALFMOVE_DRAW_LIMIT});
+}
+
 function ergebnisSatz(st, wasPlayer){
   if(st.winner==null){
-    const grund=(st.lastMove && st.lastMove.drawReason) ? ' ('+st.lastMove.drawReason+')' : '';
-    return 'Unentschieden'+grund;
+    const g=remisGrund(st.lastMove && st.lastMove.drawReason);
+    return g ? txt('meldung.unentschieden-grund', {0:g}) : txt('meldung.unentschieden');
   }
   return (st.winner===wasPlayer) ? `${txt('meldung.du-hast-gewonnen')}` : `${txt('meldung.mitspieler-hat-gewonnen')}`;
 }
@@ -4738,7 +4799,7 @@ function applyLockOnA(){ return applyLockOn(board); }
 function parityWordForPlayer(player){
   const p1odd=(PARITY_P1==='odd');
   const isOdd=(player===1) ? p1odd : !p1odd;
-  return isOdd?'ungerade':'gerade';
+  return isOdd?txt('meldung.ungerade'):txt('meldung.gerade');
 }
 
 // nextTurn: mutates board state then pushes to Firebase
@@ -4757,7 +4818,7 @@ let pendingTripleLine='';
 function moveLineHtml(move){
   if(!move || !move.player) return '';
   const movedByMe=(move.player===myPlayer);
-  const who=movedByMe?`${txt('meldung.du-hast')}`:'Max Michu hat'; // §79: nur im MvKI aufgerufen (§50)
+  const who=movedByMe?`${txt('meldung.du-hast')}`:txt('meldung.name-hat', {0:'Max Michu'}); // §79: nur im MvKI aufgerufen (§50)
   return `<span class="msg move">${txt('meldung.von-nach-gezogen', {0:(who), 1:(move.from), 2:(move.to)})}</span>`;
 }
 function showLastMoveLog(move){
@@ -4778,12 +4839,12 @@ function showWinBanner(winner){
     const iWon=(Number(winner)===Number(myPlayer));
     bannerHtml=`<div class="win-banner">${iWon?`${txt('meldung.du-gewinnst')}`:`${txt('meldung.max-michu-gewinnt')}`}</div>`;
   } else {
-    bannerHtml='<div class="win-banner">🤝 Unentschieden</div>';
+    bannerHtml=`<div class="win-banner">${txt('meldung.unentschieden-banner')}</div>`;
   }
   // §95 (Walter): „Nochmal"-Button direkt ins Schlussbild — die häufigste Folgeaktion ist ein Klick
   // statt erst „↺ Neu" zu öffnen. Toolbar (Regeln/Neu) bleibt unverändert daneben bestehen.
   // MvKI: direkter Neustart derselben Stufe (wie der bestehende Dialog-Button startAIGame(aiSkill)).
-  const rematchBtn = `<button onclick="startAIGame('${aiSkill}')" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>Nochmal</button>`;
+  const rematchBtn = `<button onclick="startAIGame('${aiSkill}')" style="display:inline-block;margin-top:10px;padding:10px 20px;border-radius:12px;border:1.5px solid var(--sel-bd);background:var(--sel-bg);color:var(--sel-bd);font-size:var(--fs-md);font-weight:600;font-family:inherit;cursor:pointer;"><svg class="sym" aria-hidden="true"><use href="#s-nochmal"/></svg>${txt('meldung.nochmal')}</button>`;
   // §97b (Walter): Zusatzzeile „oder ☰ Optionen …" entfernt (s. MvM-Zweig).
   winArea.innerHTML = bannerHtml + rematchBtn;
 }
@@ -4924,7 +4985,7 @@ function applyMvkiAutoDrawIfNeeded(nextMover, formedTriple){
   const count=seenPositions.reduce((n,x)=>x===h?n+1:n,0);
   if(count>=5 || halfmovesSinceTriple>=HALFMOVE_DRAW_LIMIT){
     const isRep=(count>=5);
-    const reasonText=isRep?'Stellung 5× wiederholt':`${txt('meldung.zuege-ohne-neuen-dreier', {0:(HALFMOVE_DRAW_LIMIT)})}`;
+    const reasonText=isRep?txt('meldung.grund-stellung-5-wiederholt'):`${txt('meldung.zuege-ohne-neuen-dreier', {0:(HALFMOVE_DRAW_LIMIT)})}`;
     phase='finished';
     setLog(`<span class="msg signal">${reasonText}</span>`);  // §95: Banner darunter zeigt „Unentschieden" — hier nur der Grund
     showWinBanner(null);
@@ -4956,7 +5017,7 @@ async function nextTurn(){
     finalizeGame(justMoved);
     if(winningMove){
       const movedByMe=(winningMove.player===myPlayer);
-      const who=movedByMe?`${txt('meldung.du-hast')}`:`${oppName} hat`;
+      const who=movedByMe?`${txt('meldung.du-hast')}`:txt('meldung.name-hat', {0:oppName});
       setLog(pendingTripleLine + `<span class="msg move">${txt('meldung.von-nach-gezogen', {0:(who), 1:(winningMove.from), 2:(winningMove.to)})}</span>`);  // §110
       pendingTripleLine='';
     }
@@ -4976,7 +5037,7 @@ async function nextTurn(){
       phase='bonus';
       // §110: den dreierbildenden Zug MIT anzeigen und für die Bonuszug-Meldung merken.
       pendingTripleLine = moveLineHtml(pendingLastMove);
-      setLog(pendingTripleLine + '<span class="msg three">3 in einer Reihe!</span>');  // §95: „Bonuszug!" steht in der Status-Box (updateStatusUI) — nicht doppeln
+      setLog(pendingTripleLine + `<span class="msg three">${txt('meldung.drei-in-einer-reihe')}</span>`);  // §95: „Bonuszug!" steht in der Status-Box (updateStatusUI) — nicht doppeln
       applyMvkiAutoDrawIfNeeded(justMoved, true); // §38f: kann obige Meldung durch Remis-Meldung ersetzen
       await pushState(); render();
       maybeTriggerAI(); // FIX §45: Bonuszug — derselbe Spieler zieht nochmal (auch die KI!) — No-Op falls Remis
@@ -4987,7 +5048,7 @@ async function nextTurn(){
         currentPlayer=opponent;phase='playing';
         // §110: kein Bonuszug — also auch nichts zu merken, der auslösende Zug wird nur gezeigt.
         pendingTripleLine='';
-        setLog(`${moveLineHtml(pendingLastMove)}<span class="msg three">3 in einer Reihe!</span><span class="msg info">${txt('meldung.bonuszug-nicht-moeglich-am', {0:(opponent===myPlayer?`${txt('meldung.du-bist')}`:`${txt('meldung.ist', {0:(oppName)})}`)})}</span>`);
+        setLog(`${moveLineHtml(pendingLastMove)}<span class="msg three">${txt('meldung.drei-in-einer-reihe')}</span><span class="msg info">${txt('meldung.bonuszug-nicht-moeglich-am', {0:(opponent===myPlayer?`${txt('meldung.du-bist')}`:`${txt('meldung.ist', {0:(oppName)})}`)})}</span>`);
         applyMvkiAutoDrawIfNeeded(opponent, true); // §38f
         await pushState(); render();
         maybeTriggerAI(); // FIX §45: Gegner dran — könnte die KI sein — No-Op falls Remis
@@ -5010,8 +5071,8 @@ async function nextTurn(){
     applyMvkiAutoDrawIfNeeded(opponent, false); // §38f: überschreibt phase/Log bei Auslösung
   } else if(hasAnyMoveA(justMoved)){
     phase='playing';
-    const noMove=opponent===myPlayer?`${txt('meldung.du-hast')}`:`${oppName} hat`;
-    setLog(`<span class="msg info">${txt('meldung.keine-zugmoeglichkeit-nochmals', {0:(noMove), 1:(justMoved===myPlayer?`${txt('meldung.du-ziehst')}`:`${oppName} zieht`)})}</span>`);
+    const noMove=opponent===myPlayer?`${txt('meldung.du-hast')}`:txt('meldung.name-hat', {0:oppName});
+    setLog(`<span class="msg info">${txt('meldung.keine-zugmoeglichkeit-nochmals', {0:(noMove), 1:(justMoved===myPlayer?`${txt('meldung.du-ziehst')}`:txt('meldung.name-zieht', {0:oppName}))})}</span>`);
     // §97: Max Michu zieht gleich nochmal — die Meldung braucht Lesezeit (s. AI_HUMAN_BLOCKED_PAUSE).
     // justMoved===aiPlayer heisst im MvKI zwingend: der Blockierte ist der Mensch.
     if(gameMode==='mvki' && justMoved===aiPlayer) aiHumanBlockedPause=true;
@@ -5292,7 +5353,7 @@ window.handleCellClick=function(r,c){
   if(canLiftA(r,c)){
     const targets=getValidTargetsA(r,c);
     if(targets.length>0){selected=[r,c];validTargets=targets;lastFailCell=null;setLog('');}
-    else explainOrToggle(r,c,'keine Zielfelder');
+    else explainOrToggle(r,c,'keine-ziele');
   } else {
     explainOrToggle(r,c,'');
   }
@@ -5326,14 +5387,14 @@ function debugLog(r,c,extra){
   }
   if(cell.locked){setLog(`<span class="msg info">${txt('meldung.basis-figur-im-dreier', {0:(coordToLabel(r,c))})}</span>`);return;}
   let w=countRedNeighbors(board,r,c); if(moving.color==='red') w++;
-  const parityWord=w%2===0?'gerade':'ungerade';
+  const parityWord=w%2===0?txt('meldung.gerade'):txt('meldung.ungerade');
   const isMe=(currentPlayer===myPlayer);
   const needWord=parityWordForPlayer(currentPlayer); // §38d: nicht mehr myPlayer===1-hardcodiert
-  const who=isMe?`${txt('meldung.du-brauchst')}`:`${(gameMode==='mvki')?'Max Michu':`${txt('meldung.mitspieler')}`} braucht`;
-  if(extra==='keine Zielfelder'){
+  const who=isMe?`${txt('meldung.du-brauchst')}`:txt('meldung.name-braucht', {0:(gameMode==='mvki')?'Max Michu':txt('meldung.mitspieler')});
+  if(extra==='keine-ziele'){
     setLog(`<span class="msg info">${txt('meldung.rot-kein-erlaubtes-zielfeld', {0:(coordToLabel(r,c)), 1:(w), 2:(parityWord), 3:(who), 4:(needWord)})}</span>`);
   } else {
-    setLog(`<span class="msg info">${coordToLabel(r,c)}: ${w} rot — ${parityWord}, ${who} ${needWord}</span>`);
+    setLog(`<span class="msg info">${txt('meldung.feld-rot-paritaet', {0:(coordToLabel(r,c)), 1:(w), 2:(parityWord), 3:(who), 4:(needWord)})}</span>`);
   }
 }
 
@@ -5343,7 +5404,7 @@ function dropFailLog(fr,fc,tr,tc){
   const targetCell=board[tr][tc];
   const isMe=(currentPlayer===myPlayer);
   const needWord=parityWordForPlayer(currentPlayer); // §38d: nicht mehr myPlayer===1-hardcodiert
-  const who=isMe?`${txt('meldung.du-brauchst')}`:`${(gameMode==='mvki')?'Max Michu':`${txt('meldung.mitspieler')}`} braucht`;
+  const who=isMe?`${txt('meldung.du-brauchst')}`:txt('meldung.name-braucht', {0:(gameMode==='mvki')?'Max Michu':txt('meldung.mitspieler')});
   if(fr===tr&&fc===tc){setLog(`<span class="msg info">${txt('meldung.quell-und-zielfeld-sind')}</span>`);return;}
   // §140: HIER STAND EIN LOCKED-ZWEIG — ersatzlos entfernt.
   //   Er meldete „gesperrt", sobald das ZIELFELD zu einem Dreier gehoerte, und stammte aus
@@ -5358,8 +5419,8 @@ function dropFailLog(fr,fc,tr,tc){
   if(targetCell.stack){setLog(`<span class="msg info">${txt('meldung.stapel-ist-voll-max', {0:(coordToLabel(tr,tc))})}</span>`);return;}
   if(targetCell.piece){
     const w=mp?countRedsInStack(targetCell.piece,mp):0;
-    const parityWord=w%2===0?'gerade':'ungerade';
-    setLog(`<span class="msg info">${coordToLabel(tr,tc)}: Stapeln — ${w} rot (${parityWord}), ${who} ${needWord}</span>`);return;
+    const parityWord=w%2===0?txt('meldung.gerade'):txt('meldung.ungerade');
+    setLog(`<span class="msg info">${txt('meldung.stapeln-rot', {0:(coordToLabel(tr,tc)), 1:(w), 2:(parityWord), 3:(who), 4:(needWord)})}</span>`);return;
   }
   if(mp && mp.stripe!==targetCell.stripe){
     setLog(`<span class="msg info">${txt('meldung.punkte-passen-nicht-figur', {0:(coordToLabel(tr,tc)), 1:(mp.stripe), 2:(targetCell.stripe)})}</span>`);return;
@@ -5370,8 +5431,8 @@ function dropFailLog(fr,fc,tr,tc){
   if(fromCell.stack && dr<=1 && dc<=1 && !(dr===0&&dc===0))
     if(fromCell.stack.bottom.color==='red') w++;
   if(mp&&mp.color==='red') w++;
-  const parityWord=w%2===0?'gerade':'ungerade';
-  setLog(`<span class="msg info">${coordToLabel(tr,tc)}: ${w} rot (${parityWord}) — ${who} ${needWord}</span>`);
+  const parityWord=w%2===0?txt('meldung.gerade'):txt('meldung.ungerade');
+  setLog(`<span class="msg info">${txt('meldung.ziel-rot', {0:(coordToLabel(tr,tc)), 1:(w), 2:(parityWord), 3:(who), 4:(needWord)})}</span>`);
 }
 
 // ── Move Log ─────────────────────────────────────────────────────
@@ -5447,9 +5508,9 @@ window.markMvkiPosition=async function(){
     // §89c: Ursache ANZEIGEN statt raten. PERMISSION_DENIED = die Firebase-Rules zählen Pfade
     // einzeln auf und kennen games_countred_marks noch nicht → Rules-Snippet ergänzen (s. §88-
     // RULES-MERKER). „keine Verbindung?" war irreführend — genau so blieb §89a jahrelang unsichtbar.
-    const why=String((e&&(e.code||e.message))||e||'unbekannt');
-    const hint=/PERMISSION/i.test(why)?' — Firebase-Rules: games_countred_marks freischalten':'';
-    setLog(`<span class="msg info">Markieren fehlgeschlagen: ${escapeHtml(why)}${hint}</span>`);
+    const why=String((e&&(e.code||e.message))||e||txt('marken.unbekannt'));
+    const hint=/PERMISSION/i.test(why)?' — '+txt('marken.hinweis-regeln'):'';
+    setLog(`<span class="msg info">${txt('marken.markieren-fehlgeschlagen', {0:(escapeHtml(why))})}${hint}</span>`);
   }
   render();
 };
@@ -5477,19 +5538,19 @@ function markEntryLabel(d){
   const dt=new Date((d&&d.ts)||0);
   const dd=`${String(dt.getDate()).padStart(2,'0')}.${String(dt.getMonth()+1).padStart(2,'0')}.`;
   const n=(d&&d.marks)?Object.keys(d.marks).length:0;
-  let res='offen/abgebrochen';
+  let res=txt('marken.offen-abgebrochen');
   if(d&&d.result){
     if(d.result.winner==null) res=`${txt('meldung.remis-2')}`;
     else res=(d.result.winner===d.humanPlayer)?`${txt('meldung.mensch-gewinnt')}`:`${txt('meldung.max-gewinnt')}`;
   }
-  return `${dd} · ${(d&&d.skill)||'?'} · ${n}× markiert · ${res}`;
+  return txt('marken.zeile', {0:dd, 1:(d&&d.skill)||'?', 2:n, 3:res});
 }
 
 window.showMarkedGames=async function(){
   showOverlay('marks-overlay');
   const fb=document.getElementById('marks-feedback'); if(fb) fb.textContent='';
   const listEl=document.getElementById('marks-list');
-  listEl.innerHTML='<div style="color:var(--text3);font-size:var(--fs-lg);text-align:center;">Lade…</div>';
+  listEl.innerHTML=`<div style="color:var(--text3);font-size:var(--fs-lg);text-align:center;">${txt('marken.lade')}</div>`;
   try{
     const q=query(ref(db,'games_countred_marks'), orderByChild('ts'), limitToLast(20));
     const snap=await get(q);
@@ -5505,9 +5566,9 @@ window.showMarkedGames=async function(){
       `<span style="color:var(--text3);">${escapeHtml(markEntryLabel(d))}</span></button>`).join('');
   }catch(e){
     console.error('§88 showMarkedGames: Laden fehlgeschlagen:', e);
-    const why=String((e&&(e.code||e.message))||e||'unbekannt'); // §89c: Ursache anzeigen
-    const hint=/PERMISSION/i.test(why)?'<br>Firebase-Rules: games_countred_marks freischalten (s. HANDOVER §88/§89).':'';
-    listEl.innerHTML=`<div style="color:var(--text3);font-size:var(--fs-lg);text-align:center;">Laden fehlgeschlagen: ${escapeHtml(why)}${hint}</div>`;
+    const why=String((e&&(e.code||e.message))||e||txt('marken.unbekannt')); // §89c: Ursache anzeigen
+    const hint=/PERMISSION/i.test(why)?'<br>'+txt('marken.hinweis-regeln-2'):'';
+    listEl.innerHTML=`<div style="color:var(--text3);font-size:var(--fs-lg);text-align:center;">${txt('marken.laden-fehlgeschlagen', {0:(escapeHtml(why))})}${hint}</div>`;
   }
 };
 
