@@ -47,7 +47,7 @@ function ladeModell(regeln){
 const M=ladeModell();
 
 // ═══════════════════════════════════════════════════════════════════
-block('T · Textschicht der Anleitung (§208, Probe an Schritt 1)');
+block('T · Textschicht der Anleitung (§208 Probe an Schritt 1, §209 alle Schritte)');
 // ═══════════════════════════════════════════════════════════════════
 // Die Probe stellt Schritt 1, den Aufgaben-Generator und den Rahmen um. Was hier steht,
 // haelt fest, dass sie VOLLSTAENDIG ist (kein Wortlaut mehr an diesen Stellen) und dass die
@@ -80,11 +80,13 @@ block('T · Textschicht der Anleitung (§208, Probe an Schritt 1)');
   }).map(([k])=>k);
   pruef('T4 Auszeichnung nur in #html-Werten, und dort nur <p>/<b>', falsch.length===0, falsch.join(', '));
 
-  // T5 · Schritt 1 ist vollstaendig umgestellt: im Quelltext des Schritts keine Zeichenkette
-  // mit Leerzeichen oder Tag mehr (Prosa hat beides; Kennungen und Felder haben keins).
-  const schritt1 = (SKRIPT.match(/\{ id:'ziel',[\s\S]*?\n  \]\},/)||[''])[0];
-  const prosa1 = [...schritt1.matchAll(/'([^']*)'/g)].map(m=>m[1]).filter(x => /[ <]/.test(x));
-  pruef('T5 Schritt 1 traegt keinen Wortlaut mehr im Quelltext', schritt1!=='' && prosa1.length===0, prosa1.join(' | '));
+  // T5 · Die Schritte sind vollstaendig umgestellt (§209: alle neun, §208: nur Schritt 1):
+  // im Quelltext von STEPS keine Zeichenkette mit Leerzeichen oder Tag mehr (Prosa hat beides;
+  // Kennungen und Felder haben keins).
+  const stepsQ = (SKRIPT.match(/\nconst STEPS = \[[\s\S]*?\n\];/)||[''])[0];
+  const prosaS = [...stepsQ.matchAll(/'([^']*)'/g)].map(m=>m[1]).filter(x => /[ <]/.test(x));
+  pruef('T5 kein Schritt traegt noch Wortlaut im Quelltext ('+M.STEPS.length+' Schritte)',
+    stepsQ.length > 2000 && prosaS.length===0, prosaS.slice(0,3).join(' | '));
 
   // T6 · Der Generator (textTeile) und der Rahmen tragen keinen Wortlaut mehr
   const gen = String(M.textTeile);
@@ -106,6 +108,22 @@ block('T · Textschicht der Anleitung (§208, Probe an Schritt 1)');
     M.txt('anl.schritt-von',{0:3,1:9})==='Schritt 3 von 9');
   pruef('T9 fehlender Schluessel ergibt den Schluessel (nie leer — a.nachher steuert den Ablauf)',
     M.txt('anl.gibt-es-nicht')==='anl.gibt-es-nicht');
+
+  // T11 · §209: Der Selbsttest liest keinen Wortlaut. Eine eigene Behauptung im Rechnungssatz
+  // steht als DATEN daneben (`behauptet`); in einer anderen Sprache passte ein Wortmuster nie,
+  // und die Pruefung verstummte still (Z1).
+  const selbst = String(M.selfTest);
+  const ohneBeh = [];
+  M.STEPS.forEach(st => (st.aktionen||[]).forEach(a => {
+    if(typeof a.rechnung==='string' && a.rechnung!=='anheben' && !(Array.isArray(a.behauptet) && a.behauptet.length))
+      ohneBeh.push(st.id+'/'+a.feld); }));
+  pruef('T11 Selbsttest prueft Behauptungen als Daten, nicht am Wortlaut',
+    !/\/[^\/\n]*[a-z] [a-z][^\/\n]*\/\.test\(a\./.test(selbst) && /a\.behauptet/.test(selbst) && ohneBeh.length===0,
+    ohneBeh.join(', '));
+  pruef('T12 Selbsttest bleibt ohne Befund (auch die Behauptung auf 4D haelt)',
+    Array.isArray(M.selfTest()) ? M.selfTest().length===0 : !M.selfTest(), String(M.selfTest()).slice(0,120));
+  pruef('T13 Ausgangsknopf im Kopf aus der Tabelle (Markup bleibt Rueckfall)',
+    /if\(ex\) ex\.textContent=txt\('anl\.zum-spiel-kopf'\);/.test(SKRIPT));
 
   // T10 · Aufgaben (ohne #html) gehen maskiert in den Kasten — Anzeige UND Hoehenmessung
   pruef('T10 Aufgabe maskiert in setText und in der Hoehenmessung',

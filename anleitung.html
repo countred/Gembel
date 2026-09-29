@@ -450,7 +450,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=165" charset="utf-8"></script>
+<script src="gembel_rules.js?v=166" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -459,7 +459,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 73 · 29.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 74 · 29.09.2026';
 
 // ═══════════════════════════════════════════════════════════════════
 //  §208 — TEXTSCHICHT DER ANLEITUNG (Probe, ToDo 43)
@@ -486,12 +486,55 @@ const TEXTE = {
       'anl.aufgabe.mitspieler-hebt':                 'Mit Weiter hebt dein Mitspieler {0} an.',
       'anl.aufgabe.mitspieler-setzt':                'Mit Weiter setzt er sie auf {0} ab.',
       'anl.aufgabe.tippe':                           'Tippe {0} an.',
+      'anl.aufloesen.a2.rechnung':                   'Du darfst anheben. Du hast den Stapel gebildet.',
+      'anl.aufloesen.a2.text#html':                  '<p>Leichter zu merken: Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.</p>',
+      'anl.aufloesen.a3.text#html':                  '<p>Wichtig: nur die Top-Figur darf bewegt werden, nicht der Stapel als ganzes.</p><p>Strategie: mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. Da, wo die Figur weggezogen wird, und auch dort, wo sie abgesetzt wird. Nur im Stapel ist eine Figur also vor dem Zugriff deines Mitspielers sicher.</p>',
+      'anl.aufloesen.a4.text#html':                  '<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht der Mitspieler von 1D auf 2C:</p>',
+      'anl.aufloesen.a4.text-nach#html':             '<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Dein Mitspieler ist von 1D auf 2C gezogen.</p>',
+      'anl.aufloesen.intro#html':                    '<p>Die Zugerlaubnis musst du genauso auch beim Anheben der Figur von einem Stapel beachten: Du darfst die Top-Figur anheben, wenn die Summe der <b>roten</b> Figuren im Stapel <b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
+      'anl.aufloesen.titel':                         'Stapel auflösen',
+      'anl.beginn.a1.nachher#html':                  '<p>Du hast einen Stapel auf 4D gebildet.</p>',
+      'anl.beginn.a2.text#html':                     '<p>Grundsätzliches, bevor du die Zugerlaubnis kennenlernst: Du darfst jede Figur bewegen, rote <b>und</b> schwarze. Du darfst überall hinziehen. Es gibt keine vorgeschriebene Richtung. Es gibt keine Beschränkung der Zugweite. Du kannst Stapel bilden und wieder auflösen. Nur Zweierstapel, ein Top auf einer Basis. Beim Top spielen auch die Punkte und die Zahl auf der Figur keine Rolle.</p>',
+      'anl.beginn.intro#html':                       '<p>Die Punktezahl oben auf einem Feld (3, 2, 1 oder 0 Punkte) und die Zahl auf der Figur (3, 2, 1 oder 0) auf diesem Feld müssen übereinstimmen. Beispiel: Auf den leeren Feldern 2A, 2B, 2C oder 2D können nur Figuren mit einer <b>2</b> abgesetzt werden.</p>',
+      'anl.beginn.titel':                            'Spielbeginn',
+      'anl.bonus.a1.text#html':                      '<p>Den Dreier kann aber auch dein Mitspieler zum Vierer vervollständigen und gewinnen.</p><p>Lote mit zwei Varianten deines Bonuszuges diese strategischen Möglichkeiten aus.</p>',
+      'anl.bonus.a2.vorher#html':                    '<p>Ein <b>guter</b> Bonuszug:</p>',
+      'anl.bonus.a3.text#html':                      '<p>Zwischen den zwei schwarzen Figuren in Spalte A wird das Feld 2A frei. Für die passende dritte schwarze Figur und damit den nächsten möglichen Dreier ist die Parität: Summe der roten Nachbarfiguren: <b>3 = ungerade</b>.</p>',
+      'anl.bonus.a4.text#html':                      '<p>Die passende Figur mit Zahl auf der Figur und Punkte auf dem Feld (2) steht auf 2D und hat gerade ebenfalls deine Parität: Summe der roten Nachbarfiguren: <b>3 = ungerade</b>. Die andere passende Figur ist bereits im Dreier gesperrt.</p><p>Mit diesem Bonuszug hast du dir die perfekte Ausgangslage für deinen nächsten Dreier geschaffen und setzt deinen Mitspieler unter Druck.</p>',
+      'anl.bonus.a5.nachher#html':                   '<p>Dein Bonuszug ist korrekt, aber du schenkst dem Mitspieler damit direkt den Sieg. Drei Dinge musst du beachten:</p>',
+      'anl.bonus.a5.vorher#html':                    '<p>Ein <b>nicht so schlauer</b> Bonuszug — der Spielstand ist wieder wie vor der ersten Variante:</p>',
+      'anl.bonus.a6.text#html':                      '<p><b>Erstens:</b> Die Lücke zwischen den drei gleichfarbigen Figuren in Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.</p>',
+      'anl.bonus.a7.text#html':                      '<p><b>Zweitens:</b> Die für das Sieg-Feld 3C passenden roten Figuren werden beide von deinem Mitspieler in dem von ihm gebildeten Stapel auf 3D kontrolliert: Summe der roten Figuren im Stapel: <b>2 = gerade</b>. Zahl auf der Figur und Punkte auf dem Feld (1) stimmen überein für das Sieg-Feld 3C.</p>',
+      'anl.bonus.a8.text#html':                      '<p><b>Drittens:</b> Dein Mitspieler kann die Sieg-Figur direkt auf 3C absetzen: Summe der roten Nachbarfiguren und der Zugfigur: <b>4 = gerade</b>.</p><p>Mit Weiter zieht dein Mitspieler und gewinnt.</p>',
+      'anl.bonus.a8.zug.nachher#html':               '<p>Vier rote Figuren in Spalte C — dein Mitspieler hat gewonnen.</p>',
+      'anl.bonus.intro#html':                        '<p>Ein Dreier ist meistens gut, vor allem wegen dem Bonuszug.</p>',
+      'anl.bonus.titel':                             'Bonuszug und Taktik',
+      'anl.dreier.a1.nachher#html':                  '<p>Du hast einen <b>Dreier</b> gebaut: 4B, 3B, 2B — drei schwarze übereinander.</p>',
+      'anl.dreier.a2.text#html':                     '<p>Jetzt gelten mehrere Besonderheiten. Die wichtigste: <b>Du bekommst einen Bonuszug.</b></p><p>Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf bleibt erlaubt, und die obere Figur darfst du auch wieder herunternehmen. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.</p>',
+      'anl.dreier.intro#html':                       '<p>Erinnerst du dich an das Ziel: die vierte gleichfarbige Figur in einer Spalte? Es gibt noch ein Zwischenziel davor: die <b>dritte</b> gleichfarbige Figur in eine Spalte ziehen. Für den Dreier — und ebenso für den Vierer — zählt bei einem Stapel nur die untere Figur, nicht die darauf gestapelte.</p>',
+      'anl.dreier.titel':                            'Drei in einer Spalte',
+      'anl.erlaubnis.a5.text#html':                  '<p>Die Zugerlaubnis musst du genauso auch beim Absetzen der Figur beachten: Du darfst die Figur <b>absetzen</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>nach</b> dem Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.</p><p>Noch sind aber alle Felder belegt, also lernst du zuvor die Zugerlaubnis beim Stapel kennen …</p>',
+      'anl.erlaubnis.intro#html':                    '<p>Wer welche Figur ziehen darf, du oder dein Mitspieler, entscheidet allein die Parität: Du darfst eine Figur <b>anheben</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.</p>',
+      'anl.erlaubnis.titel':                         'Zugerlaubnis',
+      'anl.leerfeld.a2.nachher#html':                '<p>Jetzt kennst du alle Zugvarianten: Figur vom Feld anheben, auf einem Feld absetzen, auf eine Figur absetzen, von einer Figur anheben.</p>',
+      'anl.leerfeld.a2.vorher#html':                 '<p>Neuer Versuch.</p>',
+      'anl.leerfeld.intro#html':                     '<p>Du darfst eine Figur auf ein leeres Feld <b>absetzen</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>nach</b> dem Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen. Nicht vergessen: Punktezahl auf dem Feld und Zahl auf der Figur müssen übereinstimmen.</p>',
+      'anl.leerfeld.titel':                          'Figur auf ein leeres Feld',
+      'anl.rest.a1.text#html':                       '<p>Passen gibt es nicht.</p>',
+      'anl.rest.a2.text#html':                       '<p>Wer keinen erlaubten Zug hat, setzt aus — der andere zieht nochmals.</p>',
+      'anl.rest.a3.text#html':                       '<p>Wer beginnt, entscheidet beim ersten Spiel der Zufall, ebenso, wer gerade und wer ungerade spielt. Beim Nochmal beginnt der Verlierer, nach einem Remis wechselt der Anziehende — und die Parität wechselt nach jedem Spiel.</p>',
+      'anl.rest.a4.text#html':                       '<p>Remis könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die Partie automatisch mit Remis, ebenso nach 50 Zügen ohne neuen Dreier.</p>',
+      'anl.rest.a5.text#html':                       '<p>Im Spiel kannst du nicht falsch ziehen. Tippst du eine Figur an, die du gerade nicht anheben oder nirgends absetzen kannst, dann siehst du unten, warum der Zug nicht erlaubt ist.</p>',
+      'anl.rest.titel':                              'Gut zu wissen',
       'anl.schritt-von':                             'Schritt {0} von {1}',
+      'anl.stapelbilden.intro#html':                 '<p>Beim Stapeln zählst du nur die roten Figuren im Stapel. Du darfst eine Figur auf eine andere setzen, wenn danach die Summe der <b>roten</b> Figuren im Stapel <b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
+      'anl.stapelbilden.titel':                      'Stapel bilden',
       'anl.weiter':                                  'Weiter',
       'anl.ziel.intro#html':                         '<p>Gewonnen hat, wer die <b>vierte gleichfarbige Figur in eine Spalte</b> ziehen kann — A, B, C oder D.</p>',
       'anl.ziel.nachher#html':                       '<p>Vier schwarze Figuren in Spalte B. Du hast gewonnen.</p>',
       'anl.ziel.titel':                              'Spielziel',
       'anl.zum-spiel':                               'Zum Spiel',
+      'anl.zum-spiel-kopf':                          'Zum Spiel',
     }
   }
 };
@@ -755,43 +798,28 @@ const STEPS = [
 // Der alte Satz („Die vier Figuren mit einer 2 koennen nur auf … abgesetzt werden")
 // las sich als Aussage ueber die FIGUR und stand damit halb gegen canStack. Das leere
 // Feld beschraenkt die Figur, nicht umgekehrt.
-{ id:'beginn', title:'Spielbeginn', setup:()=>initBoard(),
-  intro:'<p>Die Punktezahl oben auf einem Feld (3, 2, 1 oder 0 Punkte) und die Zahl auf der Figur '
-       +'(3, 2, 1 oder 0) auf diesem Feld müssen übereinstimmen. Beispiel: Auf den leeren Feldern '
-       +'2A, 2B, 2C oder 2D können nur Figuren mit einer <b>2</b> abgesetzt werden.</p>',
+{ id:'beginn', title:txt('anl.beginn.titel'), setup:()=>initBoard(),
+  intro:txt('anl.beginn.intro#html'),
   aktionen:[
     { art:'zug', von:'1B', nach:'4D', actor:LEARNER, roh:true,
-      nachher:'<p>Du hast einen Stapel auf 4D gebildet.</p>' },
+      nachher:txt('anl.beginn.a1.nachher#html') },
     { art:'lesen',
-      text:'<p>Grundsätzliches, bevor du die Zugerlaubnis kennenlernst: Du darfst jede Figur bewegen, '
-          +'rote <b>und</b> schwarze. Du darfst überall hinziehen. Es gibt keine vorgeschriebene '
-          +'Richtung. Es gibt keine Beschränkung der Zugweite. Du kannst Stapel bilden und wieder '
-          +'auflösen. Nur Zweierstapel, ein Top auf einer Basis. Beim Top spielen auch die Punkte und '
-          +'die Zahl auf der Figur keine Rolle.</p>' }
+      text:txt('anl.beginn.a2.text#html') }
   ]},
 
-{ id:'erlaubnis', title:'Zugerlaubnis', setup:()=>initBoard(),
-  intro:'<p>Wer welche Figur ziehen darf, du oder dein Mitspieler, entscheidet allein die Parität: '
-       +'Du darfst eine Figur <b>anheben</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren '
-       +'<b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.</p>',
+{ id:'erlaubnis', title:txt('anl.erlaubnis.titel'), setup:()=>initBoard(),
+  intro:txt('anl.erlaubnis.intro#html'),
   aktionen:[
     { art:'tippen', feld:'1B' },
     { art:'tippen', feld:'3A', neu:true },
     { art:'tippen', feld:'3C', neu:true },
     { art:'tippen', feld:'1D', neu:true },
     { art:'lesen', neu:true,
-      text:'<p>Die Zugerlaubnis musst du genauso auch beim Absetzen der Figur beachten: Du darfst die '
-          +'Figur <b>absetzen</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>nach</b> dem '
-          +'Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.</p>'
-          +'<p>Noch sind aber alle Felder belegt, also lernst du zuvor die Zugerlaubnis beim Stapel '
-          +'kennen …</p>' }
+      text:txt('anl.erlaubnis.a5.text#html') }
   ]},
 
-{ id:'stapelbilden', title:'Stapel bilden', setup:()=>initBoard(),
-  intro:'<p>Beim Stapeln zählst du nur die roten Figuren im Stapel. Du '
-       +'darfst eine Figur auf eine andere setzen, wenn danach die Summe der <b>roten</b> Figuren im '
-       +'Stapel <b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers '
-       +'ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
+{ id:'stapelbilden', title:txt('anl.stapelbilden.titel'), setup:()=>initBoard(),
+  intro:txt('anl.stapelbilden.intro#html'),
   aktionen:[
     { art:'zug',     von:'1B', nach:'4D', actor:LEARNER },
     { art:'zug',     von:'3A', nach:'3D', actor:LEARNER, neu:true },
@@ -806,126 +834,89 @@ const STEPS = [
 // Der Aufbau ist ERSPIELBAR: genau ein Zug des Lernenden (1B→4D) aus der
 // Ausgangsstellung, danach ist der Mitspieler dran. Eine Stellung, die im
 // echten Spiel nicht vorkommen kann, darf die Anleitung nicht zeigen.
-{ id:'aufloesen', title:'Stapel auflösen', startet:OPPONENT,
+{ id:'aufloesen', title:txt('anl.aufloesen.titel'), startet:OPPONENT,
   aufbau:[['1B','4D',LEARNER]],
-  intro:'<p>Die Zugerlaubnis musst du genauso auch beim Anheben der Figur von einem Stapel beachten: '
-       +'Du darfst die Top-Figur anheben, wenn die Summe der <b>roten</b> Figuren im Stapel '
-       +'<b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist '
-       +'gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
+  intro:txt('anl.aufloesen.intro#html'),
   aktionen:[
     // Seite 1: antippen, Rechnung sofort. Die beiden Folgeseiten zeigen dasselbe
     // Bild noch einmal, damit Merksatz und Klickergebnis zusammen zu sehen sind.
     { art:'tippen', feld:'4D' },
     // Die Rechnung ist hier NICHT die gerechnete Summe, sondern die Hoheit — das ist die
-    // Regel, um die es auf dieser Seite geht. `rechnung` traegt deshalb den Wortlaut selbst;
-    // der Selbsttest haelt die Behauptung gegen canLift und formedBy.
+    // Regel, um die es auf dieser Seite geht. `rechnung` traegt deshalb einen eigenen Satz.
+    // §209: WAS er behauptet, steht als DATEN daneben (`behauptet`), und nur das prueft der
+    // Selbsttest gegen canLift und formedBy. Bis v165 las er den Wortlaut (/darfst anheben/)
+    // — in jeder anderen Sprache waere die Pruefung still verstummt (Lehre Z1, innerhalb
+    // einer Seite).
     { art:'zeigen', feld:'4D', getan:'4D',
-      rechnung:'Du darfst anheben. Du hast den Stapel gebildet.',
-      text:'<p>Leichter zu merken: Nur wer den Stapel gebildet hat, kann ihn wieder auflösen.</p>' },
+      rechnung:txt('anl.aufloesen.a2.rechnung'), behauptet:['anheben','stapelhoheit'],
+      text:txt('anl.aufloesen.a2.text#html') },
     { art:'zeigen', feld:'4D', getan:'4D',
-      text:'<p>Wichtig: nur die Top-Figur darf bewegt werden, nicht der Stapel als ganzes.</p>'
-          +'<p>Strategie: mit jedem Zug einer roten Figur ändert sich die Parität vieler Felder. '
-          +'Da, wo die Figur weggezogen wird, und auch dort, wo sie abgesetzt wird. Nur im Stapel ist '
-          +'eine Figur also vor dem Zugriff deines Mitspielers sicher.</p>' },
+      text:txt('anl.aufloesen.a3.text#html') },
     { art:'lesen',
-      text:'<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. Mit Weiter zieht '
-          +'der Mitspieler von 1D auf 2C:</p>',
-      textNach:'<p>Für das nächste Beispiel macht dein Mitspieler auch seinen ersten Zug. '
-              +'Dein Mitspieler ist von 1D auf 2C gezogen.</p>',
+      text:txt('anl.aufloesen.a4.text#html'),
+      textNach:txt('anl.aufloesen.a4.text-nach#html'),
       zugDanach:{ von:'1D', nach:'2C', actor:OPPONENT, roh:true } }
   ]},
 
-{ id:'leerfeld', title:'Figur auf ein leeres Feld',
+{ id:'leerfeld', title:txt('anl.leerfeld.titel'),
   aufbau:[['1B','4D',LEARNER],['1D','2C',OPPONENT]],
-  intro:'<p>Du darfst eine Figur auf ein leeres Feld <b>absetzen</b>, wenn die Summe aller <b>roten</b> '
-       +'Nachbarfiguren <b>nach</b> dem Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, '
-       +'musst du sie mitzählen. Nicht vergessen: Punktezahl auf dem Feld und Zahl auf der Figur müssen '
-       +'übereinstimmen.</p>',
+  intro:txt('anl.leerfeld.intro#html'),
   aktionen:[
     { art:'fehlzug', von:'4D', nach:'1B', actor:LEARNER },
     { art:'zug', von:'4D', nach:'1D', actor:LEARNER,
-      vorher:'<p>Neuer Versuch.</p>',
-      nachher:'<p>Jetzt kennst du alle Zugvarianten: Figur vom Feld anheben, auf einem Feld absetzen, '
-             +'auf eine Figur absetzen, von einer Figur anheben.</p>' }
+      vorher:txt('anl.leerfeld.a2.vorher#html'),
+      nachher:txt('anl.leerfeld.a2.nachher#html') }
   ]},
 
-{ id:'dreier', title:'Drei in einer Spalte', setup:()=>fromSpec(DREIERSPEC, LEARNER),
-  intro:'<p>Erinnerst du dich an das Ziel: die vierte gleichfarbige Figur in einer Spalte? Es gibt noch '
-       +'ein Zwischenziel davor: die <b>dritte</b> gleichfarbige Figur in eine Spalte ziehen. Für den '
-       +'Dreier — und ebenso für den Vierer — zählt bei einem Stapel nur die untere Figur, nicht die '
-       +'darauf gestapelte.</p>',
+{ id:'dreier', title:txt('anl.dreier.titel'), setup:()=>fromSpec(DREIERSPEC, LEARNER),
+  intro:txt('anl.dreier.intro#html'),
   aktionen:[
     { art:'zug', von:'3C', nach:'3B', actor:LEARNER, erwartet:'dreier',
-      nachher:'<p>Du hast einen <b>Dreier</b> gebaut: 4B, 3B, 2B — drei schwarze übereinander.</p>' },
+      nachher:txt('anl.dreier.a1.nachher#html') },
     { art:'lesen',
-      text:'<p>Jetzt gelten mehrere Besonderheiten. Die wichtigste: <b>Du bekommst einen '
-          +'Bonuszug.</b></p>'
-          +'<p>Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf '
-          +'bleibt erlaubt, und die obere Figur darfst du auch wieder herunternehmen. Für die '
-          +'Parität zählen auch die gesperrten Figuren weiterhin mit.</p>' }
+      text:txt('anl.dreier.a2.text#html') }
   ]},
 
-{ id:'bonus', title:'Bonuszug und Taktik', setup:()=>fromSpec(BONUSSPEC, LEARNER),
-  intro:'<p>Ein Dreier ist meistens gut, vor allem wegen dem Bonuszug.</p>',
+{ id:'bonus', title:txt('anl.bonus.titel'), setup:()=>fromSpec(BONUSSPEC, LEARNER),
+  intro:txt('anl.bonus.intro#html'),
   aktionen:[
     { art:'lesen',
-      text:'<p>Den Dreier kann aber auch dein Mitspieler zum Vierer vervollständigen und gewinnen.</p>'
-          +'<p>Lote mit zwei Varianten deines Bonuszuges diese strategischen Möglichkeiten aus.</p>' },
+      text:txt('anl.bonus.a1.text#html') },
 
     { art:'zug', von:'2A', nach:'1A', actor:LEARNER, neu:true,
-      vorher:'<p>Ein <b>guter</b> Bonuszug:</p>' },
+      vorher:txt('anl.bonus.a2.vorher#html') },
     { art:'zeigen', von:'2D', nach:'2A', blass:['2D'], geist:{von:'2D', auf:'2A'},
       pruefungen:[{art:'absetzen', von:'2D', nach:'2A', summe:3}],
-      text:'<p>Zwischen den zwei schwarzen Figuren in Spalte A wird das Feld 2A frei. Für die passende '
-          +'dritte schwarze Figur und damit den nächsten möglichen Dreier ist die Parität: Summe der '
-          +'roten Nachbarfiguren: <b>3 = ungerade</b>.</p>' },
+      text:txt('anl.bonus.a3.text#html') },
     { art:'zeigen', feld:'2D', blass:['2D'], geist:{von:'2D', auf:'2A'},
       pruefungen:[{art:'anheben', feld:'2D', summe:3}],
-      text:'<p>Die passende Figur mit Zahl auf der Figur und Punkte auf dem Feld (2) steht auf 2D und '
-          +'hat gerade ebenfalls deine Parität: Summe der roten Nachbarfiguren: <b>3 = ungerade</b>. '
-          +'Die andere passende Figur ist bereits im Dreier gesperrt.</p>'
-          +'<p>Mit diesem Bonuszug hast du dir die perfekte Ausgangslage für deinen nächsten Dreier '
-          +'geschaffen und setzt deinen Mitspieler unter Druck.</p>' },
+      text:txt('anl.bonus.a4.text#html') },
 
     { art:'zug', von:'2B', nach:'1C', actor:LEARNER, neu:true,
-      vorher:'<p>Ein <b>nicht so schlauer</b> Bonuszug — der Spielstand ist wieder wie vor der '
-            +'ersten Variante:</p>',
-      nachher:'<p>Dein Bonuszug ist korrekt, aber du schenkst dem Mitspieler damit direkt den Sieg. '
-             +'Drei Dinge musst du beachten:</p>' },
+      vorher:txt('anl.bonus.a5.vorher#html'),
+      nachher:txt('anl.bonus.a5.nachher#html') },
     { art:'zeigen', bereich:['1C','2C','3C','4C'],
-      text:'<p><b>Erstens:</b> Die Lücke zwischen den drei gleichfarbigen Figuren in '
-          +'Spalte C ermöglicht den Sieg, obwohl zuvor kein Dreier in dieser Spalte bestand.</p>' },
+      text:txt('anl.bonus.a6.text#html') },
     { art:'zeigen', feld:'3D', blass:['3D'], geist:{von:'3D', auf:'3C'},
       pruefungen:[{art:'anheben', feld:'3D', summe:2}],
-      text:'<p><b>Zweitens:</b> Die für das Sieg-Feld 3C passenden roten Figuren werden beide von '
-          +'deinem Mitspieler in dem von ihm gebildeten Stapel auf 3D kontrolliert: Summe der roten '
-          +'Figuren im Stapel: <b>2 = gerade</b>. Zahl auf der Figur und Punkte auf dem Feld (1) '
-          +'stimmen überein für das Sieg-Feld 3C.</p>' },
+      text:txt('anl.bonus.a7.text#html') },
     { art:'zeigen', von:'3D', nach:'3C', blass:['3D'], geist:{von:'3D', auf:'3C'},
       pruefungen:[{art:'absetzen', von:'3D', nach:'3C', summe:4}],
-      text:'<p><b>Drittens:</b> Dein Mitspieler kann die Sieg-Figur direkt auf 3C absetzen: Summe der '
-          +'roten Nachbarfiguren und der Zugfigur: <b>4 = gerade</b>.</p>'
-          +'<p>Mit Weiter zieht dein Mitspieler und gewinnt.</p>',
+      text:txt('anl.bonus.a8.text#html'),
       zugDanach:{ von:'3D', nach:'3C', actor:OPPONENT, roh:true, summeAuf:4, erwartet:'sieg',
-        nachher:'<p>Vier rote Figuren in Spalte C — dein Mitspieler hat gewonnen.</p>' } }
+        nachher:txt('anl.bonus.a8.zug.nachher#html') } }
   ]},
 
-{ id:'rest', title:'Gut zu wissen', nurText:true,
+{ id:'rest', title:txt('anl.rest.titel'), nurText:true,
   aktionen:[
-    { art:'lesen', text:'<p>Passen gibt es nicht.</p>' },
-    { art:'lesen', text:'<p>Wer keinen erlaubten Zug hat, setzt aus — der andere zieht nochmals.</p>' },
+    { art:'lesen', text:txt('anl.rest.a1.text#html') },
+    { art:'lesen', text:txt('anl.rest.a2.text#html') },
     { art:'lesen',
-      text:'<p>Wer beginnt, entscheidet beim ersten Spiel der Zufall, ebenso, wer gerade und wer '
-          +'ungerade spielt. Beim Nochmal beginnt der Verlierer, nach einem Remis wechselt der '
-          +'Anziehende — und die Parität wechselt nach jedem Spiel.</p>' },
+      text:txt('anl.rest.a3.text#html') },
     { art:'lesen',
-      text:'<p>Remis könnt ihr jederzeit vereinbaren. Steht dieselbe Stellung zum dritten Mal auf '
-          +'dem Brett, kannst du Remis einfordern, wenn du am Zug bist. Beim fünften Mal endet die '
-          +'Partie automatisch mit Remis, ebenso nach 50 Zügen ohne neuen Dreier.</p>' },
+      text:txt('anl.rest.a4.text#html') },
     { art:'lesen',
-      text:'<p>Im Spiel kannst du nicht falsch ziehen. Tippst du eine Figur an, die du gerade '
-          +'nicht anheben oder nirgends absetzen kannst, dann siehst du unten, warum der Zug nicht '
-          +'erlaubt ist.</p>' }
+      text:txt('anl.rest.a5.text#html') }
   ]}
 ];
 
@@ -1642,9 +1633,12 @@ function selfTest(){
       // Ein selbst gesetzter Rechnungs-Wortlaut behauptet etwas — das wird nachgerechnet.
       if(typeof a.rechnung==='string' && a.rechnung!=='anheben' && a.feld){
         const q=CELL[a.feld], zelle=b[q[0]][q[1]];
-        if(/darfst anheben/.test(a.rechnung) && !canLift(b,q[0],q[1],LEARNER,PARITY))
+        const beh = Array.isArray(a.behauptet) ? a.behauptet : [];
+        // Ein eigener Rechnungssatz OHNE erklaerte Behauptung waere ungeprueft — das ist ein Fehler.
+        if(!beh.length) err.push(s.id+': eigener Rechnungssatz ohne `behauptet` ('+a.feld+')');
+        if(beh.includes('anheben') && !canLift(b,q[0],q[1],LEARNER,PARITY))
           err.push(s.id+': der Text sagt "darfst anheben", canLift sagt nein ('+a.feld+')');
-        if(/den Stapel gebildet/.test(a.rechnung) && !(zelle.stack && zelle.stack.formedBy===LEARNER))
+        if(beh.includes('stapelhoheit') && !(zelle.stack && zelle.stack.formedBy===LEARNER))
           err.push(s.id+': der Text behauptet eigene Stapelhoheit, das Brett sagt etwas anderes ('+a.feld+')');
       }
       pruefZug(s, a.zugDanach, b, i);
@@ -1786,6 +1780,9 @@ function init(){
   // Regelschicht fehlt und die Seite sich sperrt — sonst sitzt der Lernende fest.
   const ex=document.getElementById('btn-exit');
   if(ex) ex.onclick=function(){ location.href='index.html'; };
+  // §209: die Beschriftung aus der Tabelle. Das Markup behaelt „Zum Spiel" als Rueckfall,
+  // falls dieses Skript nie laeuft (dann greift der Fehlerschirm, §211).
+  if(ex) ex.textContent=txt('anl.zum-spiel-kopf');
   const fs_=document.getElementById('fassung'); if(fs_) fs_.textContent=ANL_FASSUNG;
   console.log('Count Red · ' + ANL_FASSUNG + ' · Regelschicht: gembel_rules.js');
 
