@@ -47,7 +47,7 @@ function ladeModell(regeln){
 const M=ladeModell();
 
 // ═══════════════════════════════════════════════════════════════════
-block('T · Textschicht der Anleitung (§208 Probe, §209 alle Schritte, §210 Rueckmeldungen)');
+block('T · Textschicht der Anleitung (§208 Probe, §209 Schritte, §210 Rueckmeldungen, §211 Rahmen)');
 // ═══════════════════════════════════════════════════════════════════
 // Die Probe stellt Schritt 1, den Aufgaben-Generator und den Rahmen um. Was hier steht,
 // haelt fest, dass sie VOLLSTAENDIG ist (kein Wortlaut mehr an diesen Stellen) und dass die
@@ -170,6 +170,73 @@ block('T · Textschicht der Anleitung (§208 Probe, §209 alle Schritte, §210 R
       widerspruch.length===0 && saetze.length > 4000, widerspruch.length+': '+(widerspruch[0]||''));
   }
 
+  // T17 · §211: KEIN SICHTBARER TEXT AUSSERHALB DER TABELLEN — dieselbe Pruefung wie im Spiel
+  // (test_ui_97 §207), aus der gemeinsamen Datei pruef_sichtbar.js. Mit ihr haette §210 die
+  // Woerter „gerade"/„ungerade" in summeSpan von selbst gefunden (Wortschatzregel).
+  {
+    const pruefe = require(path.join(D,'pruef_sichtbar.js'));
+    const WORTSCHATZ = new Set();
+    for(const v of Object.values(T))
+      for(const x of String(v).replace(/<[^>]*>/g,' ').toLowerCase().match(/[a-z\u00e4\u00f6\u00fc\u00df]{3,}/g) || []) WORTSCHATZ.add(x);
+    // Benannte Ausnahmen, je mit Grund.
+    const ERLAUBT = [
+      [/^Anleitung \u00b7 Fassung \d+ \u00b7 [\d.]+$/, 'ANL_FASSUNG: Datenquelle fuer Suite und texte.js; angezeigt wird txt(anl.fassung)'],
+      [/^px\)( \/ 4 \*)?$/,                          'Stueck einer CSS-Rechnung (calc)'],
+      [/^&von=$/,                                     'Adressparameter'],
+    ];
+    // Kennungen, die wie Woerter der Tabelle aussehen, aber Daten sind.
+    const KENNUNGEN = new Set([
+      'ziel','beginn','erlaubnis','stapelbilden','aufloesen','leerfeld','dreier','bonus','rest',  // Schritt-IDs
+      'zug','sieg','vor','nach',                          // Aktionsarten, Erwartung, Textvarianten
+      'anheben','stapeln','absetzen',                     // Verben als Schluessel von URTEIL; rechnung:'anheben'
+      'impressum','datenschutz',                          // Sprungmarken in index.html (#impressum)
+      'hat','auf',                                        // Teile von Diagnosezeilen in err.push (Konsole)
+    ]);
+    const r = pruefe(HTML, { erlaubt: ERLAUBT, kennungen: KENNUNGEN, wortschatz: WORTSCHATZ,
+      // Diagnosen: bail/abweichung/__anlAusfall schreiben nur in die Konsole; err.push sammelt
+      // Befunde des Selbsttests (T18 haelt fest, dass push nur diese Empfaenger hat).
+      stillZusatz: ['bail','abweichung','__anlAusfall','push','inventarTreu'],   // inventarTreu: Beschriftung seiner Diagnosezeilen
+      tabellen: ['const TEXTE = {', 'window.__ANL_AUSFALL_TEXTE = {'] });
+    pruef('T17 kein sichtbarer Text ausserhalb der Tabellen (Kriterium sichtbar, mit Wortschatzregel)',
+      r.gesehen > 600 && r.erlaubtGesehen >= 3 && r.befunde.length===0,
+      r.gesehen+' Zeichenketten, '+r.befunde.length+(r.befunde.length?': '+r.befunde.slice(0,6).join(' \u00b7 '):''));
+    const empfaenger = [...new Set([...SKRIPT.matchAll(/([A-Za-z_$][\w$]*)\.push\(/g)].map(m=>m[1]))].sort();
+    pruef('T18 push hat nur die bekannten Empfaenger (err = Diagnose; sonst kein Text)',
+      empfaenger.join(',')==='PHASES,err,weckerListe,zaehlt', empfaenger.join(','));
+  }
+
+  // T19 · §211: Fehlerschirm — eigene kleine Tabelle, Walters Wortlaut aus §145, ohne txt().
+  {
+    const erstes = [...HTML.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1])
+                     .find(x => /__ANL_AUSFALL_TEXTE/.test(x)) || '';
+    // Nur den Tabellenteil ausfuehren — was davor steht, greift auf document zu.
+    const teil = (erstes.match(/window\.__ANL_AUSFALL_TEXTE = \{[\s\S]*?\nwindow\.__ANL_AUSFALL = [^\n]*\n/)||[''])[0];
+    const w = {}; try { new Function('window', teil)(w); } catch(e){}
+    const at = (w.__ANL_AUSFALL_TEXTE||{}).de || {};
+    pruef('T19 Fehlerschirm: Walters Wortlaut (§145) aus eigener Tabelle, laeuft ohne Hauptskript',
+      w.__ANL_AUSFALL === '<b>Es gab ein technisches Problem mit der Anleitung.</b><br>Bitte versuche es sp\u00e4ter nochmals.' &&
+      at.zurueck === 'Zum Spiel' && /b\.textContent=__anlAT\.zurueck;/.test(erstes) && !/txt\(/.test(erstes.replace(/\/\/[^\n]*/g,'')),
+      String(w.__ANL_AUSFALL).slice(0,80));
+  }
+
+  // T20 · §211: Rahmen — jedes statische Markup-Wort ist entweder Rueckfall mit Setzer in init()
+  // oder eine benannte Ausnahme (Wortmarke, Hinweis ohne JavaScript).
+  {
+    const koerper = HTML.slice(HTML.indexOf('<body')).replace(/<script[\s\S]*?<\/script>/g,'').replace(/<style[\s\S]*?<\/style>/g,'')
+                        .replace(/<noscript>[\s\S]*?<\/noscript>/g,'').replace(/<!--[\s\S]*?-->/g,'');
+    const woerter = [...koerper.matchAll(/<[^>]*\bid="([^"]+)"[^>]*>([^<]*[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc]{2,}[^<]*)</g)]
+                      .map(m => m[1]);
+    const SETZER = { 'btn-back':'anl.zurueck', 'btn-next':'anl.weiter', 'legal-impressum':'anl.impressum',
+                     'legal-datenschutz':'anl.datenschutz', 'btn-exit':'anl.zum-spiel-kopf' };
+    const ohne = woerter.filter(id => !SETZER[id]);
+    const ungesetzt = Object.entries(SETZER).filter(([id,k]) =>
+      !(new RegExp("\\['"+id+"','"+k.replace(/[.#]/g,'\\$&')+"'\\]").test(SKRIPT) || new RegExp("txt\\('"+k.replace(/[.#]/g,'\\$&')+"'\\)").test(SKRIPT)));
+    const fz = (HTML.match(/fs_\.textContent=txt\('anl\.fassung'/)||[]).length;
+    pruef('T20 Rahmen: jedes Markup-Wort hat einen Setzer aus der Tabelle; Fassungszeile ueber die Tabelle',
+      woerter.length >= 5 && ohne.length===0 && ungesetzt.length===0 && fz===1,
+      'ohne Setzer: '+ohne.join(',')+' / nicht gesetzt: '+ungesetzt.map(x=>x[0]).join(','));
+  }
+
   // T10 · Aufgaben (ohne #html) gehen maskiert in den Kasten — Anzeige UND Hoehenmessung
   pruef('T10 Aufgabe maskiert in setText und in der Hoehenmessung',
     (SKRIPT.match(/'<div class="aufgabe">'\s*\+\s*alsText\(/g)||[]).length===2 &&
@@ -242,7 +309,9 @@ pruef('A23d kein "gesperrtes Feld" im sichtbaren Text',
   // der Hauptblock liest ihn von dort. Geprueft wird deshalb nicht mehr die Gleichheit
   // mehrerer Vorkommen, sondern dass es wirklich nur EINE Quelle gibt und der alte,
   // zu enge Satz („konnte nicht starten") nicht zurueckkommt.
-  const quellen=[...HTML.matchAll(/<b>Es gab ein technisches Problem mit der Anleitung\.<\/b>/g)];
+  // §211: der Satz steht jetzt in der kleinen Tabelle des Fehlerschirms, das <b> setzt der Code —
+  // gezaehlt wird deshalb der Satz selbst; die Absicht (EINE Quelle) bleibt.
+  const quellen=[...HTML.matchAll(/Es gab ein technisches Problem mit der Anleitung\./g)];
   pruef('A43 der Ausfallsatz hat genau EINE Quelle im Quelltext',
     quellen.length===1, 'Vorkommen: '+quellen.length);
   pruef('A43b der Hauptblock liest sie, statt sie zu wiederholen',

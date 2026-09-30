@@ -405,8 +405,16 @@ window.__anlGestartet = false;
 
 // §145: Walters Wortlaut. Deckt AUCH den Ausfall waehrend der Anwendung ab — „konnte nicht
 // starten" war zu eng, die Anleitung kann sich auch mitten im Durchgang aufhaengen.
-window.__ANL_AUSFALL = '<b>Es gab ein technisches Problem mit der Anleitung.</b><br>'
-                     + 'Bitte versuche es später nochmals.';
+// §211: Der Fehlerschirm hat seine EIGENE kleine Tabelle. Er erscheint genau dann, wenn das
+// Hauptskript nicht lief — also ohne txt() und ohne TEXTE. Die Sprachwahl ist dieselbe wie
+// dort (heute fest 'de'). Wortlaut: Walter, §145; test_anleitung_137 haelt ihn fest.
+window.__ANL_AUSFALL_TEXTE = {
+  de: { titel: 'Es gab ein technisches Problem mit der Anleitung.',
+        bitte: 'Bitte versuche es später nochmals.',
+        zurueck: 'Zum Spiel' }
+};
+var __anlAT = window.__ANL_AUSFALL_TEXTE.de;
+window.__ANL_AUSFALL = '<b>' + __anlAT.titel + '</b><br>' + __anlAT.bitte;
 window.__anlAusfall = function(diagnose){
   var el=document.getElementById('meldung');
   if(el && el.style.display!=='block'){
@@ -416,7 +424,7 @@ window.__anlAusfall = function(diagnose){
     // ein automatischer Sprung waere schlechter — er risse die Meldung weg, bevor sie
     // gelesen ist, und naehme Walter die Diagnose.
     var b=document.createElement('button');
-    b.type='button'; b.textContent='Zum Spiel';
+    b.type='button'; b.textContent=__anlAT.zurueck;
     b.setAttribute('style','margin-top:10px;padding:8px 14px;border-radius:10px;'
       + 'border:1.5px solid #ba7517;background:#fff;color:#7a4c0a;font:600 13px/1.2 system-ui;cursor:pointer;');
     b.onclick=function(){ location.href='index.html'; };
@@ -450,7 +458,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=167" charset="utf-8"></script>
+<script src="gembel_rules.js?v=168" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -459,7 +467,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 75 · 29.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 76 · 29.09.2026';
 
 // ═══════════════════════════════════════════════════════════════════
 //  §208 — TEXTSCHICHT DER ANLEITUNG (Probe, ToDo 43)
@@ -509,6 +517,7 @@ const TEXTE = {
       'anl.bonus.a8.zug.nachher#html':               '<p>Vier rote Figuren in Spalte C — dein Mitspieler hat gewonnen.</p>',
       'anl.bonus.intro#html':                        '<p>Ein Dreier ist meistens gut, vor allem wegen dem Bonuszug.</p>',
       'anl.bonus.titel':                             'Bonuszug und Taktik',
+      'anl.datenschutz':                             'Datenschutz',
       'anl.dreier.a1.nachher#html':                  '<p>Du hast einen <b>Dreier</b> gebaut: 4B, 3B, 2B — drei schwarze übereinander.</p>',
       'anl.dreier.a2.text#html':                     '<p>Jetzt gelten mehrere Besonderheiten. Die wichtigste: <b>Du bekommst einen Bonuszug.</b></p><p>Die drei unteren Figuren bleiben für den Rest des Spieles gesperrt. Stapeln darauf bleibt erlaubt, und die obere Figur darfst du auch wieder herunternehmen. Für die Parität zählen auch die gesperrten Figuren weiterhin mit.</p>',
       'anl.dreier.intro#html':                       '<p>Erinnerst du dich an das Ziel: die vierte gleichfarbige Figur in einer Spalte? Es gibt noch ein Zwischenziel davor: die <b>dritte</b> gleichfarbige Figur in eine Spalte ziehen. Für den Dreier — und ebenso für den Vierer — zählt bei einem Stapel nur die untere Figur, nicht die darauf gestapelte.</p>',
@@ -516,6 +525,7 @@ const TEXTE = {
       'anl.erlaubnis.a5.text#html':                  '<p>Die Zugerlaubnis musst du genauso auch beim Absetzen der Figur beachten: Du darfst die Figur <b>absetzen</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>nach</b> dem Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.</p><p>Noch sind aber alle Felder belegt, also lernst du zuvor die Zugerlaubnis beim Stapel kennen …</p>',
       'anl.erlaubnis.intro#html':                    '<p>Wer welche Figur ziehen darf, du oder dein Mitspieler, entscheidet allein die Parität: Du darfst eine Figur <b>anheben</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.</p>',
       'anl.erlaubnis.titel':                         'Zugerlaubnis',
+      'anl.fassung':                                 'Anleitung · Fassung {0} · {1}',
       'anl.grund.gesperrt#html':                     '{0} ist eine <b>gesperrte</b> Basis-Figur im Dreier.',
       'anl.grund.rest-rot#html':                     '— die rote Figur, die auf {0} liegen bleibt, zählt mit.',
       'anl.grund.stapel-voll#html':                  'Auf {0} steht schon ein Stapel — mehr als zwei Figuren gehen nicht.',
@@ -525,6 +535,7 @@ const TEXTE = {
       'anl.grund.zahl-passt#html':                   'Zahl auf der Figur und Punkte auf dem Feld (<b>{0}</b>) stimmen überein.',
       'anl.grund.zahl-passt-aber#html':              'Zahl auf der Figur und Punkte auf dem Feld (<b>{0}</b>) stimmen überein, aber:',
       'anl.grund.zahl-passt-nicht#html':             'Die Figur trägt die <b>{0}</b>, das Feld {1} ist <b>{2}</b> Punkte wert — das passt nicht zusammen.',
+      'anl.impressum':                               'Impressum',
       'anl.leerfeld.a2.nachher#html':                '<p>Jetzt kennst du alle Zugvarianten: Figur vom Feld anheben, auf einem Feld absetzen, auf eine Figur absetzen, von einer Figur anheben.</p>',
       'anl.leerfeld.a2.vorher#html':                 '<p>Neuer Versuch.</p>',
       'anl.leerfeld.intro#html':                     '<p>Du darfst eine Figur auf ein leeres Feld <b>absetzen</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>nach</b> dem Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen. Nicht vergessen: Punktezahl auf dem Feld und Zahl auf der Figur müssen übereinstimmen.</p>',
@@ -558,6 +569,7 @@ const TEXTE = {
       'anl.ziel.titel':                              'Spielziel',
       'anl.zum-spiel':                               'Zum Spiel',
       'anl.zum-spiel-kopf':                          'Zum Spiel',
+      'anl.zurueck':                                 'Zurück',
     }
   }
 };
@@ -652,9 +664,6 @@ const nachbarn=(r,c)=>RICHTUNGEN.map(a=>[r+a[0],c+a[1]]).filter(p=>p[0]>=0&&p[0]
 const roteAuf=(b,r,c)=>{const x=b[r][c];
   if(x.stack) return (x.stack.bottom.color==='red'?1:0)+(x.stack.top.color==='red'?1:0);
   return (x.piece && x.piece.color==='red') ? 1 : 0;};
-// Nur noch fuer eine Diagnosezeile des Selbsttests (Entwicklertext — bleibt deutsch wie die
-// Konsole, §211). Sichtbare Summen gehen ueber summeSpan und die Tabelle.
-const parWort = n => (n%2===1) ? 'ungerade' : 'gerade';
 // §210: „3 = ungerade" ist ein ganzer Ausdruck je Sprache (Zahl und Wort in eigener Reihenfolge).
 const summeSpan = n => '<span class="sum">' + ((n%2===1) ? txt('anl.summe.ungerade', {0:n}) : txt('anl.summe.gerade', {0:n})) + '</span>';
 
@@ -1607,7 +1616,7 @@ function selfTest(){
       const st=b[r][c].stack; if(!st) continue;
       const n=countRedsInStack(st.bottom, st.top);
       if(!parityOk(n, st.formedBy, PARITY))
-        err.push(wo+': Stapel auf '+lab(r,c)+' hat '+n+' rote ('+parWort(n)+'), gehoert aber Spieler '
+        err.push(wo+': Stapel auf '+lab(r,c)+' hat '+n+' rote ('+((n%2===1)?'ungerade':'gerade')+'), gehoert aber Spieler '
           +st.formedBy+' — so eine Stellung ist nicht erreichbar');
     }
   };
@@ -1819,7 +1828,15 @@ function init(){
   // §209: die Beschriftung aus der Tabelle. Das Markup behaelt „Zum Spiel" als Rueckfall,
   // falls dieses Skript nie laeuft (dann greift der Fehlerschirm, §211).
   if(ex) ex.textContent=txt('anl.zum-spiel-kopf');
-  const fs_=document.getElementById('fassung'); if(fs_) fs_.textContent=ANL_FASSUNG;
+  // §211: ANL_FASSUNG bleibt die DATENQUELLE (Suite und texte.js lesen sie); angezeigt wird
+  // die Zeile ueber die Tabelle, Nummer und Datum aus der Konstante.
+  const fz=ANL_FASSUNG.match(/Fassung (\d+) · (\S+)$/)||[];
+  const fs_=document.getElementById('fassung'); if(fs_) fs_.textContent=txt('anl.fassung', {0:fz[1], 1:fz[2]});
+  // §211: der Rahmen aus der Tabelle. Das Markup behaelt seinen Wortlaut als Rueckfall.
+  [['btn-back','anl.zurueck'], ['btn-next','anl.weiter'],
+   ['legal-impressum','anl.impressum'], ['legal-datenschutz','anl.datenschutz']].forEach(function(p){
+    const n=document.getElementById(p[0]); if(n) n.textContent=txt(p[1]);
+  });
   console.log('Count Red · ' + ANL_FASSUNG + ' · Regelschicht: gembel_rules.js');
 
   const noetig=['initBoard','canLift','canDrop','canStack','canPlaceOnEmpty','parityOk',
