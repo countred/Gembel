@@ -2255,6 +2255,64 @@ console.log('\u00a7213 \u2014 Wortlaut-Grunds\u00e4tze (gegen/Gegner, KI, Mensch
      (funde.length ? ' \u2014 ' + funde.join(' \u00b7 ') : ''));
 }
 
+// §214 (30.9.) — DIE ENGLISCHE SPALTE UND DIE SPRACHWAHL. Deutsch ist Standard; Englisch nur nach
+// ausdruecklicher Wahl (gespeicherter Wert `countred-sprache`), der Knopf bleibt unsichtbar bis
+// Walters Entscheid, die Adresse und die Browsersprache werden nicht gelesen.
+console.log('\u00a7214 \u2014 englische Spalte und Sprachwahl:');
+{
+  const vm = require('vm');
+  const schicht = (store) => {                          // die Textschicht mit einem gespielten Speicher
+    const c = { localStorage: { getItem: k => (store && k in store) ? store[k] : null } };
+    vm.createContext(c); vm.runInContext(SCHICHT + '\n;__S = SPRACHE; __T = TEXTE; __txt = txt;', c);
+    return c;
+  };
+  const D = schicht({}), E = schicht({'countred-sprache':'en'});
+  const de = D.__T.de.t, en = D.__T.en && D.__T.en.t || {};
+  // Vollstaendig und deckungsgleich
+  const kDe = Object.keys(de).sort(), kEn = Object.keys(en).sort();
+  ok(kDe.length > 300 && JSON.stringify(kDe) === JSON.stringify(kEn),
+     'die englische Spalte hat GENAU die Schl\u00fcssel der deutschen (' + kEn.length + ' / ' + kDe.length + ')');
+  const ph = v => (String(v).match(/\{\d+\}/g)||[]).sort().join();
+  const tg = v => (String(v).match(/<\/?[a-z]+/g)||[]).sort().join();
+  const ab = kDe.filter(k => ph(de[k]) !== ph(en[k]) || tg(de[k]) !== tg(en[k]));
+  ok(ab.length === 0, 'jeder englische Text hat dieselben Platzhalter und dieselbe Auszeichnung' + (ab.length ? ' \u2014 ' + ab.join(', ') : ''));
+  // Keine vergessene Uebersetzung, keine verbotenen Woerter (Begriffstafel + Walters Grundsaetze)
+  const umlaut = kEn.filter(k => /[\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df]/.test(String(en[k])));
+  ok(umlaut.length === 0, 'kein Umlaut im Englischen (Zeichen einer vergessenen \u00dcbersetzung)' + (umlaut.length ? ' \u2014 ' + umlaut.join(', ') : ''));
+  const VERBOTEN_EN = [/in a row/i, /opponent/i, /\bunstack/i, /rematch/i, /locked square/i, /\bagainst\b/i,
+                       /\bAI\b/, /\bhuman\b/i, /\bMax\b(?! Michu)/];
+  const vb = kEn.filter(k => VERBOTEN_EN.some(re => re.test(String(en[k]).replace(/<[^>]*>/g,' '))));
+  ok(vb.length === 0, 'kein verbotenes Wort im Englischen (in a row, opponent, unstack, rematch, against, AI, human, Max ohne Michu \u2026)' + (vb.length ? ' \u2014 ' + vb.join(', ') : ''));
+  // Sprachwahl: nur der gespeicherte Wert, nichts sonst
+  ok(D.__S === 'de' && E.__S === 'en' && schicht({'countred-sprache':'fr'}).__S === 'de' && schicht(null).__S === 'de',
+     'Sprachwahl: ohne Wahl Deutsch, nur „en\u201c schaltet um, alles andere bleibt Deutsch');
+  const c2 = { localStorage: { getItem(){ throw new Error('gesperrt'); } } }; vm.createContext(c2);
+  vm.runInContext(SCHICHT + '\n;__S = SPRACHE;', c2);
+  ok(c2.__S === 'de', 'gesperrter Speicher \u2192 Deutsch, kein Absturz');
+  const fn = (html.match(/\(function spracheWaehlen\(\)\{[\s\S]*?\n\}\)\(\);/)||[''])[0];
+  ok(fn.length > 0 && !/navigator|location|document/.test(fn),
+     'die Sprachwahl liest weder Browsersprache noch Adresse (\u00a7 25 TDDDG, \u00a7203)');
+  ok(E.__txt('meldung.du-hast-punkte', {0:1.5}) === 'You have 1.5 points.' && D.__txt('meldung.du-hast-punkte', {0:1.5}) === 'Du hast 1,5 Punkte.',
+     'Zahlen je Sprache: „1,5\u201c deutsch, „1.5\u201c englisch');
+  // Der Knopf: unsichtbar, schreibt nur beim Druck
+  const knopf = (html.match(/<button[^>]*id="btn-sprache"[^>]*>/)||[''])[0];
+  const sep = (html.match(/<span[^>]*id="sprache-sep"[^>]*>/)||[''])[0];
+  ok(/\bhidden\b/.test(knopf) && /\bhidden\b/.test(sep) && /const SPRACHKNOPF_SICHTBAR = false;/.test(html),
+     'der Sprachknopf ist gebaut, aber UNSICHTBAR (Walters Entscheid steht aus)');
+  const umsch = (html.match(/window\.spracheUmschalten = function\(\)\{[\s\S]*?\n\};/)||[''])[0];
+  const schreib = (HTML_CODE.match(/localStorage\.(setItem|removeItem)\('countred-sprache'/g)||[]).length;
+  ok(umsch.length > 0 && schreib === 2 && /setItem\('countred-sprache', 'en'\)/.test(umsch) && /removeItem\('countred-sprache'\)/.test(umsch),
+     'geschrieben wird der Wert NUR im Knopf (setzen bzw. entfernen), nirgends sonst');
+  // Die Vorschau-Seite: da, unverlinkt, nicht indexiert, gleicher Schluessel, keine Adressauswertung
+  const path = require('path');
+  const vs = fs.existsSync(path.join(__dirname,'vorschau-sprache.html')) ? fs.readFileSync(path.join(__dirname,'vorschau-sprache.html'),'utf8') : '';
+  const anl = fs.readFileSync(path.join(__dirname,'anleitung.html'),'utf8');
+  ok(vs.length > 0 && /noindex/.test(vs) && /'countred-sprache'/.test(vs) && !/location\.(search|hash)|navigator/.test(vs.replace(/<!--[\s\S]*?-->/g,'')) &&
+     !/<script[^>]*\bsrc=/.test(vs) && !/vorschau-sprache/.test(HTML_CODE) && !/vorschau-sprache/.test(anl.replace(/<!--[\s\S]*?-->/g,'')),
+     'Vorschau-Seite: da, unverlinkt, nicht indexiert, derselbe Schl\u00fcssel, keine Adresse, nichts von au\u00dfen');
+  ok(/document\.documentElement\.lang = SPRACHE;/.test(html), 'das lang-Attribut folgt der Sprache');
+}
+
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
 {
   const LESE = ['regeln-overlay','ueber-overlay','impressum-overlay','datenschutz-overlay','gate-overlay'];

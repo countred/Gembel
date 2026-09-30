@@ -190,6 +190,7 @@ block('T · Textschicht der Anleitung (§208 Probe, §209 Schritte, §210 Rueckm
       'zug','sieg','vor','nach',                          // Aktionsarten, Erwartung, Textvarianten
       'anheben','stapeln','absetzen',                     // Verben als Schluessel von URTEIL; rechnung:'anheben'
       'impressum','datenschutz',                          // Sprungmarken in index.html (#impressum)
+      'red',                                              // Figurenfarbe (\u201eCount Red\u201c steht im Seitentitel)
       'hat','auf',                                        // Teile von Diagnosezeilen in err.push (Konsole)
     ]);
     const r = pruefe(HTML, { erlaubt: ERLAUBT, kennungen: KENNUNGEN, wortschatz: WORTSCHATZ,
@@ -251,6 +252,40 @@ block('T · Textschicht der Anleitung (§208 Probe, §209 Schritte, §210 Rueckm
       teile.length > 80 && aus.length > 50 && nos.length > 50 && funde.length===0, funde.join(', '));
   }
 
+  // T22 · §214: die englische Spalte der Anleitung, der Fehlerschirm und die Sprachwahl.
+  {
+    const EN = (M.TEXTE && M.TEXTE.en && M.TEXTE.en.t) || {};
+    const kDe = Object.keys(T).sort(), kEn = Object.keys(EN).sort();
+    const ph = v => (String(v).match(/\{\d+\}/g)||[]).sort().join();
+    const tg = v => (String(v).match(/<\/?[a-z]+/g)||[]).sort().join();
+    const ab = kDe.filter(k => ph(T[k]) !== ph(EN[k]) || tg(T[k]) !== tg(EN[k]));
+    const uml = kEn.filter(k => /[\u00e4\u00f6\u00fc\u00c4\u00d6\u00dc\u00df]/.test(String(EN[k])));
+    const VERBOTEN_EN = [/in a row/i, /opponent/i, /\bunstack/i, /rematch/i, /locked square/i, /\bagainst\b/i,
+                         /\bAI\b/, /\bhuman\b/i, /\bMax\b(?! Michu)/];
+    const vb = kEn.filter(k => VERBOTEN_EN.some(re => re.test(String(EN[k]).replace(/<[^>]*>/g,' '))));
+    pruef('T22 englische Spalte deckungsgleich (Schluessel, Platzhalter, Auszeichnung), ohne Umlaut und verbotene Woerter',
+      kDe.length > 80 && JSON.stringify(kDe) === JSON.stringify(kEn) && !ab.length && !uml.length && !vb.length,
+      [kDe.length+'/'+kEn.length, ab.join(','), uml.join(','), vb.join(',')].join(' | '));
+    // Zwilling (P9): dieselbe Sprachwahl in index.html, im Fehlerschirm und im Hauptskript
+    const SPIEL = fs.readFileSync(path.join(D,'index.html'),'utf8');
+    const fns = [SPIEL, HTML].flatMap(q => q.match(/\(function spracheWaehlen\(\)\{[\s\S]*?\n\}\)\(\);/g) || []);
+    pruef('T23 Sprachwahl zeichengleich an allen drei Stellen (Spiel, Fehlerschirm, Anleitung) — P9',
+      fns.length === 3 && fns.every(f => f === fns[0]) && !/navigator|location|document/.test(fns[0]), fns.length+' Stellen');
+    // Fehlerschirm: dieselben Felder in beiden Sprachen; Hinweis ohne JavaScript zweisprachig
+    const erstes = [...HTML.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/g)].map(m=>m[1]).find(x => /__ANL_AUSFALL_TEXTE/.test(x)) || '';
+    const teil = (erstes.match(/window\.__ANL_AUSFALL_TEXTE = \{[\s\S]*?\n\};/)||[''])[0];
+    const w = {}; try { new Function('window', teil)(w); } catch(e){}
+    const A = w.__ANL_AUSFALL_TEXTE || {};
+    pruef('T24 Fehlerschirm in beiden Sprachen, dieselben Felder; Sprachwahl dort vor der Auswahl',
+      A.de && A.en && JSON.stringify(Object.keys(A.de).sort()) === JSON.stringify(Object.keys(A.en).sort()) &&
+      A.en.zurueck === 'To the game' && /var __anlAT = window\.__ANL_AUSFALL_TEXTE\[__anlSprache\] \|\| window\.__ANL_AUSFALL_TEXTE\.de;/.test(erstes));
+    const nos = (HTML.match(/<noscript>[\s\S]*?<\/noscript>/)||[''])[0];
+    pruef('T25 Hinweis ohne JavaScript zweisprachig (Walter, 29.9.)',
+      /Diese Anleitung braucht JavaScript\./.test(nos) && /This guide needs JavaScript\./.test(nos) && /lang="en"/.test(nos));
+    pruef('T26 Seitentitel und lang-Attribut folgen der Sprache',
+      /document\.title=txt\('anl\.seitentitel'\);/.test(SKRIPT) && /document\.documentElement\.lang=SPRACHE;/.test(SKRIPT));
+  }
+
   // T10 · Aufgaben (ohne #html) gehen maskiert in den Kasten — Anzeige UND Hoehenmessung
   pruef('T10 Aufgabe maskiert in setText und in der Hoehenmessung',
     (SKRIPT.match(/'<div class="aufgabe">'\s*\+\s*alsText\(/g)||[]).length===2 &&
@@ -267,7 +302,19 @@ pruef('A3 kein Firebase', !/firebase/i.test(ohneKommentar));
 // §203: gegen `ohneKommentar` statt gegen HTML. Ein Kommentar speichert nichts — und die
 // Begruendung, WARUM der Schritt in der Adresse steht und nicht im Speicher, muss das Wort
 // nennen duerfen. A3 macht es seit jeher so; A4 war die Ausnahme (U10-Muster).
-pruef('A4 kein Browser-Speicher', !/localStorage|sessionStorage|document\.cookie/.test(ohneKommentar));
+// §214: A4 bleibt in der Absicht gleich — die Anleitung SPEICHERT nichts. Sie LIEST jetzt genau
+// einen Wert: die Sprachwahl `countred-sprache`, die im Spiel ein ausdruecklicher Knopfdruck
+// schreibt. Erlaubt ist deshalb nur dieses eine getItem, in den zwei zeichengleichen Stellen der
+// Sprachwahl (Fehlerschirm und Hauptskript); jeder Schreibzugriff und alles andere faellt.
+{
+  const zugriffe = (ohneKommentar.match(/localStorage/g)||[]).length;
+  const lesen = (ohneKommentar.match(/localStorage\.getItem\('countred-sprache'\)/g)||[]).length;
+  const typeofs = (ohneKommentar.match(/typeof localStorage/g)||[]).length;
+  pruef('A4 kein Browser-Speicher geschrieben — nur die Sprachwahl wird gelesen (§214)',
+    lesen === 2 && zugriffe === lesen + typeofs && typeofs === 2 &&
+    !/setItem|removeItem|\.clear\(|sessionStorage|document\.cookie|indexedDB/.test(ohneKommentar),
+    'getItem '+lesen+', Zugriffe '+zugriffe);
+}
 pruef('A5 keine KI', !/countred_ai/.test(ohneKommentar));
 pruef('A6 keine externe Quelle', !/https?:\/\/(?!www\.w3\.org)/.test(HTML.replace(/<!--[\s\S]*?-->/g,'')));
 pruef('A7 Fassungsstempel vorhanden', /Anleitung · Fassung \d+ · \d\d\.\d\d\.\d{4}/.test(M.ANL_FASSUNG), M.ANL_FASSUNG);

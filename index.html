@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=169'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=170'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -621,6 +621,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <span class="legal-sep" aria-hidden="true" data-t="start.text-2"></span>
       <button type="button" class="legal-link"
         onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')" data-t="start.datenschutz"></button>
+      <!-- §214: der Sprachknopf — gebaut, aber UNSICHTBAR (`hidden`), bis Walter entscheidet
+           (SPRACHKNOPF_SICHTBAR). Beschriftet in der Sprache, die er einschaltet. -->
+      <span class="legal-sep" id="sprache-sep" aria-hidden="true" hidden data-t="start.text-3"></span>
+      <button type="button" class="legal-link sprach-link" id="btn-sprache" hidden
+        onclick="spracheUmschalten()" data-t="start.sprache-wechseln"></button>
     </div>
     <!-- §134: SICHTBARE Test-Kennung. Es ist exakt die Zufallskennung aus §124, die ohnehin
          in jeder Partie mitgeschrieben wird — hier nur lesbar gemacht, damit ein Testspieler
@@ -1186,7 +1191,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=169" charset="utf-8"></script>
+<script src="gembel_rules.js?v=170" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1198,7 +1203,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=169" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=170" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1873,7 +1878,21 @@ const GATE_STORE = 'countred_gate';
 // Schluessel und NUR die. Alles andere geht ueber `textContent`. Eine Pruefung haelt
 // fest, dass kein Schluessel ohne `#html` jemals in innerHTML landet und dass die
 // erlaubte Auszeichnung auf <strong> und <br> begrenzt bleibt.
-const SPRACHE = 'de';
+// §214 — SPRACHWAHL. Deutsch ist Standard. Englisch NUR, wenn `countred-sprache` = 'en' gespeichert
+// ist — und das schreibt ausschliesslich ein ausdruecklicher Druck auf den Sprachknopf (§ 25 TDDDG:
+// vom Nutzer gewuenscht; ohne Wahl wird nichts gespeichert). Der Knopf bleibt unsichtbar, bis Walter
+// entscheidet (SPRACHKNOPF_SICHTBAR); bis dahin schreibt nur die unverlinkte Vorschau-Seite
+// `vorschau-sprache.html` denselben Wert. Die ADRESSE wird dafuer NICHT gelesen (§203: `?` tabu,
+// genau eine Stelle liest die Raute), und die Browsersprache auch nicht (§ 25 TDDDG, keine
+// Ausrichtung auf fremde Maerkte — ToDo 43).
+// ⚠️ Diese Funktion steht ZEICHENGLEICH auch im ersten Skript von anleitung.html (Fehlerschirm) —
+// die Suiten halten das fest (P9). Wer sie aendert, aendert beide.
+const SPRACHE = (function spracheWaehlen(){
+  try {
+    if (typeof localStorage !== 'undefined' && localStorage.getItem('countred-sprache') === 'en') return 'en';
+  } catch(e){}
+  return 'de';
+})();
 const TEXTE = {
   de: {
     zahl: n => String(n).replace('.', ','),                         // 1.5 → „1,5"
@@ -1989,9 +2008,11 @@ const TEXTE = {
       'start.impressum':                             'Impressum',
       'start.interaktive-spielanleitung':            'Interaktive Spielanleitung',
       'start.mit-code-zu-zweit':                     'Mit Code zu zweit',
+      'start.sprache-wechseln':                      'English',
       'start.testversion':                           'Testversion',
       'start.text':                                  '·',
       'start.text-2':                                '·',
+      'start.text-3':                                '·',
       'start.ueber-das-spiel':                       'Über das Spiel',
       'start.wie-moechtest-du-spielen':              'Wie möchtest du spielen?',
       'stufe.einsteiger':                            'Einsteiger',
@@ -2108,11 +2129,13 @@ const TEXTE = {
       'meldung.mitspieler-hat-die-partie':           'Mitspieler hat die Partie beendet — die Verbindung war zu lange unterbrochen.',
       'meldung.mitspieler-hat-gewonnen':             'Mitspieler hat gewonnen',
       'meldung.mitspieler-hat-remis-eingefordert':   'Mitspieler hat Remis eingefordert — Stellung 3× wiederholt',
+      'meldung.mitspieler-im-satz':                  'Mitspieler',
       'meldung.mitspieler-ist-mit-remis':            'Mitspieler ist mit Remis einverstanden',
       'meldung.mitspieler-ist-nicht-mehr':           'Mitspieler ist nicht mehr verbunden — eine neue Runde ist gerade nicht möglich.',
       'meldung.mitspieler-lehnt-ab-spiel':           'Mitspieler lehnt ab — Spiel beendet',
       'meldung.mitspieler-lehnt-remis-ab':           'Mitspieler lehnt Remis ab — Spiel läuft weiter',
       'meldung.mitspieler-offline-spiel-abgebroch':  'Mitspieler offline — Spiel abgebrochen.',
+      'meldung.mitspieler-satzanfang':               'Mitspieler',
       'meldung.mitspieler-wieder-verbunden':         'Mitspieler wieder verbunden.',
       'meldung.name-braucht':                        '{0} braucht',
       'meldung.name-hat':                            '{0} hat',
@@ -2185,6 +2208,321 @@ const TEXTE = {
       'meldung.zuege-ohne-neuen-dreier':             '{0} Züge ohne neuen Dreier',
       'meldung.zuege-ohne-neuen-dreier-2':           '{0}/{1} Züge ohne neuen Dreier',
       'meldung.zurueck-zum-brett':                   'Zurück zum Brett',
+    }
+  },
+  // §214 — die englische Spalte. Begriffstafel und Grundsaetze: STAND, ToDo 43. Dieselben
+  // Schluessel, dieselben Platzhalter, dieselbe Auszeichnung wie oben — die Suite haelt es fest.
+  en: {
+    zahl: n => String(n),                                            // 1.5 bleibt „1.5"
+    t: {
+      'lobby.beitreten':                             'Join',
+      'lobby.raum-erstellen':                        'Create room',
+      'lobby.spiele-mit-code-gegen':                 'Use a code to play with someone from your circle of friends.',
+      'lobby.testversion':                           'Test version',
+      'lobby.zurueck':                               'Back',
+      'marken.hinweis-regeln':                       'Firebase rules: enable games_countred_marks',
+      'marken.hinweis-regeln-2':                     'Firebase rules: enable games_countred_marks (see HANDOVER §88/§89).',
+      'marken.lade':                                 'Loading…',
+      'marken.laden-fehlgeschlagen':                 'Loading failed: {0}',
+      'marken.markieren-fehlgeschlagen':             'Marking failed: {0}',
+      'marken.markierte-partien':                    'Marked games',
+      'marken.offen-abgebrochen':                    'open/aborted',
+      'marken.unbekannt':                            'unknown',
+      'marken.zeile':                                '{0} · {1} · marked {2}× · {3}',
+      'marken.zurueck':                              'Back',
+      'neu.datenschutz':                             'Privacy',
+      'neu.impressum':                               'Legal notice',
+      'neu.menue':                                   'Menu',
+      'neu.text':                                    '·',
+      'neu.text-2':                                  '·',
+      'neu.ueber-das-spiel':                         'About the game',
+      'nochmal.dein-mitspieler-moechte-eine':        'The other player would like to start a new round.',
+      'nochmal.ja-nochmal':                          'Yes, play again!',
+      'nochmal.nein-verlassen':                      'No, leave',
+      'nochmal.nochmal-spielen':                     'Play again?',
+      'punkte.also-dreimal-gegen-einsteiger#html':   'So: win three games at Beginner level, two at Advanced or one at Master. <strong>After that you may invite anyone.</strong>',
+      'punkte.anderes-geraet':                       'Another device',
+      'punkte.bewahre-diesen-code-auf':              'Keep this code safe. If you delete your browser’s website data, your score is gone; the code brings it back.',
+      'punkte.code-eingeben':                        'Enter code',
+      'punkte.code-kopieren':                        'Copy code',
+      'punkte.einloesen':                            'Redeem',
+      'punkte.mit-code-zu-zweit':                    'Two players with a code',
+      'punkte.schliessen':                           'Close',
+      'punkte.schliessen-2':                         'Close',
+      'punkte.schliessen-3':                         'Close',
+      'punkte.sieg-gegen-max-michu#html':            'Game won with Max Michu <strong>Beginner</strong> = 1 point<br>Game won with Max Michu <strong>Advanced</strong> = 1.5 points<br>Game won with Max Michu <strong>Master</strong> = 3 points',
+      'punkte.um-jemand-zum-spiel':                  'To invite someone to play with you, you need 3 points:',
+      'punkte.willst-du-deinen-punktestand':         'Want to take your score to another device? Simply copy this transfer code into the window on your other device:',
+      'regeln.4-4-felder-zeilen':                    '4×4 squares, rows 1–4, columns A–D. Each square has points (at the top of the square): row 1 = 3, row 2 = 2, row 3 = 1, row 4 = 0.',
+      'regeln.4-gleichfarbige-figuren-in':           '4 pieces of the same colour in one column (A, B, C or D). For a stack, the base counts, not the piece on top.',
+      'regeln.absetzen-auf-ein-leeres':              'Setting down on an empty square',
+      'regeln.anheben':                              'Lifting',
+      'regeln.beim-nochmal-beginnt-der':             'In Play again, the loser of the previous game begins; after a draw, the first player changes. Parity changes after every game, so both players alternate between even and odd.',
+      'regeln.brett':                                'Board',
+      'regeln.die-spieler-ziehen-abwechselnd':       'The players take turns. Parity decides whether a move is allowed: one player moves when the number of red pieces involved is even, the other when it is odd.',
+      'regeln.die-zahl-auf-der':                     'The number on the piece must match the points of the square. Count the red neighbours of the target square after the planned move. Count the moving piece if it is red. Odd sum → the odd player may set down, even sum → the even player.',
+      'regeln.drei-in-einer-spalte#html':            '<strong style="color:var(--text);">Three in a column → bonus move</strong><br>Three pieces of the same colour directly one above the other in a column; for a stack, the base counts. These three pieces become locked, and whoever formed the triple gets a bonus move. If no bonus move is possible, the other player moves.<br><br>Locked means: this piece can no longer be moved. But you may still stack on it, and the upper piece of a stack formed this way may be taken off again. The locked pieces still count for parity.<br><br>Whoever moves the fourth matching piece into a column wins — no matter who built the three below it.',
+      'regeln.eine-figur-auf-eine':                  'Set a piece on a single piece. Only the red pieces in the new stack count — no neighbours. The points do not matter here. A stack holds 2 pieces; you may not stack onto a stack.',
+      'regeln.figuren':                              'Pieces',
+      'regeln.first-published-in-1998':              'First published in 1998 as Gembel',
+      'regeln.hat-ein-spieler-keinen':               'If a player has no legal move, the other player moves again.',
+      'regeln.keine-zugmoeglichkeit':                'No legal move',
+      'regeln.nochmal':                              'Play again',
+      'regeln.nur-wer-einen-stapel':                 'Only the player who formed a stack may break it up again. Only the top piece is ever moved, never the stack as a whole. The rules above apply to setting it down.',
+      'regeln.passen-ist-nicht-erlaubt':             'Passing is not allowed.',
+      'regeln.regeln':                               'Rules',
+      'regeln.remis-eine-einigung-auf#html':         '<strong style="color:var(--text);">Draw</strong><br>A draw can be agreed at any time; such an offer may be declined.<br><br>If the same position — with the same player to move — occurs for the <strong style="color:var(--text);">third</strong> time, the player to move can <strong style="color:var(--text);">claim</strong> a draw. The other player cannot decline it.<br><br>When the same position occurs for the <strong style="color:var(--text);">fifth</strong> time, the game ends automatically in a draw, and likewise if no new triple has been formed for 50 moves.',
+      'regeln.schliessen':                           'Close',
+      'regeln.schliessen-2':                         'Close',
+      'regeln.schliessen-3':                         'Close',
+      'regeln.spielbeginn':                          'Starting the game',
+      'regeln.spieler-und-paritaet':                 'Players and parity',
+      'regeln.stapel-aufloesen':                     'Breaking up a stack',
+      'regeln.stapeln':                              'Stacking',
+      'regeln.wer-beginnt-und-wer':                  'Who begins, and who gets even or odd parity, is decided by lot at the start of the game.',
+      'regeln.zaehle-alle-roten-figuren':            'Count all red pieces on the up to 8 neighbouring squares (in a stack, each red piece separately). Count the moving piece itself if it is red. Odd sum → the odd player may lift, even sum → the even player.',
+      'regeln.ziel':                                 'Aim',
+      'regeln.zugrichtung-und-zugweite-keine#html':  '<strong style="color:var(--text);">Direction and distance</strong><br>No restriction. A piece may be moved to <em>any</em> square on the board — forwards, backwards, sideways, diagonally, over any distance and over other pieces. Whether a move is allowed is decided by parity alone, and for an empty target square also by the points.',
+      'regeln.zugverzicht':                          'Passing',
+      'regeln.zwei-farben-schwarz-und':              'Two colours, black and red, with numbers 0–3. The number matches the point value of the square the piece stands on at the start. The pieces do not belong to either player.',
+      'remis.ablehnen':                              'Decline',
+      'remis.ablehnen-2':                            'Decline',
+      'remis.einverstanden':                         'Agree',
+      'remis.einverstanden-2':                       'Agree',
+      'remis.max-michu-bietet-remis#html':           'Max Michu offers a draw.<br>Do you agree?',
+      'remis.mitspieler-bietet-remis-an#html':       'The other player offers a draw.<br>Do you agree?',
+      'remis.remis-angebot':                         'Draw offer',
+      'remis.remis-angebot-2':                       'Draw offer',
+      'seite.1':                                     '1',
+      'seite.2':                                     '2',
+      'seite.3':                                     '3',
+      'seite.4':                                     '4',
+      'seite.a':                                     'A',
+      'seite.abbrechen':                             'Cancel',
+      'seite.b':                                     'B',
+      'seite.beitreten':                             'Join',
+      'seite.bitte-geraet-drehen':                   'Please rotate your device',
+      'seite.c':                                     'C',
+      'seite.countred-ist-fuer-das':                 'CountRed is made for portrait mode.',
+      'seite.d':                                     'D',
+      'seite.du':                                    'You',
+      'seite.gembel-count-red':                      'Gembel · Count Red',
+      'seite.gerade':                                'even',
+      'seite.gib-den-5-stelligen':                   'Enter the 5-character code:',
+      'seite.mitspieler':                            'Other player',
+      'seite.optionen':                              'Options',
+      'seite.raum-beitreten':                        'Join room',
+      'seite.raum-erstellt':                         'Room created',
+      'seite.regeln':                                '? Rules',
+      'seite.teile-diesen-code-mit':                 'Share this code with the person you want to play with:',
+      'seite.testversion':                           'Test version',
+      'seite.text':                                  '----',
+      'seite.ungerade':                              'odd',
+      'seite.verbinde':                              'Connecting…',
+      'seite.warte-auf-mitspieler':                  'Waiting for the other player…',
+      'seite.zurueck':                               'Back',
+      'start.datenschutz':                           'Privacy',
+      'start.gegen-max-michu':                       'With Max Michu',
+      'start.impressum':                             'Legal notice',
+      'start.interaktive-spielanleitung':            'Interactive guide: how to play',
+      'start.mit-code-zu-zweit':                     'Two players with a code',
+      'start.sprache-wechseln':                      'Deutsch',
+      'start.testversion':                           'Test version',
+      'start.text':                                  '·',
+      'start.text-2':                                '·',
+      'start.text-3':                                '·',
+      'start.ueber-das-spiel':                       'About the game',
+      'start.wie-moechtest-du-spielen':              'How would you like to play?',
+      'stufe.einsteiger':                            'Beginner',
+      'stufe.fortgeschritten':                       'Advanced',
+      'stufe.gegen-max-michu-waehle':                'With Max Michu — choose the level:',
+      'stufe.meister':                               'Master',
+      'stufe.stark':                                 'Strong',
+      'stufe.zurueck':                               'Back',
+      'ueber.bild-brett':                            'The board of the limited edition: sixteen turned pieces in black and aluminium on a wooden board, several of them stacked.',
+      'ueber.bild-walter':                           'Walter Rehm, sitting cross-legged, black and white.',
+      'ueber.countred-ist-ein-strategiespiel':       'CountRed is a strategy game. No dice, no chance, no luck. The rules take three minutes to read; a game rarely lasts longer than 15 minutes.',
+      'ueber.dahinter-steht-kein-studio#html':       'There is no studio behind this, just one person: my name is Walter Rehm and I live in Munich. Questions, bug reports and ideas are welcome at <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a>.',
+      'ueber.dann-kommt-meistens-diese':             'Then comes the usual question: “So which pieces are mine? Which colour is mine?” Answer: none. In principle anyone can move any piece — nobody is red, nobody is black. What you may move is decided by the board: count the red neighbours of the piece. If the number is even, you may move it. If it is odd, the other player may.',
+      'ueber.der-computergegner-heisst-max':         'Your computer player is called Max Michu. Max Michu is not a learning model, but calculates moves and evaluates positions by rules that I set up myself and refined in thousands of test games. Three levels, from forgiving to unpleasant.',
+      'ueber.die-limitierte-auflage-design':         'The limited edition. Design development: Gerd Reger, Bernd Schiller, Walter Rehm',
+      'ueber.foto-christian-alber':                  'Photo: Christian Alber',
+      'ueber.neu-ist-das-spiel':                     'The game is not new. I invented it in 1998; the three of us developed the design over several years. The limited edition of that time has been out of print for years. Here it can be played online for the first time, with the original rules.',
+      'ueber.schliessen':                            'Close',
+      'ueber.schliessen-2':                          'Close',
+      'ueber.schliessen-3':                          'Close',
+      'ueber.ueber-das-spiel':                       'About the game',
+      'ueber.was-es-hier-nicht':                     'What you won’t find here: sign-up, accounts, advertising, tracking. If you want to play with someone, you share a code — that’s all. The game is free.',
+      'verbindung.der-andere-spieler-hat':           'The other player has disconnected.',
+      'verbindung.sofort-abbrechen-zur-lobby':       'Cancel now / back to lobby',
+      'verbindung.verbindung-unterbrochen':          'Connection lost',
+      'verbindung.verbindung-unterbrochen-2':        'Connection lost',
+      'verbindung.warte-auf-rueckkehr':              'Waiting for them to return…',
+      'verbindung.zurueck-zur-auswahl':              'Back to the menu',
+      'warten.raum#html':                            'Room: <strong id="wait-code"></strong>',
+      'warten.verbunden':                            'Connected! ✓',
+      'warten.verlassen':                            'Leave',
+      'warten.warte-auf-den-spielstart':             'Waiting for the game to start…',
+      'wartung.das-spiel-ist-voruebergehend#html':   'The game is temporarily unavailable.<br>Please try again later.',
+      'wartung.wartungsarbeiten':                    'Maintenance',
+      'meldung.achtung-diese-stellung-war':          'Careful: this position has already occurred 4× — once more = draw.',
+      'meldung.anfrage-laeuft-bereits-warte':        'Request already sent – waiting for the other player…',
+      'meldung.aufgeben':                            'Resign',
+      'meldung.aufgeben-nur-wenn-du':                'Resign (only when it is your move)',
+      'meldung.automatischer-abbruch-in':            'Automatic cancellation in {0} s.',
+      'meldung.basis-figur-im-dreier':               '{0}: base piece in the triple is locked',
+      'meldung.bitte-5-zeichen-eingeben':            'Please enter 5 characters (currently: {0}).',
+      'meldung.bonuszug-nicht-moeglich-am':          'No bonus move possible — {0} to move',
+      'meldung.bonuszug-signal':                     'Bonus move!',
+      'meldung.code-bitte-manuell-kopieren':         'Code: {0} (please copy it by hand)',
+      'meldung.code-erfolgreich-uebertragen':        'Code transferred successfully.',
+      'meldung.code-ist-markiert-jetzt':             'Code is selected — copy it now.',
+      'meldung.code-kopiert':                        'Code {0} copied',
+      'meldung.das-ist-der-code':                    'That is the code of this device. Enter the code of your other device.',
+      'meldung.das-zaehlt-als-aufgabe':              'This counts as resigning — the other player wins and the game is over.',
+      'meldung.dein-angebot-steht-noch':             'Your offer still stands',
+      'meldung.dein-stapel-kein-erlaubtes':          '{0}: your stack — no legal target square',
+      'meldung.deine-verbindung-ist-unterbrochen':   'Your connection has been lost. The game will continue as soon as it is back.',
+      'meldung.deine-verbindung-ist-unterbrochen-2': 'Your connection has been lost — the request could not be delivered.',
+      'meldung.der-code-ist-nicht':                  'The code is not correct. Please enter the complete code.',
+      'meldung.der-raum-besteht-nicht':              'The room no longer exists — the game is over.',
+      'meldung.die-partie-ist-beendet':              'The game is over: {0}. The message did not reach you because of the interruption.',
+      'meldung.dieser-code-war-schon':               'This code has already been redeemed.',
+      'meldung.dieser-raum-wurde-abgebrochen':       'This room was cancelled.',
+      'meldung.display-code':                        'display-code',
+      'meldung.drei-in-einer-spalte':                '3 in a column!',
+      'meldung.du':                                  'You',
+      'meldung.du-bist':                             'you are',
+      'meldung.du-bist-dran':                        'Your turn',
+      'meldung.du-brauchst':                         'you need',
+      'meldung.du-gewinnst':                         '🏆 You win!',
+      'meldung.du-hast':                             'You have',
+      'meldung.du-hast-aufgegeben':                  'You have resigned',
+      'meldung.du-hast-den-raum':                    'You have left the room.',
+      'meldung.du-hast-gewonnen':                    'You have won',
+      'meldung.du-hast-punkte':                      'You have {0} points.',
+      'meldung.du-hast-von-punkten':                 'You have {0} of {1} points.',
+      'meldung.du-ziehst':                           'you move',
+      'meldung.eine-neue-runde-ist':                 'A new round is not possible.',
+      'meldung.einfordern-nicht-moeglich-stellung':  'Cannot claim — the position has not yet been repeated 3×.',
+      'meldung.erst-drei-punkte-sammeln':            'First collect three points: win 3 games at Beginner, 2 at Advanced or 1 at Master.',
+      'meldung.erst-nach-dem-bonuszug':              'Only after the bonus move',
+      'meldung.feld-rot-paritaet':                   '{0}: {1} red — {2}, {3} {4}',
+      'meldung.gate-code':                           'gate-code',
+      'meldung.gerade':                              'even',
+      'meldung.grund-beide-einverstanden':           'both agreed',
+      'meldung.grund-stellung-5-wiederholt':         'position repeated 5×',
+      'meldung.hier-stimmt-was-nicht':               'Something is wrong here',
+      'meldung.hier-stimmte-was-nicht':              'Something was wrong here',
+      'meldung.im-spiel-gegen-max':                  'In a game with Max Michu: Options → mark.',
+      'meldung.ist':                                 '{0} is',
+      'meldung.ist-dran':                            '{0}’s turn',
+      'meldung.kein-spieler-kann-ziehen':            'Neither player can move',
+      'meldung.keine-antwort-mitspieler-ist':        'No answer — the other player is probably no longer connected.',
+      'meldung.keine-figur':                         '{0}: no piece ({1}●)',
+      'meldung.keine-zugmoeglichkeit-nochmals':      '{0} no legal move — {1} again',
+      'meldung.ki-selbsttest-fehlgeschlagen-ki':     '⚠️ Self-test failed — Max Michu paused (details in the console)',
+      'meldung.konnte-nicht-kopieren-bitte':         'Could not copy — please select it by hand.',
+      'meldung.kopieren':                            'copy',
+      'meldung.kopiert':                             'Copied.',
+      'meldung.markiert-partie-zug':                 'marked — game {0}, move {1}',
+      'meldung.max-gewinnt':                         'Max Michu has won',
+      'meldung.max-michu-bietet-remis':              'Max Michu offers a draw…',
+      'meldung.max-michu-gewinnt':                   '🏅 Max Michu wins!',
+      'meldung.max-michu-ist-mit':                   'Max Michu agrees to a draw',
+      'meldung.max-michu-lehnt-remis':               'Max Michu declines the draw — the game continues',
+      'meldung.mensch-gewinnt':                      'You have won',
+      'meldung.mitspieler':                          'Other player',
+      'meldung.mitspieler-gewinnt':                  '🏅 The other player wins!',
+      'meldung.mitspieler-hat':                      'The other player has',
+      'meldung.mitspieler-hat-aufgegeben':           'The other player has resigned',
+      'meldung.mitspieler-hat-den-raum':             'The other player has left the room — the game is over.',
+      'meldung.mitspieler-hat-den-raum-2':           'The other player has left the room.',
+      'meldung.mitspieler-hat-den-raum-3':           'The other player has left the room',
+      'meldung.mitspieler-hat-den-raum-4':           'The other player has left the room — you have won.',
+      'meldung.mitspieler-hat-den-raum-5':           'The other player has left the room. {0}.',
+      'meldung.mitspieler-hat-die-partie':           'The other player has ended the game — the connection was lost for too long.',
+      'meldung.mitspieler-hat-gewonnen':             'The other player has won',
+      'meldung.mitspieler-hat-remis-eingefordert':   'The other player has claimed a draw — position repeated 3×',
+      'meldung.mitspieler-im-satz':                  'the other player',
+      'meldung.mitspieler-ist-mit-remis':            'The other player agrees to a draw',
+      'meldung.mitspieler-ist-nicht-mehr':           'The other player is no longer connected — a new round is not possible right now.',
+      'meldung.mitspieler-lehnt-ab-spiel':           'The other player declines — game over',
+      'meldung.mitspieler-lehnt-remis-ab':           'The other player declines the draw — the game continues',
+      'meldung.mitspieler-offline-spiel-abgebroch':  'The other player is offline — game cancelled.',
+      'meldung.mitspieler-satzanfang':               'The other player',
+      'meldung.mitspieler-wieder-verbunden':         'The other player is connected again.',
+      'meldung.name-braucht':                        '{0} needs',
+      'meldung.name-hat':                            '{0} has',
+      'meldung.name-zieht':                          '{0} moves',
+      'meldung.neu-anderer-modus-stufe':             'New (different mode/level)',
+      'meldung.neue-runde-angefragt-warte':          'New round requested – waiting for the other player…',
+      'meldung.noch-keine-markierten-partien':       'No marked games yet.',
+      'meldung.nochmal':                             'Play again',
+      'meldung.nochmal-anfragen':                    'Ask to play again',
+      'meldung.nochmal-stufe':                       'Play again ({0})',
+      'meldung.nur-wenn-du-am':                      'Only when it is your move',
+      'meldung.partie':                              'Game',
+      'meldung.partie-beendet':                      'Game over',
+      'meldung.partie-verlassen':                    'Leave game',
+      'meldung.partie-verlassen-2':                  'Leave game?',
+      'meldung.partie-verlassen-deine-verbindung':   'Left the game — your connection was lost.',
+      'meldung.punkte':                              'Points: {0}',
+      'meldung.punkte-passen-nicht-figur':           '{0}: points do not match — piece has {1}●, square has {2}●',
+      'meldung.punkte-von':                          'Points: {0} of {1}',
+      'meldung.quell-und-zielfeld-sind':             'Starting and target square are the same',
+      'meldung.raum-bereits-voll':                   'Room is already full.',
+      'meldung.raum-nicht-gefunden-code':            'Room not found. Is the code correct?',
+      'meldung.raum-nicht-mehr-aktiv':               'Room no longer active. Is the code correct?',
+      'meldung.raum-nicht-mehr-vorhanden':           'Room no longer exists.',
+      'meldung.raum-verlassen':                      'Leave room',
+      'meldung.remis':                               'Draw — {0}',
+      'meldung.remis-2':                             'Draw',
+      'meldung.remis-abgelehnt-spiel-laeuft':        'Draw declined — the game continues',
+      'meldung.remis-anbieten':                      'Offer a draw',
+      'meldung.remis-angeboten':                     'Draw offered',
+      'meldung.remis-angeboten-warte-auf':           'Draw offered (waiting for your move)',
+      'meldung.remis-angeboten-warte-auf-2':         'Draw offered — waiting for the other player…',
+      'meldung.remis-angeboten-wartet-auf':          'Draw offered — waiting for an answer',
+      'meldung.remis-beide-einverstanden':           'Draw — both agreed',
+      'meldung.remis-einfordern-3-wiederholung':     'Claim a draw (3× repetition)',
+      'meldung.remis-eingefordert-stellung-3':       'Draw claimed — position repeated 3×',
+      'meldung.remis-eingefordert-stellung-3-2':     'Draw claimed — position repeated 3× (cannot be declined)',
+      'meldung.remis-eingefordert-stellung-3-3':     'Draw claimed — position repeated 3×…',
+      'meldung.remis-erst-nach-dem':                 'Draw (only after the bonus move)',
+      'meldung.remis-kurz':                          'Draw',
+      'meldung.remis-nur-anbieten-wenn':             'You can only offer a draw when it is your move',
+      'meldung.remis-nur-einfordern-wenn':           'You can only claim a draw when it is your move',
+      'meldung.remis-nur-wenn-du':                   'Draw (only when it is your move)',
+      'meldung.rot-kein-erlaubtes-zielfeld':         '{0}: {1} red ({2}) — {3} {4} · no legal target square',
+      'meldung.schon-angeboten-erst-nach':           'Already offered — again only after your move',
+      'meldung.spiel-abgebrochen-zurueck-zur':       'Game cancelled — back to the lobby.',
+      'meldung.spiel-beendet':                       'Game over',
+      'meldung.spiel-laeuft':                        'Game in progress',
+      'meldung.stapel-ist-voll-max':                 '{0}: stack is full — max. 2 pieces',
+      'meldung.stapel-von-nur-er':                   '{0}: stack of {1} — only {1} may break it up',
+      'meldung.stapeln-rot':                         '{0}: stacking — {1} red ({2}), {3} {4}',
+      'meldung.suche-raum':                          'Looking for room…',
+      'meldung.unentschieden':                       'Draw',
+      'meldung.unentschieden-banner':                '🤝 Draw',
+      'meldung.unentschieden-grund':                 'Draw ({0})',
+      'meldung.ungerade':                            'odd',
+      'meldung.verbindung-unterbrochen-satz':        'Connection lost.',
+      'meldung.verbindung-unterbrochen-titel':       'Connection lost',
+      'meldung.verbindung-wiederhergestellt-der-s':  'Connection restored. Checking the game state…',
+      'meldung.verbindung-wird-wiederhergestellt':   'Reconnecting…',
+      'meldung.verbindung-zu-lange-unterbrochen':    'Connection lost for too long — the room has been closed.',
+      'meldung.verbindung-zum-mitspieler-unterbro':  'Connection to the other player lost. Waiting for them to return…',
+      'meldung.verbindungsfehler':                   'Connection error: {0}',
+      'meldung.von-nach-gezogen':                    '↗ {0} moved from {1} to {2}',
+      'meldung.wait-code':                           'wait-code',
+      'meldung.warte':                               'Waiting…',
+      'meldung.weiterschauen':                       'Keep watching',
+      'meldung.weiterspielen':                       'Keep playing',
+      'meldung.ziel-rot':                            '{0}: {1} red ({2}) — {3} {4}',
+      'meldung.zuege-ohne-neuen-dreier':             '{0} moves without a new triple',
+      'meldung.zuege-ohne-neuen-dreier-2':           '{0}/{1} moves without a new triple',
+      'meldung.zurueck-zum-brett':                   'Back to the board',
     }
   }
 };
@@ -2384,6 +2722,18 @@ function gateRefresh(){
 }
 // Beitreten ist IMMER frei. Gesperrt ist nur das Eroeffnen eines Raums.
 window.tryCreateRoom = function(){ if(gateOpen()) createRoom(); else openGateInfo(); };
+// §214: der Sprachknopf. Er schreibt `countred-sprache` NUR hier, beim ausdruecklichen Druck
+// (Deutsch → Wert entfernen, nichts bleibt zurueck), und laedt neu, damit jede Stelle — auch die
+// Anleitung und ihr Fehlerschirm — dieselbe Wahl liest. SICHTBAR erst auf Walters Entscheid:
+// dann wird aus `false` ein `true`, sonst nichts. Vorher: Datenschutz-Nachtrag (ToDo 49).
+const SPRACHKNOPF_SICHTBAR = false;
+window.spracheUmschalten = function(){
+  try {
+    if(SPRACHE === 'en') localStorage.removeItem('countred-sprache');
+    else localStorage.setItem('countred-sprache', 'en');
+  } catch(e){ return; }                       // Speicher gesperrt: dann bleibt es beim Deutschen
+  location.reload();
+};
 window.openGateInfo = function(){
   if(!MVM_GATE) return;
   const st = document.getElementById('gate-state'), cd = document.getElementById(`${txt('meldung.gate-code')}`),
@@ -2463,10 +2813,14 @@ window.redeemGateCode = function(){
 // §200: Texte einsetzen, BEVOR gezeichnet wird. Die Lesefenster sind bis zum Öffnen
 // verborgen, der Punktezähler wird von gateRefresh() ohnehin selbst geschrieben.
 texteFuellen();
+document.documentElement.lang = SPRACHE;          // §214: Bildschirmleser und Silbentrennung
+if(SPRACHKNOPF_SICHTBAR){
+  ['btn-sprache','sprache-sep'].forEach(id => { const n = document.getElementById(id); if(n) n.hidden = false; });
+}
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v169';
+const BUILD_MARKER='· Build v170';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2786,7 +3140,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=169'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=170'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -4501,7 +4855,7 @@ function updateStatusUI(){
   // Meldung überschrieb. Im Bonuszug nicht: dort sind die drei Zeilen schon belegt.
   const angebotZeile = (gameMode==='mvm' && eigenesRemisOffen) ? `<br>${txt('meldung.remis-angeboten')}` : '';
   if(isMyTurn) s.innerHTML=`${txt('meldung.du-bist-dran')}<br>(${myParity})${angebotZeile}`;
-  else s.innerHTML=`${txt('meldung.ist-dran', {0:(oppName)})}<br>(${opParity})${angebotZeile}`;
+  else s.innerHTML=`${txt('meldung.ist-dran', {0:((gameMode==='mvki') ? 'Max Michu' : txt('meldung.mitspieler-satzanfang'))})}<br>(${opParity})${angebotZeile}`;
 }
 
 // ── Rematch ──────────────────────────────────────────────────────
@@ -5007,6 +5361,10 @@ async function nextTurn(){
   // §79: nextTurn läuft in BEIDEN Modi. Gegnername dynamisch: MvKI → „Max Michu", MvM → „Mitspieler".
   // (Feste Ersetzung wäre falsch — im MvM ist der Gegner ein echter Mensch.)
   const oppName = (gameMode==='mvki') ? 'Max Michu' : `${txt('meldung.mitspieler')}`;
+  // §214: im Englischen braucht der Mitspieler einen Artikel — „The other player has …“ am
+  // Satzanfang, „… the other player moves again“ mitten im Satz. Im Deutschen alle drei „Mitspieler“.
+  const oppSatzanfang = (gameMode==='mvki') ? 'Max Michu' : txt('meldung.mitspieler-satzanfang');
+  const oppImSatz     = (gameMode==='mvki') ? 'Max Michu' : txt('meldung.mitspieler-im-satz');
   const four=checkFourInRowA('black')||checkFourInRowA('red');
   if(four){
     winCells=four;phase='finished';
@@ -5017,7 +5375,7 @@ async function nextTurn(){
     finalizeGame(justMoved);
     if(winningMove){
       const movedByMe=(winningMove.player===myPlayer);
-      const who=movedByMe?`${txt('meldung.du-hast')}`:txt('meldung.name-hat', {0:oppName});
+      const who=movedByMe?`${txt('meldung.du-hast')}`:txt('meldung.name-hat', {0:oppSatzanfang});
       setLog(pendingTripleLine + `<span class="msg move">${txt('meldung.von-nach-gezogen', {0:(who), 1:(winningMove.from), 2:(winningMove.to)})}</span>`);  // §110
       pendingTripleLine='';
     }
@@ -5071,8 +5429,8 @@ async function nextTurn(){
     applyMvkiAutoDrawIfNeeded(opponent, false); // §38f: überschreibt phase/Log bei Auslösung
   } else if(hasAnyMoveA(justMoved)){
     phase='playing';
-    const noMove=opponent===myPlayer?`${txt('meldung.du-hast')}`:txt('meldung.name-hat', {0:oppName});
-    setLog(`<span class="msg info">${txt('meldung.keine-zugmoeglichkeit-nochmals', {0:(noMove), 1:(justMoved===myPlayer?`${txt('meldung.du-ziehst')}`:txt('meldung.name-zieht', {0:oppName}))})}</span>`);
+    const noMove=opponent===myPlayer?`${txt('meldung.du-hast')}`:txt('meldung.name-hat', {0:oppSatzanfang});
+    setLog(`<span class="msg info">${txt('meldung.keine-zugmoeglichkeit-nochmals', {0:(noMove), 1:(justMoved===myPlayer?`${txt('meldung.du-ziehst')}`:txt('meldung.name-zieht', {0:oppImSatz}))})}</span>`);
     // §97: Max Michu zieht gleich nochmal — die Meldung braucht Lesezeit (s. AI_HUMAN_BLOCKED_PAUSE).
     // justMoved===aiPlayer heisst im MvKI zwingend: der Blockierte ist der Mensch.
     if(gameMode==='mvki' && justMoved===aiPlayer) aiHumanBlockedPause=true;
@@ -5381,7 +5739,7 @@ function debugLog(r,c,extra){
   if(cell.stack){
     const formedByMe=(cell.stack.formedBy===myPlayer);
     if(!formedByMe){
-      setLog(`<span class="msg info">${txt('meldung.stapel-von-nur-er', {0:(coordToLabel(r,c)), 1:((gameMode==='mvki')?'Max Michu':`${txt('meldung.mitspieler')}`)})}</span>`);return;
+      setLog(`<span class="msg info">${txt('meldung.stapel-von-nur-er', {0:(coordToLabel(r,c)), 1:((gameMode==='mvki')?'Max Michu':`${txt('meldung.mitspieler-im-satz')}`)})}</span>`);return;
     }
     setLog(`<span class="msg info">${txt('meldung.dein-stapel-kein-erlaubtes', {0:(coordToLabel(r,c))})}</span>`);return;
   }
@@ -5390,7 +5748,7 @@ function debugLog(r,c,extra){
   const parityWord=w%2===0?txt('meldung.gerade'):txt('meldung.ungerade');
   const isMe=(currentPlayer===myPlayer);
   const needWord=parityWordForPlayer(currentPlayer); // §38d: nicht mehr myPlayer===1-hardcodiert
-  const who=isMe?`${txt('meldung.du-brauchst')}`:txt('meldung.name-braucht', {0:(gameMode==='mvki')?'Max Michu':txt('meldung.mitspieler')});
+  const who=isMe?`${txt('meldung.du-brauchst')}`:txt('meldung.name-braucht', {0:(gameMode==='mvki')?'Max Michu':txt('meldung.mitspieler-im-satz')});
   if(extra==='keine-ziele'){
     setLog(`<span class="msg info">${txt('meldung.rot-kein-erlaubtes-zielfeld', {0:(coordToLabel(r,c)), 1:(w), 2:(parityWord), 3:(who), 4:(needWord)})}</span>`);
   } else {
@@ -5404,7 +5762,7 @@ function dropFailLog(fr,fc,tr,tc){
   const targetCell=board[tr][tc];
   const isMe=(currentPlayer===myPlayer);
   const needWord=parityWordForPlayer(currentPlayer); // §38d: nicht mehr myPlayer===1-hardcodiert
-  const who=isMe?`${txt('meldung.du-brauchst')}`:txt('meldung.name-braucht', {0:(gameMode==='mvki')?'Max Michu':txt('meldung.mitspieler')});
+  const who=isMe?`${txt('meldung.du-brauchst')}`:txt('meldung.name-braucht', {0:(gameMode==='mvki')?'Max Michu':txt('meldung.mitspieler-im-satz')});
   if(fr===tr&&fc===tc){setLog(`<span class="msg info">${txt('meldung.quell-und-zielfeld-sind')}</span>`);return;}
   // §140: HIER STAND EIN LOCKED-ZWEIG — ersatzlos entfernt.
   //   Er meldete „gesperrt", sobald das ZIELFELD zu einem Dreier gehoerte, und stammte aus

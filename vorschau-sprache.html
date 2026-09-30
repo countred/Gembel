@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<!-- §214 (30.9.2026) — VORSCHAU DER SPRACHWAHL, nur fuer Walter.
+     Der Sprachknopf im Spiel ist gebaut, aber unsichtbar, bis Walter entscheidet. Diese Seite
+     schreibt denselben Wert wie spaeter der Knopf (`countred-sprache` = 'en', bzw. entfernt ihn
+     fuer Deutsch) — und zwar NUR beim ausdruecklichen Druck (§ 25 TDDDG). Danach zeigen Spiel,
+     Anleitung und Fehlerschirm auf diesem Geraet die gewaehlte Sprache: geprueft wird also der
+     echte Mechanismus, kein Sonderweg.
+     Die Seite ist von nirgends verlinkt und fuer Suchmaschinen gesperrt. Sie wertet die Adresse
+     NICHT aus (§203) und laedt nichts von aussen. Wer sie findet, kann damit nur fuer sich selbst
+     ausdruecklich die Sprache waehlen — harmlos. Sobald der Knopf sichtbar ist, kann sie weg. -->
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<title>Count Red · Sprache / Language</title>
+<style>
+  body{font:16px/1.5 system-ui,-apple-system,sans-serif;max-width:30em;margin:2em auto;padding:0 1em;color:#1a1a1a;background:#fafaf8;}
+  h1{font-size:1.2em;margin:0 0 .6em;}
+  p{margin:.5em 0;}
+  .stand{padding:.6em .8em;border-radius:8px;background:#eee;margin:1em 0;}
+  button{font:inherit;padding:.6em 1.1em;margin:.3em .4em .3em 0;border-radius:8px;border:1px solid #888;background:#fff;cursor:pointer;}
+  a{color:#1a1a1a;}
+</style>
+</head>
+<body>
+<h1>Sprache · Language</h1>
+<p>Vorschau der Sprachwahl. Die Wahl gilt nur auf diesem Gerät, bis du sie hier wieder änderst.</p>
+<p lang="en">Language preview. The choice applies only to this device until you change it here again.</p>
+<p class="stand" id="stand">…</p>
+<p>
+  <button type="button" id="btn-en">English</button>
+  <button type="button" id="btn-de">Deutsch</button>
+</p>
+<p><a href="index.html">Zum Spiel · To the game</a> &nbsp;·&nbsp; <a href="anleitung.html">Anleitung · How to play</a></p>
+<script>
+(function(){
+  var SCHLUESSEL = 'countred-sprache';
+  var stand = document.getElementById('stand');
+  function zeigen(){
+    var en = false;
+    try { en = localStorage.getItem(SCHLUESSEL) === 'en'; } catch(e){ stand.textContent = 'Speicher gesperrt · storage blocked'; return; }
+    stand.textContent = en ? 'Eingestellt: English' : 'Eingestellt: Deutsch (Standard)';
+  }
+  document.getElementById('btn-en').onclick = function(){
+    try { localStorage.setItem(SCHLUESSEL, 'en'); } catch(e){}
+    zeigen();
+  };
+  document.getElementById('btn-de').onclick = function(){
+    try { localStorage.removeItem(SCHLUESSEL); } catch(e){}
+    zeigen();
+  };
+  zeigen();
+})();
+</script>
+</body>
+</html>
