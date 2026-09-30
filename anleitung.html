@@ -450,7 +450,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=166" charset="utf-8"></script>
+<script src="gembel_rules.js?v=167" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -459,7 +459,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 74 · 29.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 75 · 29.09.2026';
 
 // ═══════════════════════════════════════════════════════════════════
 //  §208 — TEXTSCHICHT DER ANLEITUNG (Probe, ToDo 43)
@@ -516,6 +516,15 @@ const TEXTE = {
       'anl.erlaubnis.a5.text#html':                  '<p>Die Zugerlaubnis musst du genauso auch beim Absetzen der Figur beachten: Du darfst die Figur <b>absetzen</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>nach</b> dem Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.</p><p>Noch sind aber alle Felder belegt, also lernst du zuvor die Zugerlaubnis beim Stapel kennen …</p>',
       'anl.erlaubnis.intro#html':                    '<p>Wer welche Figur ziehen darf, du oder dein Mitspieler, entscheidet allein die Parität: Du darfst eine Figur <b>anheben</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen.</p>',
       'anl.erlaubnis.titel':                         'Zugerlaubnis',
+      'anl.grund.gesperrt#html':                     '{0} ist eine <b>gesperrte</b> Basis-Figur im Dreier.',
+      'anl.grund.rest-rot#html':                     '— die rote Figur, die auf {0} liegen bleibt, zählt mit.',
+      'anl.grund.stapel-voll#html':                  'Auf {0} steht schon ein Stapel — mehr als zwei Figuren gehen nicht.',
+      'anl.grund.summe-nachbarn#html':               'Summe der roten Nachbarfiguren: {0}',
+      'anl.grund.summe-nachbarn-zugfigur#html':      'Summe der roten Nachbarfiguren und der Zugfigur: {0}',
+      'anl.grund.summe-stapel#html':                 'Summe der roten Figuren im Stapel: {0}',
+      'anl.grund.zahl-passt#html':                   'Zahl auf der Figur und Punkte auf dem Feld (<b>{0}</b>) stimmen überein.',
+      'anl.grund.zahl-passt-aber#html':              'Zahl auf der Figur und Punkte auf dem Feld (<b>{0}</b>) stimmen überein, aber:',
+      'anl.grund.zahl-passt-nicht#html':             'Die Figur trägt die <b>{0}</b>, das Feld {1} ist <b>{2}</b> Punkte wert — das passt nicht zusammen.',
       'anl.leerfeld.a2.nachher#html':                '<p>Jetzt kennst du alle Zugvarianten: Figur vom Feld anheben, auf einem Feld absetzen, auf eine Figur absetzen, von einer Figur anheben.</p>',
       'anl.leerfeld.a2.vorher#html':                 '<p>Neuer Versuch.</p>',
       'anl.leerfeld.intro#html':                     '<p>Du darfst eine Figur auf ein leeres Feld <b>absetzen</b>, wenn die Summe aller <b>roten</b> Nachbarfiguren <b>nach</b> dem Absetzen <b>ungerade</b> ist. Ist die Zugfigur selbst auch rot, musst du sie mitzählen. Nicht vergessen: Punktezahl auf dem Feld und Zahl auf der Figur müssen übereinstimmen.</p>',
@@ -529,6 +538,20 @@ const TEXTE = {
       'anl.schritt-von':                             'Schritt {0} von {1}',
       'anl.stapelbilden.intro#html':                 '<p>Beim Stapeln zählst du nur die roten Figuren im Stapel. Du darfst eine Figur auf eine andere setzen, wenn danach die Summe der <b>roten</b> Figuren im Stapel <b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
       'anl.stapelbilden.titel':                      'Stapel bilden',
+      'anl.summe.gerade':                            '{0} = gerade',
+      'anl.summe.ungerade':                          '{0} = ungerade',
+      'anl.urteil.du-absetzen#html':                 'Du darfst absetzen.',
+      'anl.urteil.du-anheben#html':                  'Du darfst anheben.',
+      'anl.urteil.du-nicht-absetzen#html':           'Du darfst <b>nicht</b> absetzen.',
+      'anl.urteil.du-nicht-anheben#html':            'Du darfst <b>nicht</b> anheben.',
+      'anl.urteil.du-nicht-stapeln#html':            'Du darfst <b>nicht</b> stapeln.',
+      'anl.urteil.du-stapeln#html':                  'Du darfst stapeln.',
+      'anl.urteil.er-absetzen#html':                 'Er darf absetzen.',
+      'anl.urteil.er-anheben#html':                  'Er darf anheben.',
+      'anl.urteil.er-nicht-absetzen#html':           'Er darf <b>nicht</b> absetzen.',
+      'anl.urteil.er-nicht-anheben#html':            'Er darf <b>nicht</b> anheben.',
+      'anl.urteil.er-nicht-stapeln#html':            'Er darf <b>nicht</b> stapeln.',
+      'anl.urteil.er-stapeln#html':                  'Er darf stapeln.',
       'anl.weiter':                                  'Weiter',
       'anl.ziel.intro#html':                         '<p>Gewonnen hat, wer die <b>vierte gleichfarbige Figur in eine Spalte</b> ziehen kann — A, B, C oder D.</p>',
       'anl.ziel.nachher#html':                       '<p>Vier schwarze Figuren in Spalte B. Du hast gewonnen.</p>',
@@ -629,8 +652,28 @@ const nachbarn=(r,c)=>RICHTUNGEN.map(a=>[r+a[0],c+a[1]]).filter(p=>p[0]>=0&&p[0]
 const roteAuf=(b,r,c)=>{const x=b[r][c];
   if(x.stack) return (x.stack.bottom.color==='red'?1:0)+(x.stack.top.color==='red'?1:0);
   return (x.piece && x.piece.color==='red') ? 1 : 0;};
+// Nur noch fuer eine Diagnosezeile des Selbsttests (Entwicklertext — bleibt deutsch wie die
+// Konsole, §211). Sichtbare Summen gehen ueber summeSpan und die Tabelle.
 const parWort = n => (n%2===1) ? 'ungerade' : 'gerade';
-const summeSpan = n => '<span class="sum">' + n + ' = ' + parWort(n) + '</span>';
+// §210: „3 = ungerade" ist ein ganzer Ausdruck je Sprache (Zahl und Wort in eigener Reihenfolge).
+const summeSpan = n => '<span class="sum">' + ((n%2===1) ? txt('anl.summe.ungerade', {0:n}) : txt('anl.summe.gerade', {0:n})) + '</span>';
+
+// §210 — DIE RUECKMELDUNGEN ALS GANZE SAETZE. Bis v166 wurden sie aus Bruchstuecken geklebt:
+// „Du darfst" / „Er darf", ein eingeschobenes „<b>nicht</b>", das Verb, dann die Begruendung.
+// In einer anderen Sprache stimmt diese Reihenfolge nicht (Verneinung, Verbstellung, Anrede).
+// Jetzt: URTEIL (ein ganzer Satz je Subjekt × erlaubt/verboten × Verb) + BEGRUENDUNG (ganze
+// Saetze). Die Schluessel stehen hier ausgeschrieben, nicht zusammengesetzt — sonst saehe
+// die Suite nicht, welche benutzt sind.
+const URTEIL = {
+  du: { ja:  {anheben:'anl.urteil.du-anheben#html',       stapeln:'anl.urteil.du-stapeln#html',       absetzen:'anl.urteil.du-absetzen#html'},
+        nein:{anheben:'anl.urteil.du-nicht-anheben#html', stapeln:'anl.urteil.du-nicht-stapeln#html', absetzen:'anl.urteil.du-nicht-absetzen#html'} },
+  er: { ja:  {anheben:'anl.urteil.er-anheben#html',       stapeln:'anl.urteil.er-stapeln#html',       absetzen:'anl.urteil.er-absetzen#html'},
+        nein:{anheben:'anl.urteil.er-nicht-anheben#html', stapeln:'anl.urteil.er-nicht-stapeln#html', absetzen:'anl.urteil.er-nicht-absetzen#html'} } };
+function urteil(spieler, ok, verb){
+  return txt(URTEIL[spieler===LEARNER ? 'du' : 'er'][ok ? 'ja' : 'nein'][verb]);
+}
+const summeNachbarn = (self, summe) =>
+  txt(self ? 'anl.grund.summe-nachbarn-zugfigur#html' : 'anl.grund.summe-nachbarn#html', {0:summeSpan(summe)});
 
 // ── Stellungen ─────────────────────────────────────────────────────
 // '.' leer · 'r'/'b' Basisfigur (Punktzahl = Zeile) · '*' gesperrt
@@ -699,43 +742,37 @@ const BONUSSPEC = [
 // steht EINMAL in Schritt 3, nicht in jeder Rechnung.
 function markAnheben(b, fr, fc, spieler){
   const cell=b[fr][fc], mp=getMovingPiece(cell);
-  const wer = spieler===LEARNER ? 'Du darfst' : 'Er darf';
   const ok  = canLift(b, fr, fc, spieler, PARITY);
-  const ja  = ok ? ' ' : ' <b>nicht</b> ';
   if(cell.stack){
     // Keine Nachbarn. Es zaehlt allein der Stapelinhalt — und der legt zugleich
     // fest, wer den Stapel gebildet haben kann.
     const n=countRedsInStack(cell.stack.bottom, cell.stack.top);
     return {bereich:[[fr,fc]], zaehlt:(n>0?[[fr,fc]]:[]), tippen:[fr,fc], summe:n, ok:ok, stapel:true,
-      text: wer+ja+'anheben. Summe der roten Figuren im Stapel: '+summeSpan(n)};
+      text: urteil(spieler, ok, 'anheben')+' '+txt('anl.grund.summe-stapel#html', {0:summeSpan(n)})};
   }
   if(cell.locked)
     return {bereich:null, zaehlt:[], tippen:null, summe:null, ok:ok,
-      text: lab(fr,fc)+' ist eine <b>gesperrte</b> Basis-Figur im Dreier.'};
+      text: txt('anl.grund.gesperrt#html', {0:lab(fr,fc)})};
   const bereich=[[fr,fc]].concat(nachbarn(fr,fc));
   const zaehlt=bereich.filter(function(p){ return roteAuf(b,p[0],p[1])>0; });
   const nb=countRedNeighbors(b,fr,fc), self=(mp.color==='red'?1:0), summe=nb+self;
   return {bereich:bereich, zaehlt:zaehlt, tippen:[fr,fc], summe:summe, ok:ok,
-    text: wer+ja+'anheben. Summe der roten Nachbarfiguren'
-        + (self ? ' und der Zugfigur' : '') + ': ' + summeSpan(summe)};
+    text: urteil(spieler, ok, 'anheben')+' '+summeNachbarn(self, summe)};
 }
 function markAbsetzen(b, fr, fc, tr, tc, spieler){
   const mp=getMovingPiece(b[fr][fc]), to=b[tr][tc];
-  const wer = spieler===LEARNER ? 'Du darfst' : 'Er darf';
   const ok  = canDrop(b, fr, fc, tr, tc, spieler, PARITY);
-  const ja  = ok ? ' ' : ' <b>nicht</b> ';
   if(to.piece && to.stack)
     return {bereich:null, zaehlt:[], tippen:[tr,tc], summe:null, ok:ok,
-      text: wer+ja+'stapeln. Auf '+lab(tr,tc)+' steht schon ein Stapel — mehr als zwei Figuren gehen nicht.'};
+      text: urteil(spieler, ok, 'stapeln')+' '+txt('anl.grund.stapel-voll#html', {0:lab(tr,tc)})};
   if(to.piece){
     const n=countRedsInStack(to.piece, mp);
     return {bereich:[[tr,tc]], zaehlt:(n>0?[[tr,tc]]:[]), tippen:[tr,tc], summe:n, ok:ok, stapel:true,
-      text: wer+ja+'stapeln. Summe der roten Figuren im Stapel: '+summeSpan(n)};
+      text: urteil(spieler, ok, 'stapeln')+' '+txt('anl.grund.summe-stapel#html', {0:summeSpan(n)})};
   }
   if(mp.stripe!==to.stripe)
     return {bereich:null, zaehlt:[], tippen:[tr,tc], summe:null, ok:ok,
-      text: wer+ja+'absetzen. Die Figur trägt die <b>'+mp.stripe+'</b>, das Feld '+lab(tr,tc)
-          + ' ist <b>'+to.stripe+'</b> Punkte wert — das passt nicht zusammen.'};
+      text: urteil(spieler, ok, 'absetzen')+' '+txt('anl.grund.zahl-passt-nicht#html', {0:mp.stripe, 1:lab(tr,tc), 2:to.stripe})};
   const bereich=[[tr,tc]].concat(nachbarn(tr,tc));
   const zaehlt=[]; let restRot=false;
   for(let i=0;i<bereich.length;i++){
@@ -752,11 +789,10 @@ function markAbsetzen(b, fr, fc, tr, tc, spieler){
   if(restRot) n++;
   const self=(mp.color==='red'?1:0), summe=n+self;
   return {bereich:bereich, zaehlt:zaehlt, tippen:[tr,tc], summe:summe, ok:ok,
-    text: wer+ja+'absetzen. Zahl auf der Figur und Punkte auf dem Feld (<b>'+to.stripe+'</b>) stimmen überein'
-        + (ok ? '. ' : ', aber: ')
-        + 'Summe der roten Nachbarfiguren'
-        + (self ? ' und der Zugfigur' : '') + ': ' + summeSpan(summe)
-        + (restRot ? ' — die rote Figur, die auf '+lab(fr,fc)+' liegen bleibt, zählt mit.' : '')};
+    text: urteil(spieler, ok, 'absetzen')+' '
+        + txt(ok ? 'anl.grund.zahl-passt#html' : 'anl.grund.zahl-passt-aber#html', {0:to.stripe})+' '
+        + summeNachbarn(self, summe)
+        + (restRot ? ' '+txt('anl.grund.rest-rot#html', {0:lab(fr,fc)}) : '')};
 }
 
 // ═══════════════════════════════════════════════════════════════════

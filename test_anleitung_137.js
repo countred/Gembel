@@ -47,7 +47,7 @@ function ladeModell(regeln){
 const M=ladeModell();
 
 // ═══════════════════════════════════════════════════════════════════
-block('T · Textschicht der Anleitung (§208 Probe an Schritt 1, §209 alle Schritte)');
+block('T · Textschicht der Anleitung (§208 Probe, §209 alle Schritte, §210 Rueckmeldungen)');
 // ═══════════════════════════════════════════════════════════════════
 // Die Probe stellt Schritt 1, den Aufgaben-Generator und den Rahmen um. Was hier steht,
 // haelt fest, dass sie VOLLSTAENDIG ist (kein Wortlaut mehr an diesen Stellen) und dass die
@@ -67,7 +67,9 @@ block('T · Textschicht der Anleitung (§208 Probe an Schritt 1, §209 alle Schr
     fn(HTML) !== '' && fn(HTML) === fn(SPIEL), fn(HTML).length+' / '+fn(SPIEL).length+' Zeichen');
 
   // T2 · jeder benutzte Schluessel belegt, keiner verwaist
-  const benutzt = new Set([...SKRIPT.matchAll(/txt\('([^']+)'/g)].map(m=>m[1]));
+  // §210: benutzt ist jeder ausgeschriebene Schluessel, nicht nur der direkt an txt() —
+  // die Urteile stehen in der Tabelle URTEIL und werden von urteil() nachgeschlagen.
+  const benutzt = new Set([...SKRIPT.matchAll(/'(anl\.[a-z0-9.#-]+)'/g)].map(m=>m[1]));
   const unbelegt = [...benutzt].filter(k => !(k in T));
   const verwaist = Object.keys(T).filter(k => !benutzt.has(k));
   pruef('T2 jeder benutzte Schluessel ist belegt ('+benutzt.size+')', unbelegt.length===0, unbelegt.join(', '));
@@ -124,6 +126,49 @@ block('T · Textschicht der Anleitung (§208 Probe an Schritt 1, §209 alle Schr
     Array.isArray(M.selfTest()) ? M.selfTest().length===0 : !M.selfTest(), String(M.selfTest()).slice(0,120));
   pruef('T13 Ausgangsknopf im Kopf aus der Tabelle (Markup bleibt Rueckfall)',
     /if\(ex\) ex\.textContent=txt\('anl\.zum-spiel-kopf'\);/.test(SKRIPT));
+
+  // T14 · §210: Die Rueckmeldungen kleben keine Saetze mehr. Dieselbe Nahtregel wie T6 (Z6):
+  // Wort neben Leerzeichen am Rand einer Zeichenkette.
+  const naht = f => [...String(f).matchAll(/'([^']*)'/g)].map(m=>m[1])
+    .filter(x => /[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df]{2,} |\s[A-Za-z\u00c4\u00d6\u00dc\u00e4\u00f6\u00fc\u00df]{2,}/.test(x));
+  const genaeht = [].concat(naht(M.markAnheben), naht(M.markAbsetzen));
+  pruef('T14 markAnheben/markAbsetzen setzen keine Saetze aus Wortlaut zusammen',
+    String(M.markAnheben).length > 300 && genaeht.length===0, genaeht.join(' | '));
+
+  // T15 · §210: JEDER Zweig der Rueckmeldungen laeuft einmal wirklich — auch die, die in den
+  // neun Schritten heute nie erscheinen (gesperrt, Stapel voll, Zahl passt nicht, rote Figur
+  // bleibt liegen, „Er darf"). Gefahren wird jede Stellung der Anleitung, beide Spieler, jedes
+  // Feld und Feldpaar. Kein Satz darf einen Schluesselnamen oder einen offenen Platzhalter
+  // zeigen, und jeder Zweig muss mindestens einmal getroffen sein.
+  {
+    const felder = Object.keys(M.CELL), saetze = [], gesehen = new Set(), widerspruch = [];
+    // Der Satz muss zum URTEIL in den Daten passen: „<b>nicht</b>" genau dann, wenn ok falsch
+    // ist, und das Subjekt zum Spieler. Sonst koennte eine vertauschte Tabellenzeile das
+    // Gegenteil dessen sagen, was canLift/canDrop entschieden haben.
+    const halte = (m, sp) => { const t = m.text;
+      if(!/^(Du darfst|Er darf) /.test(t)) return;
+      if(/<b>nicht<\/b>/.test(t) === !!m.ok || /^Du /.test(t) !== (sp===1)) widerspruch.push(t.slice(0,60)); };
+    for(let i=0; i<M.PHASES.length; i++){
+      const b = M.boardFor(i), sig = JSON.stringify(b); if(gesehen.has(sig)) continue; gesehen.add(sig);
+      for(const sp of [1,2]) for(const f of felder){
+        const [r,c] = M.CELL[f]; if(!b[r][c].piece) continue;
+        const mA = M.markAnheben(b,r,c,sp); saetze.push(mA.text); halte(mA, sp);
+        for(const t of felder) if(t!==f){ const [tr,tc] = M.CELL[t];
+          const mD = M.markAbsetzen(b,r,c,tr,tc,sp); saetze.push(mD.text); halte(mD, sp); }
+      }
+    }
+    const kaputt = saetze.filter(x => /anl\.|\{\d\}/.test(x));
+    const ZWEIGE = { 'Stapel anheben':/anheben\. Summe der roten Figuren im Stapel/, 'gesperrt':/gesperrte<\/b> Basis-Figur/,
+      'Nachbarn':/Nachbarfiguren: /, 'Nachbarn+Zugfigur':/Nachbarfiguren und der Zugfigur/, 'Stapel voll':/steht schon ein Stapel/,
+      'stapeln':/stapeln\. Summe/, 'Zahl passt nicht':/passt nicht zusammen/, 'Zahl passt':/stimmen \u00fcberein\. /,
+      'Zahl passt, aber':/stimmen \u00fcberein, aber: /, 'rote Figur bleibt':/liegen bleibt/, 'Du darfst':/^Du darfst /,
+      'Er darf':/^Er darf /, 'nicht':/<b>nicht<\/b>/, 'gerade':/= gerade</, 'ungerade':/= ungerade</ };
+    const fehlt = Object.keys(ZWEIGE).filter(n => !saetze.some(x => ZWEIGE[n].test(x)));
+    pruef('T15 jeder Zweig der Rueckmeldungen laeuft und liefert ganzen Wortlaut ('+saetze.length+' Saetze)',
+      saetze.length > 4000 && kaputt.length===0 && fehlt.length===0, [kaputt[0]||'', fehlt.join(', ')].join(' / '));
+    pruef('T16 jeder Urteilssatz sagt, was canLift/canDrop entschieden haben (Subjekt und „nicht")',
+      widerspruch.length===0 && saetze.length > 4000, widerspruch.length+': '+(widerspruch[0]||''));
+  }
 
   // T10 · Aufgaben (ohne #html) gehen maskiert in den Kasten — Anzeige UND Hoehenmessung
   pruef('T10 Aufgabe maskiert in setText und in der Hoehenmessung',
