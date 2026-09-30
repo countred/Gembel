@@ -118,8 +118,8 @@ ok(/function txt\(schluessel, werte\)\{/.test(html) && !/function t\(schluessel/
    '\u00a7202: die Nachschlagefunktion hei\u00dft txt() \u2014 `t` w\u00e4re als lokaler Name zu h\u00e4ufig');
 
 console.log('\u00a797 \u2014 Beschriftungen:');
-ok(/Gegen Max Michu[\s\S]{0,120}?#s-robot[\s\S]{0,60}?<\/button>/.test(sichtbar(html)) && !/Spiele gegen Max Michu/.test(sichtbar(html)),
-   'Startmen\u00fc: „Gegen Max Michu" (ohne „Spiele")');
+ok(/Mit Max Michu[\s\S]{0,120}?#s-robot[\s\S]{0,60}?<\/button>/.test(sichtbar(html)) && !/Spiele (gegen|mit) Max Michu/.test(sichtbar(html)),
+   'Startmen\u00fc: „Mit Max Michu" (ohne „Spiele"; §213: nicht mehr „Gegen")');
 ok(/showNeuMenu\(\)"[^>]*>Optionen<svg class="sym"[^>]*><use href="#s-menue"\/><\/svg><\/button>/.test(sichtbar(html))
    && !/Men\u00fc<\/button>/.test(html),   // §187: „Menü" bleibt als ÜBERSCHRIFT erlaubt, nur der KNOPF heißt Optionen
    'Werkzeugleiste: „\u2630 Optionen" statt „\u21ba Neu"');
@@ -361,7 +361,7 @@ console.log('\u00a7157 \u2014 Datenschutz: Pflichtangaben nach Art. 13:');
 
   ok(/Art\. 6 Abs\. 1 lit\. f/.test(ds),
      'die Rechtsgrundlage ist benannt (Art. 6 Abs. 1 lit. f \u2014 Art. 13 Abs. 1 lit. c)');
-  ok(/berechtigtes Interesse/.test(ds) && /Spielst\u00e4rke der\s+Computergegner einzustellen/.test(ds),
+  ok(/berechtigtes Interesse/.test(ds) && /Spielst\u00e4rke von\s+Max Michu einzustellen/.test(ds),   // §213: Wortlaut, Rechtsaussage gleich
      'die berechtigten Interessen stehen KONKRET da, nicht als Formel (Art. 13 Abs. 1 lit. d)');
   ok(/Wie lange/.test(ds) && /solange sie f\u00fcr diese Auswertung/.test(ds),
      'die Speicherdauer ist angegeben (Art. 13 Abs. 2 lit. a)');
@@ -1103,8 +1103,8 @@ console.log('\u00a7144 \u2014 Startmen\u00fc: DREI Kn\u00f6pfe, gestapelt, neue 
   };
   ok(/Interaktive Spielanleitung/.test(beschriftung(btns[0])) && /anleitung\.html\?v=/.test(btns[0]||''),
      '„Interaktive Spielanleitung" steht OBEN und f\u00fchrt mit ?v= auf die Anleitung');
-  ok(/Gegen Max Michu/.test(beschriftung(btns[1])),
-     '„Gegen Max Michu" steht in der MITTE');
+  ok(/Mit Max Michu/.test(beschriftung(btns[1])),
+     '„Mit Max Michu" steht in der MITTE (§213: nicht mehr „Gegen")');
   ok(/Mit Code zu zweit/.test(beschriftung(btns[2])) && /id="btn-mvm"/.test(btns[2]||''),
      '„Mit Code zu zweit" steht UNTEN und tr\u00e4gt die Kennung f\u00fcr die Sperre');
   ok(!/Neu hier\?/.test(html) && !/class="anleitung-link"/.test(html) && !/^\.anleitung-link\{/m.test(html),
@@ -1291,7 +1291,7 @@ console.log('\u00a7144 \u2014 Freischaltung des Zwei-Personen-Modus:');
      'Antippen f\u00fchrt entweder ins Erstellen oder in die Erkl\u00e4rung \u2014 nie ins Leere');
   ok(/id="gate-score"[^>]*onclick="openGateInfo\(\)"/.test(html),
      'die Punktezeile ist anklickbar \u2014 auch nach der Freischaltung noch der Weg zum \u00dcbertragungscode');
-  ok(/title = open \? '' : GATE_TIP/.test(html) && /3\u00d7 Einsteiger, 2\u00d7 Fortgeschritten oder 1\u00d7 Meister/.test(html),
+  ok(/title = open \? '' : GATE_TIP/.test(html) && /3 Partien auf Einsteiger, 2 auf Fortgeschritten oder 1 auf Meister/.test(html)   /* §213 */,
      '\u00dcberfahren erkl\u00e4rt die Bedingung (Rechner), Antippen ebenfalls (Telefon kennt kein Hover)');
 
   // \u00a7127-Lehre: inline-onclick sucht im GLOBALEN Scope. Modul-interne Funktionen sind dort
@@ -1461,7 +1461,7 @@ console.log('\u00a7145 \u2014 Wortlaut der Freischalttexte (Walters Fassung, 27.
   // \u2014 wer sie umschreibt, soll darueber stolpern, nicht sie nebenbei verlieren.
   ok(/Um jemand zum Spiel mit dir einzuladen, brauchst du 3 Punkte:/.test(html),
      'Einleitung nennt den ZWECK (jemanden einladen), nicht die Sperre');
-  ok((html.match(/Sieg gegen Max Michu <strong>/g)||[]).length === 3,
+  ok((html.match(/Gewonnene Partie mit Max Michu <strong>/g)||[]).length === 3,   // §213
      'alle drei Zeilen nennen \u201eMax Michu\u201c \u2014 der Name aus dem Startmen\u00fc, nicht nur die Stufe');
   ok(/Einladen darfst du danach jeden\./.test(html),
      'der Satz, dass Eingeladene selbst keine Punkte brauchen, steht da');
@@ -2188,7 +2188,7 @@ console.log('\u00a7207 \u2014 kein sichtbarer Text au\u00dferhalb der Textschich
   // hier stehen nur die Listen dieser Seite.
   // Benannte Ausnahmen — jede mit Grund. Der Name des Gegners ist ein Name, keine Vokabel.
   const ERLAUBT = [
-    [/^Max Michu$/,            'Name des Computergegners (bleibt in jeder Sprache)'],
+    [/^Max Michu$/,            'Name des Computerspielers (bleibt in jeder Sprache)'],
     [/^\u00b7 Build v\d+$/,    'Build-Marker (Konsole und Pr\u00fcfsuiten)'],
     [/^AIza[\w-]{30,}$/,        'Firebase-Konfiguration (kein Text)'],
   ];
@@ -2233,6 +2233,26 @@ console.log('\u00a7207 \u2014 kein sichtbarer Text au\u00dferhalb der Textschich
   ok(offen.length === 0 && ohneRecht.length < html.length,
      'Markup: jedes title/aria-label/placeholder/alt mit Text l\u00e4uft \u00fcber data-t-attr (Rechtsfenster ausgenommen)' +
      (offen.length ? ' \u2014 ' + offen.join(' \u00b7 ') : ''));
+}
+
+// §213 (30.9.) — WALTERS WORTLAUT-GRUNDSAETZE, dauerhaft. Wie „Reihe" (nur Zeile/Spalte) gibt
+// es Woerter, die im sichtbaren Text nicht vorkommen: kein „gegen"/„Gegner" (man spielt MIT
+// Max Michu, mit jemandem aus dem Freundeskreis), kein „KI", kein „Mensch", und Max Michu
+// immer mit vollem Namen. „Er"/„It" fuer Max Michu laesst sich nicht maschinell von „er" fuer
+// den Mitspieler trennen — das bleibt Wortlautarbeit. Geprueft: jeder Wert der Tabelle und die
+// Rechtsfenster (sie stehen ausserhalb der Tabelle).
+console.log('\u00a7213 \u2014 Wortlaut-Grunds\u00e4tze (gegen/Gegner, KI, Mensch, Max Michu):');
+{
+  const VERBOTEN = [[/\b[Gg]egen\b/, '„gegen"'], [/[Gg]egner/, '„Gegner"'], [/\bKI\b/, '„KI"'],
+                    [/Mensch/, '„Mensch"'], [/\bMax\b(?! Michu)/, '„Max" ohne „Michu"']];
+  const werte = Object.entries(DE).map(([k,v]) => [k, (typeof v === 'object' ? v.eins+' '+v.andere : String(v)).replace(/<[^>]*>/g,' ')]);
+  const recht = [...html.matchAll(/<div class="overlay hidden" id="(impressum|datenschutz)-overlay">[\s\S]*?\n<\/div>/g)]
+                  .map(m => [m[1]+'-Fenster', m[0].replace(/<[^>]*>/g,' ').replace(/\s+/g,' ')]);
+  const funde = [];
+  for(const [k,t] of werte.concat(recht)) for(const [re,n] of VERBOTEN) if(re.test(t)) funde.push(k+': '+n);
+  ok(werte.length > 290 && recht.length === 2 && funde.length === 0,
+     'kein „gegen"/„Gegner"/„KI"/„Mensch", Max Michu nie ohne „Michu" \u2014 Tabelle und Rechtsfenster' +
+     (funde.length ? ' \u2014 ' + funde.join(' \u00b7 ') : ''));
 }
 
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');

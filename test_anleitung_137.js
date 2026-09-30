@@ -237,6 +237,20 @@ block('T · Textschicht der Anleitung (§208 Probe, §209 Schritte, §210 Rueckm
       'ohne Setzer: '+ohne.join(',')+' / nicht gesetzt: '+ungesetzt.map(x=>x[0]).join(','));
   }
 
+  // T21 · §213: Walters Wortlaut-Grundsaetze auch hier — kein „gegen"/„Gegner", kein „KI", kein
+  // „Mensch", Max Michu nie ohne „Michu". Dazu die kleine Tabelle des Fehlerschirms und der
+  // Hinweis ohne JavaScript (beide stehen ausserhalb von TEXTE).
+  {
+    const VERBOTEN = [/\b[Gg]egen\b/, /[Gg]egner/, /\bKI\b/, /Mensch/, /\bMax\b(?! Michu)/];
+    const teile = Object.entries(T).map(([k,v]) => [k, String(v).replace(/<[^>]*>/g,' ')]);
+    const aus = (HTML.match(/window\.__ANL_AUSFALL_TEXTE = \{[\s\S]*?\n\};/)||[''])[0];
+    const nos = (HTML.match(/<noscript>[\s\S]*?<\/noscript>/)||[''])[0].replace(/<[^>]*>/g,' ');
+    teile.push(['Fehlerschirm', aus], ['noscript', nos]);
+    const funde = teile.filter(([k,t]) => VERBOTEN.some(re => re.test(t))).map(([k]) => k);
+    pruef('T21 Wortlaut-Grundsaetze: kein gegen/Gegner/KI/Mensch, Max Michu nie ohne Michu',
+      teile.length > 80 && aus.length > 50 && nos.length > 50 && funde.length===0, funde.join(', '));
+  }
+
   // T10 · Aufgaben (ohne #html) gehen maskiert in den Kasten — Anzeige UND Hoehenmessung
   pruef('T10 Aufgabe maskiert in setText und in der Hoehenmessung',
     (SKRIPT.match(/'<div class="aufgabe">'\s*\+\s*alsText\(/g)||[]).length===2 &&

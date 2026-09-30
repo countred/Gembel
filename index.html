@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=168'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=169'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -841,8 +841,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Kennung.</div>
       <div><strong style="color:var(--text);">Warum, und auf welcher Grundlage</strong><br>
         Rechtsgrundlage ist Art. 6 Abs. 1 lit. f DSGVO — unser berechtigtes Interesse. Es
-        besteht darin, das Spiel zu betreiben und weiterzuentwickeln: die Spielstärke der
-        Computergegner einzustellen, Fehler in den Spielregeln und in der Suche zu finden und
+        besteht darin, das Spiel zu betreiben und weiterzuentwickeln: die Spielstärke von
+        Max Michu einzustellen, Fehler in den Spielregeln und in der Suche zu finden und
         zu erkennen, ob eine Schwierigkeitsstufe wirklich das leistet, was sie soll. Dafür
         müssen mehrere Partien zusammengehören; einzelne Partien ohne Zusammenhang beantworten
         diese Fragen nicht. Es findet keine Werbung, keine Profilbildung und keine Weitergabe
@@ -1186,7 +1186,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=168" charset="utf-8"></script>
+<script src="gembel_rules.js?v=169" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1198,7 +1198,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=168" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=169" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -1880,7 +1880,7 @@ const TEXTE = {
     t: {
       'lobby.beitreten':                             'Beitreten',
       'lobby.raum-erstellen':                        'Raum erstellen',
-      'lobby.spiele-mit-code-gegen':                 'Spiele mit Code gegen jemanden aus deinem Freundeskreis.',
+      'lobby.spiele-mit-code-gegen':                 'Spiele per Code mit jemandem aus deinem Freundeskreis.',
       'lobby.testversion':                           'Testversion',
       'lobby.zurueck':                               'Zurück',
       'marken.hinweis-regeln':                       'Firebase-Rules: games_countred_marks freischalten',
@@ -1903,7 +1903,7 @@ const TEXTE = {
       'nochmal.ja-nochmal':                          'Ja, nochmal!',
       'nochmal.nein-verlassen':                      'Nein, verlassen',
       'nochmal.nochmal-spielen':                     'Nochmal spielen?',
-      'punkte.also-dreimal-gegen-einsteiger#html':   'Also: dreimal gegen Einsteiger, zweimal gegen Fortgeschritten oder einmal gegen\n        Meister gewinnen. <strong>Einladen darfst du danach jeden.</strong>',
+      'punkte.also-dreimal-gegen-einsteiger#html':   'Also: drei Partien auf der Stufe Einsteiger gewinnen, zwei auf Fortgeschritten oder eine auf Meister. <strong>Einladen darfst du danach jeden.</strong>',
       'punkte.anderes-geraet':                       'Anderes Gerät',
       'punkte.bewahre-diesen-code-auf':              'Bewahre diesen Code auf. Löschst du die Website-Daten deines Browsers, ist dein Punktestand weg; mit dem Code holst du ihn zurück.',
       'punkte.code-eingeben':                        'Code eingeben',
@@ -1913,7 +1913,7 @@ const TEXTE = {
       'punkte.schliessen':                           'Schließen',
       'punkte.schliessen-2':                         'Schließen',
       'punkte.schliessen-3':                         'Schließen',
-      'punkte.sieg-gegen-max-michu#html':            '\n        Sieg gegen Max Michu <strong>Einsteiger</strong> = 1 Punkt<br>\n        Sieg gegen Max Michu <strong>Fortgeschritten</strong> = 1,5 Punkte<br>\n        Sieg gegen Max Michu <strong>Meister</strong> = 3 Punkte',
+      'punkte.sieg-gegen-max-michu#html':            '\n        Gewonnene Partie mit Max Michu <strong>Einsteiger</strong> = 1 Punkt<br>\n        Gewonnene Partie mit Max Michu <strong>Fortgeschritten</strong> = 1,5 Punkte<br>\n        Gewonnene Partie mit Max Michu <strong>Meister</strong> = 3 Punkte',
       'punkte.um-jemand-zum-spiel':                  'Um jemand zum Spiel mit dir einzuladen, brauchst du 3 Punkte:',
       'punkte.willst-du-deinen-punktestand':         'Willst du deinen Punktestand auf ein anderes Gerät mitnehmen? Kopier einfach diesen Übertragungscode in das Fenster auf deinem anderen Gerät:',
       'regeln.4-4-felder-zeilen':                    '4×4 Felder, Zeilen 1–4, Spalten A–D. Jedes Feld hat Punkte (oben im Feld): Zeile 1 = 3, Zeile 2 = 2, Zeile 3 = 1, Zeile 4 = 0.',
@@ -1977,7 +1977,7 @@ const TEXTE = {
       'seite.raum-beitreten':                        'Raum beitreten',
       'seite.raum-erstellt':                         'Raum erstellt',
       'seite.regeln':                                '? Regeln',
-      'seite.teile-diesen-code-mit':                 'Teile diesen Code mit der Person, gegen die du spielen möchtest:',
+      'seite.teile-diesen-code-mit':                 'Teile diesen Code mit der Person, mit der du spielen möchtest:',
       'seite.testversion':                           'Testversion',
       'seite.text':                                  '----',
       'seite.ungerade':                              'ungerade',
@@ -1985,7 +1985,7 @@ const TEXTE = {
       'seite.warte-auf-mitspieler':                  'Warte auf Mitspieler…',
       'seite.zurueck':                               'Zurück',
       'start.datenschutz':                           'Datenschutz',
-      'start.gegen-max-michu':                       'Gegen Max Michu',
+      'start.gegen-max-michu':                       'Mit Max Michu',
       'start.impressum':                             'Impressum',
       'start.interaktive-spielanleitung':            'Interaktive Spielanleitung',
       'start.mit-code-zu-zweit':                     'Mit Code zu zweit',
@@ -1996,7 +1996,7 @@ const TEXTE = {
       'start.wie-moechtest-du-spielen':              'Wie möchtest du spielen?',
       'stufe.einsteiger':                            'Einsteiger',
       'stufe.fortgeschritten':                       'Fortgeschritten',
-      'stufe.gegen-max-michu-waehle':                'Gegen Max Michu — wähle die Spielstärke:',
+      'stufe.gegen-max-michu-waehle':                'Mit Max Michu — wähle die Spielstärke:',
       'stufe.meister':                               'Meister',
       'stufe.stark':                                 'Stark',
       'stufe.zurueck':                               'Zurück',
@@ -2005,7 +2005,7 @@ const TEXTE = {
       'ueber.countred-ist-ein-strategiespiel':       'CountRed ist ein Strategiespiel. Kein Würfel, kein Zufall, kein Glück. Die Regeln lesen sich in drei Minuten, eine Partie dauert selten länger als 15 Minuten.',
       'ueber.dahinter-steht-kein-studio#html':       'Dahinter steht kein Studio, sondern eine Person: Mein Name ist\n          Walter Rehm, ich wohne in München. Fragen, Fehlermeldungen und Ideen gerne an\n          <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a>.',
       'ueber.dann-kommt-meistens-diese':             'Dann kommt meistens diese Frage: „Was sind denn jetzt meine Figuren? Welche Farbe gehört mir?“ Antwort: keine. Jeder kann prinzipiell jede Figur ziehen — niemand ist rot, niemand ist schwarz. Was du ziehen darfst, entscheidet das Brett: Zähle die roten Nachbarn der Figur. Ist die Zahl gerade, darfst du sie ziehen. Ist sie ungerade, darf dein Mitspieler.',
-      'ueber.der-computergegner-heisst-max':         'Der Computergegner heißt Max Michu. Er ist kein lernendes Modell, sondern rechnet Züge durch und bewertet Stellungen nach Regeln, die ich selbst aufgestellt und in Tausenden von Testpartien nachgeschärft habe. Drei Stufen, von nachsichtig bis unangenehm.',
+      'ueber.der-computergegner-heisst-max':         'Am Computer heißt dein Mitspieler Max Michu. Max Michu ist kein lernendes Modell, sondern rechnet Züge durch und bewertet Stellungen nach Regeln, die ich selbst aufgestellt und in Tausenden von Testpartien nachgeschärft habe. Drei Stufen, von nachsichtig bis unangenehm.',
       'ueber.die-limitierte-auflage-design':         'Die limitierte Auflage. Design-Entwicklung: Gerd Reger, Bernd Schiller, Walter Rehm',
       'ueber.foto-christian-alber':                  'Foto: Christian Alber',
       'ueber.neu-ist-das-spiel':                     'Neu ist das Spiel nicht. Erfunden habe ich es 1998; das Design haben wir zu dritt über mehrere Jahre entwickelt. Die damalige limitierte Auflage ist seit Jahren vergriffen. Hier ist es erstmals online spielbar, mit den Regeln von damals.',
@@ -2069,7 +2069,7 @@ const TEXTE = {
       'meldung.du-ziehst':                           'Du ziehst',
       'meldung.eine-neue-runde-ist':                 'Eine neue Runde ist nicht möglich.',
       'meldung.einfordern-nicht-moeglich-stellung':  'Einfordern nicht möglich — Stellung noch nicht 3× wiederholt.',
-      'meldung.erst-drei-punkte-sammeln':            'Erst drei Punkte sammeln: 3× Einsteiger, 2× Fortgeschritten oder 1× Meister schlagen.',
+      'meldung.erst-drei-punkte-sammeln':            'Erst drei Punkte sammeln: 3 Partien auf Einsteiger, 2 auf Fortgeschritten oder 1 auf Meister gewinnen.',
       'meldung.erst-nach-dem-bonuszug':              'Erst nach dem Bonuszug',
       'meldung.feld-rot-paritaet':                   '{0}: {1} rot — {2}, {3} {4}',
       'meldung.gate-code':                           'gate-code',
@@ -2078,24 +2078,24 @@ const TEXTE = {
       'meldung.grund-stellung-5-wiederholt':         'Stellung 5× wiederholt',
       'meldung.hier-stimmt-was-nicht':               'Hier stimmt was nicht',
       'meldung.hier-stimmte-was-nicht':              'Hier stimmte was nicht',
-      'meldung.im-spiel-gegen-max':                  'Im Spiel gegen Max Michu: Optionen → markieren.',
+      'meldung.im-spiel-gegen-max':                  'Im Spiel mit Max Michu: Optionen → markieren.',
       'meldung.ist':                                 '{0} ist',
       'meldung.ist-dran':                            '{0} ist dran',
       'meldung.kein-spieler-kann-ziehen':            'Kein Spieler kann ziehen',
       'meldung.keine-antwort-mitspieler-ist':        'Keine Antwort — Mitspieler ist vermutlich nicht mehr verbunden.',
       'meldung.keine-figur':                         '{0}: keine Figur ({1}●)',
       'meldung.keine-zugmoeglichkeit-nochmals':      '{0} keine Zugmöglichkeit — {1} nochmals',
-      'meldung.ki-selbsttest-fehlgeschlagen-ki':     '⚠️ KI-Selbsttest fehlgeschlagen — KI gesperrt (Details in der Konsole)',
+      'meldung.ki-selbsttest-fehlgeschlagen-ki':     '⚠️ Selbsttest fehlgeschlagen — Max Michu pausiert (Details in der Konsole)',
       'meldung.konnte-nicht-kopieren-bitte':         'Konnte nicht kopieren — bitte von Hand markieren.',
       'meldung.kopieren':                            'kopieren',
       'meldung.kopiert':                             'Kopiert.',
       'meldung.markiert-partie-zug':                 'markiert — Partie {0}, Zug {1}',
-      'meldung.max-gewinnt':                         'Max gewinnt',
+      'meldung.max-gewinnt':                         'Max Michu hat gewonnen',
       'meldung.max-michu-bietet-remis':              'Max Michu bietet Remis an…',
       'meldung.max-michu-gewinnt':                   '🏅 Max Michu gewinnt!',
       'meldung.max-michu-ist-mit':                   'Max Michu ist mit Remis einverstanden',
       'meldung.max-michu-lehnt-remis':               'Max Michu lehnt Remis ab — Spiel läuft weiter',
-      'meldung.mensch-gewinnt':                      'Mensch gewinnt',
+      'meldung.mensch-gewinnt':                      'Du hast gewonnen',
       'meldung.mitspieler':                          'Mitspieler',
       'meldung.mitspieler-gewinnt':                  '🏅 Mitspieler gewinnt!',
       'meldung.mitspieler-hat':                      'Mitspieler hat',
@@ -2162,7 +2162,7 @@ const TEXTE = {
       'meldung.spiel-beendet':                       'Spiel beendet',
       'meldung.spiel-laeuft':                        'Spiel läuft',
       'meldung.stapel-ist-voll-max':                 '{0}: Stapel ist voll — max. 2 Figuren',
-      'meldung.stapel-von-nur-er':                   '{0}: Stapel von {1} — nur er darf ihn auflösen',
+      'meldung.stapel-von-nur-er':                   '{0}: Stapel von {1} — auflösen darf ihn nur {1}',
       'meldung.stapeln-rot':                         '{0}: Stapeln — {1} rot ({2}), {3} {4}',
       'meldung.suche-raum':                          'Suche Raum…',
       'meldung.unentschieden':                       'Unentschieden',
@@ -2466,7 +2466,7 @@ texteFuellen();
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v168';
+const BUILD_MARKER='· Build v169';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -2786,7 +2786,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=168'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=169'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
