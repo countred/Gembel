@@ -5,6 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<!-- §218: kein Symbol, mit Absicht — sonst fragt jeder Browser nach /favicon.ico und erhält 404 (ToDo 48). -->
+<link rel="icon" href="data:,">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
@@ -597,7 +600,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=173'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=174'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -865,10 +868,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Wählst du über den Sprachknopf Englisch, merkt sich dein Browser diese Wahl. Sie wird
         erst gespeichert, wenn du den Knopf drückst, und nicht übertragen; wählst du wieder
         Deutsch, wird sie entfernt. Auch diese Angabe ist für die von dir gewählte Funktion
-        erforderlich. Die Spracheinstellung deines Browsers liest die Seite nicht.<br><br>
-        Die Datenbank-Bibliothek von Google (Firebase), über die das Spiel mit dem Server
-        verbunden ist, würde in deinem Browser von sich aus technische Einträge anlegen; die
-        Seite unterbindet das.</div>
+        erforderlich. Die Spracheinstellung deines Browsers liest die Seite nicht.</div>
       <div><strong style="color:var(--text);">Wechsel auf ein anderes Gerät</strong><br>
         Du kannst dir einen Übertragungscode anzeigen lassen und ihn auf einem zweiten Gerät
         eingeben; mit demselben Code holst du deinen Punktestand auch zurück, wenn du die
@@ -959,9 +959,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         remembers this choice. It is stored only when you press the button, and it is
         not transmitted; if you choose German again, it is removed. This information,
         too, is necessary for the function you chose. The site does not read your
-        browser’s language setting.<br><br>The database library from Google (Firebase), through which the game is connected
-        to the server, would create technical entries in your browser on its own; the site prevents
-        this.</div>
+        browser’s language setting.</div>
       <div><strong style="color:var(--text);">Moving to another device</strong><br>
         You can display a transfer code and enter it on a second device; with the same
         code you can also get your score back after deleting the website data. It
@@ -1316,7 +1314,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=173" charset="utf-8"></script>
+<script src="gembel_rules.js?v=174" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1328,7 +1326,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=173" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=174" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <!-- §216 (1.10.2026) — SPEICHERSCHILD (ToDo 50, Walters GO). Die Firebase-Bibliothek schreibt sonst
@@ -2995,7 +2993,7 @@ if(SPRACHKNOPF_SICHTBAR){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v173';
+const BUILD_MARKER='· Build v174';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -3315,7 +3313,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=173'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=174'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

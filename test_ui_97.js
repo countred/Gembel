@@ -2328,14 +2328,14 @@ console.log('\u00a7215 \u2014 Datenschutz: jeder Speicherschl\u00fcssel beschrie
     'countred_pkey':    /zuf\u00e4llige Kennung/,
     'countred_gate':    /wie viele\s+Punkte du gesammelt hast/,
     'countred-sprache': /merkt sich dein Browser diese Wahl/,
-    'firebase:host':    /w\u00fcrde in deinem Browser von sich aus technische Eintr\u00e4ge anlegen; die\s+Seite unterbindet das\./,   // §217: das Schild (§216) verhindert es
+    // §218: `firebase:host` u. a. entfallen — das Speicherschild (§216) verhindert sie; §217 prüft das Schild.
   };
   const imCode = new Set([...HTML_CODE.matchAll(/localStorage\.(?:getItem|setItem|removeItem)\('([^']+)'/g)].map(m=>m[1]));
   const gs = (html.match(/const GATE_STORE = '([^']+)';/)||[])[1]; if(gs) imCode.add(gs);
   const unbeschrieben = [...imCode].filter(k => !BESCHRIEBEN[k]);
   const fehltImText = Object.entries(BESCHRIEBEN).filter(([k,re]) => !re.test(flach(deTeil))).map(([k]) => k);
   ok(imCode.size >= 3 && unbeschrieben.length === 0 && fehltImText.length === 0,
-     'jeder Speicherschl\u00fcssel ist im Datenschutztext beschrieben (' + [...imCode].join(', ') + ' + firebase:host)' +
+     'jeder Speicherschl\u00fcssel ist im Datenschutztext beschrieben (' + [...imCode].join(', ') + ')' +
      (unbeschrieben.length ? ' \u2014 ohne Beschreibung: ' + unbeschrieben.join(', ') : '') +
      (fehltImText.length ? ' \u2014 Text fehlt f\u00fcr: ' + fehltImText.join(', ') : ''));
   // (2) Die englische Fassung: da, mit Vorrangsatz, dieselben Abschnitte, dasselbe Datum.
@@ -2417,13 +2417,27 @@ console.log('\u00a7217 \u2014 Rechtsfenster: Hinweis, Schlie\u00dfen \u00b7 Clos
     ok(/class="lesezu" aria-label="Schlie\u00dfen \u00b7 Close" title="Schlie\u00dfen \u00b7 Close"/.test(f) && />Schlie\u00dfen \u00b7 Close<\/button>/.test(f),
        ov + ': Schlie\u00dfen zweisprachig (oben und unten)');
   }
-  // Der Satz „die Seite unterbindet das“ ist nur wahr, solange das Speicherschild (§216) im Code steht.
-  const satz = /Seite unterbindet das\./.test(html) && /the site prevents\s+this\./.test(html);
+  // §218: Der Satz „die Seite unterbindet das“ ist gestrichen (Walter, 1.10.: unüblich). Der
+  // Datenschutztext beschreibt nur, was gespeichert wird — das ist nur richtig, solange das
+  // Speicherschild (§216) die Firebase-Einträge verhindert. Deshalb: kein Firebase-Speicher-Absatz
+  // mehr im Text, UND das Schild steht im Code. Fehlt das Schild, fällt diese Prüfung.
+  const satz = !/unterbindet das|prevents\s+this|technische Eintr\u00e4ge anlegen|technical entr/.test(html);
   const schild = /<!-- §216 \(1\.10\.2026\) — SPEICHERSCHILD[\s\S]*?<script type="module">[\s\S]*?\['localStorage','sessionStorage','indexedDB'\]/.test(html)
                && /forceWebSockets\(\);/.test(HTML_CODE);
-  ok(satz && schild, 'Datenschutz sagt \u201eunterbindet das\u201c \u2014 und das Speicherschild steht im Code (sonst w\u00e4re der Satz falsch)');
+  ok(satz && schild, 'Datenschutz nennt keine Firebase-Eintr\u00e4ge \u2014 und das Speicherschild steht im Code, das sie verhindert (\u00a7218)');
   ok(!/legt in deinem Browser selbst einen technischen Eintrag an/.test(html) && !/itself creates a technical/.test(html),
      'der alte Firebase-Absatz ist aus beiden Fassungen entfernt');
+}
+
+// §218 (1.10.) — kein 404 auf /favicon.ico (ToDo 48), App-Zeile auch für Chrome.
+console.log('\u00a7218 \u2014 Symbol und App-Zeile:');
+{
+  const anl = fs.readFileSync(require('path').join(__dirname,'anleitung.html'),'utf8');
+  const vs  = fs.readFileSync(require('path').join(__dirname,'vorschau-sprache.html'),'utf8');
+  ok([html, anl, vs].every(q => /<link rel="icon" href="data:,">/.test(q)),
+     'alle drei Seiten sagen ausdr\u00fccklich „kein Symbol“ \u2014 kein Nachfragen nach /favicon.ico, kein 404');
+  ok([html, anl].every(q => /<meta name="apple-mobile-web-app-capable" content="yes">\s*<meta name="mobile-web-app-capable" content="yes">/.test(q)),
+     'App-Zeile f\u00fcr iPhone UND die allgemeine Fassung (Chrome-Warnung)');
 }
 
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
