@@ -2298,19 +2298,23 @@ console.log('\u00a7214 \u2014 englische Spalte und Sprachwahl:');
   // Der Knopf: unsichtbar, schreibt nur beim Druck
   const knopf = (html.match(/<button[^>]*id="btn-sprache"[^>]*>/)||[''])[0];
   const sep = (html.match(/<span[^>]*id="sprache-sep"[^>]*>/)||[''])[0];
-  ok(/\bhidden\b/.test(knopf) && /\bhidden\b/.test(sep) && /const SPRACHKNOPF_SICHTBAR = false;/.test(html),
-     'der Sprachknopf ist gebaut, aber UNSICHTBAR (Walters Entscheid steht aus)');
+  // §219: Walters Entscheid (1.10.) — sichtbar. Im Markup bleibt `hidden` (ohne Skript kann der Knopf
+  // nichts tun); das Skript zeigt Knopf und Trenner, weil SPRACHKNOPF_SICHTBAR wahr ist.
+  ok(/\bhidden\b/.test(knopf) && /\bhidden\b/.test(sep) && /const SPRACHKNOPF_SICHTBAR = true;/.test(html) &&
+     /if\(SPRACHKNOPF_SICHTBAR\)\{\s*\['btn-sprache','sprache-sep'\]\.forEach\(id => \{ const n = document\.getElementById\(id\); if\(n\) n\.hidden = false; \}\);/.test(html),
+     'der Sprachknopf ist SICHTBAR (Walter, \u00a7219) \u2014 ohne Skript bleibt er verborgen');
   const umsch = (html.match(/window\.spracheUmschalten = function\(\)\{[\s\S]*?\n\};/)||[''])[0];
   const schreib = (HTML_CODE.match(/localStorage\.(setItem|removeItem)\('countred-sprache'/g)||[]).length;
   ok(umsch.length > 0 && schreib === 2 && /setItem\('countred-sprache', 'en'\)/.test(umsch) && /removeItem\('countred-sprache'\)/.test(umsch),
      'geschrieben wird der Wert NUR im Knopf (setzen bzw. entfernen), nirgends sonst');
-  // Die Vorschau-Seite: da, unverlinkt, nicht indexiert, gleicher Schluessel, keine Adressauswertung
+  // §219: Die Vorschau-Seite aus §214 ist entfernt — der Knopf ist sichtbar. Sie darf nicht mehr da,
+  // nicht auf der Positivliste und nirgends erwähnt sein (außer in Kommentaren).
   const path = require('path');
-  const vs = fs.existsSync(path.join(__dirname,'vorschau-sprache.html')) ? fs.readFileSync(path.join(__dirname,'vorschau-sprache.html'),'utf8') : '';
   const anl = fs.readFileSync(path.join(__dirname,'anleitung.html'),'utf8');
-  ok(vs.length > 0 && /noindex/.test(vs) && /'countred-sprache'/.test(vs) && !/location\.(search|hash)|navigator/.test(vs.replace(/<!--[\s\S]*?-->/g,'')) &&
-     !/<script[^>]*\bsrc=/.test(vs) && !/vorschau-sprache/.test(HTML_CODE) && !/vorschau-sprache/.test(anl.replace(/<!--[\s\S]*?-->/g,'')),
-     'Vorschau-Seite: da, unverlinkt, nicht indexiert, derselbe Schl\u00fcssel, keine Adresse, nichts von au\u00dfen');
+  const gi  = fs.readFileSync(path.join(__dirname,'.gitignore'),'utf8');
+  ok(!fs.existsSync(path.join(__dirname,'vorschau-sprache.html')) && !/vorschau-sprache/.test(gi) &&
+     !/vorschau-sprache/.test(HTML_CODE.replace(/\/\/[^\n]*/g,'')) && !/vorschau-sprache/.test(anl.replace(/<!--[\s\S]*?-->/g,'')),
+     'die Vorschau-Seite ist entfernt: keine Datei, kein Eintrag in der Positivliste, kein Verweis');
   ok(/document\.documentElement\.lang = SPRACHE;/.test(html), 'das lang-Attribut folgt der Sprache');
 }
 
@@ -2433,9 +2437,8 @@ console.log('\u00a7217 \u2014 Rechtsfenster: Hinweis, Schlie\u00dfen \u00b7 Clos
 console.log('\u00a7218 \u2014 Symbol und App-Zeile:');
 {
   const anl = fs.readFileSync(require('path').join(__dirname,'anleitung.html'),'utf8');
-  const vs  = fs.readFileSync(require('path').join(__dirname,'vorschau-sprache.html'),'utf8');
-  ok([html, anl, vs].every(q => /<link rel="icon" href="data:,">/.test(q)),
-     'alle drei Seiten sagen ausdr\u00fccklich „kein Symbol“ \u2014 kein Nachfragen nach /favicon.ico, kein 404');
+  ok([html, anl].every(q => /<link rel="icon" href="data:,">/.test(q)),
+     'beide Seiten sagen ausdr\u00fccklich „kein Symbol“ \u2014 kein Nachfragen nach /favicon.ico, kein 404 (\u00a7219: die Vorschau-Seite ist entfernt)');
   ok([html, anl].every(q => /<meta name="apple-mobile-web-app-capable" content="yes">\s*<meta name="mobile-web-app-capable" content="yes">/.test(q)),
      'App-Zeile f\u00fcr iPhone UND die allgemeine Fassung (Chrome-Warnung)');
 }

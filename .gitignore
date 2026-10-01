@@ -30,8 +30,6 @@ loeschliste.txt
 # §211 (29.9.): die Pruefung „kein sichtbarer Text ausserhalb der Textschicht" — gemeinsam
 # fuer test_ui_97 (Spiel) und test_anleitung_137 (Anleitung), statt als Zwilling kopiert.
 !pruef_sichtbar.js
-# §214 (30.9.): Vorschau der Sprachwahl — unverlinkt, nur fuer Walter, bis der Sprachknopf sichtbar ist.
-!vorschau-sprache.html
 !test_*.js
 
 # robots.txt gehoert zur Auslieferung (§157), nicht zum Archiv

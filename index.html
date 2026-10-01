@@ -600,7 +600,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=174'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=175'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -624,8 +624,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <span class="legal-sep" aria-hidden="true" data-t="start.text-2"></span>
       <button type="button" class="legal-link"
         onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')" data-t="start.datenschutz"></button>
-      <!-- §214: der Sprachknopf — gebaut, aber UNSICHTBAR (`hidden`), bis Walter entscheidet
-           (SPRACHKNOPF_SICHTBAR). Beschriftet in der Sprache, die er einschaltet. -->
+      <!-- §214/§219: der Sprachknopf, beschriftet in der Sprache, die er einschaltet. Sichtbar seit
+           §219 (Walter, 1.10.: „her mit dem Knopf!“). `hidden` bleibt im Markup: ohne JavaScript
+           kann er nichts tun — das Skript zeigt ihn (SPRACHKNOPF_SICHTBAR). -->
       <span class="legal-sep" id="sprache-sep" aria-hidden="true" hidden data-t="start.text-3"></span>
       <button type="button" class="legal-link sprach-link" id="btn-sprache" hidden
         onclick="spracheUmschalten()" data-t="start.sprache-wechseln"></button>
@@ -1314,7 +1315,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=174" charset="utf-8"></script>
+<script src="gembel_rules.js?v=175" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1326,7 +1327,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=174" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=175" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <!-- §216 (1.10.2026) — SPEICHERSCHILD (ToDo 50, Walters GO). Die Firebase-Bibliothek schreibt sonst
@@ -2054,8 +2055,8 @@ const GATE_STORE = 'countred_gate';
 // §214 — SPRACHWAHL. Deutsch ist Standard. Englisch NUR, wenn `countred-sprache` = 'en' gespeichert
 // ist — und das schreibt ausschliesslich ein ausdruecklicher Druck auf den Sprachknopf (§ 25 TDDDG:
 // vom Nutzer gewuenscht; ohne Wahl wird nichts gespeichert). Der Knopf bleibt unsichtbar, bis Walter
-// entscheidet (SPRACHKNOPF_SICHTBAR); bis dahin schreibt nur die unverlinkte Vorschau-Seite
-// `vorschau-sprache.html` denselben Wert. Die ADRESSE wird dafuer NICHT gelesen (§203: `?` tabu,
+// entschied (seit §219 sichtbar; die Vorschau-Seite aus §214 ist entfernt). Die ADRESSE wird dafuer
+// NICHT gelesen (§203: `?` tabu,
 // genau eine Stelle liest die Raute), und die Browsersprache auch nicht (§ 25 TDDDG, keine
 // Ausrichtung auf fremde Maerkte — ToDo 43).
 // ⚠️ Diese Funktion steht ZEICHENGLEICH auch im ersten Skript von anleitung.html (Fehlerschirm) —
@@ -2899,7 +2900,8 @@ window.tryCreateRoom = function(){ if(gateOpen()) createRoom(); else openGateInf
 // (Deutsch → Wert entfernen, nichts bleibt zurueck), und laedt neu, damit jede Stelle — auch die
 // Anleitung und ihr Fehlerschirm — dieselbe Wahl liest. SICHTBAR erst auf Walters Entscheid:
 // dann wird aus `false` ein `true`, sonst nichts. Vorher: Datenschutz-Nachtrag (ToDo 49).
-const SPRACHKNOPF_SICHTBAR = false;
+// §219 (1.10.2026): Walters Entscheid — der Knopf ist sichtbar.
+const SPRACHKNOPF_SICHTBAR = true;
 window.spracheUmschalten = function(){
   try {
     if(SPRACHE === 'en') localStorage.removeItem('countred-sprache');
@@ -2993,7 +2995,7 @@ if(SPRACHKNOPF_SICHTBAR){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v174';
+const BUILD_MARKER='· Build v175';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -3313,7 +3315,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=174'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=175'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
