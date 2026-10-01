@@ -2461,6 +2461,31 @@ console.log('\u00a7220 \u2014 Sprachknopf im \u2630-Men\u00fc nur ohne laufende 
      'der Knopf im Men\u00fc ist gleich gebaut wie auf dem Startbildschirm');
 }
 
+// §221 (1.10.) — Max Michus Denkzeit, Teil 1 rund 2 s, gestreut; Teil 2 und MvM unverändert.
+console.log('\u00a7221 \u2014 Denkzeit Teil 1 (rund 2 s, gestreut), Teil 2 und MvM unver\u00e4ndert:');
+{
+  const vm = require('vm');
+  const fn = (html.match(/async function animateAIMove\([\s\S]*?\n\}/)||[''])[0];
+  // animateAIMove mit gespielten Uhren fahren: gemessen wird, wie lange VOR dem Anheben gewartet wird.
+  const fahre = (wait, opts) => { const pausen = []; const zellen = { add(){}, remove(){} };
+    const c = { setTimeout: (f, ms) => { pausen.push(ms); f(); }, Promise,
+      document: { querySelector: () => ({ classList: zellen }) } };
+    vm.createContext(c); vm.runInContext(fn + '\n;__f = animateAIMove;', c);
+    return c.__f({fr:0,fc:0,tr:1,tc:1}, wait, opts).then(() => pausen); };
+  Promise.all([ fahre(900, undefined), fahre(900, {denkMs: 2000}), fahre(0, {bMin:1000, cMs:750}), fahre(900, {denkMs: -50}) ])
+  .then(([alt, neu, mvm, negativ]) => {
+    ok(alt[0] === 495 && alt[1] === 405, 'ohne denkMs wie seit \u00a7199: 55 % vor, 45 % zwischen (' + alt.join('/') + ')');
+    ok(neu[0] === 2000 && neu[1] === 405 && neu[2] === 600, 'mit denkMs: Teil 1 genau vorgegeben, Teil 2 und Nachleuchten UNVER\u00c4NDERT (' + neu.join('/') + ')');
+    ok(mvm.length === 2 && mvm[0] === 1000 && mvm[1] === 750, 'MvM unver\u00e4ndert: keine Denkpause, 1000/750 (' + mvm.join('/') + ')');
+    ok(negativ[0] === 405 || negativ.length === 3, 'Suche l\u00e4nger als Denkzeit \u2192 keine negative Pause (' + negativ.join('/') + ')');
+  });
+  const ruf = (html.match(/const DENK_MIN_MS=(\d+), DENK_SPANNE_MS=(\d+);\s*const denkOpts = \(moveIndex===0\) \? undefined\s*: \{ denkMs: \(DENK_MIN_MS \+ Math\.random\(\)\*DENK_SPANNE_MS\) - \(performance\.now\(\)-tZugBeginn\) \};\s*await animateAIMove\(move, wait, denkOpts\);/)||[]);
+  ok(ruf.length && Number(ruf[1]) === 1600 && Number(ruf[2]) === 1000,
+     'Teil 1 = 1,6\u20132,6 s, zuf\u00e4llig und unabh\u00e4ngig von der Stellung (\u00a7125), Er\u00f6ffnungszug ohne (\u00a795)');
+  ok(/aiThinking=true;\s*const tZugBeginn=performance\.now\(\);/.test(html),
+     'gez\u00e4hlt ab dem Moment, in dem Max Michu am Zug ist (feste Pause und Suche geh\u00f6ren dazu)');
+}
+
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
 {
   const LESE = ['regeln-overlay','ueber-overlay','impressum-overlay','datenschutz-overlay','gate-overlay'];
