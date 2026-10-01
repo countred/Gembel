@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=170'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=171'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -810,8 +810,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Diese Seite setzt keine Cookies, bindet keine Werbung ein und verwendet kein
         Analyse-Werkzeug. Name und E-Mail-Adresse werden nicht erhoben —
         gespeichert werden nur der Spielverlauf und eine zufällige Kennung deines Browsers.
-        Dein Punktestand und die Freischaltung des Zwei-Personen-Modus bleiben allein in
-        deinem Browser.</div>
+        Dein Punktestand, die Freischaltung des Zwei-Personen-Modus und deine Sprachwahl
+        bleiben allein in deinem Browser.</div>
       <div><strong style="color:var(--text);">Was gespeichert wird</strong><br>
         Beim Spielen werden der Spielverlauf (Züge, Zeitpunkte, Ergebnis, gewählte Spielstärke)
         und technische Kennzahlen zur Spielstärke-Auswertung gespeichert. Zu diesen Kennzahlen
@@ -836,7 +836,17 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Punkte du gesammelt hast und ob der Modus offen ist. Diese Angaben werden nicht
         übertragen. Ohne sie gäbe es die Freischaltung nicht; sie sind für diese von dir
         angeforderte Funktion erforderlich. Löschst du die Website-Daten, sind sie ebenso
-        weg wie die Kennung.</div>
+        weg wie die Kennung.<br><br>
+        Wählst du über den Sprachknopf Englisch, merkt sich dein Browser diese Wahl. Sie wird
+        erst gespeichert, wenn du den Knopf drückst, und nicht übertragen; wählst du wieder
+        Deutsch, wird sie entfernt. Auch diese Angabe ist für die von dir gewählte Funktion
+        erforderlich. Die Spracheinstellung deines Browsers liest die Seite nicht.<br><br>
+        Die Datenbank-Bibliothek von Google (Firebase), über die das Spiel mit dem Server
+        verbunden ist, legt in deinem Browser selbst einen technischen Eintrag an: die Adresse
+        des Datenbankservers, damit die Verbindung beim nächsten Aufruf direkt zustande kommt.
+        Nach einem Verbindungsfehler kann ein weiterer Eintrag hinzukommen, der vermerkt, welche
+        Verbindungsart gescheitert ist. Diese Einträge enthalten keine Angaben zu dir und werden
+        von uns nicht ausgewertet; sie verschwinden, wenn du die Website-Daten löschst.</div>
       <div><strong style="color:var(--text);">Wechsel auf ein anderes Gerät</strong><br>
         Du kannst dir einen Übertragungscode anzeigen lassen und ihn auf einem zweiten Gerät
         eingeben; mit demselben Code holst du deinen Punktestand auch zurück, wenn du die
@@ -886,7 +896,104 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Art. 11 DSGVO auch nicht verpflichtet, zusätzliche Daten zu erheben, nur um dich
         identifizieren zu können.</div>
       <div style="font-size:var(--fs-sm);color:var(--text3);">
-        Verantwortlich ist die im Impressum genannte Person. Stand: 22. September 2026</div>
+        Verantwortlich ist die im Impressum genannte Person. Stand: 1. Oktober 2026</div>
+      <!-- §215 (1.10.2026): die ENGLISCHE FASSUNG „zum Verständnis“ (Walter, 29.9./1.10.). Wie der
+           deutsche Text oben skriptfrei und außerhalb der Textschicht. Maßgeblich ist die deutsche
+           Fassung; die englische muss inhaltlich gleich und auf demselben Stand bleiben (Art. 12
+           DSGVO) — test_ui_97 hält fest, dass beide dieselben Abschnitte tragen. -->
+      <div lang="en" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border,#ccc);padding-top:14px;margin-top:6px;">
+      <div><strong style="color:var(--text);font-size:var(--fs-lg);">Privacy — English version</strong><br>
+        <em>This translation is provided for information only. The German version above is legally binding.</em></div>
+      <div><strong style="color:var(--text);">In short</strong><br>
+        This site sets no cookies, shows no advertising and uses no analytics tool. Your
+        name and email address are not collected — only the course of your games and a
+        random identifier of your browser are stored. Your score, the unlocking of the
+        two-player mode and your language choice stay in your browser alone.</div>
+      <div><strong style="color:var(--text);">What is stored</strong><br>
+        While you play, the course of the game (moves, times, result, chosen level) and
+        technical figures for evaluating the playing strength are stored. These figures
+        include a short calculation test that measures once per session how fast your
+        device calculates — without it, thinking times on different devices cannot be
+        compared. They also include a random identifier that your browser creates once
+        and that serves to link several games from the same browser. It contains neither
+        your name nor an identifier of your device.</div>
+      <div><strong style="color:var(--text);">Two players with a code</strong><br>
+        If you play with someone else, the site creates a room on the server under the
+        five-character code. During the game it holds the game state, the moves of both
+        sides and a sign of life, so that a lost connection can be detected; after the
+        end, the move record and the result go into a separate area. No identifier is
+        stored for this — these games are not assigned to any person. <strong style="color:var(--text);">Anyone who knows
+        the code can read along in the room</strong>; so give it only to the person you want to
+        play with. Abandoned rooms are removed once they have shown no sign of life for
+        two hours, move records of finished games after 30 days. The site does this
+        clean-up itself whenever someone opens a room again; there is so far no
+        permanently running deletion service on the server.</div>
+      <div><strong style="color:var(--text);">What stays only in your browser</strong><br>
+        To unlock the two-player mode, your browser remembers how many points you have
+        collected and whether the mode is open. This information is not transmitted.
+        Without it there would be no unlocking; it is necessary for this function that
+        you requested. If you delete the website data, it is gone, just like the
+        identifier.<br><br>If you choose English with the language button, your browser
+        remembers this choice. It is stored only when you press the button, and it is
+        not transmitted; if you choose German again, it is removed. This information,
+        too, is necessary for the function you chose. The site does not read your
+        browser’s language setting.<br><br>The database library from Google (Firebase),
+        through which the game is connected to the server, itself creates a technical
+        entry in your browser: the address of the database server, so that the
+        connection is established directly the next time. After a connection error, a
+        further entry may be added, noting which type of connection failed. These
+        entries contain no information about you and are not evaluated by us; they
+        disappear when you delete the website data.</div>
+      <div><strong style="color:var(--text);">Moving to another device</strong><br>
+        You can display a transfer code and enter it on a second device; with the same
+        code you can also get your score back after deleting the website data. It
+        contains the identifiers of the devices on which your score was built up, and
+        the respective score, nothing else — so enter it only on your own devices. The
+        second device keeps its own identifier.</div>
+      <div><strong style="color:var(--text);">Why, and on what legal basis</strong><br>
+        The legal basis is Art. 6(1)(f) GDPR — our legitimate interest. It consists in
+        operating and further developing the game: setting the playing strength of Max
+        Michu, finding errors in the game rules and in the search, and recognising
+        whether a level really does what it is meant to do. For this, several games must
+        belong together; individual games without context do not answer these questions.
+        There is no advertising, no profiling and no disclosure to third parties for
+        their own purposes.</div>
+      <div><strong style="color:var(--text);">For how long</strong><br>
+        The course of the games and the identifier are stored for as long as they are
+        needed for this evaluation. There is no fixed date for this; the data is deleted
+        as soon as the evaluation is complete, but at the latest at your request. The
+        information in your browser remains until you delete the website data.</div>
+      <div><strong style="color:var(--text);">Where, and who sees the data</strong><br>
+        The data is held in the Firebase Realtime Database of Google (Google Ireland
+        Limited and Google LLC), region europe-west1. The site itself is delivered via
+        GitHub Pages (GitHub, Inc.). To this extent, both providers are processors;
+        their respective data processing terms apply. When the site is called up, GitHub
+        additionally logs the IP address of your connection for security purposes —
+        GitHub itself is responsible for this, not we.</div>
+      <div><strong style="color:var(--text);">Transfers to third countries</strong><br>
+        Both providers may also process data in the USA. Google and GitHub are certified
+        under the EU-US Data Privacy Framework, for which there is an adequacy decision
+        of the European Commission. In addition, the contracts of both providers contain
+        the European Commission’s standard contractual clauses under Art. 46(2)(c) GDPR.
+        A copy of the clauses is available from the providers; on request we will tell
+        you where to find it.</div>
+      <div><strong style="color:var(--text);">Your rights</strong><br>
+        You have the right of access, rectification, erasure, restriction of processing
+        and data portability. You can object to the processing at any time (Art. 21
+        GDPR) — your data will then be deleted, unless there are compelling grounds to
+        the contrary. You can also lodge a complaint with a supervisory authority; the
+        authority responsible for us is the Bavarian Data Protection Authority
+        (Bayerisches Landesamt für Datenschutzaufsicht), Promenade 18, 91522 Ansbach,
+        Germany.<br><br>The quickest way works without us: if you delete the website
+        data in your browser, the identifier is gone and your next game starts under a
+        new one. For access to or erasure of games already stored, a message to the
+        address given in the legal notice (Impressum) is enough. For this we need your
+        identifier — it is at the start of your transfer code. Without it we cannot find
+        your games and, under Art. 11 GDPR, are not obliged to collect additional data
+        merely in order to identify you.</div>
+      <div style="font-size:var(--fs-sm);color:var(--text3);">
+        The person named in the legal notice (Impressum) is responsible. Last updated: 1 October 2026</div>
+      </div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('datenschutz-overlay').classList.add('hidden')">Schließen</button>
@@ -1191,7 +1298,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=170" charset="utf-8"></script>
+<script src="gembel_rules.js?v=171" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1203,7 +1310,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=170" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=171" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <script type="module">
@@ -2820,7 +2927,7 @@ if(SPRACHKNOPF_SICHTBAR){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v170';
+const BUILD_MARKER='· Build v171';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -3140,7 +3247,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=170'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=171'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

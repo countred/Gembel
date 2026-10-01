@@ -2313,6 +2313,45 @@ console.log('\u00a7214 \u2014 englische Spalte und Sprachwahl:');
   ok(/document\.documentElement\.lang = SPRACHE;/.test(html), 'das lang-Attribut folgt der Sprache');
 }
 
+// §215 (1.10.) — DATENSCHUTZ: SPRACHWAHL, FIREBASE-EINTRAG, ENGLISCHE FASSUNG (ToDo 49).
+console.log('\u00a7215 \u2014 Datenschutz: jeder Speicherschl\u00fcssel beschrieben, englische Fassung gleichst\u00e4ndig:');
+{
+  const dsHtml = (html.match(/<div class="overlay hidden" id="datenschutz-overlay">[\s\S]*?\n<\/div>/)||[''])[0];
+  const enA = dsHtml.indexOf('<div lang="en"');
+  const deTeil = enA > 0 ? dsHtml.slice(0, enA) : dsHtml, enTeil = enA > 0 ? dsHtml.slice(enA) : '';
+  const flach = t => t.replace(/<[^>]*>/g,' ').replace(/\s+/g,' ');
+  // (1) JEDER Speicherschluessel, den der Code schreibt oder liest, ist im deutschen Text beschrieben.
+  //     Ein neuer Schluessel ohne Eintrag hier faellt — genau so blieb der Firebase-Eintrag seit dem
+  //     Start unbemerkt (ToDo 31 b, Befund 1.10.).
+  const BESCHRIEBEN = {
+    'countred_pkey':    /zuf\u00e4llige Kennung/,
+    'countred_gate':    /wie viele\s+Punkte du gesammelt hast/,
+    'countred-sprache': /merkt sich dein Browser diese Wahl/,
+    'firebase:host':    /die Adresse\s+des Datenbankservers/,          // legt die Firebase-Bibliothek selbst an
+  };
+  const imCode = new Set([...HTML_CODE.matchAll(/localStorage\.(?:getItem|setItem|removeItem)\('([^']+)'/g)].map(m=>m[1]));
+  const gs = (html.match(/const GATE_STORE = '([^']+)';/)||[])[1]; if(gs) imCode.add(gs);
+  const unbeschrieben = [...imCode].filter(k => !BESCHRIEBEN[k]);
+  const fehltImText = Object.entries(BESCHRIEBEN).filter(([k,re]) => !re.test(flach(deTeil))).map(([k]) => k);
+  ok(imCode.size >= 3 && unbeschrieben.length === 0 && fehltImText.length === 0,
+     'jeder Speicherschl\u00fcssel ist im Datenschutztext beschrieben (' + [...imCode].join(', ') + ' + firebase:host)' +
+     (unbeschrieben.length ? ' \u2014 ohne Beschreibung: ' + unbeschrieben.join(', ') : '') +
+     (fehltImText.length ? ' \u2014 Text fehlt f\u00fcr: ' + fehltImText.join(', ') : ''));
+  // (2) Die englische Fassung: da, mit Vorrangsatz, dieselben Abschnitte, dasselbe Datum.
+  const H = /<strong style="color:var\(--text\);">([^<]+)<\/strong>/g;
+  const abDe = [...deTeil.matchAll(H)].map(m=>m[1]), abEn = [...enTeil.matchAll(H)].map(m=>m[1]);
+  ok(enTeil.length > 3000 && /The German version above is legally binding\./.test(enTeil) && abDe.length >= 10 && abDe.length === abEn.length,
+     'englische Fassung mit Vorrangsatz, dieselbe Zahl Abschnitte (' + abDe.length + ' / ' + abEn.length + ')');
+  const MON = {Januar:'January',Februar:'February','M\u00e4rz':'March',April:'April',Mai:'May',Juni:'June',Juli:'July',August:'August',September:'September',Oktober:'October',November:'November',Dezember:'December'};
+  const dDe = (flach(deTeil).match(/Stand: (\d+)\. (\S+) (\d{4})/)||[]), dEn = (flach(enTeil).match(/Last updated: (\d+) (\S+) (\d{4})/)||[]);
+  ok(dDe.length && dEn.length && dDe[1] === dEn[1] && MON[dDe[2]] === dEn[2] && dDe[3] === dEn[3],
+     'beide Fassungen tragen dasselbe Datum (deutsch \u201e' + (dDe[0]||'?') + '\u201c, englisch \u201e' + (dEn[0]||'?') + '\u201c)');
+  // (3) Walters Grundsaetze auch im englischen Rechtstext.
+  const VB = [/\bagainst\b/i, /opponent/i, /\bAI\b/, /\bhuman\b/i, /\bMax\b(?! Michu)/];
+  const vbEn = VB.filter(re => re.test(flach(enTeil))).map(String);
+  ok(vbEn.length === 0, 'Grunds\u00e4tze auch im englischen Datenschutztext' + (vbEn.length ? ' \u2014 ' + vbEn.join(' ') : ''));
+}
+
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
 {
   const LESE = ['regeln-overlay','ueber-overlay','impressum-overlay','datenschutz-overlay','gate-overlay'];
