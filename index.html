@@ -600,7 +600,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=175'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=176'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -640,7 +640,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          Anklickbar: das ist der einzige Weg zum Erklaertext, sobald der Modus offen ist und
          der gesperrte Knopf nicht mehr antippbar ist. -->
     <div id="gate-score" class="hidden" onclick="openGateInfo()"></div>
-    <div id="test-key" class="hidden">Test-Kennung: <span id="test-key-val"></span></div>
+    <div id="test-key" class="hidden"><span data-t="start.test-kennung"></span> <span id="test-key-val"></span></div>
   </div>
 </div>
 
@@ -1206,6 +1206,12 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <span class="legal-sep" aria-hidden="true" data-t="neu.text-2"></span>
       <button type="button" class="legal-link"
         onclick="document.getElementById('datenschutz-overlay').classList.remove('hidden')" data-t="neu.datenschutz"></button>
+      <!-- §220: der Sprachknopf auch im ☰-Menü (Walter, 1.10.). Er lädt die Seite neu — deshalb
+           zeigt showOverlay ihn hier NUR, wenn gerade keine Partie läuft (sonst bräche der Wechsel
+           sie ab, zu zweit für beide). Auf dem Startbildschirm steht er immer. -->
+      <span class="legal-sep" id="sprache-sep-menue" aria-hidden="true" hidden data-t="neu.text-3"></span>
+      <button type="button" class="legal-link sprach-link" id="btn-sprache-menue" hidden
+        onclick="spracheUmschalten()" data-t="neu.sprache-wechseln"></button>
     </div>
   </div>
 </div>
@@ -1315,7 +1321,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=175" charset="utf-8"></script>
+<script src="gembel_rules.js?v=176" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1327,7 +1333,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=175" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=176" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <!-- §216 (1.10.2026) — SPEICHERSCHILD (ToDo 50, Walters GO). Die Firebase-Bibliothek schreibt sonst
@@ -2089,8 +2095,10 @@ const TEXTE = {
       'neu.datenschutz':                             'Datenschutz',
       'neu.impressum':                               'Impressum',
       'neu.menue':                                   'Menü',
+      'neu.sprache-wechseln':                        'English',
       'neu.text':                                    '·',
       'neu.text-2':                                  '·',
+      'neu.text-3':                                  '·',
       'neu.ueber-das-spiel':                         'Über das Spiel',
       'nochmal.dein-mitspieler-moechte-eine':        'Dein Mitspieler möchte eine neue Runde starten.',
       'nochmal.ja-nochmal':                          'Ja, nochmal!',
@@ -2183,6 +2191,7 @@ const TEXTE = {
       'start.interaktive-spielanleitung':            'Interaktive Spielanleitung',
       'start.mit-code-zu-zweit':                     'Mit Code zu zweit',
       'start.sprache-wechseln':                      'English',
+      'start.test-kennung':                          'Test-Kennung:',
       'start.testversion':                           'Testversion',
       'start.text':                                  '·',
       'start.text-2':                                '·',
@@ -2407,8 +2416,10 @@ const TEXTE = {
       'neu.datenschutz':                             'Privacy',
       'neu.impressum':                               'Legal notice',
       'neu.menue':                                   'Menu',
+      'neu.sprache-wechseln':                        'Deutsch',
       'neu.text':                                    '·',
       'neu.text-2':                                  '·',
+      'neu.text-3':                                  '·',
       'neu.ueber-das-spiel':                         'About the game',
       'nochmal.dein-mitspieler-moechte-eine':        'The other player would like to start a new round.',
       'nochmal.ja-nochmal':                          'Yes, play again!',
@@ -2501,6 +2512,7 @@ const TEXTE = {
       'start.interaktive-spielanleitung':            'Interactive guide: how to play',
       'start.mit-code-zu-zweit':                     'Two players with a code',
       'start.sprache-wechseln':                      'Deutsch',
+      'start.test-kennung':                          'Test ID:',
       'start.testversion':                           'Test version',
       'start.text':                                  '·',
       'start.text-2':                                '·',
@@ -2995,7 +3007,7 @@ if(SPRACHKNOPF_SICHTBAR){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v175';
+const BUILD_MARKER='· Build v176';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -3315,7 +3327,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=175'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=176'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);
@@ -3440,6 +3452,11 @@ function showOverlay(id){
    'neu-overlay','rematch-req-overlay','regeln-overlay','maintenance-overlay','draw-offer-overlay','ai-draw-offer-overlay','opp-offline-overlay','marks-overlay',
    'impressum-overlay','datenschutz-overlay','gate-overlay','ueber-overlay']  // §126, §144, §191
     .forEach(o=>document.getElementById(o).classList.toggle('hidden',o!==id));
+  // §220: der Sprachknopf im ☰-Menü nur ohne laufende Partie — der Wechsel lädt neu.
+  if(id==='neu-overlay'){
+    const zeigen = SPRACHKNOPF_SICHTBAR && !(phase==='playing' || phase==='bonus');
+    ['btn-sprache-menue','sprache-sep-menue'].forEach(k => { const n=document.getElementById(k); if(n) n.hidden=!zeigen; });
+  }
 }
 // §203 (23.9.): RECHTSFENSTER AUS DER ADRESSE. `index.html` wertete bis v159 weder
 // `location.search` noch `location.hash` aus — das war eine GEMESSENE Eigenschaft der

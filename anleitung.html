@@ -475,7 +475,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=175" charset="utf-8"></script>
+<script src="gembel_rules.js?v=176" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -484,7 +484,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 77 · 30.09.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 78 · 01.10.2026';
 
 // ═══════════════════════════════════════════════════════════════════
 //  §208 — TEXTSCHICHT DER ANLEITUNG (Probe, ToDo 43)
@@ -1978,7 +1978,11 @@ function init(){
   document.getElementById('btn-back').onclick=zurueck;
   window.addEventListener('resize', function(){ messeKastenhoehe(); groesse(); });
   idx=schrittAusAdresse();   // §203: dort weitermachen, wo der Leser war
-  zeigePhase();
+  // §220 (Walters Befund 1.10.): Wer aus Impressum/Datenschutz zurückkommt, war schon HIER — ein
+  // Zug, der schon geschehen ist, wird nicht noch einmal abgespielt (sonst entstand der Vierer
+  // jedes Mal neu). Also wie beim Zurückblättern: Ergebnis sofort. Ohne gemerkten Stand ist
+  // idx 0, und alles läuft wie bisher vorwärts.
+  zeigePhase(idx>0);
   setTimeout(function(){ messeKastenhoehe(); groesse(); }, 30);
 }
 if(typeof document!=='undefined' && typeof window!=='undefined'){

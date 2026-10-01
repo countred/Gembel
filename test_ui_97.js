@@ -1143,8 +1143,10 @@ ok(/window\.markMvkiPosition=|async function markMvkiPosition|function markMvkiP
 
 console.log('\u00a7134 \u2014 sichtbare Test-Kennung:');
 {
-  ok(/<div id="test-key" class="hidden">Test-Kennung: <span id="test-key-val"><\/span><\/div>/.test(html),
-     'Zeile steht im Startmen\u00fc, anf\u00e4nglich verborgen');
+  // §220: der Vorspann kommt aus der Tabelle („Test-Kennung:“ / „Test ID:“), sonst gleich.
+  ok(/<div id="test-key" class="hidden"><span data-t="start\.test-kennung"><\/span> <span id="test-key-val"><\/span><\/div>/.test(html) &&
+     DE['start.test-kennung'] === 'Test-Kennung:',
+     'Zeile steht im Startmen\u00fc, anf\u00e4nglich verborgen (Vorspann \u00fcbersetzbar, \u00a7220)');
   ok(/#test-key\.hidden\{display:none;\}/.test(html),
      '.hidden ist F\u00dcR DIESES ELEMENT definiert \u2014 die Klasse ist in dieser Datei NICHT global');
   ok(/if\(PLAYER_KEY\)\{[\s\S]{0,240}_tk\.classList\.remove\('hidden'\)/.test(html),
@@ -2441,6 +2443,22 @@ console.log('\u00a7218 \u2014 Symbol und App-Zeile:');
      'beide Seiten sagen ausdr\u00fccklich „kein Symbol“ \u2014 kein Nachfragen nach /favicon.ico, kein 404 (\u00a7219: die Vorschau-Seite ist entfernt)');
   ok([html, anl].every(q => /<meta name="apple-mobile-web-app-capable" content="yes">\s*<meta name="mobile-web-app-capable" content="yes">/.test(q)),
      'App-Zeile f\u00fcr iPhone UND die allgemeine Fassung (Chrome-Warnung)');
+}
+
+// §220 (1.10.) — Sprachknopf im ☰-Menü, aber nur ohne laufende Partie.
+console.log('\u00a7220 \u2014 Sprachknopf im \u2630-Men\u00fc nur ohne laufende Partie:');
+{
+  const vm = require('vm');
+  const fn = (html.match(/function showOverlay\(id\)\{[\s\S]*?\n\}/)||[''])[0];
+  const mk = () => { const el = {}; return { getElementById: id => (el[id] = el[id] || { hidden: true, classList: { toggle(){} } }), el }; };
+  const lage = (phase, sichtbar) => { const d = mk(); const c = { document: d, SPRACHKNOPF_SICHTBAR: sichtbar, phase };
+    vm.createContext(c); vm.runInContext(fn + '\n;showOverlay("neu-overlay");', c);
+    return !d.el['btn-sprache-menue'].hidden && !d.el['sprache-sep-menue'].hidden; };
+  ok(fn.length > 0 && !lage('playing', true) && !lage('bonus', true) && lage('finished', true) && lage('waiting', true) && !lage('finished', false),
+     'im \u2630-Men\u00fc nur ohne laufende Partie (playing/bonus: verborgen; beendet: sichtbar) \u2014 der Wechsel l\u00e4dt neu');
+  ok(/<button type="button" class="legal-link sprach-link" id="btn-sprache-menue" hidden\s+onclick="spracheUmschalten\(\)" data-t="neu\.sprache-wechseln"><\/button>/.test(html) &&
+     DE['neu.sprache-wechseln'] === 'English',
+     'der Knopf im Men\u00fc ist gleich gebaut wie auf dem Startbildschirm');
 }
 
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');

@@ -990,11 +990,42 @@ async function zweiterTipp(){
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// I · §220 Rückkehr aus Impressum/Datenschutz: der Zug wird nicht noch einmal abgespielt
+// ═══════════════════════════════════════════════════════════════════
+// Walters Befund (1.10.): Wer nach dem Vierer in Schritt 1 Impressum oder Datenschutz öffnete,
+// kam zurück VOR den Vierer — der Zug lief neu ab. Die Anleitung merkte sich die Phase richtig
+// (`#schritt=<phase>`), zeigte sie beim Laden aber VORWÄRTS. Hier wird genau das nachgestellt:
+// die Seite mit der gemerkten Phase laden und SOFORT nachsehen.
+async function rueckkehrAusRechtsfenster(){
+  block('I · §220 Rückkehr aus Impressum/Datenschutz');
+  const warte=ms=>new Promise(r=>setTimeout(r,ms));
+  const exec1 = M.PHASES.findIndex(p => p.p === 'exec');              // Schritt 1: nach dem Vierer
+  pruef('I0 Schritt 1 hat eine Ausführungsseite (Testmaterial)', exec1 > 0 && M.PHASES[exec1].si === 0, String(exec1));
+  const dom = new JSDOM(HTML.replace(/<script src="gembel_rules\.js[^>]*><\/script>/,'<script>'+RULES+'</script>'),
+    { runScripts:'dangerously', pretendToBeVisual:true, url:'https://countred.com/anleitung.html#schritt=' + exec1 });
+  const d = dom.window.document;
+  await warte(80);                                                    // kürzer als jede Zugdauer
+  const sieg = d.querySelectorAll('#board .cell.sieg').length;
+  const lauf = d.querySelectorAll('#board .cell.abflug, #board .cell.ankunft, #board .cell.abflug-mit, #board .cell.ankunft-mit').length;
+  pruef('I1 nach der Rückkehr steht der Vierer sofort — kein erneutes Abspielen des Zuges',
+    sieg === 4 && lauf === 0 && d.getElementById('meldung').style.display !== 'block', 'sieg '+sieg+', Animation '+lauf);
+  pruef('I2 die Rückkehr bleibt auf derselben Phase', /#schritt=\d+$/.test(dom.window.location.hash) && dom.window.location.hash === '#schritt=' + exec1, dom.window.location.hash);
+  dom.window.close();
+  // Gegenprobe: ohne gemerkten Stand läuft alles wie bisher vorwärts ab Phase 0.
+  const neu = new JSDOM(HTML.replace(/<script src="gembel_rules\.js[^>]*><\/script>/,'<script>'+RULES+'</script>'),
+    { runScripts:'dangerously', pretendToBeVisual:true, url:'https://countred.com/anleitung.html' });
+  await warte(80);
+  pruef('I3 ohne gemerkten Stand: Start bei Phase 0, wie bisher', neu.window.location.hash === '#schritt=0', neu.window.location.hash);
+  neu.window.close();
+}
+
 (async function(){
   if(JSDOM){ try { await durchklick(); } catch(e){ pruef('B· Durchklick abgebrochen', false, e.message); } }
   if(JSDOM){ try { await doppeltipp(); } catch(e){ pruef('D· §146-Probe abgebrochen', false, e.message); } }
   if(JSDOM){ try { await verspaeteterWecker(); } catch(e){ pruef('G· §150-Probe abgebrochen', false, e.message); } }
   if(JSDOM){ try { await zweiterTipp(); } catch(e){ pruef('H· §158-Probe abgebrochen', false, e.message); } }
+  if(JSDOM){ try { await rueckkehrAusRechtsfenster(); } catch(e){ pruef('I· §220-Probe abgebrochen', false, e.message); } }
   else { console.log('\n⚠ jsdom fehlt — Block B uebersprungen. Mit  npm i jsdom  nachinstallieren.'); }
   console.log('\n'+'═'.repeat(62));
   if(bad){ console.log('FEHLER ('+bad+'):'); fehler.forEach(f=>console.log(' · '+f)); }
