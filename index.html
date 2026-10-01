@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=171'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=172'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -752,6 +752,25 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div style="font-size:var(--fs-sm);color:var(--text3);">
         Count Red ist ein privates, nicht kommerzielles Projekt. Das Spiel erschien 1998
         erstmals als Brettspiel unter dem Namen Gembel.</div>
+      <!-- §216 (1.10.2026): die ENGLISCHE FASSUNG (Walter: „wie Datenschutz in beiden Sprachen“).
+           Skriptfrei wie der deutsche Text, gleich gegliedert; maßgeblich ist die deutsche Fassung.
+           Die Anschrift bleibt postalisch unverändert („München“). Der Vermerk bleibt EINE Zeile und
+           beansprucht die Spielidee nicht (§195). test_ui_97 hält gleiche Gliederung fest. -->
+      <div lang="en" style="display:flex;flex-direction:column;gap:10px;border-top:1px solid var(--border,#ccc);padding-top:14px;margin-top:6px;">
+      <div><strong style="color:var(--text);font-size:var(--fs-lg);">Legal notice — English version</strong><br>
+        <em>This translation is provided for information only. The German version above is legally binding.</em></div>
+      <div><strong style="color:var(--text);">Information pursuant to § 5 DDG</strong><br>
+        Walter Rehm<br>Guldeinstr. 32 A<br>80339 München<br>Germany</div>
+      <div><strong style="color:var(--text);">Contact</strong><br>
+        Email: <a href="mailto:info@countred.com" style="color:var(--text2);">info@countred.com</a></div>
+      <div><strong style="color:var(--text);">Responsible for the content</strong><br>
+        Walter Rehm, address as above</div>
+      <div><strong style="color:var(--text);">Copyright</strong><br>
+        © 1998–2026 Walter Rehm. All rights reserved.</div>
+      <div style="font-size:var(--fs-sm);color:var(--text3);">
+        Count Red is a private, non-commercial project. The game was first published in 1998
+        as a board game under the name Gembel.</div>
+      </div>
     </div>
     <button class="big-btn primary" style="width:100%;"
       onclick="document.getElementById('impressum-overlay').classList.add('hidden')">Schließen</button>
@@ -1298,7 +1317,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=171" charset="utf-8"></script>
+<script src="gembel_rules.js?v=172" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1310,13 +1329,57 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=171" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=172" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
+<!-- §216 (1.10.2026) — SPEICHERSCHILD (ToDo 50, Walters GO). Die Firebase-Bibliothek schreibt sonst
+     von sich aus in den Browser: `firebase:sentinel` (Funktionstest bei jedem Laden, lokal UND
+     Sitzung), `firebase:previous_websocket_failure` (bei jedem Verbindungsaufbau), `firebase:host:…`
+     (zwischengespeicherter Teilserver) und die IndexedDB `firebase-heartbeat-database`. Sie prueft
+     dafuer beim LADEN, ob `window.localStorage`/`sessionStorage` da sind (createStoragefor), und beim
+     ersten getDatabase, ob `indexedDB` da ist (Heartbeat). Dieses Modul laeuft VOR dem Hauptmodul
+     (Module laufen in Dokumentreihenfolge) und versteckt alle drei; die Bibliothek nimmt dann ihren
+     reinen Arbeitsspeicher und schreibt nichts. Das Hauptmodul gibt localStorage/sessionStorage
+     direkt nach getDatabase wieder frei (unser eigener Code braucht sie erst danach); indexedDB
+     bleibt verborgen — unser Code benutzt es nicht. `__FIREBASE_DEFAULTS__` = {} haelt die
+     Bibliothek davon ab, ihre Voreinstellungen in `document.cookie` zu suchen.
+     Einmalig: Eintraege aus frueheren Besuchen werden entfernt (Loeschen ist Datensparsamkeit).
+     Laesst ein Browser das Verstecken nicht zu, schreibt die Bibliothek wie bisher — kein Bruch. -->
+<script type="module">
+(function(){
+  const W = window;
+  const merke = {};
+  W.__FIREBASE_DEFAULTS__ = {};
+  // Alte Eintraege der Bibliothek entfernen (nur Schluessel mit `firebase:`, sonst nichts).
+  ['localStorage','sessionStorage'].forEach(function(name){
+    try {
+      const sp = W[name];
+      for (let i = sp.length - 1; i >= 0; i--) { const k = sp.key(i); if (k && k.indexOf('firebase:') === 0) sp.removeItem(k); }
+    } catch(e){}
+  });
+  try { if (W.indexedDB && W.indexedDB.deleteDatabase) W.indexedDB.deleteDatabase('firebase-heartbeat-database'); } catch(e){}
+  // Verstecken.
+  ['localStorage','sessionStorage','indexedDB'].forEach(function(name){
+    try {
+      merke[name] = Object.getOwnPropertyDescriptor(W, name) || null;   // null: lag auf dem Prototyp
+      Object.defineProperty(W, name, { value: undefined, configurable: true, writable: true });
+    } catch(e){ delete merke[name]; }
+  });
+  // Freigabe fuer unseren Code — nur localStorage/sessionStorage.
+  W.__countredSpeicherFrei = function(){
+    ['localStorage','sessionStorage'].forEach(function(name){
+      if (!(name in merke)) return;
+      try { if (merke[name]) Object.defineProperty(W, name, merke[name]); else delete W[name]; } catch(e){}
+    });
+    W.__countredSpeicherFrei = function(){};
+  };
+})();
+</script>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getDatabase, ref, set, get, onValue, update, remove, onDisconnect, serverTimestamp,
-  query, orderByChild, endAt, limitToLast }
+  query, orderByChild, endAt, limitToLast, forceWebSockets }
   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
 
 // ── Firebase Config ──────────────────────────────────────────────
@@ -1329,8 +1392,14 @@ const firebaseConfig = {
   messagingSenderId: "572125194542",
   appId: "1:572125194542:web:8dd30223070b53252532bf"
 };
+// §216: nur WebSocket. Ohne Speicher hielte die Bibliothek WebSocket sonst fuer „frueher gescheitert"
+// und begaenne mit Long-Polling (nachgeladene Skripte/iframes). MUSS vor der ersten Verbindung stehen.
+forceWebSockets();
 const app = initializeApp(firebaseConfig);
 const db  = getDatabase(app);
+// §216: Speicherschild — localStorage/sessionStorage fuer UNSEREN Code wieder freigeben. Ab hier
+// hat die Bibliothek ihren Arbeitsspeicher schon gewaehlt; indexedDB bleibt verborgen.
+if (typeof window.__countredSpeicherFrei === 'function') window.__countredSpeicherFrei();
 
 // §61d-4/§F6: Server-Zeit-Offset. Die Cleanup-Cutoffs (cleanupOldRooms/-Games) liefen bisher
 // über die reine CLIENT-Uhr — ein Gerät mit z.B. +3 h Schiefstand (falsche Zeitzone, defekte
@@ -2927,7 +2996,7 @@ if(SPRACHKNOPF_SICHTBAR){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v171';
+const BUILD_MARKER='· Build v172';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -3247,7 +3316,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=171'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=172'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

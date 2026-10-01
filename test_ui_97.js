@@ -2352,6 +2352,58 @@ console.log('\u00a7215 \u2014 Datenschutz: jeder Speicherschl\u00fcssel beschrie
   ok(vbEn.length === 0, 'Grunds\u00e4tze auch im englischen Datenschutztext' + (vbEn.length ? ' \u2014 ' + vbEn.join(' ') : ''));
 }
 
+// §216 (1.10.) — SPEICHERSCHILD (ToDo 50) und englisches Impressum.
+console.log('\u00a7216 \u2014 Speicherschild gegen Firebase-Eintr\u00e4ge, Impressum zweisprachig:');
+{
+  const vm = require('vm');
+  const m = html.match(/<!-- §216 \(1\.10\.2026\) — SPEICHERSCHILD[\s\S]*?-->\s*<script type="module">([\s\S]*?)<\/script>\s*<script type="module">\s*import \{ initializeApp \}/);
+  const schild = m ? m[1] : '';
+  ok(schild.length > 200, 'das Schild ist ein eigenes Modul UNMITTELBAR vor dem Firebase-Hauptmodul (Module laufen in Dokumentreihenfolge)');
+  // Verhalten, gefahren gegen nachgebildete Fenster — Speicher als EIGENE Eigenschaft und auf dem Prototyp.
+  const lauf = (aufPrototyp) => {
+    const mk = (n) => { const d = new Map([['countred_pkey','k'],['firebase:host:x','s-1'],['firebase:previous_websocket_failure','true']]);
+      return { get length(){ return d.size; }, key(i){ return [...d.keys()][i]; }, getItem(k){ return d.get(k) ?? null; },
+               setItem(k,v){ d.set(k,v); }, removeItem(k){ d.delete(k); }, _d: d }; };
+    const ls = mk(), ss = mk(), geloescht = [];
+    const idb = { deleteDatabase(n){ geloescht.push(n); } };
+    const proto = {}; const W = Object.create(proto);
+    const ziel = aufPrototyp ? proto : W;
+    Object.defineProperty(ziel, 'localStorage', { get(){ return ls; }, configurable: true, enumerable: true });
+    Object.defineProperty(ziel, 'sessionStorage', { get(){ return ss; }, configurable: true, enumerable: true });
+    Object.defineProperty(ziel, 'indexedDB', { get(){ return idb; }, configurable: true, enumerable: true });
+    const c = { window: W, Object }; vm.createContext(c);
+    vm.runInContext(schild, c);
+    const versteckt = typeof W.localStorage === 'undefined' && typeof W.sessionStorage === 'undefined' && typeof W.indexedDB === 'undefined';
+    W.__countredSpeicherFrei();
+    return { versteckt, frei: W.localStorage === ls && W.sessionStorage === ss, idbZu: typeof W.indexedDB === 'undefined',
+             aufgeraeumt: !ls._d.has('firebase:host:x') && !ls._d.has('firebase:previous_websocket_failure') && ls._d.has('countred_pkey'),
+             heartbeatWeg: geloescht.includes('firebase-heartbeat-database'), defaults: W.__FIREBASE_DEFAULTS__ && typeof W.__FIREBASE_DEFAULTS__ === 'object' };
+  };
+  for (const proto of [false, true]) {
+    const e = lauf(proto); const wo = proto ? 'Speicher auf dem Prototyp' : 'Speicher als eigene Eigenschaft';
+    ok(e.versteckt && e.frei && e.idbZu, '\u00a7216 (' + wo + '): w\u00e4hrend des Ladens alle drei versteckt, danach localStorage/sessionStorage f\u00fcr uns zur\u00fcck, indexedDB bleibt zu');
+    ok(e.aufgeraeumt && e.heartbeatWeg && e.defaults, '\u00a7216 (' + wo + '): alte firebase:-Eintr\u00e4ge und die Heartbeat-Datenbank entfernt, unsere bleiben; keine Cookie-Suche (__FIREBASE_DEFAULTS__)');
+  }
+  // Reihenfolge im Hauptmodul
+  const hm = (html.match(/<script type="module">\s*import \{ initializeApp \}[\s\S]*?<\/script>/)||[''])[0];
+  const pFws = hm.indexOf('forceWebSockets();'), pInit = hm.indexOf('initializeApp(firebaseConfig)'),
+        pDb = hm.indexOf('getDatabase(app)'), pFrei = hm.indexOf('window.__countredSpeicherFrei();');
+  const vorFrei = hm.slice(0, pFrei).replace(/\/\/[^\n]*/g, '');
+  ok(/limitToLast, forceWebSockets \}/.test(hm) && pFws > 0 && pFws < pInit && pInit < pDb && pDb < pFrei,
+     'forceWebSockets() vor der ersten Verbindung, Freigabe direkt nach getDatabase');
+  ok(pFrei > 0 && !/localStorage|sessionStorage/.test(vorFrei),
+     'vor der Freigabe fasst unser Code keinen Speicher an (sonst s\u00e4he er „undefined“)');
+  const ohneSchild = HTML_CODE.replace(ohneKommentare(schild), '');
+  ok(ohneSchild.length < HTML_CODE.length && !/indexedDB/.test(ohneSchild.replace(/\/\/[^\n]*/g, '')), 'unser Code benutzt IndexedDB nirgends (sie darf verborgen bleiben)');
+  // Impressum zweisprachig
+  const imp = (html.match(/<div class="overlay hidden" id="impressum-overlay">[\s\S]*?\n<\/div>/)||[''])[0];
+  const e = imp.indexOf('<div lang="en"'), H = /<strong style="color:var\(--text\);">([^<]+)<\/strong>/g;
+  const de = [...imp.slice(0, e).matchAll(H)].length, en = [...imp.slice(e).matchAll(H)].length;
+  ok(e > 0 && de === 4 && en === de && /The German version above is legally binding\./.test(imp) &&
+     /80339 München<br>Germany/.test(imp) && /© 1998–2026 Walter Rehm\. All rights reserved\./.test(imp),
+     'Impressum: englische Fassung, gleiche Gliederung (' + de + ' / ' + en + '), Vorrangsatz, Anschrift postalisch, Vermerk eine Zeile');
+}
+
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
 {
   const LESE = ['regeln-overlay','ueber-overlay','impressum-overlay','datenschutz-overlay','gate-overlay'];
