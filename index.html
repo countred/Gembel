@@ -597,7 +597,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=172'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=173'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -723,8 +723,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <div class="lesekopf">
       <span class="lese-platz" aria-hidden="true"></span>
       <h2 style="text-align:center;font-size:var(--fs-xl);">Impressum</h2>
-      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('impressum-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+      <button type="button" class="lesezu" aria-label="Schließen · Close" title="Schließen · Close" onclick="document.getElementById('impressum-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
     </div>
+    <!-- §217: Hinweis für englische Leser, bewusst OHNE Sprunglink (ein `#…`-Link änderte die Raute
+         der Adresse — §203: genau eine Stelle liest sie, gegen zwei feste Ziele). -->
+    <p lang="en" class="hinweis-en" style="margin:0;text-align:center;font-size:var(--fs-sm);color:var(--text3);"><em>English version below.</em></p>
     <!-- §203: nur sichtbar, wenn dieses Fenster aus der ANLEITUNG heraus geoeffnet wurde
          (`#impressum&von=<schritt>`). Das Ziel wird aus einer ZIFFER gebaut, nie aus Text —
          der Wert aus der Adresse erreicht niemals eine Ausgabe. Bewusst OHNE data-t:
@@ -773,7 +776,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       </div>
     </div>
     <button class="big-btn primary" style="width:100%;"
-      onclick="document.getElementById('impressum-overlay').classList.add('hidden')">Schließen</button>
+      onclick="document.getElementById('impressum-overlay').classList.add('hidden')">Schließen · Close</button>
   </div>
 </div>
 
@@ -817,8 +820,11 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
     <div class="lesekopf">
       <span class="lese-platz" aria-hidden="true"></span>
       <h2 style="text-align:center;font-size:var(--fs-xl);">Datenschutz</h2>
-      <button type="button" class="lesezu" aria-label="Schließen" title="Schließen" onclick="document.getElementById('datenschutz-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
+      <button type="button" class="lesezu" aria-label="Schließen · Close" title="Schließen · Close" onclick="document.getElementById('datenschutz-overlay').classList.add('hidden')"><svg class="sym" aria-hidden="true"><use href="#s-schliessen"/></svg></button>
     </div>
+    <!-- §217: Hinweis für englische Leser, bewusst OHNE Sprunglink (ein `#…`-Link änderte die Raute
+         der Adresse — §203: genau eine Stelle liest sie, gegen zwei feste Ziele). -->
+    <p lang="en" class="hinweis-en" style="margin:0;text-align:center;font-size:var(--fs-sm);color:var(--text3);"><em>English version below.</em></p>
     <!-- §203: nur sichtbar, wenn dieses Fenster aus der ANLEITUNG heraus geoeffnet wurde
          (`#datenschutz&von=<schritt>`). Das Ziel wird aus einer ZIFFER gebaut, nie aus Text —
          der Wert aus der Adresse erreicht niemals eine Ausgabe. Bewusst OHNE data-t:
@@ -861,11 +867,8 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         Deutsch, wird sie entfernt. Auch diese Angabe ist für die von dir gewählte Funktion
         erforderlich. Die Spracheinstellung deines Browsers liest die Seite nicht.<br><br>
         Die Datenbank-Bibliothek von Google (Firebase), über die das Spiel mit dem Server
-        verbunden ist, legt in deinem Browser selbst einen technischen Eintrag an: die Adresse
-        des Datenbankservers, damit die Verbindung beim nächsten Aufruf direkt zustande kommt.
-        Nach einem Verbindungsfehler kann ein weiterer Eintrag hinzukommen, der vermerkt, welche
-        Verbindungsart gescheitert ist. Diese Einträge enthalten keine Angaben zu dir und werden
-        von uns nicht ausgewertet; sie verschwinden, wenn du die Website-Daten löschst.</div>
+        verbunden ist, würde in deinem Browser von sich aus technische Einträge anlegen; die
+        Seite unterbindet das.</div>
       <div><strong style="color:var(--text);">Wechsel auf ein anderes Gerät</strong><br>
         Du kannst dir einen Übertragungscode anzeigen lassen und ihn auf einem zweiten Gerät
         eingeben; mit demselben Code holst du deinen Punktestand auch zurück, wenn du die
@@ -956,13 +959,9 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
         remembers this choice. It is stored only when you press the button, and it is
         not transmitted; if you choose German again, it is removed. This information,
         too, is necessary for the function you chose. The site does not read your
-        browser’s language setting.<br><br>The database library from Google (Firebase),
-        through which the game is connected to the server, itself creates a technical
-        entry in your browser: the address of the database server, so that the
-        connection is established directly the next time. After a connection error, a
-        further entry may be added, noting which type of connection failed. These
-        entries contain no information about you and are not evaluated by us; they
-        disappear when you delete the website data.</div>
+        browser’s language setting.<br><br>The database library from Google (Firebase), through which the game is connected
+        to the server, would create technical entries in your browser on its own; the site prevents
+        this.</div>
       <div><strong style="color:var(--text);">Moving to another device</strong><br>
         You can display a transfer code and enter it on a second device; with the same
         code you can also get your score back after deleting the website data. It
@@ -1015,7 +1014,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       </div>
     </div>
     <button class="big-btn primary" style="width:100%;"
-      onclick="document.getElementById('datenschutz-overlay').classList.add('hidden')">Schließen</button>
+      onclick="document.getElementById('datenschutz-overlay').classList.add('hidden')">Schließen · Close</button>
   </div>
 </div>
 
@@ -1317,7 +1316,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=172" charset="utf-8"></script>
+<script src="gembel_rules.js?v=173" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1329,7 +1328,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=172" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=173" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <!-- §216 (1.10.2026) — SPEICHERSCHILD (ToDo 50, Walters GO). Die Firebase-Bibliothek schreibt sonst
@@ -2996,7 +2995,7 @@ if(SPRACHKNOPF_SICHTBAR){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v172';
+const BUILD_MARKER='· Build v173';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -3316,7 +3315,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=172'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=173'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

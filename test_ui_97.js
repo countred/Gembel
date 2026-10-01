@@ -356,7 +356,7 @@ ok(/werden nicht erhoben/.test(html) && /Spielverlauf und eine zuf\u00e4llige Ke
 //    Wort beim Nutzer ankommt. Dieselbe Falle wie \u00a7156, eine Ebene weiter.
 console.log('\u00a7157 \u2014 Datenschutz: Pflichtangaben nach Art. 13:');
 {
-  const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen<\/button>/) || [''])[0];
+  const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen(?: \u00b7 Close)?<\/button>/) || [''])[0];
   ok(ds.length > 1000, 'Datenschutz-Overlay isoliert (' + ds.length + ' Zeichen)');
 
   ok(/Art\. 6 Abs\. 1 lit\. f/.test(ds),
@@ -408,7 +408,7 @@ console.log('\u00a7157 \u2014 Datenschutz: Pflichtangaben nach Art. 13:');
 // (Regeln v109: `rooms`/`games_mp` auf `.read: true`), stand nirgends.
 console.log('\u00a7184b \u2014 Datenschutz: Zwei-Personen-Modus:');
 {
-  const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen<\/button>/) || [''])[0];
+  const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen(?: \u00b7 Close)?<\/button>/) || [''])[0];
   const mvm = (ds.match(/Zwei Personen \u00fcber einen Code[\s\S]*?<\/div>/) || [''])[0];
   ok(mvm.length > 300, 'der Absatz zum Zwei-Personen-Modus steht im Overlay (' + mvm.length + ' Zeichen)');
   ok(/Wer den Code\s*<\/strong>?[\s\S]{0,40}kennt, kann den Raum mitlesen/.test(mvm.replace(/<[^>]+>/g,' ').replace(/\s+/g,' '))
@@ -544,7 +544,7 @@ console.log('\u00a7159 \u2014 Urheberrechtsvermerk:');
   // Geprueft wird gegen das ISOLIERTE Overlay, nicht gegen die Datei (\u00a7157-Lehre): der
   // Kopfvermerk steht als Kommentar in derselben Datei und wuerde jede Suche ueber `html`
   // gruen faerben, ohne dass beim Nutzer ein Wort ankommt.
-  const imp = html.match(/id="impressum-overlay"[\s\S]*?Schlie\u00dfen<\/button>/)[0];
+  const imp = html.match(/id="impressum-overlay"[\s\S]*?Schlie\u00dfen(?: \u00b7 Close)?<\/button>/)[0];
   ok(/Urheberrecht/.test(imp) && /\u00a9 1998\u20132026 Walter Rehm/.test(imp) &&
      /Alle Rechte vorbehalten/.test(imp),
      'der Urheberrechtsvermerk steht SICHTBAR im Impressum');
@@ -613,7 +613,7 @@ console.log('\u00a7133 \u2014 Impressum vollst\u00e4ndig (keine Platzhalter mehr
   const platzhalter = html.match(/\[(Vor- und Nachname|Stra\u00dfe und Hausnummer|PLZ und Ort|adresse@example\.de|Datum)\]/g);
   ok(!platzhalter, 'keine Platzhalter mehr im Impressum/Datenschutz' +
      (platzhalter ? ' \u2014 offen: ' + platzhalter.join(', ') : ''));
-  const imp = html.match(/id="impressum-overlay"[\s\S]*?Schlie\u00dfen<\/button>/)[0];
+  const imp = html.match(/id="impressum-overlay"[\s\S]*?Schlie\u00dfen(?: \u00b7 Close)?<\/button>/)[0];
   ok(/Guldeinstr/.test(imp) && /80339/.test(imp) && /M\u00fcnchen/.test(imp),
      'ladungsf\u00e4hige Anschrift steht im Impressum (\u00a7 5 DDG verlangt sie, eine E-Mail allein gen\u00fcgt nicht)');
   ok(/mailto:info@countred\.com/.test(imp),
@@ -1190,7 +1190,8 @@ console.log('\u00a7142 \u2014 Kartenbreiten:');
     const i = html.indexOf('id="'+id+'"');
     if(i < 0) return null;
     // §147: die Groesse kann Literal ODER var(--fs-xx) sein — beides aufloesen.
-    const m2 = html.slice(i, i+1400).match(/font-size:([^;]+);line-height:1\.6/);
+    // §217: 1400 → 2400 — der Hinweis „English version below.“ (samt Kommentar) steht jetzt davor.
+    const m2 = html.slice(i, i+2400).match(/font-size:([^;]+);line-height:1\.6/);
     return m2 ? px(m2[1]) : null;
   };
   const textKarten = ['impressum-overlay','datenschutz-overlay','regeln-overlay'];
@@ -1475,7 +1476,7 @@ console.log('\u00a7145 \u2014 Wortlaut der Freischalttexte (Walters Fassung, 27.
     // TEXT GEGEN CODE, wie bei den Fristen: sobald der Code MEHRERE Anteile tragen kann,
     // nennt er fremde Kennungen — und dann muss der Datenschutztext das aussprechen.
     const mehrteilig = /\.join\('\.'\) \+ '-' \+ gateCodeHash/.test(html);
-    const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen<\/button>/) || [''])[0];
+    const ds = (html.match(/id="datenschutz-overlay"[\s\S]*?Schlie\u00dfen(?: \u00b7 Close)?<\/button>/) || [''])[0];
     ok(!mehrteilig || /Kennungen der Ger\u00e4te, auf denen dein\s+Punktestand entstanden ist/.test(ds),
        'der Datenschutztext nennt die MEHRZAHL der Kennungen (mehrteiliger Code gefunden: ' + mehrteilig + ')');
     // Walters Auflage (22.9.): der Text soll niemanden auf die Idee bringen, Punkte von
@@ -2167,7 +2168,7 @@ console.log('\u00a7200 \u2014 Textschicht: Schluessel, Vollstaendigkeit, Auszeic
      'der F\u00fcllschritt wird aufgerufen, und zwar vor dem ersten Zeichnen');
   // Impressum und Datenschutz bleiben im Markup (\u00a7 5 DDG: st\u00e4ndig verf\u00fcgbar, auch ohne Skript).
   for(const id of ['impressum-overlay','datenschutz-overlay']){
-    const blk = (html.match(new RegExp('id="' + id + '"[\\s\\S]*?Schlie\u00dfen<\\/button>'))||[''])[0]
+    const blk = (html.match(new RegExp('id="' + id + '"[\\s\\S]*?Schlie\u00dfen(?: \u00b7 Close)?<\\/button>'))||[''])[0]
                   .replace(/<!--[\s\S]*?-->/g, '');   // §203: Kommentare heraus (U10-Muster)
     ok(blk.length > 500 && !/data-t/.test(blk),
        id + ': Wortlaut steht weiter im Markup, kein Schl\u00fcssel (Pflichtangaben brauchen kein Skript)');
@@ -2327,7 +2328,7 @@ console.log('\u00a7215 \u2014 Datenschutz: jeder Speicherschl\u00fcssel beschrie
     'countred_pkey':    /zuf\u00e4llige Kennung/,
     'countred_gate':    /wie viele\s+Punkte du gesammelt hast/,
     'countred-sprache': /merkt sich dein Browser diese Wahl/,
-    'firebase:host':    /die Adresse\s+des Datenbankservers/,          // legt die Firebase-Bibliothek selbst an
+    'firebase:host':    /w\u00fcrde in deinem Browser von sich aus technische Eintr\u00e4ge anlegen; die\s+Seite unterbindet das\./,   // §217: das Schild (§216) verhindert es
   };
   const imCode = new Set([...HTML_CODE.matchAll(/localStorage\.(?:getItem|setItem|removeItem)\('([^']+)'/g)].map(m=>m[1]));
   const gs = (html.match(/const GATE_STORE = '([^']+)';/)||[])[1]; if(gs) imCode.add(gs);
@@ -2402,6 +2403,27 @@ console.log('\u00a7216 \u2014 Speicherschild gegen Firebase-Eintr\u00e4ge, Impre
   ok(e > 0 && de === 4 && en === de && /The German version above is legally binding\./.test(imp) &&
      /80339 München<br>Germany/.test(imp) && /© 1998–2026 Walter Rehm\. All rights reserved\./.test(imp),
      'Impressum: englische Fassung, gleiche Gliederung (' + de + ' / ' + en + '), Vorrangsatz, Anschrift postalisch, Vermerk eine Zeile');
+}
+
+// §217 (1.10.) — Rechtsfenster für englische Leser, und der Datenschutzsatz hängt am Schild.
+console.log('\u00a7217 \u2014 Rechtsfenster: Hinweis, Schlie\u00dfen \u00b7 Close; Datenschutz-Satz nur mit Schild:');
+{
+  for (const ov of ['impressum','datenschutz']) {
+    const f = (html.match(new RegExp('<div class="overlay hidden" id="' + ov + '-overlay">[\\s\\S]*?\\n<\\/div>'))||[''])[0];
+    const kopfEnde = f.indexOf('</div>', f.indexOf('lesekopf'));
+    const hinweis = (f.match(/<p lang="en" class="hinweis-en"[^>]*>([\s\S]*?)<\/p>/)||[])[1] || '';
+    ok(/English version below\./.test(hinweis) && !/href/.test(hinweis) && f.indexOf('hinweis-en') > kopfEnde && f.indexOf('hinweis-en') < f.indexOf('<div lang="en"'),
+       ov + ': Hinweis \u201eEnglish version below.\u201c unter der \u00dcberschrift, ohne Sprunglink (\u00a7203)');
+    ok(/class="lesezu" aria-label="Schlie\u00dfen \u00b7 Close" title="Schlie\u00dfen \u00b7 Close"/.test(f) && />Schlie\u00dfen \u00b7 Close<\/button>/.test(f),
+       ov + ': Schlie\u00dfen zweisprachig (oben und unten)');
+  }
+  // Der Satz „die Seite unterbindet das“ ist nur wahr, solange das Speicherschild (§216) im Code steht.
+  const satz = /Seite unterbindet das\./.test(html) && /the site prevents\s+this\./.test(html);
+  const schild = /<!-- §216 \(1\.10\.2026\) — SPEICHERSCHILD[\s\S]*?<script type="module">[\s\S]*?\['localStorage','sessionStorage','indexedDB'\]/.test(html)
+               && /forceWebSockets\(\);/.test(HTML_CODE);
+  ok(satz && schild, 'Datenschutz sagt \u201eunterbindet das\u201c \u2014 und das Speicherschild steht im Code (sonst w\u00e4re der Satz falsch)');
+  ok(!/legt in deinem Browser selbst einen technischen Eintrag an/.test(html) && !/itself creates a technical/.test(html),
+     'der alte Firebase-Absatz ist aus beiden Fassungen entfernt');
 }
 
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
