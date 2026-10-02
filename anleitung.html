@@ -6,8 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- §218: kein Symbol, mit Absicht (sonst 404 auf /favicon.ico, ToDo 48). -->
-<link rel="icon" href="data:,">
+<!-- §222 (1.10.2026): das Symbol — ein Feld des Spiels mit Stapel, rote 3 auf schwarzer 2, mit den
+     Punkten (Walters Idee). Farben aus dem Stylesheet (--bg2, --border, --border2, --red-fig-bg,
+     schwarze Figur). Im Tab als SVG direkt in der Seite (kein Abruf); wo ein Browser kein SVG-Symbol
+     kann, und für den iPhone-Startbildschirm, dasselbe Motiv als PNG 180×180 (randlos — iOS rundet
+     selbst). Ersetzt das leere Symbol aus §218: weiterhin kein 404 auf /favicon.ico. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 130 130%22%3E%3Crect x=%221%22 y=%221%22 width=%22128%22 height=%22128%22 rx=%2224%22 fill=%22%23ebe9e2%22 stroke=%22%23d3d1c7%22 stroke-width=%222%22/%3E%3Ccircle cx=%2257%22 cy=%2220%22 r=%225.5%22 fill=%22%23b4b2a9%22/%3E%3Ccircle cx=%2273%22 cy=%2220%22 r=%225.5%22 fill=%22%23b4b2a9%22/%3E%3Ccircle cx=%2265%22 cy=%2296%22 r=%2224%22 fill=%22%232c2c2a%22/%3E%3Ctext x=%2265%22 y=%22108%22 text-anchor=%22middle%22 font-family=%22Helvetica,Arial,sans-serif%22 font-weight=%22700%22 font-size=%2227%22 fill=%22%23fff%22%3E2%3C/text%3E%3Ccircle cx=%2265%22 cy=%2256%22 r=%2224%22 fill=%22%23D94F3D%22/%3E%3Ccircle cx=%2265%22 cy=%2256%22 r=%2223%22 fill=%22none%22 stroke=%22%23C4402F%22 stroke-width=%222%22/%3E%3Ctext x=%2265%22 y=%2266%22 text-anchor=%22middle%22 font-family=%22Helvetica,Arial,sans-serif%22 font-weight=%22700%22 font-size=%2227%22 fill=%22%23fff%22%3E3%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
 <title>Count Red · Anleitung</title>
@@ -475,7 +481,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=177" charset="utf-8"></script>
+<script src="gembel_rules.js?v=178" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════

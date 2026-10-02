@@ -6,8 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<!-- §218: kein Symbol, mit Absicht — sonst fragt jeder Browser nach /favicon.ico und erhält 404 (ToDo 48). -->
-<link rel="icon" href="data:,">
+<!-- §222 (1.10.2026): das Symbol — ein Feld des Spiels mit Stapel, rote 3 auf schwarzer 2, mit den
+     Punkten (Walters Idee). Farben aus dem Stylesheet (--bg2, --border, --border2, --red-fig-bg,
+     schwarze Figur). Im Tab als SVG direkt in der Seite (kein Abruf); wo ein Browser kein SVG-Symbol
+     kann, und für den iPhone-Startbildschirm, dasselbe Motiv als PNG 180×180 (randlos — iOS rundet
+     selbst). Ersetzt das leere Symbol aus §218: weiterhin kein 404 auf /favicon.ico. -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 130 130%22%3E%3Crect x=%221%22 y=%221%22 width=%22128%22 height=%22128%22 rx=%2224%22 fill=%22%23ebe9e2%22 stroke=%22%23d3d1c7%22 stroke-width=%222%22/%3E%3Ccircle cx=%2257%22 cy=%2220%22 r=%225.5%22 fill=%22%23b4b2a9%22/%3E%3Ccircle cx=%2273%22 cy=%2220%22 r=%225.5%22 fill=%22%23b4b2a9%22/%3E%3Ccircle cx=%2265%22 cy=%2296%22 r=%2224%22 fill=%22%232c2c2a%22/%3E%3Ctext x=%2265%22 y=%22108%22 text-anchor=%22middle%22 font-family=%22Helvetica,Arial,sans-serif%22 font-weight=%22700%22 font-size=%2227%22 fill=%22%23fff%22%3E2%3C/text%3E%3Ccircle cx=%2265%22 cy=%2256%22 r=%2224%22 fill=%22%23D94F3D%22/%3E%3Ccircle cx=%2265%22 cy=%2256%22 r=%2223%22 fill=%22none%22 stroke=%22%23C4402F%22 stroke-width=%222%22/%3E%3Ctext x=%2265%22 y=%2266%22 text-anchor=%22middle%22 font-family=%22Helvetica,Arial,sans-serif%22 font-weight=%22700%22 font-size=%2227%22 fill=%22%23fff%22%3E3%3C/text%3E%3C/svg%3E">
+<link rel="icon" type="image/png" sizes="180x180" href="apple-touch-icon.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
@@ -600,7 +606,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=177'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=178'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -1321,7 +1327,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=177" charset="utf-8"></script>
+<script src="gembel_rules.js?v=178" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1333,7 +1339,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=177" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=178" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <!-- §216 (1.10.2026) — SPEICHERSCHILD (ToDo 50, Walters GO). Die Firebase-Bibliothek schreibt sonst
@@ -3007,7 +3013,7 @@ if(SPRACHKNOPF_SICHTBAR){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v177';
+const BUILD_MARKER='· Build v178';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -3327,7 +3333,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=177'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=178'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

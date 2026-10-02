@@ -2439,8 +2439,22 @@ console.log('\u00a7217 \u2014 Rechtsfenster: Hinweis, Schlie\u00dfen \u00b7 Clos
 console.log('\u00a7218 \u2014 Symbol und App-Zeile:');
 {
   const anl = fs.readFileSync(require('path').join(__dirname,'anleitung.html'),'utf8');
-  ok([html, anl].every(q => /<link rel="icon" href="data:,">/.test(q)),
-     'beide Seiten sagen ausdr\u00fccklich „kein Symbol“ \u2014 kein Nachfragen nach /favicon.ico, kein 404 (\u00a7219: die Vorschau-Seite ist entfernt)');
+  // §222: statt „kein Symbol“ jetzt das Symbol — SVG direkt in der Seite, PNG für iPhone/Ersatz.
+  // Weiterhin: kein Nachfragen nach /favicon.ico (dafür sorgen die rel="icon"-Zeilen).
+  const svgZeile = q => (q.match(/<link rel="icon" type="image\/svg\+xml" href="(data:image\/svg\+xml,[^"]+)">/)||[])[1] || '';
+  ok([html, anl].every(q => svgZeile(q) && svgZeile(q) === svgZeile(html) &&
+       /<link rel="icon" type="image\/png" sizes="180x180" href="apple-touch-icon\.png">/.test(q) &&
+       /<link rel="apple-touch-icon" href="apple-touch-icon\.png">/.test(q) && !/href="data:,"/.test(q)),
+     'beide Seiten tragen dasselbe Symbol (SVG in der Seite, PNG f\u00fcr iPhone und als Ersatz) \u2014 kein 404 auf /favicon.ico');
+  const svg = decodeURIComponent(svgZeile(html).slice('data:image/svg+xml,'.length));
+  ok(/^<svg xmlns="http:\/\/www\.w3\.org\/2000\/svg" viewBox="0 0 130 130">/.test(svg) &&
+     ['#ebe9e2','#d3d1c7','#b4b2a9','#D94F3D','#2c2c2a'].every(f => svg.includes(f)) && />3<\/text>/.test(svg) && />2<\/text>/.test(svg),
+     'das Symbol ist das Spielfeld: Farben aus dem Stylesheet, rote 3 auf schwarzer 2, mit Punkten');
+  const png = fs.readFileSync(require('path').join(__dirname,'apple-touch-icon.png'));
+  const gi = fs.readFileSync(require('path').join(__dirname,'.gitignore'),'utf8');
+  ok(png.slice(1,4).toString() === 'PNG' && png.readUInt32BE(16) === 180 && png.readUInt32BE(20) === 180 && png[25] === 2 &&
+     png.length < 20000 && /^!apple-touch-icon\.png$/m.test(gi),
+     'iPhone-Symbol: PNG 180\u00d7180, deckend (RGB, kein Alpha), klein, auf der Positivliste');
   ok([html, anl].every(q => /<meta name="apple-mobile-web-app-capable" content="yes">\s*<meta name="mobile-web-app-capable" content="yes">/.test(q)),
      'App-Zeile f\u00fcr iPhone UND die allgemeine Fassung (Chrome-Warnung)');
 }
