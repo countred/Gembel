@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Count Red · © 1998–2026 Walter Rehm · Alle Rechte vorbehalten · countred.com -->
+<!-- CountRed · © 1998–2026 Walter Rehm · Alle Rechte vorbehalten · countred.com -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -16,7 +16,7 @@
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
-<title>Count Red · Anleitung</title>
+<title>CountRed · Anleitung</title>
 
 <!-- ═══════════════════════════════════════════════════════════════════
      anleitung.html — die interaktive Spielanleitung
@@ -481,7 +481,7 @@ setTimeout(function(){
 </script>
 
 <!-- Kanonische Regelschicht — dieselbe Datei, die das Spiel laedt. -->
-<script src="gembel_rules.js?v=178" charset="utf-8"></script>
+<script src="gembel_rules.js?v=179" charset="utf-8"></script>
 
 <script>
 // ═══════════════════════════════════════════════════════════════════
@@ -490,7 +490,7 @@ setTimeout(function(){
 const LEARNER = 1, OPPONENT = 2, PARITY = 'odd';
 
 // REGEL: JEDE Auslieferung zaehlt die Fassung hoch, auch bei reinem Innenleben.
-const ANL_FASSUNG = 'Anleitung · Fassung 78 · 01.10.2026';
+const ANL_FASSUNG = 'Anleitung · Fassung 79 · 02.10.2026';
 
 // ═══════════════════════════════════════════════════════════════════
 //  §208 — TEXTSCHICHT DER ANLEITUNG (Probe, ToDo 43)
@@ -578,7 +578,7 @@ const TEXTE = {
       'anl.rest.a5.text#html':                       '<p>Im Spiel kannst du nicht falsch ziehen. Tippst du eine Figur an, die du gerade nicht anheben oder nirgends absetzen kannst, dann siehst du unten, warum der Zug nicht erlaubt ist.</p>',
       'anl.rest.titel':                              'Gut zu wissen',
       'anl.schritt-von':                             'Schritt {0} von {1}',
-      'anl.seitentitel':                             'Count Red · Anleitung',
+      'anl.seitentitel':                             'CountRed · Anleitung',
       'anl.stapelbilden.intro#html':                 '<p>Beim Stapeln zählst du nur die roten Figuren im Stapel. Du darfst eine Figur auf eine andere setzen, wenn danach die Summe der <b>roten</b> Figuren im Stapel <b>ungerade</b> ist. In deinem Fall ist das 1 rote Figur. Die Parität des Mitspielers ist gerade, also sind es bei ihm 0 oder 2 rote Figuren.</p>',
       'anl.stapelbilden.titel':                      'Stapel bilden',
       'anl.summe.gerade':                            '{0} = gerade',
@@ -665,7 +665,7 @@ const TEXTE = {
       'anl.rest.a5.text#html':                       '<p>In the game you cannot make an illegal move. If you tap a piece that you cannot lift right now, or cannot set down anywhere, you will see below why the move is not allowed.</p>',
       'anl.rest.titel':                              'Good to know',
       'anl.schritt-von':                             'Step {0} of {1}',
-      'anl.seitentitel':                             'Count Red · How to play',
+      'anl.seitentitel':                             'CountRed · How to play',
       'anl.stapelbilden.intro#html':                 '<p>When stacking, you count only the red pieces in the stack. You may set one piece on another if afterwards the sum of the <b>red</b> pieces in the stack is <b>odd</b>. In your case that is 1 red piece. The other player’s parity is even, so for them it is 0 or 2 red pieces.</p>',
       'anl.stapelbilden.titel':                      'Forming a stack',
       'anl.summe.gerade':                            '{0} = even',
@@ -1959,7 +1959,7 @@ function init(){
    ['legal-impressum','anl.impressum'], ['legal-datenschutz','anl.datenschutz']].forEach(function(p){
     const n=document.getElementById(p[0]); if(n) n.textContent=txt(p[1]);
   });
-  console.log('Count Red · ' + ANL_FASSUNG + ' · Regelschicht: gembel_rules.js');
+  console.log('CountRed · ' + ANL_FASSUNG + ' · Regelschicht: gembel_rules.js');
 
   const noetig=['initBoard','canLift','canDrop','canStack','canPlaceOnEmpty','parityOk',
                 'countRedNeighbors','countRedsInStack','getMovingPiece','getBasePiece',

@@ -101,7 +101,7 @@ const MARKE={lesen:'lesen', zeigen:'zeigen', tap:'antippen', lift:'anheben', dro
 function schreibe(){
   const fassung=(htmlSrc.match(/const ANL_FASSUNG\s*=\s*'([^']+)'/)||[])[1];
   const L=[];
-  L.push('# Count Red — Interaktive Spielanleitung: alle Texte','');
+  L.push('# CountRed — Interaktive Spielanleitung: alle Texte','');
   L.push('**Quelle: `anleitung.html` · '+fassung+'**','');
   L.push('> Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`');
   L.push('> im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt');
@@ -147,7 +147,7 @@ function schreibe(){
   }
   L.push('---','','## Bedienelemente','');
   L.push('| Element | Text |','|---|---|');
-  L.push('| Kopfzeile links | `COUNT · RED` |');
+  L.push('| Kopfzeile links | `CountRed` (Wortmarke, zweifarbig) |');
   L.push('| Kopfzeile rechts | `Schritt N von 9` |');
   L.push('| unter dem Fortschrittsbalken | `'+fassung+'` |');
   L.push('| Knopf links | `Zurück` — einen Teilschritt zurück |');

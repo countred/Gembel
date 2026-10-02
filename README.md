@@ -1,4 +1,4 @@
-# Count Red
+# CountRed
 
 Ein Strategiespiel für zwei auf einem 4×4-Brett. Spielbar im Browser, ohne
 Installation und ohne Anmeldung:
@@ -84,7 +84,7 @@ Fehler, Ungereimtheiten und Eindrücke aus dem Spiel sind willkommen:
 
 ---
 
-*Count Red · digitale Fassung · Testbetrieb 2026*
+*CountRed · digitale Fassung · Testbetrieb 2026*
 
 ---
 

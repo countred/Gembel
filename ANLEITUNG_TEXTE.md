@@ -1,6 +1,6 @@
-# Count Red — Interaktive Spielanleitung: alle Texte
+# CountRed — Interaktive Spielanleitung: alle Texte
 
-**Quelle: `anleitung.html` · Anleitung · Fassung 78 · 01.10.2026**
+**Quelle: `anleitung.html` · Anleitung · Fassung 79 · 02.10.2026**
 
 > Diese Datei ist **erzeugt**, nicht abgeschrieben: ein Skript bedient `anleitung.html`
 > im DOM und fängt jeden Text ab, den ein Lernender wirklich zu sehen bekommt — samt
@@ -497,9 +497,9 @@ Markierungen bewusst: dort wird noch nichts gerechnet.
 
 | Element | Text |
 |---|---|
-| Kopfzeile links | `COUNT · RED` |
+| Kopfzeile links | `CountRed` (Wortmarke, zweifarbig) |
 | Kopfzeile rechts | `Schritt N von 9` |
-| unter dem Fortschrittsbalken | `Anleitung · Fassung 78 · 01.10.2026` |
+| unter dem Fortschrittsbalken | `Anleitung · Fassung 79 · 02.10.2026` |
 | Knopf links | `Zurück` — einen Teilschritt zurück |
 | Knopf rechts | `Weiter` — einen Teilschritt vor; im letzten Schritt `Zum Spiel` |
 

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- Count Red · © 1998–2026 Walter Rehm · Alle Rechte vorbehalten · countred.com -->
+<!-- CountRed · © 1998–2026 Walter Rehm · Alle Rechte vorbehalten · countred.com -->
 <html lang="de">
 <head>
 <meta charset="UTF-8">
@@ -17,7 +17,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <meta name="theme-color" content="#f5f4ef" media="(prefers-color-scheme: light)">
 <meta name="theme-color" content="#1a1a18" media="(prefers-color-scheme: dark)">
-<title data-t="seite.gembel-count-red"></title>
+<title data-t="seite.titel"></title>
 <!-- §161 (7.9.): VORVERBINDEN. Der Startbildschirm hing an zwei Netzverbindungen zu zwei
      fremden Servern: das Firebase-SDK von gstatic.com und die Datenbank selbst. Ohne
      preconnect beginnen DNS und TLS erst, wenn der Modul-Block gelesen ist — also nach dem
@@ -606,7 +606,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
          `anleitung.html?v=` bleibt der FUENFTE Cache-Bust-Ladeweg; der Deploy-Guard aller
          elf Suiten prueft ihn seit §139 mit. -->
     <div class="card-col">
-      <button class="big-btn" onclick="location.href='anleitung.html?v=178'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
+      <button class="big-btn" onclick="location.href='anleitung.html?v=179'" data-t-label="start.interaktive-spielanleitung"><svg class="sym" aria-hidden="true"><use href="#s-buch"/></svg></button>
       <button class="big-btn" onclick="showAISetup()" data-t-label="start.gegen-max-michu"><svg class="sym" aria-hidden="true"><use href="#s-robot"/></svg></button>
       <button class="big-btn" id="btn-mvm" onclick="showLobby()" data-t-label="start.mit-code-zu-zweit"><svg class="sym" aria-hidden="true"><use href="#s-zweit"/></svg></button>
     </div>
@@ -763,7 +763,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div><strong style="color:var(--text);">Urheberrecht</strong><br>
         © 1998–2026 Walter Rehm. Alle Rechte vorbehalten.</div>
       <div style="font-size:var(--fs-sm);color:var(--text3);">
-        Count Red ist ein privates, nicht kommerzielles Projekt. Das Spiel erschien 1998
+        CountRed ist ein privates, nicht kommerzielles Projekt. Das Spiel erschien 1998
         erstmals als Brettspiel unter dem Namen Gembel.</div>
       <!-- §216 (1.10.2026): die ENGLISCHE FASSUNG (Walter: „wie Datenschutz in beiden Sprachen“).
            Skriptfrei wie der deutsche Text, gleich gegliedert; maßgeblich ist die deutsche Fassung.
@@ -781,7 +781,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
       <div><strong style="color:var(--text);">Copyright</strong><br>
         © 1998–2026 Walter Rehm. All rights reserved.</div>
       <div style="font-size:var(--fs-sm);color:var(--text3);">
-        Count Red is a private, non-commercial project. The game was first published in 1998
+        CountRed is a private, non-commercial project. The game was first published in 1998
         as a board game under the name Gembel.</div>
       </div>
     </div>
@@ -1327,7 +1327,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
      dessen importScripts) UND in anleitung.html (§139: fuenfter Ladeweg). AKTUELL: v112. ⚠️ AUCH den Build-Marker-Literal im Versions-Log
      ganz unten (console.log '· Build vNN') mitziehen — er wurde bei v66/v67 vergessen und
      zeigte fälschlich v65, wodurch der Cache-Mix-Check am Log blind war (§72). -->
-<script src="gembel_rules.js?v=178" charset="utf-8"></script>
+<script src="gembel_rules.js?v=179" charset="utf-8"></script>
 
 <!-- Globaler Spielzustand, den KI-Kern UND Modul-Block teilen (§42 Etappe 2, Weg 1).
      PARITY_P1 muss GLOBAL sein (nicht var im Modul), damit countred_ai_core.js sie sieht.
@@ -1339,7 +1339,7 @@ html,body{height:100%;background:var(--bg);color:var(--text);font-family:system-
 <!-- KI-Kern (§41): pickMove/evaluate/negamax/antisymmetrySelfTest/SKILL_LEVELS global.
      Nutzt die kanonische Regelschicht oben (EINE gemeinsame Schicht, keine Kopie, §42d).
      module.exports-Guard ist browsersicher (module undefiniert → übersprungen). -->
-<script src="countred_ai_core.js?v=178" charset="utf-8"></script>
+<script src="countred_ai_core.js?v=179" charset="utf-8"></script>
 
 <!-- Firebase SDK -->
 <!-- §216 (1.10.2026) — SPEICHERSCHILD (ToDo 50, Walters GO). Die Firebase-Bibliothek schreibt sonst
@@ -2176,7 +2176,7 @@ const TEXTE = {
       'seite.countred-ist-fuer-das':                 'CountRed ist für das Hochformat gebaut.',
       'seite.d':                                     'D',
       'seite.du':                                    'Du',
-      'seite.gembel-count-red':                      'Gembel · Count Red',
+      'seite.titel':                                 'CountRed',
       'seite.gerade':                                'gerade',
       'seite.gib-den-5-stelligen':                   'Gib den 5-stelligen Code ein:',
       'seite.mitspieler':                            'Mitspieler',
@@ -2497,7 +2497,7 @@ const TEXTE = {
       'seite.countred-ist-fuer-das':                 'CountRed is made for portrait mode.',
       'seite.d':                                     'D',
       'seite.du':                                    'You',
-      'seite.gembel-count-red':                      'Gembel · Count Red',
+      'seite.titel':                                 'CountRed',
       'seite.gerade':                                'even',
       'seite.gib-den-5-stelligen':                   'Enter the 5-character code:',
       'seite.mitspieler':                            'Other player',
@@ -3013,7 +3013,7 @@ if(SPRACHKNOPF_SICHTBAR){
 gateState = gateLoad();
 gateRefresh();
 
-const BUILD_MARKER='· Build v178';
+const BUILD_MARKER='· Build v179';
 const BUILD_NO=parseInt((BUILD_MARKER.match(/v(\d+)/)||[])[1],10);
 
 const AI_SCORE_WINDOW=6;   // Fenster: die letzten N KI-Züge (inkl. Bonuszüge)
@@ -3333,7 +3333,7 @@ const aiPending=new Map(); // jobId -> {resolve, reject, timer} der wartenden Pr
 
 function getAIWorker(){
   if(!aiWorker){
-    aiWorker=new Worker('countred_ai_worker.js?v=178'); // §61e-3/§65e: Cache-Busting (s. Kopf)
+    aiWorker=new Worker('countred_ai_worker.js?v=179'); // §61e-3/§65e: Cache-Busting (s. Kopf)
     aiWorker.onmessage=function(e){
       const {id}=e.data;
       const p=aiPending.get(id);

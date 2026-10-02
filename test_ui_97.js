@@ -569,7 +569,8 @@ console.log('\u00a7159 \u2014 Urheberrechtsvermerk:');
        '\u00a7195: er bleibt kurz (h\u00f6chstens zwei S\u00e4tze) \u2014 Einzelheiten geh\u00f6ren in die LICENSE');
   }
 
-  const VERMERK = /Count Red \u00b7 \u00a9 1998\u20132026 Walter Rehm \u00b7 Alle Rechte vorbehalten/;
+  // §223: der Name ist „CountRed“, in einem Wort (Walter, 2.10.).
+  const VERMERK = /CountRed \u00b7 \u00a9 1998\u20132026 Walter Rehm \u00b7 Alle Rechte vorbehalten/;
   ok(VERMERK.test(html.split('\n').slice(0,4).join('\n')),
      'index.html traegt den Vermerk im Dateikopf');
 
@@ -2498,6 +2499,35 @@ console.log('\u00a7221 \u2014 Denkzeit Teil 1 (rund 2 s, gestreut), Teil 2 und M
      'Teil 1 = 1,6\u20132,6 s, zuf\u00e4llig und unabh\u00e4ngig von der Stellung (\u00a7125), Er\u00f6ffnungszug ohne (\u00a795)');
   ok(/aiThinking=true;\s*const tZugBeginn=performance\.now\(\);/.test(html),
      'gez\u00e4hlt ab dem Moment, in dem Max Michu am Zug ist (feste Pause und Suche geh\u00f6ren dazu)');
+}
+
+// §223 (2.10.) — DER NAME IST „CountRed“ (Walter: „Die Bezeichnung des Spiels muss überall CountRed
+// sein. Gembel ist die alte Bezeichnung, die nur für die Geschichte und vor allem das Copyright
+// benötigt wird.“). Anlass: der iPhone-Startbildschirm zeigte „Gembel · Count Red“ (Seitentitel).
+console.log('\u00a7223 \u2014 der Name ist \u201eCountRed\u201c, \u201eGembel\u201c nur f\u00fcr Geschichte und Kennzeichen:');
+{
+  const path = require('path');
+  const lies = f => fs.existsSync(path.join(__dirname, f)) ? fs.readFileSync(path.join(__dirname, f), 'utf8') : '';
+  const DATEIEN = ['index.html','anleitung.html','gembel_rules.js','countred_ai_core.js','countred_ai_worker.js','LICENSE','README.md','ANLEITUNG_TEXTE.md','texte.js'];
+  const getrennt = DATEIEN.filter(f => /Count[\s\u00a0\u00b7.-]+Red\b/.test(lies(f)));
+  ok(getrennt.length === 0, 'nirgends \u201eCount Red\u201c getrennt (' + DATEIEN.length + ' Dateien)' + (getrennt.length ? ' \u2014 ' + getrennt.join(', ') : ''));
+  ok(DE['seite.titel'] === 'CountRed' && /<title data-t="seite\.titel"><\/title>/.test(html) &&
+     /<title>CountRed \u00b7 Anleitung<\/title>/.test(lies('anleitung.html')),
+     'Seitentitel \u201eCountRed\u201c (iPhone-Startbildschirm, Tab) und \u201eCountRed \u00b7 Anleitung\u201c');
+  // „Gembel“ darf im SICHTBAREN Text nur die Geschichte erzählen: „Erstmals 1998 als Gembel erschienen“,
+  // „… unter dem Namen Gembel“ — sonst nirgends (Tabellen beider Sprachen, Rechtsfenster, Titel).
+  const anl = lies('anleitung.html');
+  const werte = [...Object.entries(DE)].concat(Object.entries((D => { try { return D; } catch(e){ return {}; } })(DE)))
+                 .map(([k,v]) => [k, String(typeof v === 'object' ? v.eins + ' ' + v.andere : v)]);
+  const recht = [...html.matchAll(/<div class="overlay hidden" id="(impressum|datenschutz)-overlay">[\s\S]*?\n<\/div>/g)].map(m => [m[1], m[0].replace(/<[^>]*>/g,' ').replace(/\s+/g,' ')]);
+  const GESCHICHTE = /(als Gembel erschienen|as Gembel\b|unter dem Namen Gembel|under the name Gembel)/;
+  const ohneGeschichte = werte.concat(recht).filter(([k,t]) => /Gembel/.test(t.replace(new RegExp(GESCHICHTE.source,'g'),'')));
+  const enTab = (html.match(/  en: \{[\s\S]*?\n  \}\n\};/)||[''])[0];
+  const enGembel = [...enTab.matchAll(/'([^']+)':\s*'([^']*Gembel[^']*)'/g)].filter(m => !GESCHICHTE.test(m[2])).map(m => m[1]);
+  ok(ohneGeschichte.length === 0 && enGembel.length === 0 && !/Gembel/.test((anl.match(/const TEXTE = \{[\s\S]*?\n\};/)||[''])[0]),
+     '\u201eGembel\u201c im sichtbaren Text nur f\u00fcr die Geschichte' + (ohneGeschichte.length || enGembel.length ? ' \u2014 ' + ohneGeschichte.map(x=>x[0]).concat(enGembel).join(', ') : ''));
+  ok(/Die Namen "CountRed" und "Gembel" werden als Kennzeichen/.test(lies('LICENSE')) && /"CountRed" and "Gembel" are used as the marks/.test(lies('LICENSE')),
+     'LICENSE: \u201eCountRed\u201c und \u201eGembel\u201c bleiben beide Kennzeichen (Copyright)');
 }
 
 console.log('\u00a7198 \u2014 Lesefenster: Ausgang oben rechts, Escape nur am Rechner:');
